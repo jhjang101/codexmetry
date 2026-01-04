@@ -35,8 +35,8 @@ CREATE TABLE IF NOT EXISTS settings_metadata (
     id INTEGER PRIMARY KEY CHECK (id = 1), -- Enforce single row
     company_name TEXT DEFAULT 'My Business',
     address TEXT,
-    company_logo_url TEXT,
-    timezone TEXT DEFAULT '	America/Chicago',
+    company_logo TEXT,
+    timezone TEXT DEFAULT 'America/Chicago',
     invoice_threshold INTEGER DEFAULT 10000 -- Stored in cents
 );
 
@@ -62,7 +62,7 @@ CREATE TABLE IF NOT EXISTS products (
     name TEXT NOT NULL,
     catalog_number TEXT,
     category_id INTEGER,
-    image_url TEXT,
+    image TEXT,
     default_unit_price INTEGER DEFAULT 0, -- Cents
     is_active INTEGER DEFAULT 1,
     FOREIGN KEY (category_id) REFERENCES product_categories(id)

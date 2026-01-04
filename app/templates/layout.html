@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Codexmetry - Local Business Manager</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+</head>
+<body class="bg-gray-50 flex h-screen overflow-hidden">
+
+    <!-- Left Navigation Panel -->
+    <aside class="w-64 bg-slate-900 text-white flex flex-col">
+        <div class="p-6 text-2xl font-bold border-b border-slate-800">
+            Codexmetry
+        </div>
+        <nav class="flex-1 overflow-y-auto p-4 space-y-2 text-md">
+            <a href="/" class="block p-3 rounded hover:bg-slate-800">Dashboard</a>
+            <a href="#" class="block p-3 rounded hover:bg-slate-800">Purchase Orders</a>
+            <a href="#" class="block p-3 rounded hover:bg-slate-800">Invoices</a>
+            <a href="#" class="block p-3 rounded hover:bg-slate-800">Payments</a>
+            <a href="#" class="block p-3 rounded hover:bg-slate-800">Expenses</a>
+            <a href="#" class="block p-3 rounded hover:bg-slate-800">Clients</a>
+            <a href="#" class="block p-3 rounded hover:bg-slate-800">Products</a>
+            <a href="#" class="block p-3 rounded hover:bg-slate-800">Vendors</a>
+            <a href="#" class="block p-3 rounded hover:bg-slate-800">Reports</a>
+            <a href="/settings" class="block p-3 rounded bg-blue-600">Settings</a>
+        </nav>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 flex flex-col overflow-hidden">
+        <!-- Top Header (Optional) -->
+        <header class="bg-white shadow-sm py-4 px-8 flex justify-between items-center">
+            <h1 class="text-xl font-semibold text-gray-800">{% block title %}{% endblock %}</h1>
+            <div class="text-sm text-gray-500">{{ now.strftime('%Y-%m-%d') if now else '' }}</div>
+        </header>
+
+        <!-- Content Area -->
+        <section class="flex-1 overflow-y-auto p-8">
+            {% block content %}{% endblock %}
+        </section>
+    </main>
+
+</body>
+</html>

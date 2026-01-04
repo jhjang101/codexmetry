@@ -1,15 +1,19 @@
 import sqlite3
 import os
-from flask import Flask, g
+from flask import Flask, g, current_app
 
-DATABASE = 'instance/codexmetry.db'
+# --- DATABASE HELPERS ---
 
 def get_db():
     db = getattr(g, '_database', None)
     if db is None:
-        if not os.path.exists('instance'):
-            os.makedirs('instance')
-        db = g._database = sqlite3.connect(DATABASE)
+        db_path = current_app.config['DATABASE']
+        db_dir = os.path.dirname(db_path)
+
+        if not os.path.exists(db_dir):
+            os.makedirs(db_dir, exist_ok=True)
+
+        db = g._database = sqlite3.connect(db_path)
         db.row_factory = sqlite3.Row
         db.execute('PRAGMA foreign_keys = ON;')
     return db
@@ -28,6 +32,76 @@ def init_db(app: Flask):
                 VALUES (1, 'My Business')
             ''')
         db.commit()
+
+def read_db(table_name, active_only=True, id=None, where_clause=None, args=(), one=False):
+    """
+    Flexible Read function.
+    - id: if provided, fetches by ID.
+    - where_clause: e.g. "client_id = ?"
+    - active_only: filters by is_active = 1
+    """
+    db = get_db()
+    query = f"SELECT * FROM {table_name}"
+    conditions = []
+    params = list(args)
+
+    if active_only:
+        conditions.append("is_active = 1")
+    
+    if id:
+        conditions.append("id = ?")
+        params.append(id)
+        one = True
+
+    if where_clause:
+        conditions.append(where_clause)
+
+    if conditions:
+        query += " WHERE " + " AND ".join(conditions)
+
+    cur = db.execute(query, params)
+    rv = cur.fetchall()
+    return (rv[0] if rv else None) if one else rv
+
+def insert_db(table_name, data: dict):
+    """
+    Inserts a dictionary into the database.
+    Example: create_db('clients', {'company_name': 'Acme', 'address': '123 St'})
+    """
+    db = get_db()
+    columns = ', '.join(data.keys())
+    placeholders = ', '.join(['?' for _ in data])
+    sql = f"INSERT INTO {table_name} ({columns}) VALUES ({placeholders})"
+
+    cur = db.execute(sql, list(data.values()))
+    db.commit()
+    return cur.lastrowid
+
+def update_db(table_name, id: int, data: dict):
+    """
+    Updates a record by ID using a dictionary.
+    Example: update_db('clients', 5, {'address': 'New Address'})
+    """
+    db = get_db()
+    # Build string: "col1 = ?, col2 = ?"
+    set_clause = ', '.join([f"{k} = ?" for k in data.keys()])
+    sql = f"UPDATE {table_name} SET {set_clause} WHERE id = ?"
+    
+    params = list(data.values()) + [id]
+    db.execute(sql, params)
+    db.commit()
+    return True
+
+def archive_db(table_name, id: int):
+    """Soft delete helper (PRD 4.2)"""
+    return update_db(table_name, id, {'is_active': 0})
+
+def delete_db(table_name, id: int):
+    """Hard delete (Used for contacts/items)"""
+    db = get_db()
+    db.execute(f"DELETE FROM {table_name} WHERE id = ?", (id,))
+    db.commit()
+    return True
 
 # --- MONEY HELPERS ---
 
