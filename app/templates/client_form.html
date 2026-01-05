@@ -1,0 +1,123 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+    {% if mode == 'add' %}New Client{% elif mode == 'edit' %}Edit Client{% else %}{{ client.company_name }}{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    
+    <!-- 1. HEADER ACTION BAR (Outside the main form) -->
+    <div class="flex justify-between items-center mb-8">
+        <a href="{{ url_for('clients') }}" class="text-blue-600 hover:underline text-sm font-medium">
+            &larr; Back to Directory
+        </a>
+
+        <div class="flex gap-3 items-center">
+            {% if mode == 'view' %}
+                <!-- ARCHIVE FORM -->                   
+                <form action="/clients/archive/{{ client.id }}" method="POST" 
+                      onsubmit="return confirm('Are you sure you want to archive this client? This will hide them from active lists.')">
+                    <button type="submit" class="text-red-400 px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-800 transition-colors">
+                        Archive Client
+                    </button>
+                </form>
+
+                <a href="/clients/edit/{{ client.id }}" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors">
+                    Edit Client
+                </a>
+            {% else %}
+                <!-- CANCEL BUTTON -->
+                <a href="{% if mode == 'add' %}{{ url_for('clients') }}{% else %}/clients/view/{{ client.id }}{% endif %}" 
+                   class="text-gray-500 px-4 py-2 text-sm font-medium hover:text-gray-800">
+                    Cancel
+                </a>
+                
+                <!-- SAVE BUTTON (Linked to the form below via ID) -->
+                <button type="submit" form="client-main-form" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors">
+                    Save Client
+                </button>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- 2. MAIN DATA FORM -->
+    <form id="client-main-form" action="{% if mode == 'add' %}/clients/add{% else %}/clients/edit/{{ client.id }}{% endif %}" method="POST">
+        
+        <!-- Company Information Card -->
+        <section class="bg-white p-6 rounded-lg shadow mb-8">
+            <h2 class="text-xl font-semibold mb-4 border-b pb-2">Company Information</h2>
+            <div class="grid grid-cols-2 gap-4">
+                <div class="col-span-2">
+                    <label class="block text-sm font-medium text-gray-700">Company Name</label>
+                    {% if mode == 'view' %}
+                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2">{{ client.company_name }}</p>
+                    {% else %}
+                        <input type="text" name="company_name" value="{{ client.company_name or '' }}" class="mt-1 block w-full border rounded-lg p-2" required>
+                    {% endif %}
+                </div>
+                <div class="col-span-2">
+                    <label class="block text-sm font-medium text-gray-700">Billing Address</label>
+                    {% if mode == 'view' %}
+                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 whitespace-pre-wrap">{{ client.address or '-' }}</p>
+                    {% else %}
+                        <textarea name="address" rows="3" class="mt-1 block w-full border rounded-lg p-2">{{ client.address or '' }}</textarea>
+                    {% endif %}
+                </div>
+            </div>
+        </section>
+
+        <!-- Personnel & Contacts Card -->
+        <section class="bg-white p-6 rounded-lg shadow">
+            <div class="flex justify-between items-center mb-4 border-b pb-2">
+                <h2 class="text-xl font-semibold">Personnel & Contacts</h2>
+                {% if mode != 'view' %}
+                    <button type="button" 
+                            hx-get="/clients/contact/row" 
+                            hx-target="#contact-list" 
+                            hx-swap="beforeend"
+                            class="text-blue-600 hover:text-blue-800 text-sm font-bold flex items-center gap-1">
+                        + Add Person
+                    </button>
+                {% endif %}
+            </div>
+
+            <div id="contact-list" class="space-y-1">
+                {% if mode == 'view' %}
+                    <!-- Header for View Mode -->
+                    <div class="grid grid-cols-3 gap-4 pb-2 text-sm font-medium text-gray-700">
+                        <div>Full Name</div>
+                        <div class="col-span-2">Email Address</div>
+                    </div>
+                    
+                    {% for contact in contacts %}
+                        <div class="grid grid-cols-3 gap-4">
+                            <div class="mt-1 block bg-gray-100 w-full border rounded-md p-2">
+                                {{ contact.first_name }} {{ contact.last_name }}
+                            </div>
+                            <div class="text-blue-600 mt-1 block bg-gray-100 w-full border rounded-md p-2">
+                                {{ contact.email or '-' }}
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="py-8 text-center text-gray-400 italic text-sm">
+                            No contacts assigned to this client.
+                        </div>
+                    {% endfor %}
+
+                {% else %}
+                    <!-- Edit/Add Mode: Injecting Rows -->
+                    {% for contact in contacts %}
+                        {% include 'partials/contact_row.html' %}
+                    {% endfor %}
+
+                    <!-- Show at least one blank row on New Client screen -->
+                    {% if mode == 'add' and not contacts %}
+                        {% include 'partials/contact_row.html' %}
+                    {% endif %}
+                {% endif %}
+            </div>
+        </section>
+    </form>
+</div>
+{% endblock %}

@@ -103,6 +103,32 @@ def delete_db(table_name, id: int):
     db.commit()
     return True
 
+def get_clients_with_contacts():
+    """
+    Fetches all active clients and joins the first contact found for each.
+    Matches the PRD requirements for the Table View.
+    """
+    db = get_db()
+    # This query gets the client and the 'first' contact associated with them
+    sql = """
+        SELECT 
+            c.id, 
+            c.company_name, 
+            c.address,
+            cc.first_name, 
+            cc.last_name, 
+            cc.email
+        FROM clients c
+        LEFT JOIN client_contacts cc ON cc.id = (
+            SELECT id FROM client_contacts 
+            WHERE client_id = c.id 
+            LIMIT 1
+        )
+        WHERE c.is_active = 1
+        ORDER BY c.company_name ASC
+    """
+    return db.execute(sql).fetchall()
+
 # --- MONEY HELPERS ---
 
 def format_usd(cents: int) -> str:

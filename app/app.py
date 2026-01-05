@@ -45,10 +45,127 @@ def inject_metadata():
     return dict(metadata=metadata, now=now)
 
 @app.route('/')
+@app.route('/dashboard')
 def dashboard():
     return render_template('dashboard.html')
 
-# --- SETTINGS ROUTES ---
+@app.route('/purchase-orders')
+def purchase_orders(): return "Purchase Orders Coming Soon"
+
+@app.route('/invoices')
+def invoices(): return "Invoices Coming Soon"
+
+@app.route('/payments')
+def payments(): return "Payments Coming Soon"
+
+@app.route('/expenses')
+def expenses(): return "Expenses Coming Soon"
+
+@app.route('/products')
+def products(): return "Products Coming Soon"
+
+@app.route('/vendors')
+def vendors(): return "Vendors Coming Soon"
+
+@app.route('/transactions')
+def transactions(): return "Transactions Coming Soon"
+
+@app.route('/reports')
+def reports(): return "Reports Coming Soon"
+
+# --- CLIENTS ---
+@app.route('/clients')
+def clients():
+    # Use our new join helper
+    clients = get_clients_with_contacts()
+    return render_template('clients.html', clients=clients)
+
+@app.route('/clients/add', methods=['GET', 'POST'])
+def client_add():
+    if request.method == 'POST':
+        # 1. Save Company
+        client_id = insert_db('clients', {
+            'company_name': request.form.get('company_name'),
+            'address': request.form.get('address')
+        })
+        
+        # 2. Save Contacts (Loop through lists)
+        first_names = request.form.getlist('contact_first[]')
+        last_names = request.form.getlist('contact_last[]')
+        emails = request.form.getlist('contact_email[]')
+        
+        for i in range(len(first_names)):
+            if first_names[i] or last_names[i]: # Only save if name exists
+                insert_db('client_contacts', {
+                    'client_id': client_id,
+                    'first_name': first_names[i],
+                    'last_name': last_names[i],
+                    'email': emails[i]
+                })
+        
+        return redirect(url_for('clients'))
+    
+    return render_template('client_form.html', mode='add', client={}, contacts=[])
+
+@app.route('/clients/view/<int:id>')
+def client_view(id):
+    client = read_db('clients', id=id, one=True)
+    if not client: # If client is archived or doesn't exist
+        return redirect(url_for('clients'))
+    contacts = read_db('client_contacts', active_only=False, where_clause="client_id = ?", args=(id,))
+    return render_template('client_form.html', mode='view', client=client, contacts=contacts)
+
+@app.route('/clients/edit/<int:id>', methods=['GET', 'POST'])
+def client_edit(id):
+    if request.method == 'POST':
+        # 1. Update Company
+        update_db('clients', id, {
+            'company_name': request.form.get('company_name'),
+            'address': request.form.get('address')
+        })
+        
+        # 2. Simple Update Pattern: Clear old contacts and re-insert new ones
+        # This is much easier than tracking which specific contact changed
+        db = get_db()
+        db.execute("DELETE FROM client_contacts WHERE client_id = ?", (id,))
+        
+        first_names = request.form.getlist('contact_first[]')
+        last_names = request.form.getlist('contact_last[]')
+        emails = request.form.getlist('contact_email[]')
+        
+        for i in range(len(first_names)):
+            if first_names[i] or last_names[i]:
+                insert_db('client_contacts', {
+                    'client_id': id,
+                    'first_name': first_names[i],
+                    'last_name': last_names[i],
+                    'email': emails[i]
+                })
+        db.commit()
+        return redirect(url_for('client_view', id=id))
+    
+    # GET: Load the edit form
+    client = read_db('clients', id=id, one=True)
+    contacts = read_db('client_contacts', active_only=False, where_clause="client_id = ?", args=(id,))
+    return render_template('client_form.html', mode='edit', client=client, contacts=contacts)
+
+@app.route('/clients/archive/<int:id>', methods=['POST'])
+def client_archive(id):
+    archive_db('clients', id)
+    return redirect(url_for('clients'))
+
+# Route to fetch the empty contact row (HTMX)
+@app.route('/clients/contact/row')
+def client_contact_row():
+    return render_template('partials/contact_row.html')
+
+
+
+
+
+
+
+# --- SETTINGS ---
 @app.route('/settings')
 def settings():
     # Metadata is injected in @app.context_processor decorator

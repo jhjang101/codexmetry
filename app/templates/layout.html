@@ -14,17 +14,31 @@
         <div class="p-6 text-2xl font-bold border-b border-slate-800">
             Codexmetry
         </div>
-        <nav class="flex-1 overflow-y-auto p-4 space-y-2 text-md">
-            <a href="/" class="block p-3 rounded hover:bg-slate-800">Dashboard</a>
-            <a href="#" class="block p-3 rounded hover:bg-slate-800">Purchase Orders</a>
-            <a href="#" class="block p-3 rounded hover:bg-slate-800">Invoices</a>
-            <a href="#" class="block p-3 rounded hover:bg-slate-800">Payments</a>
-            <a href="#" class="block p-3 rounded hover:bg-slate-800">Expenses</a>
-            <a href="#" class="block p-3 rounded hover:bg-slate-800">Clients</a>
-            <a href="#" class="block p-3 rounded hover:bg-slate-800">Products</a>
-            <a href="#" class="block p-3 rounded hover:bg-slate-800">Vendors</a>
-            <a href="#" class="block p-3 rounded hover:bg-slate-800">Reports</a>
-            <a href="/settings" class="block p-3 rounded bg-blue-600">Settings</a>
+        <nav class="flex-1 overflow-y-auto py-4">
+            <ul class="space-y-1">
+                {% set nav_items = [
+                    ('Dashboard', 'dashboard'),
+                    ('Purchase Orders', 'purchase_orders'),
+                    ('Invoices', 'invoices'),
+                    ('Payments', 'payments'),
+                    ('Expenses', 'expenses'),
+                    ('Clients', 'clients'),
+                    ('Products', 'products'),
+                    ('Vendors', 'vendors'),
+                    ('Transactions', 'transactions'),
+                    ('Reports', 'reports'),
+                    ('Settings', 'settings')
+                ] %}
+                
+                {% for label, endpoint in nav_items %}
+                <li>
+                    <a href="{{ url_for(endpoint) }}" 
+                       class="block px-6 py-3 hover:bg-slate-700 transition-colors {{ 'bg-blue-600' if request.endpoint == endpoint else '' }}">
+                        {{ label }}
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
         </nav>
     </aside>
 
