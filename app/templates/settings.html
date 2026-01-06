@@ -7,13 +7,14 @@
     <!-- 1. Metadata Form (Standard POST) -->
     <section class="bg-white p-6 rounded-lg shadow mb-8">
         <h2 class="text-xl font-semibold mb-4 border-b pb-2">Company Information</h2>
-        <form action="/settings/metadata/update" method="POST" enctype="multipart/form-data" class="grid grid-cols-2 gap-4">
+        <form action="/settings/metadata/update" method="POST" enctype="multipart/form-data" 
+            class="grid grid-cols-2 gap-4">
 
             <!-- Hidden field to get old image url -->
             <input type="hidden" name="old_image" value="{{ metadata.company_logo }}">
 
+            <!-- logo and text fields -->
             <div class="col-span-2 flex items-center gap-6 mb-2">
-                    
                 <div class="w-20 h-20 bg-gray-100 rounded border flex items-center justify-center overflow-hidden">
                     {% if metadata.company_logo %}
                         <img src="{{ url_for('static', filename='uploads/' + metadata.company_logo) }}" 
@@ -22,8 +23,6 @@
                         <span class="text-gray-400 text-xs">No Logo</span>
                     {% endif %}
                 </div>
-
-  
                 <div class="flex-1">
                     <label class="block text-sm font-medium text-gray-700">Company Logo</label>
                     <input type="file" name="logo" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
@@ -46,7 +45,9 @@
                 <input type="text" name="threshold" value="{{ metadata.invoice_threshold | usd }}" class="mt-1 block w-full border rounded-md p-2">
             </div>
             <div class="col-span-2 text-right">
-                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Save Metadata</button>
+                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors">
+                    Save Metadata
+                </button>
             </div>
         </form>
     </section>
@@ -54,39 +55,8 @@
     <!-- 2. Lookup Tables Grid (HTMX for "Live" Feel) -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
         {% for table_name, items in lookups.items() %}
-        <section class="bg-white p-6 rounded-lg shadow">
-            <h3 class="text-lg font-semibold mb-4">
-                {{ table_name | 
-                    replace('po_types', 'PO Types') | 
-                    replace('product_categories', 'Product Categories') | 
-                    replace('expense_categories', 'Expense Categories') | 
-                    replace('payment_types', 'Payment Types') | 
-                    replace('transaction_categories', 'Transaction Categories') 
-                }}
-            </h3>
-            
-            <!-- List -->
-            <ul class="space-y-2 mb-4">
-                {% for item in items %}
-                <li class="flex justify-between items-center text-sm bg-gray-50 p-2 rounded border" id="item-{{ table_name }}-{{ item.id }}">
-                    <span>{{ item.name }}</span>
-                    <button 
-                        hx-post="/settings/lookup/archive/{{ table_name }}/{{ item.id }}" 
-                        hx-target="#item-{{ table_name }}-{{ item.id }}"
-                        hx-swap="delete"
-                        hx-confirm="Delete '{{ item.name }}'?"
-                        class="text-red-500 hover:text-red-800 text-sm font-bold">×</button>
-                </li>
-                {% endfor %}
-            </ul>
-
-            <!-- Add Form -->
-            <form hx-post="/settings/lookup/add" hx-target="closest section" hx-swap="outerHTML" class="flex gap-2">
-                <input type="hidden" name="table" value="{{ table_name }}">
-                <input type="text" name="item" placeholder="New category..." class="flex-1 border rounded p-1 text-sm"  required>
-                <button type="submit" class="bg-green-600 text-white px-3 py-1 rounded text-sm">+</button>
-            </form>
-        </section>
+            <!-- This replaces the whole repeating block -->
+            {% include 'partials/lookup_card.html' %}
         {% endfor %}
     </div>
 </div>

@@ -1,5 +1,5 @@
 <section class="bg-white p-6 rounded-lg shadow">
-    <h3 class="text-lg font-semibold mb-4">
+    <h2 class="text-xl font-semibold mb-4 border-b pb-2">
         {{ table_name | 
             replace('po_types', 'PO Types') | 
             replace('product_categories', 'Product Categories') | 
@@ -7,25 +7,35 @@
             replace('payment_types', 'Payment Types') | 
             replace('transaction_categories', 'Transaction Categories') 
         }}
-    </h3>
-    
+    </h2>
+
+    <!-- List of Items -->
     <ul class="space-y-2 mb-4">
         {% for item in items %}
-        <li class="flex justify-between items-center text-sm bg-gray-50 p-2 rounded border" id="item-{{ table_name }}-{{ item.id }}">
+        <li class="flex justify-between items-center bg-gray-50 p-2 rounded-lg border text-sm" 
+            id="item-{{ table_name }}-{{ item.id }}">
             <span>{{ item.name }}</span>
             <button 
                 hx-post="/settings/lookup/archive/{{ table_name }}/{{ item.id }}" 
                 hx-target="#item-{{ table_name }}-{{ item.id }}"
                 hx-swap="delete"
-                hx-confirm="Delete '{{ item.name }}'?"
-                class="text-red-500 hover:text-red-700 text-sm">×</button>
+                hx-confirm="Archive '{{ item.name }}'?"
+                class="text-red-500 hover:text-red-800 text-sm font-bold">
+                ×
+            </button>
         </li>
         {% endfor %}
     </ul>
 
-    <form hx-post="/settings/lookup/add" hx-target="closest section" hx-swap="outerHTML" class="flex gap-2">
+    <!-- Add Form (Targets this specific section) -->
+    <form 
+        hx-post="/settings/lookup/add" 
+        hx-target="closest section" 
+        hx-swap="outerHTML" 
+        class="flex gap-2">
         <input type="hidden" name="table" value="{{ table_name }}">
-        <input type="text" name="item" placeholder="New category..." class="flex-1 border rounded p-1 text-sm" required>
-        <button type="submit" class="bg-green-600 text-white px-3 py-1 rounded text-sm">+</button>
+        <input type="text" name="item" placeholder="New category..." 
+            class="flex-1 border rounded-lg p-1 text-sm" required>
+        <button type="submit" class="bg-green-600 text-white px-3 py-1 rounded text-sm font-bold hover:bg-green-700 transition-colors">+</button>
     </form>
 </section>
