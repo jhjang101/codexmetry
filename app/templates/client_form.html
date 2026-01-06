@@ -51,7 +51,7 @@
                 <div class="col-span-2">
                     <label class="block text-sm font-medium text-gray-700">Company Name</label>
                     {% if mode == 'view' %}
-                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2">{{ client.company_name }}</p>
+                        <p class="mt-1 block w-full rounded-lg p-2">{{ client.company_name }}</p>
                     {% else %}
                         <input type="text" name="company_name" value="{{ client.company_name or '' }}" class="mt-1 block w-full border rounded-lg p-2" required>
                     {% endif %}
@@ -59,7 +59,7 @@
                 <div class="col-span-2">
                     <label class="block text-sm font-medium text-gray-700">Billing Address</label>
                     {% if mode == 'view' %}
-                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 whitespace-pre-wrap">{{ client.address or '-' }}</p>
+                        <p class="mt-1 block w-full rounded-lg p-2 whitespace-pre-wrap">{{ client.address or '-' }}</p>
                     {% else %}
                         <textarea name="address" rows="3" class="mt-1 block w-full border rounded-lg p-2">{{ client.address or '' }}</textarea>
                     {% endif %}
@@ -92,10 +92,10 @@
                     
                     {% for contact in contacts %}
                         <div class="grid grid-cols-3 gap-4">
-                            <div class="mt-1 block bg-gray-100 w-full border rounded-md p-2">
+                            <div class="mt-1 block w-full rounded-md p-2">
                                 {{ contact.first_name }} {{ contact.last_name }}
                             </div>
-                            <div class="text-blue-600 mt-1 block bg-gray-100 w-full border rounded-md p-2">
+                            <div class="text-blue-600 mt-1 block w-full rounded-md p-2">
                                 {{ contact.email or '-' }}
                             </div>
                         </div>
@@ -106,6 +106,12 @@
                     {% endfor %}
 
                 {% else %}
+                    <!-- Header for View Mode -->
+                    <div class="grid grid-cols-10 gap-4 pb-2 text-sm font-medium text-gray-700">
+                        <div class="col-span-3">First Name</div>
+                        <div class="col-span-3">Last Name</div>
+                        <div class="col-span-3">Email Address</div>
+                    </div>
                     <!-- Edit/Add Mode: Injecting Rows -->
                     {% for contact in contacts %}
                         {% include 'partials/contact_row.html' %}
