@@ -96,12 +96,28 @@ def archive_db(table_name, id: int):
     """Soft delete helper (PRD 4.2)"""
     return update_db(table_name, id, {'is_active': 0})
 
-def delete_db(table_name, id: int):
-    """Hard delete (Used for contacts/items)"""
+    
+def delete_db(table_name, id=None, where_clause=None, args=()):
+    """
+    Hard delete helper. 
+    Supports deleting by id OR a custom where clause.
+    """
     db = get_db()
-    db.execute(f"DELETE FROM {table_name} WHERE id = ?", (id,))
+    query = f'DELETE FROM "{table_name}"'
+    params = []
+
+    if id:
+        query += " WHERE id = ?"
+        params = [id]
+    elif where_clause:
+        query += f" WHERE {where_clause}"
+        params = args
+
+    db.execute(query, params)
     db.commit()
     return True
+
+  
 
 def get_clients_with_contacts():
     """

@@ -126,8 +126,7 @@ def client_edit(id):
         
         # 2. Simple Update Pattern: Clear old contacts and re-insert new ones
         # This is much easier than tracking which specific contact changed
-        db = get_db()
-        db.execute("DELETE FROM client_contacts WHERE client_id = ?", (id,))
+        delete_db('client_contacts', where_clause="client_id = ?", args=(id,))
         
         first_names = request.form.getlist('contact_first[]')
         last_names = request.form.getlist('contact_last[]')
@@ -141,7 +140,7 @@ def client_edit(id):
                     'last_name': last_names[i],
                     'email': emails[i]
                 })
-        db.commit()
+
         return redirect(url_for('client_view', id=id))
     
     # GET: Load the edit form
