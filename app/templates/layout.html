@@ -32,8 +32,11 @@
                 
                 {% for label, endpoint in nav_items %}
                 <li>
+                    <!-- We check if the singular base (e.g., 'client') is in the current endpoint (e.g., 'client_view') -->
+                    {% set is_active = request.endpoint and endpoint.rstrip('s') in request.endpoint %}
+                    
                     <a href="{{ url_for(endpoint) }}" 
-                       class="block px-6 py-3 hover:bg-slate-700 transition-colors {{ 'bg-blue-600' if request.endpoint == endpoint else '' }}">
+                    class="block px-6 py-3 hover:bg-slate-700 transition-colors {{ 'bg-blue-600 font-bold' if is_active else '' }}">
                         {{ label }}
                     </a>
                 </li>
