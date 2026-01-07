@@ -37,7 +37,8 @@ CREATE TABLE IF NOT EXISTS settings_metadata (
     address TEXT,
     company_logo TEXT,
     timezone TEXT DEFAULT 'America/Chicago',
-    invoice_threshold INTEGER DEFAULT 10000 -- Stored in cents
+    invoice_threshold INTEGER DEFAULT 10000, -- Stored in cents
+    doc_padding INTEGER DEFAULT 4
 );
 
 -- 2. MASTER DATA

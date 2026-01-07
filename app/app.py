@@ -75,10 +75,21 @@ def reports(): return "Reports Coming Soon"
 
 # --- CLIENTS ---
 @app.route('/clients')
+@app.route('/clients/table')
 def clients():
-    # Use our new join helper
-    clients = get_clients_with_contacts()
-    return render_template('clients.html', clients=clients)
+    search_query = request.args.get('search', '')
+
+    if search_query:
+        client_data = read_db(table_name='clients', where_clause="company_name LIKE ?", args=(f"%{search_query}%",))
+    else:
+        client_data = get_clients_with_contacts()
+
+    # If it's an HTMX request, return ONLY the partial
+    if request.headers.get('HX-Request'):
+        return render_template('partials/client_table.html', clients=client_data, search_query=search_query)
+
+    # Otherwise, return the full page (which includes the partial)
+    return render_template('clients.html', clients=client_data)
 
 @app.route('/clients/add', methods=['GET', 'POST'])
 def client_add():
@@ -187,6 +198,7 @@ def update_metadata():
     timezone = request.form.get('timezone')
     threshold_raw = request.form.get('threshold')
     threshold_cents = parse_to_cents(threshold_raw)
+    doc_padding = request.form.get('doc_padding', 4)
 
     # Image Logic Implementation
     new_image = request.files.get('logo')
@@ -209,6 +221,7 @@ def update_metadata():
                         'address': address,
                         'timezone': timezone,
                         'invoice_threshold': threshold_cents,
+                        'doc_padding': doc_padding,
                         'company_logo': filename
                         })
         
@@ -225,7 +238,8 @@ def update_metadata():
                   data={'company_name': company_name,
                         'address': address,
                         'timezone': timezone,
-                        'invoice_threshold': threshold_cents
+                        'invoice_threshold': threshold_cents,
+                        'doc_padding': doc_padding
                         })
     
     return redirect(url_for('settings'))

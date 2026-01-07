@@ -4,63 +4,28 @@
 {% block content %}
 <div class="max-w-6xl mx-auto">
     <!-- Header with Action Button -->
-    <div class="flex justify-between items-center mb-4">
-        <div>
-            <h2 class="text-2xl font-bold text-gray-800">Clients</h2>
-            <p class="text-sm text-gray-500">Manage your customer accounts and contact information.</p>
+    <div class="flex justify-between items-end mb-4">
+        <div class="relative w-1/5">
+            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">
+                <i class="fa-solid fa-magnifying-glass text-sm"></i>
+            </span>
+            <input type="text" 
+                   name="search" 
+                   placeholder="Search company name..." 
+                   class="mt-1 block text-sm w-full border rounded-lg pl-10 p-2" 
+                   hx-get="/clients/table" 
+                   hx-trigger="keyup changed delay:300ms" 
+                   hx-target="#client-table-container">
         </div>
+
         <a href="/clients/add" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors">
             + Add New Client
         </a>
     </div>
 
     <!-- Table Card -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-        <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-white">
-                <tr>
-                    <th scope="col" class="px-6 py-4 text-left text-sm font-bold text-blue-600">Company Name</th>
-                    <th scope="col" class="px-6 py-4 text-left text-sm font-bold text-blue-600">Primary Contact</th>
-                    <th scope="col" class="px-6 py-4 text-left text-sm font-bold text-blue-600">Email</th>
-                    <th scope="col" class="px-6 py-4 text-left text-sm font-bold text-blue-600">Address</th>
-                    <th scope="col" class="px-6 py-4 text-center text-sm font-bold text-blue-600">Actions</th>
-                </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
-                {% for client in clients %}
-                <tr class="hover:bg-blue-50/50 transition-colors cursor-pointer" onclick="window.location='/clients/view/{{ client.id }}'">
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="text-sm font-medium text-gray-700">{{ client.company_name }}</div>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                        {% if client.first_name %}
-                            {{ client.first_name }} {{ client.last_name }}
-                        {% else %}
-                            <span class="text-gray-400 italic">No contact</span>
-                        {% endif %}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                        {{ client.email or '-' }}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                        <span class="truncate block max-w-xs">{{ client.address or '-' }}</span>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
-                        <button class="text-gray-400 hover:text-blue-600 transition-colors">
-                        >
-                        </button>
-                    </td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="5" class="px-6 py-16 text-center">
-                        <p class="text-gray-500 font-medium">No clients found in the registry.</p>
-                        <p class="text-sm text-gray-400">Click the button above to add your first customer.</p>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    <div id="client-table-container" class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        {% include 'partials/client_table.html' %}
     </div>
 </div>
 {% endblock %}
