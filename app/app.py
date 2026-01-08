@@ -79,7 +79,6 @@ def reports(): return "Reports Coming Soon"
 
 # --- CLIENTS ---
 @app.route('/clients')
-@app.route('/clients/table')
 def clients():
     search_query = request.args.get('search', '')
 
@@ -88,9 +87,14 @@ def clients():
     else:
         client_data = get_clients_with_contacts()
 
+    context = {
+        "clients": client_data,
+        "search_query": search_query
+    }
+
     # If it's an HTMX request, return ONLY the partial
     if request.headers.get('HX-Request'):
-        return render_template('partials/client_table.html', clients=client_data, search_query=search_query)
+        return render_template('partials/client_table.html', **context)
 
     # Otherwise, return the full page (which includes the partial)
     return render_template('clients.html', clients=client_data)
