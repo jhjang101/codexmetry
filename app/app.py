@@ -38,8 +38,12 @@ init_db(app)
 
 @app.context_processor
 def inject_metadata():
-    metadata = read_db(table_name='settings_metadata', active_only=False, id=1, one=True)
-    tz = metadata['timezone']
+    metadata_raw = read_db(table_name='settings_metadata', active_only=False, id=1, one=True)
+    metadata = dict(metadata_raw) if metadata_raw else None
+    if metadata:
+        tz = metadata.get('timezone', 'America/Chicago')
+    else:
+        tz = 'America/Chicago'
     now = datetime.now(ZoneInfo(tz))
 
     return dict(metadata=metadata, now=now)
@@ -196,7 +200,7 @@ def update_metadata():
     company_name = request.form.get('company_name')
     address = request.form.get('address')
     timezone = request.form.get('timezone')
-    threshold_raw = request.form.get('threshold')
+    threshold_raw = request.form.get('threshold', '$100.00')
     threshold_cents = parse_to_cents(threshold_raw)
     doc_padding = request.form.get('doc_padding', 4)
 
