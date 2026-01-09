@@ -1,0 +1,50 @@
+<table class="min-w-full divide-y divide-gray-200">
+    <thead class="bg-white">
+        <tr>
+            <th scope="col" class="px-6 py-4 text-left text-sm font-bold text-blue-600">Image</th>
+            <th scope="col" class="px-6 py-4 text-left text-sm font-bold text-blue-600">Product Name</th>
+            <th scope="col" class="px-6 py-4 text-left text-sm font-bold text-blue-600">Catalog #</th>
+            <th scope="col" class="px-6 py-4 text-left text-sm font-bold text-blue-600">Category</th>
+            <th scope="col" class="px-6 py-4 text-left text-sm font-bold text-blue-600">Price</th>
+            <th scope="col" class="px-6 py-4 text-center text-sm font-bold text-blue-600">Actions</th>
+        </tr>
+    </thead>
+    <tbody class="bg-white divide-y divide-gray-200">
+        {% for product in products %}
+        <tr class="hover:bg-blue-50/50 transition-colors cursor-pointer" 
+            onclick="window.location='/products/view/{{ product.id }}'">
+            <td class="px-6 py-4 whitespace-nowrap">
+                {% if product.image_url %}
+                    <img src="{{ product.image_url }}" class="h-10 w-10 object-cover rounded border">
+                {% else %}
+                    <span class="text-gray-400 italic">No image</span>
+                {% endif %}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm font-medium text-gray-700">{{ product.name }}</div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                { product.catalog_number or '-' }
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                {{ product.category_name or '-' }}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">    
+                {{ product.default_unit_price | usd if product.default_unit_price else '-' }}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                <button class="text-gray-400 hover:text-blue-600 transition-colors">
+                >
+                </button>
+            </td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="5" class="px-6 py-16 text-center">
+                <p class="text-gray-500 font-medium">No Products found in the registry.</p>
+                <p class="text-sm text-gray-400">Click the button above to add your first product.</p>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>

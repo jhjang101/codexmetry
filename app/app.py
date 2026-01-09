@@ -65,8 +65,7 @@ def payments(): return "Payments Coming Soon"
 @app.route('/expenses')
 def expenses(): return "Expenses Coming Soon"
 
-@app.route('/products')
-def products(): return "Products Coming Soon"
+
 
 @app.route('/vendors')
 def vendors(): return "Vendors Coming Soon"
@@ -179,6 +178,27 @@ def client_contact_row():
 
 
 
+# --- PRODUCTS ---
+@app.route('/products')
+def products(): 
+    search_query = request.args.get('search', '')
+
+    if search_query:
+        product_data = read_db(table_name='products', where_clause="name LIKE ?", args=(f"%{search_query}%",))
+    else:
+        product_data = read_db(table_name='products')
+
+    context = {
+        "products": product_data,
+        "search_query": search_query
+    }
+
+    # If it's an HTMX request, return ONLY the partial
+    if request.headers.get('HX-Request'):
+        return render_template('partials/product_table.html', **context)
+
+    # Otherwise, return the full page (which includes the partial)
+    return render_template('products.html', **context)
 
 
 
