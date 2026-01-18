@@ -1,22 +1,22 @@
 from flask import Blueprint, render_template, request, redirect, url_for
 from ..services.settings_service import (
-    MetadataService as Metadata,
-    PoTypeService as PoType,
-    ProductCategoryService as ProductCategory, 
-    ExpenseCategoryService as ExpenseCategory, 
-    PaymentTypeService as PaymentType, 
-    TransactionCategoryService as TransactionCategory
+    MetadataService,
+    PoTypeService,
+    ProductCategoryService, 
+    ExpenseCategoryService, 
+    PaymentTypeService, 
+    TransactionCategoryService
 )
 from ..utils.images import save_image
 from ..utils.money import parse_to_cents
 
 
 LOOKUPS = {
-    'po_types': PoType,
-    'product_categories': ProductCategory,
-    'expense_categories': ExpenseCategory,
-    'payment_types': PaymentType,
-    'transaction_categories': TransactionCategory
+    'po_types': PoTypeService,
+    'product_categories': ProductCategoryService,
+    'expense_categories': ExpenseCategoryService,
+    'payment_types': PaymentTypeService,
+    'transaction_categories': TransactionCategoryService
 }
 
 bp = Blueprint('settings', __name__)
@@ -53,7 +53,7 @@ def update_metadata():
         if new_filename:
             metadata['company_logo'] = new_filename
 
-    Metadata.update(1, **metadata)
+    MetadataService.update(1, **metadata)
 
     return redirect(url_for('settings.index'))
 

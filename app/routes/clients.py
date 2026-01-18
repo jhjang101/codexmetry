@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for
-from ..services.clients_service import ClientService as Client
+from ..services.clients_service import ClientService
 
 bp = Blueprint('clients', __name__)
 
@@ -12,7 +12,7 @@ def index():
 
     print(f"Search Term: {search_term}")
 
-    clients = Client.get_all_with_search(search_term)
+    clients = ClientService.get_all_with_search(search_term)
     
     # If HTMX request, return only the table partial
     if request.headers.get('HX-Request'):
@@ -30,11 +30,11 @@ def add():
             'company_name': request.form.get('company_name'),
             'address': request.form.get('address')
         }
-        new_client = Client.add(**client_data)
+        new_client = ClientService.add(**client_data)
 
         # 2. Process and Save Personnel (Contacts)
         contacts = _parse_contact_form(request.form)
-        Client.update_personnel(new_client.id, contacts)
+        ClientService.update_personnel(new_client.id, contacts)
 
         return redirect(url_for('clients.index'))
 
@@ -42,23 +42,23 @@ def add():
 
 @bp.route('/view/<int:id>')
 def view(id):
-    client = Client.get_by_id(id)
+    client = ClientService.get_by_id(id)
     return render_template('clients/form.html', mode='view', client=client)
 
 @bp.route('/edit/<int:id>', methods=['GET', 'POST'])
 def edit(id):
-    client = Client.get_by_id(id)
+    client = ClientService.get_by_id(id)
     if request.method == 'POST':
         # 1. Update Main Client Data
         client_data = {
             'company_name': request.form.get('company_name'),
             'address': request.form.get('address')
         }
-        Client.update(id, **client_data)
+        ClientService.update(id, **client_data)
 
         # 2. Update Personnel (Contacts)
         contacts = _parse_contact_form(request.form)
-        Client.update_personnel(id, contacts)
+        ClientService.update_personnel(id, contacts)
 
         return redirect(url_for('clients.view', id=id))
 
@@ -66,7 +66,7 @@ def edit(id):
 
 @bp.route('/archive/<int:id>', methods=['POST'])
 def archive(id):
-    Client.archive(id)
+    ClientService.archive(id)
     return redirect(url_for('clients.index'))
 
 # --- HTMX PARTIALS ---
