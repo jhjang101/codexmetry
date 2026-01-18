@@ -27,7 +27,8 @@ def create_app():
     # 3. Register Blueprints
     from .routes import (dashboard, quotes, purchase_orders, invoices, 
                          payments, expenses, clients, products, vendors, 
-                         transactions, reports, settings)
+                         transactions, reports, settings
+    )
     app.register_blueprint(dashboard.bp)
     app.register_blueprint(quotes.bp, url_prefix='/quotes')
     app.register_blueprint(purchase_orders.bp, url_prefix='/purchase_orders')

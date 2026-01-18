@@ -1,0 +1,41 @@
+<section class="bg-white p-6 rounded-lg shadow">
+    <h2 class="text-xl font-semibold mb-4 border-b pb-2">
+        {{ table_name | 
+            replace('po_types', 'PO Types') | 
+            replace('product_categories', 'Product Categories') | 
+            replace('expense_categories', 'Expense Categories') | 
+            replace('payment_types', 'Payment Types') | 
+            replace('transaction_categories', 'Transaction Categories') 
+        }}
+    </h2>
+    
+    <!-- List and Archive Items  -->
+    <ul class="space-y-2 mb-4">
+        {% for item in items %}
+        <li class="flex justify-between items-center bg-gray-50 p-2 rounded-lg border text-sm" id="item-{{ table_name }}-{{ item.id }}">
+            <span>{{ item.type }}</span>
+            <button 
+                hx-post="{{ url_for('settings.archive_lookup', table_name=table_name, id=item.id) }}" 
+                hx-confirm="Archive this item?"
+                hx-target="#item-{{ table_name }}-{{ item.id }}"
+                hx-swap="delete"
+                class="text-red-400 hover:text-red-600">
+                    <i class="far fa-trash-alt text-xs"></i>
+            </button>
+        </li>
+        {% else %}
+            <p class="text-center text-gray-400 italic text-sm">No categories defined.</p>
+        {% endfor %}
+    </ul>
+
+    <!-- Add Form (Targets this specific card) -->
+    <form hx-post="{{ url_for('settings.add_lookup') }}" 
+          hx-target="closest section" 
+          hx-swap="outerHTML" 
+          class="flex gap-2">
+        <input type="hidden" name="table_name" value="{{ table_name }}">
+        <input type="text" name="value" placeholder="New category..." 
+               class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" required>
+        <button type="submit" class="bg-blue-600 text-white px-3 py-1 rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors">+</button>
+    </form>
+</section>

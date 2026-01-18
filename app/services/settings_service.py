@@ -21,4 +21,3 @@ class PaymentTypeService(BaseService):
 
 class TransactionCategoryService(BaseService):
     model = TransactionCategory
-

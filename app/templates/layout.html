@@ -11,7 +11,7 @@
     
     <!-- HTMX CSRF Configuration -->
     <script>
-        document.body.addEventListener('htmx:configRequest', (event) => {
+        document.addEventListener('htmx:configRequest', (event) => {
             event.detail.headers['X-CSRFToken'] = '{{ csrf_token() }}';
         });
     </script>

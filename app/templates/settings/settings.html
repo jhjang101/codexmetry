@@ -4,11 +4,13 @@
 {% block content %}
 <div class="max-w-4xl mx-auto">
 
-    <!-- 1. Metadata Form (Standard POST) -->
+    <!-- 1. Company Metadata Form (Standard POST) -->
     <section class="bg-white p-6 rounded-lg shadow mb-8">
         <h2 class="text-xl font-semibold mb-4 border-b pb-2">Company Information</h2>
-        <form action="/settings/metadata/update" method="POST" enctype="multipart/form-data" 
+        <form action="{{ url_for('settings.update_metadata') }}" method="POST" enctype="multipart/form-data" 
             class="grid grid-cols-2 gap-4">
+            <!-- CSRF Token handled by Flask-WTF -->
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
             <!-- Hidden field to get old image url -->
             <input type="hidden" name="old_image" value="{{ metadata.company_logo }}">
@@ -30,7 +32,7 @@
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700">Company Name</label>
-                <input type="text" name="company_name" value="{{ metadata.company_name }}" class="mt-1 block w-full border rounded-md p-2">
+                <input type="text" name="company_name" value="{{ metadata.company_name }}" class="mt-1 block w-full border rounded-md p-2 focus:ring-2 focus:ring-blue-500 outline-none">
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700">Timezone</label>
@@ -73,7 +75,14 @@
         </form>
     </section>
 
-    <!-- 2. Lookup Tables Grid (HTMX for "Live" Feel) -->
+    <!-- 2. Lookup Tables Grid (HTMX) -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {% for table_name, items in lookups.items() %}
+            <!-- This replaces the whole repeating block -->
+            {% include 'settings/partials/lookup_card.html' %}
+        {% endfor %}
+    </div>
+</div>
 
 </div>
 {% endblock %}
