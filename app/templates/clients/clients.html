@@ -7,14 +7,14 @@
     <!-- Header with Action Button -->
     <div class="flex justify-between items-end mb-4">
         <!-- Search Bar -->
-        <div class="relative w-1/5">
+        <div class="relative w-1/3">
             <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">
                 <i class="fa-solid fa-magnifying-glass text-sm"></i>
             </span>
             <input type="text" 
                    name="search"
                    value="{{ search }}"
-                   placeholder="Search clients, address, or email..." 
+                   placeholder="Search clients, name, email, or address..." 
                    class="mt-1 block text-sm w-full border rounded-lg pl-10 p-2 focus:ring-1 focus:ring-blue-300 outline-none" 
                    hx-get="{{ url_for('clients.index') }}" 
                    hx-trigger="keyup changed delay:300ms" 
