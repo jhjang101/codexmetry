@@ -7,6 +7,8 @@ from ..services.settings_service import (
     PaymentTypeService as PaymentType, 
     TransactionCategoryService as TransactionCategory
 )
+from ..utils.money import parse_to_cents
+
 
 LOOKUPS = {
     'po_types': PoType,
@@ -35,7 +37,7 @@ def update_metadata():
         'company_name': request.form.get('company_name'),
         'address': request.form.get('address'),
         'timezone': request.form.get('timezone'),
-        'invoice_threshold': int(request.form.get('threshold', 0)), # Simplified for now
+        'invoice_threshold': parse_to_cents(request.form.get('threshold', '$100.00')),
         'doc_padding': int(request.form.get('doc_padding', 4))
     }
     

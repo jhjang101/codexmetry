@@ -1,9 +1,9 @@
 import os
 from flask import Flask, render_template
-from .extensions import db, csrf, login_manager
 from sqlalchemy.exc import SQLAlchemyError
 from datetime import datetime
 from zoneinfo import ZoneInfo
+from .extensions import db, csrf, login_manager
 
 def create_app():
     app = Flask(__name__)
@@ -42,14 +42,20 @@ def create_app():
     app.register_blueprint(reports.bp, url_prefix='/reports')
     app.register_blueprint(settings.bp, url_prefix='/settings')
 
-    # 4. Error Handling
+    # 4. Register Jinja Filter
+    from .utils.money import format_usd
+    @app.template_filter('usd')
+    def usd_filter(cents):
+        return format_usd(cents)
+
+    # 5. Error Handling
     @app.errorhandler(SQLAlchemyError)
     def handle_db_error(error):
         db.session.rollback()
         # In the future, we can return an HTMX-specific error snippet
         return render_template('error.html', error="A database error occurred."), 500
     
-    # 5. Global Context Processors (For now, and Metadata)
+    # 6. Global Context Processors (For now, and Metadata)
     @app.context_processor
     def inject_metadata():
         from .services.settings_service import MetadataService as Metadata
