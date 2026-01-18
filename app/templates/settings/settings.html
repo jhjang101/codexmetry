@@ -2,5 +2,78 @@
 {% block title %}Settings{% endblock %}
 
 {% block content %}
+<div class="max-w-4xl mx-auto">
 
+    <!-- 1. Metadata Form (Standard POST) -->
+    <section class="bg-white p-6 rounded-lg shadow mb-8">
+        <h2 class="text-xl font-semibold mb-4 border-b pb-2">Company Information</h2>
+        <form action="/settings/metadata/update" method="POST" enctype="multipart/form-data" 
+            class="grid grid-cols-2 gap-4">
+
+            <!-- Hidden field to get old image url -->
+            <input type="hidden" name="old_image" value="{{ metadata.company_logo }}">
+
+            <!-- logo and text fields -->
+            <div class="col-span-2 flex items-center gap-6 mb-2">
+                <div class="w-20 h-20 bg-gray-100 rounded border flex items-center justify-center overflow-hidden">
+                    {% if metadata.company_logo %}
+                        <img src="{{ url_for('static', filename='uploads/' + metadata.company_logo) }}" 
+                            class="object-contain w-full h-full">
+                    {% else %}
+                        <span class="text-gray-400 text-xs">No Logo</span>
+                    {% endif %}
+                </div>
+                <div class="flex-1">
+                    <label class="block text-sm font-medium text-gray-700">Company Logo</label>
+                    <input type="file" name="logo" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Company Name</label>
+                <input type="text" name="company_name" value="{{ metadata.company_name }}" class="mt-1 block w-full border rounded-md p-2">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Timezone</label>
+                <input type="text" name="timezone" value="{{ metadata.timezone }}" class="mt-1 block w-full border rounded-md p-2">
+            </div>
+            <div class="col-span-2">
+                <label class="block text-sm font-medium text-gray-700">Address</label>
+                <textarea name="address" rows="3" class="mt-1 block w-full border rounded-md p-2">{{ metadata.address }}</textarea>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Invoice Threshold (USD)</label>
+                <input type="text" name="threshold" value="{{ metadata.invoice_threshold }}" class="mt-1 block w-full border rounded-md p-2">
+            </div>
+            <!-- Document Number Padding -->
+            <div class="relative">
+                <div class="flex items-center gap-1 mb-1 group">
+                    <label class="block text-sm font-medium text-gray-700">Document Number Padding</label>
+                    <i class="fa-solid fa-circle-info text-amber-500 text-xs cursor-help"></i>
+                    <!-- Tooltip Box (Visible on Hover) -->
+                    <div class="invisible group-hover:visible absolute bottom-full left-0 mb-2 w-64 p-2 bg-slate-700 text-white text-xs rounded-lg shadow-xl z-10 leading-relaxed">
+                         Default is 4 (e.g., CX-260001). Affects new records only. 
+                        <br><br>
+                        <span class="text-amber-400 font-bold">Warning:</span> 
+                        Changing this mid-year disrupts chronological sorting. For consistent lists, only update on January 1st.
+                        <!-- Tooltip Arrow -->
+                        <div class="absolute top-full left-4 -mt-1 border-4 border-transparent border-t-slate-800"></div>
+                    </div>
+                </div>
+
+                <input type="number" name="doc_padding" value="{{ metadata.doc_padding or 4 }}" min="3" max="10" 
+                    class="block w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+            </div>
+
+            
+            <div class="col-span-2 text-right">
+                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors">
+                    Save Metadata
+                </button>
+            </div>
+        </form>
+    </section>
+
+    <!-- 2. Lookup Tables Grid (HTMX for "Live" Feel) -->
+
+</div>
 {% endblock %}

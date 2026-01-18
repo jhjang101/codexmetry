@@ -51,8 +51,8 @@ def create_app():
     # 5. Global Context Processors (For now, and Metadata)
     @app.context_processor
     def inject_metadata():
-        from .models import SettingsMetadata
-        metadata = SettingsMetadata.query.get(1)
+        from .services.settings_service import MetadataService as Metadata
+        metadata = Metadata.get_by_id(1)
         tz = metadata.timezone if metadata else 'America/Chicago'
         now = datetime.now(ZoneInfo(tz))
         return dict(metadata=metadata, now=now)

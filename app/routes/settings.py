@@ -1,4 +1,6 @@
 from flask import Blueprint, render_template
+from app.services.settings_service import MetadataService as Metadata
+
 
 bp = Blueprint('settings', __name__)
 
