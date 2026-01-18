@@ -24,7 +24,9 @@ class ClientService(BaseService):
                 or_(
                     cls.model.company_name.icontains(search_term),
                     cls.model.address.icontains(search_term),
-                    ClientContact.email.icontains(search_term)
+                    ClientContact.email.icontains(search_term),
+                    ClientContact.first_name.icontains(search_term),
+                    ClientContact.last_name.icontains(search_term) 
                 )
             ).distinct() # Prevent duplicate clients if multiple contacts match
 
