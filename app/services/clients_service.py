@@ -49,12 +49,13 @@ class ClientService(BaseService):
         for data in contacts_data:
             # Only save if at least one name field is provided
             if data.get('first_name') or data.get('last_name'):
-                new_contact = ClientContact(
-                    client_id=client_id,
-                    first_name=data.get('first_name'),
-                    last_name=data.get('last_name'),
-                    email=data.get('email')
-                )
+                new_contact = ClientContact()
+
+                new_contact.client_id = client_id
+                new_contact.first_name = data.get('first_name')
+                new_contact.last_name = data.get('last_name')
+                new_contact.email = data.get('email')
+                
                 db.session.add(new_contact)
 
         db.session.commit()
