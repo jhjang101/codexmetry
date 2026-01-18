@@ -1,0 +1,129 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+    {% if mode == 'add' %}New Client{% elif mode == 'edit' %}Edit Client{% else %}{{ client.company_name }}{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    
+    <!-- 1. HEADER ACTION BAR -->
+    <div class="flex justify-between items-center mb-8">
+        <a href="{{ url_for('clients.index') }}" class="text-blue-600 hover:underline text-sm font-medium flex items-center gap-1">
+            <i class="fa-solid fa-arrow-left"></i> Back to Directory
+        </a>
+
+        <div class="flex gap-3 items-center">
+            {% if mode == 'view' %}
+                <!-- STANDALONE ARCHIVE FORM -->                   
+                <form action="{{ url_for('clients.archive', id=client.id) }}" method="POST" 
+                      onsubmit="return confirm('Are you sure you want to archive this client?')">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="text-red-400 px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-800 transition-colors">
+                        Archive Client
+                    </button>
+                </form>
+
+                <a href="{{ url_for('clients.edit', id=client.id) }}" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors shadow-sm">
+                    Edit Client
+                </a>
+            {% else %}
+                <a href="{% if mode == 'add' %}{{ url_for('clients.index') }}{% else %}{{ url_for('clients.view', id=client.id) }}{% endif %}" 
+                   class="text-gray-500 px-4 py-2 text-sm font-medium hover:text-gray-800">
+                    Cancel
+                </a>
+                
+                <!-- ATTACHED SAVE BUTTON -->
+                <button type="submit" form="client-main-form" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors shadow-sm">
+                    Save Client
+                </button>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- 2. MAIN DATA FORM -->
+    <form id="client-main-form" action="{% if mode == 'add' %}/clients/add{% else %}/clients/edit/{{ client.id }}{% endif %}" method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <!-- Company Information Section -->
+        <section class="bg-white p-6 rounded-lg shadow mb-8">
+            <h2 class="text-xl font-semibold mb-4 border-b pb-2">Company Information</h2>
+            <div class="grid grid-cols-2 gap-4">
+                <div class="col-span-2">
+                    <label class="block text-sm font-medium text-gray-700">Company Name</label>
+                    {% if mode == 'view' %}
+                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2">{{ client.company_name }}</p>
+                    {% else %}
+                        <input type="text" name="company_name" value="{{ client.company_name if client else '' }}" 
+                               class="mt-1 block w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none" required>
+                    {% endif %}
+                </div>
+                <div class="col-span-2">
+                    <label class="block text-sm font-medium text-gray-700">Billing Address</label>
+                    {% if mode == 'view' %}
+                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 whitespace-pre-wrap">{{ client.address or '-' }}</p>
+                    {% else %}
+                        <textarea name="address" rows="3" class="mt-1 block w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none">{{ client.address if client else '' }}</textarea>
+                    {% endif %}
+                </div>
+            </div>
+        </section>
+
+        <!-- Personnel & Contacts Section -->
+        <section class="bg-white p-6 rounded-lg shadow">
+            <div class="flex justify-between items-center mb-4 border-b pb-2">
+                <h2 class="text-xl font-semibold">Personnel & Contacts</h2>
+                {% if mode != 'view' %}
+                    <button type="button" 
+                            hx-get="{{ url_for('clients.contact_row') }}" 
+                            hx-target="#contact-list" 
+                            hx-swap="beforeend"
+                            class="text-blue-600 hover:text-blue-800 text-sm font-bold flex items-center gap-1">
+                        <i class="fa-solid fa-plus text-xs"></i> Add Contact
+                    </button>
+                {% endif %}
+            </div>
+
+            <div id="contact-list" class="space-y-3">
+                {% if mode == 'view' %}
+                    <div class="grid grid-cols-10 gap-4 pb-2 text-sm font-medium text-gray-400 uppercase tracking-wider px-2">
+                        <div class="col-span-3">First Name</div>
+                        <div class="col-span-3">Last Name</div>
+                        <div class="col-span-4">Email Address</div>
+                    </div>
+                    
+                    {% for contact in client.contacts %}
+                        <div class="grid grid-cols-10 gap-4 p-2 border-b border-gray-50 last:border-0">
+                            <div class="col-span-3 text-sm font-semibold">{{ contact.first_name or '-' }}</div>
+                            <div class="col-span-3 text-sm font-semibold">{{ contact.last_name or '-' }}</div>
+                            <div class="col-span-4 text-sm text-blue-600 font-medium">{{ contact.email or '-' }}</div>
+                        </div>
+                    {% else %}
+                        <p class="py-8 text-center text-gray-400 italic text-sm">No contacts assigned.</p>
+                    {% endfor %}
+
+                {% else %}
+                    <!-- Edit/Add Mode -->
+                    <div class="grid grid-cols-10 gap-4 pb-2 text-sm font-medium text-gray-700 px-2">
+                        <div class="col-span-3">First Name</div>
+                        <div class="col-span-3">Last Name</div>
+                        <div class="col-span-3">Email Address</div>
+                        <div class="col-span-1"></div>
+                    </div>
+
+                    {% if mode == 'edit' %}
+                        {% for contact in client.contacts %}
+                            {% include 'clients/partials/contact.html' %}
+                        {% endfor %}
+                    {% endif %}
+
+                    <!-- Show one blank row for new clients or if no contacts exist -->
+                    {% if mode == 'add' or (mode == 'edit' and not client.contacts) %}
+                        {% include 'clients/partials/contact.html' %}
+                    {% endif %}
+                {% endif %}
+            </div>
+        </section>
+    </form>
+</div>
+{% endblock %}

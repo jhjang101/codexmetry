@@ -2,5 +2,37 @@
 {% block title %}Clients{% endblock %}
 
 {% block content %}
+<div class="max-w-6xl mx-auto">
+
+    <!-- Header with Action Button -->
+    <div class="flex justify-between items-end mb-4">
+        <!-- Search Bar -->
+        <div class="relative w-1/5">
+            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">
+                <i class="fa-solid fa-magnifying-glass text-sm"></i>
+            </span>
+            <input type="text" 
+                   name="search"
+                   value="{{ search }}"
+                   placeholder="Search clients, address, or email..." 
+                   class="mt-1 block text-sm w-full border rounded-lg pl-10 p-2 focus:ring-1 focus:ring-blue-300 outline-none" 
+                   hx-get="{{ url_for('clients.index') }}" 
+                   hx-trigger="keyup changed delay:300ms" 
+                   hx-target="#client-list-container"
+                   hx-push-url="true"> <!-- This keeps the URL in sync: /clients?search=... -->
+        </div>
+        <!-- Add New Button -->
+        <a href="{{ url_for('clients.add') }}" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors">
+            + Add New Client
+        </a>
+    </div>
+
+    <!-- Table Container (HTMX Target) -->
+    <div id="client-list-container" class="bg-white rounded-lg shadow overflow-hidden border border-gray-200">
+        <!-- Initially include the table partial -->
+        {% include 'clients/partials/list.html' %}
+    </div>
+
+</div>
 
 {% endblock %}

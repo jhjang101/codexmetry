@@ -1,5 +1,5 @@
 from .base_service import BaseService
-from app.models import (
+from ..models import (
     SettingsMetadata, PoType, ProductCategory, 
     ExpenseCategory, PaymentType, TransactionCategory
 )

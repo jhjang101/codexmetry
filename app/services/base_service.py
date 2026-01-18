@@ -1,12 +1,12 @@
-from app.extensions import db
+from ..extensions import db
 
 class BaseService:
     model: type = db.Model
 
     @classmethod
     def get_all(cls):
-        query = db.select(cls.model).filter_by(is_active=True)
-        return db.session.execute(query).scalars().all()
+        stmt = db.select(cls.model).filter_by(is_active=True)
+        return db.session.execute(stmt).scalars().all()
     
     @classmethod
     def get_by_id(cls, id):

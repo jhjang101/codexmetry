@@ -1,0 +1,37 @@
+<div class="grid grid-cols-10 gap-3 items-center contact-row p-2">
+    <!-- First Name -->
+    <div class="col-span-3">
+        <input type="text" 
+               name="contact_first[]" 
+               value="{{ contact.first_name if contact else '' }}" 
+               placeholder="First Name"
+               class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+    </div>
+
+    <!-- Last Name -->
+    <div class="col-span-3">
+        <input type="text" 
+               name="contact_last[]" 
+               value="{{ contact.last_name if contact else '' }}" 
+               placeholder="Last Name"
+               class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+    </div>
+
+    <!-- Email Address -->
+    <div class="col-span-3">
+        <input type="email" 
+               name="contact_email[]" 
+               value="{{ contact.email if contact else '' }}" 
+               placeholder="Email Address"
+               class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+    </div>
+
+    <!-- Remove Button (Using the efficient one-liner JS) -->
+    <div class="col-span-1 text-center">
+        <button type="button" 
+                class="text-red-500 hover:text-red-800 remove-row text-lg font-bold transition-colors"
+                onclick="this.closest('.contact-row').remove()">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+    </div>
+</div>
