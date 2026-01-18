@@ -7,6 +7,7 @@ from ..services.settings_service import (
     PaymentTypeService as PaymentType, 
     TransactionCategoryService as TransactionCategory
 )
+from ..utils.images import save_image
 from ..utils.money import parse_to_cents
 
 
@@ -41,7 +42,16 @@ def update_metadata():
         'doc_padding': int(request.form.get('doc_padding', 4))
     }
     
-    # TDDO: Image Logic Implementation
+    # Image Logic Implementation
+    new_logo = request.files.get('logo')
+    if new_logo:
+        new_filename = save_image(
+            file=new_logo, 
+            subfolder='logos', 
+            old_filename=request.form.get('old_image')
+        )
+        if new_filename:
+            metadata['company_logo'] = new_filename
 
     Metadata.update(1, **metadata)
 

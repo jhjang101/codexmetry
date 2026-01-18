@@ -19,7 +19,7 @@
             <div class="col-span-2 flex items-center gap-6 mb-2">
                 <div class="w-20 h-20 bg-gray-100 rounded-lg border flex items-center justify-center overflow-hidden">
                     {% if metadata.company_logo %}
-                        <img src="{{ url_for('static', filename='uploads/' + metadata.company_logo) }}" 
+                        <img src="{{ url_for('static', filename='uploads/logos/' + metadata.company_logo) }}" 
                             class="object-contain w-full h-full">
                     {% else %}
                         <span class="text-gray-400 text-xs">No Logo</span>
@@ -28,7 +28,7 @@
                 <div class="flex-1">
                     <label 
                         class="block text-sm font-medium text-gray-700">Company Logo</label>
-                    <input type="file" name="logo" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                    <input type="file" accept=".png,.jpg,.jpeg,.gif" name="logo" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
                 </div>
             </div>
             <div>
