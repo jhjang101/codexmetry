@@ -11,7 +11,9 @@
     <tbody class="divide-y divide-gray-100 bg-white">
         {% for client in clients %}
         <tr class="hover:bg-blue-50/40 transition-colors cursor-pointer" 
-            onclick="window.location='{{ url_for('clients.view', id=client.id) }}'">
+            hx-get="{{ url_for('clients.view', id=client.id) }}" 
+            hx-target="body" 
+            hx-push-url="true">
             
             <td class="px-6 py-4 whitespace-nowrap">
                 <span class="text-sm font-bold text-blue-700">{{ client.company_name }}</span>
