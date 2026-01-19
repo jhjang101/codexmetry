@@ -1,4 +1,4 @@
-<div class="grid grid-cols-10 gap-3 items-center contact-row p-2">
+<div class="grid grid-cols-11 gap-3 items-center contact-row">
     <!-- First Name -->
     <div class="col-span-3">
         <input type="text" 
@@ -18,7 +18,7 @@
     </div>
 
     <!-- Email Address -->
-    <div class="col-span-3">
+    <div class="col-span-4">
         <input type="email" 
                name="contact_email[]" 
                value="{{ contact.email if contact else '' }}" 
@@ -29,7 +29,7 @@
     <!-- Remove Button (Using the efficient one-liner JS) -->
     <div class="col-span-1 text-center">
         <button type="button" 
-                class="text-red-500 hover:text-red-800 remove-row text-lg font-bold transition-colors"
+                class="text-red-400 hover:text-red-800 remove-row"
                 onclick="this.closest('.contact-row').remove()">
             <i class="fa-solid fa-xmark"></i>
         </button>
