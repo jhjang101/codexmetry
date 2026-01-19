@@ -9,9 +9,6 @@ bp = Blueprint('clients', __name__)
 def index():
     """Main landing page for Clients module."""
     search_term = request.args.get('search', '')
-
-    print(f"Search Term: {search_term}")
-
     clients = ClientService.get_all_with_search(search_term)
     
     # If HTMX request, return only the table partial
@@ -35,7 +32,6 @@ def add():
         # 2. Process and Save Personnel (Contacts)
         contacts = _parse_contact_form(request.form)
         ClientService.update_personnel(new_client.id, contacts)
-
         return redirect(url_for('clients.index'))
 
     return render_template('clients/form.html', mode='add', client=None)
@@ -59,7 +55,6 @@ def edit(id):
         # 2. Update Personnel (Contacts)
         contacts = _parse_contact_form(request.form)
         ClientService.update_personnel(id, contacts)
-
         return redirect(url_for('clients.view', id=id))
 
     return render_template('clients/form.html', mode='edit', client=client)

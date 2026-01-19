@@ -2,53 +2,48 @@
     <thead class="bg-gray-50">
         <tr>
             <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Company Name</th>
+            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Website</th>
             <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Primary Contact</th>
-            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Email</th>
             <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Address</th>
             <th class="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
         </tr>
     </thead>
     <tbody class="divide-y divide-gray-100 bg-white">
-        {% for client in clients %}
+        {% for vendor in vendors %}
         <tr class="hover:bg-blue-50/40 transition-colors cursor-pointer" 
-            hx-get="{{ url_for('clients.view', id=client.id) }}" 
+            hx-get="{{ url_for('vendors.view', id=vendor.id) }}" 
             hx-target="body" 
             hx-push-url="true">
-            
+
             <td class="px-6 py-4 whitespace-nowrap">
-                <span class="text-sm font-bold text-blue-700">{{ client.company_name }}</span>
+                <span class="text-sm font-bold text-blue-700">{{ vendor.company_name }}</span>
             </td>
-            
+
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                {% if client.contacts and client.contacts|length > 0 %}
-                    {{ client.contacts[0].first_name }} {{ client.contacts[0].last_name }}
+                {{ vendor.url or '-' }}
+            </td>
+
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                {% if vendor.contacts and vendor.contacts|length > 0 %}
+                    {{ vendor.contacts[0].first_name }} {{ vendor.contacts[0].last_name }}
                 {% else %}
                     -
                 {% endif %}
             </td>
-            
+
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                {% if client.contacts and client.contacts|length > 0 %}
-                    {{ client.contacts[0].email or '-' }}
-                {% else %}
-                    -
-                {% endif %}
+                <span class="truncate block max-w-xs">{{ vendor.address or '-' }}</span>
             </td>
-            
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                <span class="truncate block max-w-xs">{{ client.address or '-' }}</span>
-            </td>
-            
+
             <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
                 <span class="text-blue-600 font-medium hover:text-blue-800">View</span>
             </td>
         </tr>
         {% else %}
-        <tr>
-            <td colspan="5" class="py-12 text-center text-gray-400 italic text-sm">
-                No clients found matching your search.
-            </td>
-        </tr>
+        <tr><td colspan="5" class="py-12 text-center text-gray-400 italic text-sm">
+            No vendors found matching your search.
+        </td>
+    </tr>
         {% endfor %}
     </tbody>
 </table>
