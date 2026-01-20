@@ -75,7 +75,7 @@
                 <div class="col-span-2">
                     <label class="block text-sm font-medium text-gray-700">Product Name</label>
                     {% if mode == 'view' %}
-                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 font-bold">{{ product.name }}</p>
+                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2">{{ product.name }}</p>
                     {% else %}
                         <input type="text" name="name" value="{{ product.name if product else '' }}" class="mt-1 block w-full border rounded-lg p-2 focus:ring-1 focus:ring-blue-300 outline-none" required>
                     {% endif %}
@@ -108,7 +108,7 @@
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Default Unit Price (USD)</label>
                     {% if mode == 'view' %}
-                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-blue-700 font-bold">{{ product.default_unit_price | usd }}</p>
+                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2">{{ product.default_unit_price | usd }}</p>
                     {% else %}
                         <input type="text" name="unit_price" value="{{ product.default_unit_price | usd if product else '' }}" class="mt-1 block w-full border rounded-lg p-2 focus:ring-1 focus:ring-blue-300 outline-none">
                     {% endif %}
