@@ -41,15 +41,18 @@ class QuoteService(BaseService):
 
         # 2. Add new items
         for data in items_data:
-            qty = int(data.get('quantity', 0))
-            price = int(data.get('unit_price', 0))
-            line_total = qty * price
-            total_cents += line_total
+            product_id = data.get('product_id')
 
-            if data.get('product_id'):
+            if product_id:
+                product_id = int(product_id)
+                qty = int(data.get('quantity', 0))
+                price = int(data.get('unit_price', 0))
+                line_total = qty * price
+                total_cents += line_total
+
                 new_item = QuoteItem()
                 new_item.quote_id = quote_id
-                new_item.product_id = data.get('product_id')
+                new_item.product_id = product_id
                 new_item.quantity = qty
                 new_item.quoted_unit_price = price
                 db.session.add(new_item)
