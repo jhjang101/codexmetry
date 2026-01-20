@@ -93,9 +93,8 @@
                     {% if mode == 'view' %}
                         <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 font-mono">{{ quote.quote_number }}</p>
                     {% else %}
-                        <input type="text" name="quote_number" value="{{ quote.quote_number if quote else 'Auto-Generated' }}" 
-                               class="mt-1 block w-full border rounded-lg p-2 focus:ring-1 focus:ring-blue-300 outline-none {{ 'bg-gray-50 text-gray-400' if mode == 'add' else '' }}" 
-                               {{ 'readonly' if mode == 'add' else '' }}>
+                        <input type="text" name="quote_number" value="{{ quote.quote_number if quote else suggested_number }}" 
+                               class="mt-1 block w-full border rounded-lg p-2 focus:ring-1 focus:ring-blue-300 outline-none transition-all" required>
                     {% endif %}
                 </div>
             </div>

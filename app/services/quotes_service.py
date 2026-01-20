@@ -28,27 +28,6 @@ class QuoteService(BaseService):
         return cls.paginate(stmt, page=page, per_page=per_page)
 
     @classmethod
-    def create_quote(cls, data: dict) -> Quote:
-        """
-        Initializes a new Quote with an auto-generated number.
-        """
-        # 1. Generate Q-YY0000 number
-        next_num = generate_doc_number(prefix='Q', model=Quote, column_name='quote_number')
-        
-        # 2. Create object (Explicit attributes for Pylance)
-        new_quote = Quote()
-        new_quote.quote_number = next_num
-        new_quote.client_id = data.get('client_id')
-        new_quote.quote_date = data.get('quote_date')
-        new_quote.expiration_date = data.get('expiration_date')
-        new_quote.note = data.get('note')
-        new_quote.status = 'draft'
-        
-        db.session.add(new_quote)
-        db.session.commit()
-        return new_quote
-
-    @classmethod
     def update_items(cls, quote_id: int, items_data: list[dict]):
         """
         Wipe current items and re-insert new ones.

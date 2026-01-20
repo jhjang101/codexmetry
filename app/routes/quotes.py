@@ -3,6 +3,8 @@ from ..services.quotes_service import QuoteService
 from ..services.products_service import ProductService
 from ..services.clients_service import ClientService
 from ..utils.money import parse_to_cents, format_usd
+from ..utils.docs import generate_doc_number 
+from ..models import Quote
 from datetime import datetime
 
 bp = Blueprint('quotes', __name__)
@@ -29,11 +31,12 @@ def add():
         # 1. Save Quote Header
         quote_data = {
             'client_id': request.form.get('client_id'),
+            'quote_number': request.form.get('quote_number'), 
             'quote_date': datetime.strptime(request.form.get('quote_date'), '%Y-%m-%d').date() if request.form.get('quote_date') else None,
             'expiration_date': datetime.strptime(request.form.get('expiration_date'), '%Y-%m-%d').date() if request.form.get('expiration_date') else None,
             'note': request.form.get('note')
         }
-        new_quote = QuoteService.create_quote(quote_data)
+        new_quote = QuoteService.add(**quote_data)
 
         # 2. Process and Save Line Items
         items = _parse_items_form(request.form)
@@ -44,11 +47,21 @@ def add():
     # GET: Prepare form data
     clients = ClientService.get_all()
     products = ProductService.get_all()
-    return render_template('quotes/form.html', mode='add', quote=None, clients=clients, products=products)
+    suggested_number = generate_doc_number(prefix='Q', model=Quote, column_name='quote_number')
+    return render_template('quotes/form.html', 
+                           mode='add', 
+                           quote=None, 
+                           clients=clients, 
+                           products=products,
+                           suggested_number=suggested_number
+    )
 
 @bp.route('/view/<int:id>')
 def view(id):
     quote = QuoteService.get_by_id(id)
+
+    print(quote.total_amount)
+
     return render_template('quotes/form.html', mode='view', quote=quote)
 
 @bp.route('/edit/<int:id>', methods=['GET', 'POST'])
