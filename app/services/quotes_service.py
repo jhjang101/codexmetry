@@ -8,7 +8,7 @@ class QuoteService(BaseService):
     model = Quote
 
     @classmethod
-    def get_all_with_search(cls, search_term: str | None = None):
+    def get_all_with_search(cls, search_term: str | None = None, page: int = 1, per_page: int = 10):
         """
         Fetches active quotes.
         Joins with Client to allow searching by Company Name.
@@ -25,7 +25,7 @@ class QuoteService(BaseService):
             )
 
         stmt = stmt.order_by(cls.model.quote_date.desc())
-        return db.session.execute(stmt).scalars().all()
+        return cls.paginate(stmt, page=page, per_page=per_page)
 
     @classmethod
     def create_quote(cls, data: dict) -> Quote:

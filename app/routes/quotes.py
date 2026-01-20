@@ -12,12 +12,14 @@ bp = Blueprint('quotes', __name__)
 @bp.route('/')
 def index():
     search_term = request.args.get('search', '')
-    quotes = QuoteService.get_all_with_search(search_term)
+    page = request.args.get('page', 1, type=int)
+    # pagination is an object containing .items, .has_next, .has_prev, etc.
+    pagination = QuoteService.get_all_with_search(search_term, page=page, per_page=2)
     
     if request.headers.get('HX-Request'):
-        return render_template('quotes/partials/list.html', quotes=quotes)
+        return render_template('quotes/partials/list.html', pagination=pagination)
     
-    return render_template('quotes/quotes.html', quotes=quotes, search=search_term)
+    return render_template('quotes/quotes.html', pagination=pagination, search=search_term)
 
 # --- CRUD OPERATIONS ---
 
