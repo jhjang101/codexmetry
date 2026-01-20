@@ -7,7 +7,7 @@ class ProductService(BaseService):
     model = Product
 
     @classmethod
-    def get_all_with_search(cls, search_term: str | None = None):
+    def get_all_with_search(cls, search_term: str | None = None, page: int = 1, per_page: int = 10):
         """
         Fetches all active products.
         Joins with ProductCategory to allow searching by Category Type.
@@ -30,8 +30,8 @@ class ProductService(BaseService):
         # 3. Order by product name alphabetically
         stmt = stmt.order_by(cls.model.name.asc())
 
-        # 4. Execute and return results
-        return db.session.execute(stmt).scalars().all()
+        # 4. Use the paginate helper
+        return cls.paginate(stmt, page=page, per_page=per_page)
 
     @classmethod
     def get_by_id_with_category(cls, product_id: int):

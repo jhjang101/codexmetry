@@ -6,13 +6,15 @@ bp = Blueprint('vendors', __name__)
 @bp.route('/')
 def index():
     search_term = request.args.get('search', '')
-    vendors = VendorService.get_all_with_search(search_term)
+    page = request.args.get('page', 1, type=int)
+    # pagination is an object containing .items, .has_next, .has_prev, etc.
+    pagination = VendorService.get_all_with_search(search_term, page=page, per_page=2)
 
     # If HTMX request, return only the table partial
     if request.headers.get('HX-Request'):
-        return render_template('vendors/partials/list.html', vendors=vendors)
+        return render_template('vendors/partials/list.html', pagination=pagination)
     
-    return render_template('vendors/vendors.html', vendors=vendors, search=search_term)
+    return render_template('vendors/vendors.html', pagination=pagination, search=search_term)
 
 @bp.route('/add', methods=['GET', 'POST'])
 def add():

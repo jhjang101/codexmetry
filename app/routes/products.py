@@ -12,12 +12,14 @@ bp = Blueprint('products', __name__)
 def index():
     """Main product directory with HTMX search support."""
     search_term = request.args.get('search', '')
-    products = ProductService.get_all_with_search(search_term)
+    page = request.args.get('page', 1, type=int)
+    # pagination is an object containing .items, .has_next, .has_prev, etc.
+    pagination = ProductService.get_all_with_search(search_term, page=page, per_page=2)
     
     if request.headers.get('HX-Request'):
-        return render_template('products/partials/list.html', products=products)
+        return render_template('products/partials/list.html', pagination=pagination)
     
-    return render_template('products/products.html', products=products, search=search_term)
+    return render_template('products/products.html', pagination=pagination, search=search_term)
 
 # --- CRUD OPERATIONS ---
 

@@ -9,13 +9,15 @@ bp = Blueprint('clients', __name__)
 def index():
     """Main landing page for Clients module."""
     search_term = request.args.get('search', '')
-    clients = ClientService.get_all_with_search(search_term)
-    
+    page = request.args.get('page', 1, type=int)
+    # pagination is an object containing .items, .has_next, .has_prev, etc.
+    pagination = ClientService.get_all_with_search(search_term, page=page, per_page=2)
+
     # If HTMX request, return only the table partial
     if request.headers.get('HX-Request'):
-        return render_template('clients/partials/list.html', clients=clients)
+        return render_template('clients/partials/list.html', pagination=pagination)
     
-    return render_template('clients/clients.html', clients=clients, search=search_term)
+    return render_template('clients/clients.html', pagination=pagination, search=search_term)
 
 # --- CRUD OPERATIONS ---
 

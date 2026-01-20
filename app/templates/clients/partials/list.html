@@ -9,7 +9,7 @@
         </tr>
     </thead>
     <tbody class="divide-y divide-gray-100 bg-white">
-        {% for client in clients %}
+        {% for client in pagination.items %}
         <tr class="hover:bg-blue-50/40 transition-colors cursor-pointer" 
             hx-get="{{ url_for('clients.view', id=client.id) }}" 
             hx-target="body" 
@@ -52,3 +52,32 @@
         {% endfor %}
     </tbody>
 </table>
+
+<!-- Pagination Footer -->
+<div class="bg-gray-50 px-6 py-4 flex items-center justify-between border-t border-gray-200">
+    <div class="text-xs text-gray-500">
+        Showing page <b>{{ pagination.page }}</b> of <b>{{ pagination.pages }}</b>
+    </div>
+    
+    <div class="flex gap-2">
+        {% if pagination.has_prev %}
+        <button hx-get="{{ url_for('clients.index', page=pagination.prev_num) }}"
+                hx-target="#client-list-container"
+                hx-include="[name='search']"
+                hx-push-url="true"
+                class="px-3 py-1 bg-white border rounded text-xs text-gray-500 font-semibold hover:bg-gray-100 transition-colors">
+            <i class="fa-solid fa-chevron-left mr-1"></i> Previous
+        </button>
+        {% endif %}
+
+        {% if pagination.has_next %}
+        <button hx-get="{{ url_for('clients.index', page=pagination.next_num) }}"
+                hx-target="#client-list-container"
+                hx-include="[name='search']"
+                hx-push-url="true"
+                class="px-3 py-1 bg-white border rounded text-xs text-gray-500 font-semibold hover:bg-gray-100 transition-colors">
+            Next <i class="fa-solid fa-chevron-right ml-1"></i>
+        </button>
+        {% endif %}
+    </div>
+</div>

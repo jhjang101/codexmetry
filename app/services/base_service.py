@@ -40,3 +40,14 @@ class BaseService:
         db.session.delete(row)
         db.session.commit()
         return row
+    
+    @classmethod
+    def paginate(cls, stmt, page: int = 1, per_page: int = 10):
+        """
+        Generic pagination helper.
+        stmt: The SQLAlchemy Select statement
+        page: Current page number
+        per_page: Number of items per page
+        """
+        # db.paginate is a Flask-SQLAlchemy helper that handles the math
+        return db.paginate(stmt, page=page, per_page=per_page, error_out=False)

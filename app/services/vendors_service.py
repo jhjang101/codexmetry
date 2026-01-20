@@ -7,7 +7,7 @@ class VendorService(BaseService):
     model = Vendor
 
     @classmethod
-    def get_all_with_search(cls, search_term: str | None = None):
+    def get_all_with_search(cls, search_term: str | None = None, page: int = 1, per_page: int = 10):
         """
         Search: Implementation of filtered search for the client list.
         Searches across Company Name, Address, url, Contact names, and Contact Emails.
@@ -30,7 +30,9 @@ class VendorService(BaseService):
         
         # 3. Order by name
         stmt = stmt.order_by(cls.model.company_name.asc())
-        return db.session.execute(stmt).scalars().all()
+
+        # 4. Use the paginate helper
+        return cls.paginate(stmt, page=page, per_page=per_page)
 
     @classmethod
     def update_personnel(cls, vendor_id: int, contacts_data: list[dict]):
