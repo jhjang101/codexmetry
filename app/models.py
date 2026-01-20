@@ -79,6 +79,7 @@ class Client(db.Model):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     
     contacts: Mapped[list["ClientContact"]] = relationship(back_populates="client", cascade="all, delete-orphan")
+    quotes: Mapped[list["Quote"]] = relationship(back_populates="client")
 
 class ClientContact(db.Model):
     __tablename__ = 'client_contacts'
@@ -143,6 +144,7 @@ class Quote(db.Model):
     note: Mapped[str | None] = mapped_column(Text)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
+    client: Mapped["Client"] = relationship(back_populates="quotes")
     items: Mapped[list["QuoteItem"]] = relationship(back_populates="quote", cascade="all, delete-orphan")
 
 class PurchaseOrder(db.Model):
@@ -225,6 +227,7 @@ class QuoteItem(db.Model):
     quoted_unit_price: Mapped[int] = mapped_column(Integer, default=0)
 
     quote: Mapped["Quote"] = relationship(back_populates="items")
+    product: Mapped["Product"] = relationship()
 
 class PoItem(db.Model):
     __tablename__ = 'po_items'
