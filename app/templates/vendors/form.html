@@ -31,7 +31,7 @@
 
                 <a href="{{ url_for('vendors.edit', id=vendor.id) }}" 
                    class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors">
-                   Edit Vendor
+                    Edit Vendor
                 </a>
             {% else %}
                 <a href="{% if mode == 'add' %}{{ url_for('vendors.index') }}{% else %}{{ url_for('vendors.view', id=vendor.id) }}{% endif %}" 

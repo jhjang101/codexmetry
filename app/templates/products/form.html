@@ -1,0 +1,120 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+    {% if mode == 'add' %}New Product
+    {% elif mode == 'edit' %}Edit Product
+    {% else %}{{ product.name }}
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <!-- Header Actions -->
+    <div class="flex justify-between items-center mb-4">
+        <a href="{{ url_for('products.index') }}" 
+           class="text-blue-600 hover:underline text-sm font-medium flex items-center gap-1">
+            <i class="fa-solid fa-arrow-left"></i> Back to Directory
+        </a>
+
+        <div class="flex gap-3 items-center">
+            {% if mode == 'view' %}
+                <form action="{{ url_for('products.archive', id=product.id) }}" method="POST" 
+                      onsubmit="return confirm('Are you sure you want to archive this product?')">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" 
+                            class="text-red-400 px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-800 transition-colors">
+                        Archive Product
+                    </button>
+                </form>
+
+                <a href="{{ url_for('products.edit', id=product.id) }}" 
+                   class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors shadow-sm">
+                    Edit Product
+                </a>
+            {% else %}
+                <a href="{% if mode == 'add' %}{{ url_for('products.index') }}{% else %}{{ url_for('products.view', id=product.id) }}{% endif %}" 
+                   class="text-gray-500 px-4 py-2 text-sm font-medium hover:text-gray-800">
+                    Cancel
+                </a>
+                <button type="submit" form="product-main-form" 
+                        class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors shadow-sm">
+                    Save Product
+                </button>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Main Data Form -->
+    <form id="product-main-form" action="{% if mode == 'add' %}{{ url_for('products.add') }}{% else %}{{ url_for('products.edit', id=product.id) }}{% endif %}" method="POST" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="old_image" value="{{ product.image_url if product else '' }}">
+
+        <section class="bg-white p-6 rounded-lg shadow mb-8">
+            <h2 class="text-xl font-semibold mb-4 border-b pb-2">Catalog Information</h2>
+            
+            <div class="grid grid-cols-2 gap-4">
+                <!-- Image Section -->
+                <div class="col-span-2 flex items-center gap-6 mb-4">
+                    <div class="w-24 h-24 bg-gray-100 rounded border flex items-center justify-center overflow-hidden shadow-inner">
+                        {% if product and product.image_url %}
+                            <img src="{{ url_for('static', filename='uploads/products/' + product.image_url) }}" 
+                                 class="object-contain w-full h-full">
+                        {% else %}
+                            <i class="fa-solid fa-box-open text-gray-300 text-2xl"></i>
+                        {% endif %}
+                    </div>
+                    {% if mode != 'view' %}
+                    <div class="flex-1">
+                        <label class="block text-sm font-medium text-gray-700">Product Image</label>
+                        <input type="file" name="image" accept=".png,.jpg,.jpeg,.gif" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Product Details -->
+                <div class="col-span-2">
+                    <label class="block text-sm font-medium text-gray-700">Product Name</label>
+                    {% if mode == 'view' %}
+                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 font-bold">{{ product.name }}</p>
+                    {% else %}
+                        <input type="text" name="name" value="{{ product.name if product else '' }}" class="mt-1 block w-full border rounded-lg p-2 focus:ring-1 focus:ring-blue-300 outline-none" required>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Catalog Number</label>
+                    {% if mode == 'view' %}
+                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2">{{ product.catalog_number or '-' }}</p>
+                    {% else %}
+                        <input type="text" name="catalog_number" value="{{ product.catalog_number if product else '' }}" class="mt-1 block w-full border rounded-lg p-2 focus:ring-1 focus:ring-blue-300 outline-none">
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Category</label>
+                    {% if mode == 'view' %}
+                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2">{{ product.category.type if product and product.category else '-' }}</p>
+                    {% else %}
+                        <select name="category_id" 
+                                class="mt-1 block w-full border rounded-lg p-2 focus:ring-1 focus:ring-blue-300 outline-none">
+                            <option value="">Uncategorized</option>
+                            {% for category in categories %}
+                                <option value="{{ category.id }}" {{ 'selected' if (product and product.category_id == category.id) else '' }}>{{ category.type }}</option>
+                            {% endfor %}
+                        </select>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Default Unit Price (USD)</label>
+                    {% if mode == 'view' %}
+                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-blue-700 font-bold">{{ product.default_unit_price | usd }}</p>
+                    {% else %}
+                        <input type="text" name="unit_price" value="{{ product.default_unit_price | usd if product else '' }}" class="mt-1 block w-full border rounded-lg p-2 focus:ring-1 focus:ring-blue-300 outline-none">
+                    {% endif %}
+                </div>
+            </div>
+        </section>
+    </form>
+</div>
+{% endblock %}

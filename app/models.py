@@ -120,6 +120,8 @@ class Product(db.Model):
     default_unit_price: Mapped[int] = mapped_column(Integer, default=0)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
+    category: Mapped["ProductCategory"] = relationship()
+
 # --- 5. REGISTRY & SALES ---
 class OrderRegistry(db.Model):
     __tablename__ = 'orders'
