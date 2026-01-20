@@ -15,7 +15,7 @@ def index():
     if request.headers.get('HX-Request'):
         return render_template('clients/partials/list.html', clients=clients)
     
-    return render_template('clients/clients.html', clients=clients)
+    return render_template('clients/clients.html', clients=clients, search=search_term)
 
 # --- CRUD OPERATIONS ---
 

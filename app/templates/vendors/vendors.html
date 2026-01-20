@@ -13,7 +13,7 @@
             </span>
             <input type="text" 
                    name="search" 
-                   value="{{ search }}"
+                   value="{{ search or '' }}"
                    placeholder="Search vendors, url, name, email, or address..." 
                    class="mt-1 block text-sm w-full border rounded-lg pl-10 p-2 focus:ring-1 focus:ring-blue-300 outline-none"
                    hx-get="{{ url_for('vendors.index') }}" 

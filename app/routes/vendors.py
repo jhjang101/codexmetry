@@ -12,7 +12,7 @@ def index():
     if request.headers.get('HX-Request'):
         return render_template('vendors/partials/list.html', vendors=vendors)
     
-    return render_template('vendors/vendors.html', vendors=vendors)
+    return render_template('vendors/vendors.html', vendors=vendors, search=search_term)
 
 @bp.route('/add', methods=['GET', 'POST'])
 def add():
