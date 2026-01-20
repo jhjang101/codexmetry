@@ -71,6 +71,7 @@ def edit(id):
         # 1. Update Header
         quote_data = {
             'client_id': request.form.get('client_id'),
+            'quote_number': request.form.get('quote_number'), 
             'quote_date': datetime.strptime(request.form.get('quote_date'), '%Y-%m-%d').date() if request.form.get('quote_date') else None,
             'expiration_date': datetime.strptime(request.form.get('expiration_date'), '%Y-%m-%d').date() if request.form.get('expiration_date') else None,
             'note': request.form.get('note'),
