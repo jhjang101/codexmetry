@@ -67,9 +67,6 @@ def add():
 @bp.route('/view/<int:id>')
 def view(id):
     quote = QuoteService.get_by_id(id)
-
-    print(quote.total_amount)
-
     return render_template('quotes/form.html', mode='view', quote=quote)
 
 @bp.route('/edit/<int:id>', methods=['GET', 'POST'])
