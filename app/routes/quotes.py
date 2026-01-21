@@ -16,7 +16,7 @@ def index():
     search_term = request.args.get('search', '')
     page = request.args.get('page', 1, type=int)
     # pagination is an object containing .items, .has_next, .has_prev, etc.
-    pagination = QuoteService.get_all_with_search(search_term, page=page, per_page=2)
+    pagination = QuoteService.get_all_with_search(search_term, page=page, per_page=10)
     
     if request.headers.get('HX-Request'):
         return render_template('quotes/partials/list.html', pagination=pagination)
@@ -29,12 +29,20 @@ def index():
 def add():
     if request.method == 'POST':
         # 1. Save Quote Header
+        client_id = request.form.get('client_id')
+        quote_number = request.form.get('quote_number', '').strip()
+        if not quote_number:
+            quote_number = generate_doc_number(prefix='Q', model=Quote, column_name='quote_number')
+        quote_date = request.form.get('quote_date')
+        expiration_date = request.form.get('expiration_date')
+        note = request.form.get('note')
+
         quote_data = {
-            'client_id': request.form.get('client_id'),
-            'quote_number': request.form.get('quote_number'), 
-            'quote_date': datetime.strptime(request.form.get('quote_date'), '%Y-%m-%d').date() if request.form.get('quote_date') else None,
-            'expiration_date': datetime.strptime(request.form.get('expiration_date'), '%Y-%m-%d').date() if request.form.get('expiration_date') else None,
-            'note': request.form.get('note')
+            'client_id': int(client_id) if client_id else None,
+            'quote_number': quote_number,
+            'quote_date': datetime.strptime(quote_date, '%Y-%m-%d').date() if quote_date else None,
+            'expiration_date': datetime.strptime(expiration_date, '%Y-%m-%d').date() if expiration_date else None,
+            'note': note
         }
         new_quote = QuoteService.add(**quote_data)
 
@@ -69,13 +77,22 @@ def edit(id):
     quote = QuoteService.get_by_id(id)
     if request.method == 'POST':
         # 1. Update Header
+        client_id = request.form.get('client_id')
+        quote_number = request.form.get('quote_number', '').strip()
+        if not quote_number:
+            quote_number = generate_doc_number(prefix='Q', model=Quote, column_name='quote_number')
+        quote_date = request.form.get('quote_date')
+        expiration_date = request.form.get('expiration_date')
+        note = request.form.get('note')
+        status = request.form.get('status')
+
         quote_data = {
-            'client_id': request.form.get('client_id'),
-            'quote_number': request.form.get('quote_number'), 
-            'quote_date': datetime.strptime(request.form.get('quote_date'), '%Y-%m-%d').date() if request.form.get('quote_date') else None,
-            'expiration_date': datetime.strptime(request.form.get('expiration_date'), '%Y-%m-%d').date() if request.form.get('expiration_date') else None,
-            'note': request.form.get('note'),
-            'status': request.form.get('status')
+            'client_id': int(client_id) if client_id else None,
+            'quote_number': quote_number, 
+            'quote_date': datetime.strptime(quote_date, '%Y-%m-%d').date() if quote_date else None,
+            'expiration_date': datetime.strptime(expiration_date, '%Y-%m-%d').date() if expiration_date else None,
+            'note': note,
+            'status': status
         }
         QuoteService.update(id, **quote_data)
 
