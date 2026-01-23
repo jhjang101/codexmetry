@@ -1,19 +1,23 @@
+{% set row_id = row_id if row_id else (item.id if item else timestamp) %}
+
 <tr class="item-row group">
-    <!-- Product Select -->
+    <input type="hidden" name="row_ids[]" value="{{ row_id }}">
+    
     <td class="py-2 pr-2">
         {% if mode == 'view' %}
             <p class="block bg-gray-100 border rounded-lg p-2 text-sm">{{ item.product.name }}</p>
         {% else %}
             <div class="relative">
-                <select name="product_id[]" 
+                <select name="product_ids[]" 
                         class="block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none appearance-none bg-transparent cursor-pointer pr-10"
-                        hx-post="{{ url_for('quotes.calculate') }}"
+                        hx-get="{{ url_for('quotes.get_unit_price') }}"
+                        hx-vals='{"row_id": "{{ row_id }}"}'
                         hx-trigger="change"
-                        hx-target="#calculation-summary"
-                        hx-include="closest form">
+                        hx-target="#unit-price-cell-{{ row_id }}"
+                        hx-include="closest tr">
                     <option value="">Select Product...</option>
-                    {% for p in products %}
-                        <option value="{{ p.id }}" {{ 'selected' if (item and item.product_id == p.id) else '' }}>{{ p.name }}</option>
+                    {% for product in products %}
+                        <option value="{{ product.id }}" {{ 'selected' if (item and item.product_id == product.id) else '' }}>{{ product.name }}</option>
                     {% endfor %}
                 </select>
                 <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-400">
@@ -22,55 +26,35 @@
             </div>
         {% endif %}
     </td>
-
-    <!-- Quantity -->
-    <td class="py-2 px-2">
-        {% if mode == 'view' %}
-            <p class="block bg-gray-100 border rounded-lg p-2 text-sm text-center">{{ item.quantity }}</p>
-        {% else %}
-            <input type="number" name="qty[]" value="{{ item.quantity if item else 1 }}" min="1"
+    
+        <!-- Quantity -->
+        <td class="py-2 px-2">
+            <input type="number" name="quantities[]" value="{{ item.quantity if item else 1 }}" 
                    class="block w-full border rounded-lg p-2 text-sm text-center focus:ring-1 focus:ring-blue-300 outline-none"
                    hx-post="{{ url_for('quotes.calculate') }}"
-                   hx-trigger="keyup changed delay:500ms"
-                   hx-target="#calculation-summary"
-                   hx-include="closest form">
-        {% endif %}
+                   hx-vals='{"row_id": "{{ row_id }}"}'
+                   hx-trigger="change delay:300ms"
+                   hx-target="#line-total-{{ row_id }}"
+                   hx-include="#quote-main-form">
+        </td>
+
+    <!-- Unit Price Cell -->
+    <td class="py-2 px-2" id="unit-price-cell-{{ row_id }}">
+        {# Even though it's a separate file for HTMX, we 'include' it to keep it inline #}
+        {% include 'quotes/partials/unit_price_input.html' %}
     </td>
 
-    <!-- Unit Price -->
+    <!-- Line Total Display -->
     <td class="py-2 px-2">
-        {% if mode == 'view' %}
-            <p class="block bg-gray-100 border rounded-lg p-2 text-sm">{{ item.quoted_unit_price | usd }}</p>
-        {% else %}
-            <input type="text" name="unit_price[]" value="{{ item.quoted_unit_price | usd if item else '$0.00' }}"
-                   class="block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none"
-                   hx-post="{{ url_for('quotes.calculate') }}"
-                   hx-trigger="keyup changed delay:500ms"
-                   hx-target="#calculation-summary"
-                   hx-include="closest form">
-        {% endif %}
+        <div id="line-total-{{ row_id }}" class="block bg-gray-100 border rounded-lg p-2 text-sm font-bold text-right text-gray-700">
+            {% if item %}{{ (item.quantity * item.quoted_unit_price) | usd }}{% else %}$0.00{% endif %}
+        </div>
     </td>
 
-    <!-- Line Total (Calculated) -->
-    <td class="py-2 px-2">
-        <p class="block bg-gray-100 border rounded-lg p-2 text-sm font-semibold line-total-display">
-            {{ (item.quantity * item.quoted_unit_price) | usd if item else '$0.00' }}
-        </p>
-    </td>
-
-    <!-- Remove Row -->
-    {% if mode != 'view' %}
     <td class="py-2 pl-2 text-center">
-        <button type="button" 
-                class="text-red-400 hover:text-red-800 transition-colors"
-                onclick="this.closest('.item-row').remove(); htmx.trigger('#quote-main-form', 'itemRemoved')">
-            <i class="fa-solid fa-xmark"></i>
-        </button>
-        <!-- This hidden trigger ensures the math updates when a row is deleted -->
-        <div hx-post="{{ url_for('quotes.calculate') }}" 
-             hx-trigger="itemRemoved from:body" 
-             hx-target="#calculation-summary" 
-             hx-include="closest form"></div>
+        {% if mode != 'view' %}
+        <button type="button" class="text-red-500 hover:text-red-800 text-lg font-bold remove-row"
+                onclick="this.closest('.item-row').remove(); htmx.trigger('body', 'recalculate')">×</button>
+        {% endif %}
     </td>
-    {% endif %}
 </tr>

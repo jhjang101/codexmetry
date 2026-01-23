@@ -6,6 +6,7 @@ from ..utils.money import parse_to_cents, format_usd
 from ..utils.docs import generate_doc_number 
 from ..models import Quote
 from datetime import datetime
+import time 
 
 bp = Blueprint('quotes', __name__)
 
@@ -56,13 +57,14 @@ def add():
     clients = ClientService.get_all()
     products = ProductService.get_all()
     suggested_number = generate_doc_number(prefix='Q', model=Quote, column_name='quote_number')
+    initial_row_id = str(int(time.time() * 1000))   
     return render_template('quotes/form.html', 
                            mode='add', 
                            quote=None, 
                            clients=clients, 
                            products=products,
-                           suggested_number=suggested_number
-    )
+                           suggested_number=suggested_number,
+                           timestamp=initial_row_id)
 
 @bp.route('/view/<int:id>')
 def view(id):
@@ -110,40 +112,74 @@ def archive(id):
 
 # --- HTMX PARTIALS & LIVE MATH ---
 
-@bp.route('/item-row')
-def item_row():
+@bp.route('/add-row')
+def add_row():
     """Returns a blank product row for the dynamic sub-form."""
     products = ProductService.get_all()
-    return render_template('quotes/partials/item_row.html', item=None, products=products)
+    # Generate a unique row_id based on a timestamp
+    row_id = str(int(time.time() * 1000))
+    return render_template(
+            'quotes/partials/item_row.html', products=products, row_id=row_id, item=None, mode='add')
+
+@bp.route('/get-unit-price')
+def get_unit_price():
+    """Returns the default_unit_price for the selected product."""
+    raw_pid = request.args.get('product_ids[]')
+    row_id = request.args.get('row_id')
+    
+    product_id = int(raw_pid) if raw_pid and raw_pid.strip() else None
+    
+    # Query product for its default price
+    product = ProductService.get_by_id(product_id) if product_id else None 
+    default_unit_price = product.default_unit_price if product else 0
+    
+    return render_template('quotes/partials/unit_price_input.html', 
+                           row_id=row_id, 
+                           price=default_unit_price)
 
 @bp.route('/calculate', methods=['POST'])
 def calculate():
-    """The 'No-JS' Calculation Engine: Re-sums totals and returns a partial snippet."""
-    quantities = request.form.getlist('qty[]')
-    prices = request.form.getlist('unit_price[]')
-    
+    """Calculates the specific Line Total and the global Grand Total."""
+    row_id = request.form.get('row_id')
+    row_ids = request.form.getlist('row_ids[]')
+    quantities = request.form.getlist('quantities[]')
+    unit_prices = request.form.getlist('unit_prices[]')
+
+    print('row_id:', row_id)
+    print('row_ids:', row_ids)
+    print('quantities:', quantities)
+    print('unit_prices:', unit_prices)
+
+    line_total = 0
     grand_total = 0
-    line_totals = []
 
-    for q, p in zip(quantities, prices):
-        qty = int(q) if q and q.isdigit() else 0
-        price = parse_to_cents(p)
-        line = qty * price
-        line_totals.append(format_usd(line))
-        grand_total += line
+    # If this is the row the user is currently editing, capture its total
+    if row_id in row_ids:
+        idx = row_ids.index(row_id)
+        line_total = int(quantities[idx]) * parse_to_cents(unit_prices[idx])
 
-    # We return a JSON-like update or a specific partial that updates the total areas
-    return render_template('quotes/partials/calculation_summary.html', 
-                           line_totals=line_totals, 
-                           grand_total=format_usd(grand_total))
+    # calculate grand total
+    items = [{'qty': q, 'price': p} for q, p in zip(quantities, unit_prices)]
+    for item in items:
+        qty = int(item['qty'])
+        price = parse_to_cents(item['price'])
+        grand_total += qty * price
+
+    print('grand_total:', grand_total)
+
+
+    return render_template('quotes/partials/calculation_result.html', 
+                           row_id=row_id,
+                           line_total=line_total, 
+                           grand_total=grand_total)
 
 # --- INTERNAL HELPERS ---
 
 def _parse_items_form(form_data):
     """Parses parallel lists from form into a list of dictionaries."""
-    product_ids = form_data.getlist('product_id[]')
-    quantities = form_data.getlist('qty[]')
-    unit_prices = form_data.getlist('unit_price[]')
+    product_ids = form_data.getlist('product_ids[]')
+    quantities = form_data.getlist('quantities[]')
+    unit_prices = form_data.getlist('unit_prices[]')
     
     items = []
     for pid, q, p in zip(product_ids, quantities, unit_prices):
