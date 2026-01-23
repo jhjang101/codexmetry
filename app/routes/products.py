@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for
+from flask import Blueprint, render_template, request, redirect, url_for, session
 from ..services.products_service import ProductService
 from ..services.settings_service import ProductCategoryService
 from ..utils.images import save_image
@@ -13,6 +13,11 @@ def index():
     """Main product directory with HTMX search support."""
     search_term = request.args.get('search', '')
     page = request.args.get('page', 1, type=int)
+
+    # RECORD THE STATE: Save the current full URL into the session
+    # request.full_path includes the ?search=...&page=...
+    session['products_last_url'] = request.full_path
+
     # pagination is an object containing .items, .has_next, .has_prev, etc.
     pagination = ProductService.get_all_with_search(search_term, page=page, per_page=2)
     

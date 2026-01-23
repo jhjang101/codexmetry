@@ -9,7 +9,7 @@
     
     <!-- 1. HEADER ACTION BAR -->
     <div class="flex justify-between items-center mb-4">
-        <a href="{{ url_for('quotes.index') }}" class="text-blue-600 hover:underline text-sm font-medium flex items-center gap-1">
+        <a href="{{ session.get('quotes_last_url', url_for('quotes.index')) }}" class="text-blue-600 hover:underline text-sm font-medium flex items-center gap-1">
             <i class="fa-solid fa-arrow-left"></i> Back to Directory
         </a>
 

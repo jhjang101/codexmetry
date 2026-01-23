@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for
+from flask import Blueprint, render_template, request, redirect, url_for, session
 from ..services.clients_service import ClientService
 
 bp = Blueprint('clients', __name__)
@@ -10,6 +10,11 @@ def index():
     """Main landing page for Clients module."""
     search_term = request.args.get('search', '')
     page = request.args.get('page', 1, type=int)
+
+    # RECORD THE STATE: Save the current full URL into the session
+    # request.full_path includes the ?search=...&page=...
+    session['clients_last_url'] = request.full_path
+
     # pagination is an object containing .items, .has_next, .has_prev, etc.
     pagination = ClientService.get_all_with_search(search_term, page=page, per_page=2)
 

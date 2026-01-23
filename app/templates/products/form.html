@@ -11,7 +11,7 @@
 <div class="max-w-4xl mx-auto">
     <!-- Header Actions -->
     <div class="flex justify-between items-center mb-4">
-        <a href="{{ url_for('products.index') }}" 
+        <a href="{{ session.get('products_last_url', url_for('products.index')) }}" 
            class="text-blue-600 hover:underline text-sm font-medium flex items-center gap-1">
             <i class="fa-solid fa-arrow-left"></i> Back to Directory
         </a>
