@@ -27,21 +27,29 @@
         {% endif %}
     </td>
     
-        <!-- Quantity -->
-        <td class="py-2 px-2">
+    <!-- Quantity -->
+    <td class="py-2 px-2">
+        {% if mode == 'view' %}
+            <p class="block bg-gray-100 border rounded-lg p-2 text-sm text-right">{{ item.quantity }}</p>
+        {% else %}
             <input type="number" name="quantities[]" value="{{ item.quantity if item else 1 }}" 
-                   class="block w-full border rounded-lg p-2 text-sm text-center focus:ring-1 focus:ring-blue-300 outline-none"
-                   hx-post="{{ url_for('quotes.calculate') }}"
-                   hx-vals='{"row_id": "{{ row_id }}"}'
-                   hx-trigger="change delay:300ms"
-                   hx-target="#line-total-{{ row_id }}"
-                   hx-include="#quote-main-form">
-        </td>
+                    class="block w-full border rounded-lg p-2 text-sm text-center focus:ring-1 focus:ring-blue-300 outline-none"
+                    hx-post="{{ url_for('quotes.calculate') }}"
+                    hx-vals='{"row_id": "{{ row_id }}"}'
+                    hx-trigger="change delay:300ms"
+                    hx-target="#line-total-{{ row_id }}"
+                    hx-include="#quote-main-form">
+        {% endif %}
+    </td>
 
     <!-- Unit Price Cell -->
     <td class="py-2 px-2" id="unit-price-cell-{{ row_id }}">
-        {# Even though it's a separate file for HTMX, we 'include' it to keep it inline #}
-        {% include 'quotes/partials/unit_price_input.html' %}
+        {% if mode == 'view' %}
+            <p class="block bg-gray-100 border rounded-lg p-2 text-sm text-right">{{ item.quoted_unit_price | usd if item else '$0.00' }}</p>
+        {% else %}
+            {# Even though it's a separate file for HTMX, we 'include' it to keep it inline #}
+            {% include 'quotes/partials/unit_price_input.html' %}
+        {% endif %}
     </td>
 
     <!-- Line Total Display -->
@@ -53,8 +61,10 @@
 
     <td class="py-2 pl-2 text-center">
         {% if mode != 'view' %}
-        <button type="button" class="text-red-500 hover:text-red-800 text-lg font-bold remove-row"
-                onclick="this.closest('.item-row').remove(); htmx.trigger('body', 'recalculate')">×</button>
+        <button type="button" class="text-red-400 hover:text-red-800 remove-row"
+                onclick="this.closest('.item-row').remove(); htmx.trigger('body', 'recalculate')">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
         {% endif %}
     </td>
 </tr>
