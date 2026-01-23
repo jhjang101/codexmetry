@@ -27,30 +27,30 @@
                 </div>
                 <div class="flex-1">
                     <label 
-                        class="block text-sm font-medium text-gray-700">Company Logo</label>
+                        class="block text-sm font-medium text-gray-600">Company Logo</label>
                     <input type="file" accept=".png,.jpg,.jpeg,.gif" name="logo" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
                 </div>
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700">Company Name</label>
-                <input type="text" name="company_name" value="{{ metadata.company_name }}" class="mt-1 block w-full border rounded-lg p-2 focus:ring-1 focus:ring-blue-300 outline-none">
+                <label class="block text-sm font-medium text-gray-600">Company Name</label>
+                <input type="text" name="company_name" value="{{ metadata.company_name }}" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700">Timezone</label>
-                <input type="text" name="timezone" value="{{ metadata.timezone }}" class="mt-1 block w-full border rounded-lg p-2 focus:ring-1 focus:ring-blue-300 outline-none">
+                <label class="block text-sm font-medium text-gray-600">Timezone</label>
+                <input type="text" name="timezone" value="{{ metadata.timezone }}" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">
             </div>
             <div class="col-span-2">
-                <label class="block text-sm font-medium text-gray-700">Address</label>
-                <textarea name="address" rows="3" class="mt-1 block w-full border rounded-lg p-2 focus:ring-1 focus:ring-blue-300 outline-none">{{ metadata.address }}</textarea>
+                <label class="block text-sm font-medium text-gray-600">Address</label>
+                <textarea name="address" rows="3" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">{{ metadata.address }}</textarea>
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700">Invoice Threshold (USD)</label>
-                <input type="text" name="threshold" value="{{ metadata.invoice_threshold | usd }}" class="mt-1 block w-full border rounded-lg p-2 focus:ring-1 focus:ring-blue-300 outline-none">
+                <label class="block text-sm font-medium text-gray-600">Invoice Threshold (USD)</label>
+                <input type="text" name="threshold" value="{{ metadata.invoice_threshold | usd }}" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">
             </div>
             <!-- Document Number Padding -->
             <div class="relative">
                 <div class="flex items-center gap-1 mb-1 group">
-                    <label class="block text-sm font-medium text-gray-700">Document Number Padding</label>
+                    <label class="block text-sm font-medium text-gray-600">Document Number Padding</label>
                     <i class="fa-solid fa-circle-info text-amber-500 text-xs cursor-help"></i>
                     <!-- Tooltip Box (Visible on Hover) -->
                     <div class="invisible group-hover:visible absolute bottom-full left-0 mb-2 w-64 p-2 bg-slate-700 text-white text-xs rounded-lg shadow-xl z-10 leading-relaxed">
