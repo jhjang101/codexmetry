@@ -65,7 +65,7 @@
                     </div>
                     {% if mode != 'view' %}
                     <div class="flex-1">
-                        <label class="block text-sm font-medium text-gray-700">Product Image</label>
+                        <label class="block text-sm font-medium text-gray-600">Product Image</label>
                         <input type="file" name="image" accept=".png,.jpg,.jpeg,.gif" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
                     </div>
                     {% endif %}
@@ -73,31 +73,31 @@
 
                 <!-- Product Details -->
                 <div class="col-span-2">
-                    <label class="block text-sm font-medium text-gray-700">Product Name</label>
+                    <label class="block text-sm font-medium text-gray-600">Product Name</label>
                     {% if mode == 'view' %}
-                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2">{{ product.name }}</p>
+                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ product.name }}</p>
                     {% else %}
-                        <input type="text" name="name" value="{{ product.name if product else '' }}" class="mt-1 block w-full border rounded-lg p-2 focus:ring-1 focus:ring-blue-300 outline-none" required>
+                        <input type="text" name="name" value="{{ product.name if product else '' }}" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none" required>
                     {% endif %}
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Catalog Number</label>
+                    <label class="block text-sm font-medium text-gray-600">Catalog Number</label>
                     {% if mode == 'view' %}
-                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2">{{ product.catalog_number or '-' }}</p>
+                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ product.catalog_number or '-' }}</p>
                     {% else %}
-                        <input type="text" name="catalog_number" value="{{ product.catalog_number if product else '' }}" class="mt-1 block w-full border rounded-lg p-2 focus:ring-1 focus:ring-blue-300 outline-none">
+                        <input type="text" name="catalog_number" value="{{ product.catalog_number if product else '' }}" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">
                     {% endif %}
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Category</label>
+                    <label class="block text-sm font-medium text-gray-600">Category</label>
                     {% if mode == 'view' %}
-                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2">{{ product.category.type if product and product.category else '-' }}</p>
+                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ product.category.type if product and product.category else '-' }}</p>
                     {% else %}
                         <div class="relative">
                         <select name="category_id" 
-                                class="mt-1 block w-full border rounded-lg p-2 focus:ring-1 focus:ring-blue-300 outline-none appearance-none bg-transparent cursor-pointer pr-10">
+                                class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none appearance-none bg-transparent cursor-pointer pr-10">
                             <option value="">Uncategorized</option>
                             {% for category in categories %}
                                 <option value="{{ category.id }}" {{ 'selected' if (product and product.category_id == category.id) else '' }}>{{ category.type }}</option>
@@ -111,11 +111,11 @@
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Default Unit Price (USD)</label>
+                    <label class="block text-sm font-medium text-gray-600">Default Unit Price (USD)</label>
                     {% if mode == 'view' %}
-                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2">{{ product.default_unit_price | usd }}</p>
+                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ product.default_unit_price | usd }}</p>
                     {% else %}
-                        <input type="text" name="unit_price" value="{{ product.default_unit_price | usd if product else '' }}" class="mt-1 block w-full border rounded-lg p-2 focus:ring-1 focus:ring-blue-300 outline-none">
+                        <input type="text" name="unit_price" value="{{ product.default_unit_price | usd if product else '' }}" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">
                     {% endif %}
                 </div>
             </div>

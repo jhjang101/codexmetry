@@ -57,33 +57,33 @@
             <h2 class="text-xl font-semibold mb-4 border-b pb-2">Vendor Information</h2>
             <div class="grid grid-cols-2 gap-4">
                 <div class="col-span-2">
-                    <label class="block text-sm font-medium text-gray-700">Company Name</label>
+                    <label class="block text-sm font-medium text-gray-600">Company Name</label>
                     {% if mode == 'view' %}
-                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2">
+                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">
                             {{ vendor.company_name }}
                         </p>
                     {% else %}
                         <input type="text" name="company_name" 
                                value="{{ vendor.company_name if vendor else '' }}" 
-                               class="mt-1 block w-full border rounded-lg p-2 focus:ring-1 focus:ring-blue-300 outline-none" required>
+                               class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none" required>
                     {% endif %}
                 </div>
                 <div class="col-span-2">
-                    <label class="block text-sm font-medium text-gray-700">Website URL</label>
+                    <label class="block text-sm font-medium text-gray-600">Website URL</label>
                     {% if mode == 'view' %}
-                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2">{{ vendor.url or '-' }}</p>
+                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ vendor.url or '-' }}</p>
                     {% else %}
                         <input type="text" name="url" value="{{ vendor.url if vendor else '' }}" 
-                               class="mt-1 block w-full border rounded-lg p-2 focus:ring-1 focus:ring-blue-300 outline-none">
+                               class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">
                     {% endif %}
                 </div>
                 <div class="col-span-2">
-                    <label class="block text-sm font-medium text-gray-700">Address</label>
+                    <label class="block text-sm font-medium text-gray-600">Address</label>
                     {% if mode == 'view' %}
-                    <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 whitespace-pre-wrap">{{ vendor.address or '-' }}</p>
+                    <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm whitespace-pre-wrap">{{ vendor.address or '-' }}</p>
                     {% else %}
                         <textarea name="address" rows="3" 
-                                  class="mt-1 block w-full border rounded-lg p-2 focus:ring-1 focus:ring-blue-300 outline-none">{{ vendor.address if vendor else '' }}</textarea>
+                                  class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">{{ vendor.address if vendor else '' }}</textarea>
                     {% endif %}
                 </div>
             </div>
@@ -106,10 +106,10 @@
 
             <div id="contact-list" class="space-y-3">
                 {% if mode == 'view' %}
-                    <div class="grid grid-cols-10 gap-4 text-xs font-semibold text-gray-500 uppercase tracking-wider px-2">
-                        <div class="col-span-3">First Name</div>
-                        <div class="col-span-3">Last Name</div>
-                        <div class="col-span-4">Email Address</div>
+                    <div class="grid grid-cols-10 gap-4 text-sm text-gray-600 px-2">
+                        <div class="col-span-3 font-medium">First Name</div>
+                        <div class="col-span-3 font-medium">Last Name</div>
+                        <div class="col-span-4 font-medium">Email Address</div>
                     </div>
 
                     {% for contact in vendor.contacts %}
