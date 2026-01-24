@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, session
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash
 from ..services.vendors_service import VendorService
 
 bp = Blueprint('vendors', __name__)
@@ -35,6 +35,8 @@ def add():
         # 2. Process and Save Personnel (Contacts)
         contacts = _parse_contact_form(request.form)
         VendorService.update_personnel(new_vendor.id, contacts)
+
+        flash(f'Vendor {new_vendor.company_name} added successfully!', 'success')
         return redirect(url_for('vendors.index'))
 
     return render_template('vendors/form.html', mode='add', vendor=None)
@@ -59,13 +61,19 @@ def edit(id):
         # 2. Update Personnel (Contacts)
         contacts = _parse_contact_form(request.form)
         VendorService.update_personnel(id, contacts)
+
+        flash(f'Vendor {vendor.company_name} updated successfully!', 'success')
         return redirect(url_for('vendors.view', id=id))
 
     return render_template('vendors/form.html', mode='edit', vendor=vendor)
 
 @bp.route('/archive/<int:id>', methods=['POST'])
 def archive(id):
-    VendorService.archive(id)
+    vendor = VendorService.archive(id)
+    if vendor:
+        flash(f'Vendor {vendor.company_name} has been moved to archives.', 'warning')
+    else:
+        flash('Vendor not found.', 'error')
     return redirect(url_for('vendors.index'))
 
 # --- HTMX PARTIALS ---

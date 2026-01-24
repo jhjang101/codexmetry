@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, session
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash
 from ..services.clients_service import ClientService
 
 bp = Blueprint('clients', __name__)
@@ -39,6 +39,8 @@ def add():
         # 2. Process and Save Personnel (Contacts)
         contacts = _parse_contact_form(request.form)
         ClientService.update_personnel(new_client.id, contacts)
+
+        flash(f'Client {new_client.company_name} added successfully!', 'success')
         return redirect(url_for('clients.index'))
 
     return render_template('clients/form.html', mode='add', client=None)
@@ -62,13 +64,21 @@ def edit(id):
         # 2. Update Personnel (Contacts)
         contacts = _parse_contact_form(request.form)
         ClientService.update_personnel(id, contacts)
+
+        flash(f'Client {client.company_name} updated successfully!', 'success')
         return redirect(url_for('clients.view', id=id))
 
     return render_template('clients/form.html', mode='edit', client=client)
 
 @bp.route('/archive/<int:id>', methods=['POST'])
 def archive(id):
-    ClientService.archive(id)
+    client = ClientService.archive(id)
+
+    if client:
+        flash(f'Client {client.company_name} has been moved to archives.', 'warning')
+    else:
+        flash('Client not found.', 'error')
+        
     return redirect(url_for('clients.index'))
 
 # --- HTMX PARTIALS ---

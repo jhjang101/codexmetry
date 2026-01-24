@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, session
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash
 from ..services.quotes_service import QuoteService
 from ..services.products_service import ProductService
 from ..services.clients_service import ClientService
@@ -56,6 +56,7 @@ def add():
         items = _parse_items_form(request.form)
         QuoteService.update_items(new_quote.id, items)
 
+        flash(f'Quote {new_quote.quote_number} added successfully!', 'success')
         return redirect(url_for('quotes.index'))
 
     # GET: Prepare form data
@@ -104,6 +105,7 @@ def edit(id):
         items = _parse_items_form(request.form)
         QuoteService.update_items(id, items)
 
+        flash(f'Quote {quote.quote_number} updated successfully!', 'success')
         return redirect(url_for('quotes.view', id=id))
 
     clients = ClientService.get_all()
@@ -112,7 +114,11 @@ def edit(id):
 
 @bp.route('/archive/<int:id>', methods=['POST'])
 def archive(id):
-    QuoteService.archive(id)
+    quote = QuoteService.archive(id)
+    if quote:
+        flash(f'Quote {quote.quote_number} has been moved to archives.', 'warning')
+    else:
+        flash('Quote not found.', 'error')
     return redirect(url_for('quotes.index'))
 
 # --- HTMX PARTIALS & LIVE MATH ---

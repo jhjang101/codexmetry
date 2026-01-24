@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, session
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash
 from ..services.products_service import ProductService
 from ..services.settings_service import ProductCategoryService
 from ..utils.images import save_image
@@ -44,7 +44,9 @@ def add():
             'default_unit_price': parse_to_cents(request.form.get('unit_price', '')),
             'image_url': saved_filename
         }
-        ProductService.add(**product_data)
+        new_product = ProductService.add(**product_data)
+
+        flash(f'Product {new_product.name} added successfully!', 'success')
         return redirect(url_for('products.index'))
 
     # GET: Load categories for the dropdown
@@ -80,6 +82,7 @@ def edit(id):
             product_data['image_url'] = saved_filename
 
         ProductService.update(id, **product_data)
+        flash(f'Product {product.name} updated successfully!', 'success')
         return redirect(url_for('products.view', id=id))
 
     # GET: Load categories for the dropdown
@@ -88,5 +91,9 @@ def edit(id):
 
 @bp.route('/archive/<int:id>', methods=['POST'])
 def archive(id):
-    ProductService.archive(id)
+    product = ProductService.archive(id)
+    if product:
+        flash(f'Product {product.name} has been moved to archives.', 'warning')
+    else:
+        flash('Product not found.', 'error')
     return redirect(url_for('products.index'))

@@ -33,7 +33,6 @@ def index():
 # Route to update metadata
 @bp.route('/metadata/update', methods=['POST'])
 def update_metadata():
-    print("update_metadata")
     metadata = {
         'company_name': request.form.get('company_name'),
         'address': request.form.get('address'),
