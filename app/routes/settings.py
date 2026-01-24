@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for
+from flask import Blueprint, render_template, request, redirect, url_for, flash
 from ..services.settings_service import (
     MetadataService,
     PoTypeService,
@@ -54,6 +54,7 @@ def update_metadata():
             metadata['company_logo'] = new_filename
 
     MetadataService.update(1, **metadata)
+    flash('Metadata updated successfully!', 'success')
 
     return redirect(url_for('settings.index'))
 
