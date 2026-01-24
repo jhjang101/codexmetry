@@ -2,10 +2,18 @@
 
 {% block title %}
     {% if mode == 'add' %}New Product
-    {% elif mode == 'edit' %}Edit Product
-    {% else %}{{ product.name }}
+    {% elif mode == 'edit' %}Edit Product - {{ product.name }}
+    {% else %}Product - {{ product.name }}
     {% endif %}
 {% endblock %}
+
+{% block header %}
+    {% if mode == 'add' %}New Product
+    {% elif mode == 'edit' %}<span class = "text-gray-400">Edit Product - </span>{{ product.name }}
+    {% else %}<span class = "text-gray-400">Product - </span>{{ product.name }}
+    {% endif %}
+{% endblock %}
+
 
 {% block content %}
 <div class="max-w-4xl mx-auto">

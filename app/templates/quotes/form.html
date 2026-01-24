@@ -1,7 +1,17 @@
 {% extends 'layout.html' %}
 
 {% block title %}
-    {% if mode == 'add' %}New Quote{% elif mode == 'edit' %}Edit Quote{% else %}{{ quote.quote_number }}{% endif %}
+    {% if mode == 'add' %}New Quote
+    {% elif mode == 'edit' %}Edit Quote - {{ quote.quote_number }}
+    {% else %}Quotes - {{ quote.quote_number }}
+    {% endif %}
+{% endblock %}
+
+{% block header %}
+    {% if mode == 'add' %}New Quote
+    {% elif mode == 'edit' %}<span class = "text-gray-400">Edit Quote - </span>{{ quote.quote_number }}
+    {% else %}<span class = "text-gray-400">Quote - </span>{{ quote.quote_number }}
+    {% endif %}
 {% endblock %}
 
 {% block content %}

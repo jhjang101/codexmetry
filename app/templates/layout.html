@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Codexmetry</title>
+    <title>{% block title %}Codexmetry{% endblock %}</title>
     <!-- CDNs -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
@@ -58,7 +58,7 @@
     <!-- Main Area -->
     <main class="flex-1 flex flex-col overflow-hidden">
         <header class="bg-white shadow-sm py-4 px-8 flex justify-between items-center border-b border-gray-200">
-            <h1 class="text-xl font-semibold text-gray-800">{% block title %}{% endblock %}</h1>
+            <h1 class="text-xl font-semibold text-gray-800">{% block header %}{% endblock %}</h1>
             <div class="text-sm text-gray-500">
                 <i class="fa-regular fa-calendar-days mr-2"></i>
                 {{ now.strftime('%Y-%m-%d %-H:%M:%S') }}

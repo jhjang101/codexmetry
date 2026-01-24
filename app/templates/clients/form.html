@@ -2,8 +2,15 @@
 
 {% block title %}
     {% if mode == 'add' %}New Client
-    {% elif mode == 'edit' %}Edit Client
-    {% else %}{{ client.company_name }}
+    {% elif mode == 'edit' %}Edit Client - {{ client.company_name }}
+    {% else %}Client - {{ client.company_name }}
+    {% endif %}
+{% endblock %}
+
+{% block header %}
+    {% if mode == 'add' %}New Client
+    {% elif mode == 'edit' %}<span class = "text-gray-400">Edit Client - </span>{{ client.company_name }}
+    {% else %}<span class = "text-gray-400">Client - </span>{{ client.company_name }}
     {% endif %}
 {% endblock %}
 

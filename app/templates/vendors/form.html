@@ -2,8 +2,15 @@
 
 {% block title %}
     {% if mode == 'add' %}New Vendor
-    {% elif mode == 'edit' %}Edit Vendor
-    {% else %}{{ vendor.company_name }}
+    {% elif mode == 'edit' %}Edit Vendor - {{ vendor.company_name }}
+    {% else %}Vendor - {{ vendor.company_name }}
+    {% endif %}
+{% endblock %}
+
+{% block header %}
+    {% if mode == 'add' %}New Vendor
+    {% elif mode == 'edit' %}<span class = "text-gray-400">Edit Vendor - </span>{{ vendor.company_name }}
+    {% else %}<span class = "text-gray-400">Vendor - </span>{{ vendor.company_name }}
     {% endif %}
 {% endblock %}
 
