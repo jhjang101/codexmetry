@@ -71,7 +71,7 @@
             {% with messages = get_flashed_messages(with_categories=true) %}
               {% if messages %}
                 {% for category, message in messages %}
-                  <div class="mb-4 p-2 pl-5 w-full rounded-lg  
+                  <div class="mb-2 p-2 pl-5 w-full rounded-lg  
                     {% if category == 'error' %} text-red-700 bg-red-100
                     {% elif category == 'info' %} text-blue-700 bg-blue-100
                     {% elif category == 'success' %} text-green-700 bg-green-100 border-l-4 border-green-400

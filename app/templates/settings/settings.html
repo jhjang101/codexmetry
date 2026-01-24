@@ -6,8 +6,8 @@
 <div class="max-w-4xl mx-auto">
 
     <!-- 1. Company Metadata Form (Standard POST) -->
-    <section class="bg-white p-6 rounded-lg shadow mb-4">
-        <h2 class="text-xl font-semibold mb-4 border-b pb-2">Company Information</h2>
+    <section class="bg-white p-6 rounded-lg shadow mb-2">
+        <h2 class="text-xl font-semibold mb-2 border-b pb-2">Company Information</h2>
         <form action="{{ url_for('settings.update_metadata') }}" method="POST" enctype="multipart/form-data" 
             class="grid grid-cols-2 gap-4">
             <!-- CSRF Token handled by Flask-WTF -->
@@ -54,7 +54,7 @@
                     <label class="block text-sm font-medium text-gray-600">Document Number Padding</label>
                     <i class="fa-solid fa-circle-info text-amber-500 text-xs cursor-help"></i>
                     <!-- Tooltip Box (Visible on Hover) -->
-                    <div class="invisible group-hover:visible absolute bottom-full left-0 mb-2 w-64 p-2 bg-slate-700 text-white text-xs rounded-lg shadow-xl z-10 leading-relaxed">
+                    <div class="invisible group-hover:visible absolute bottom-full left-0 mb-1 w-64 p-2 bg-slate-700 text-white text-xs rounded-lg shadow-xl z-10 leading-relaxed">
                          Default is 4 (e.g., CDX-260001). Affects new records only. 
                         <br><br>
                         <span class="text-amber-400 font-bold">Warning:</span> 

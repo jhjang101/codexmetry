@@ -18,7 +18,7 @@
 {% block content %}
 <div class="max-w-4xl mx-auto">
     <!-- Header Actions -->
-    <div class="flex justify-between items-center mb-4">
+    <div class="flex justify-between items-center mb-2">
         <a href="{{ session.get('products_last_url', url_for('products.index')) }}" 
            class="text-blue-600 hover:underline text-sm font-medium flex items-center gap-1">
             <i class="fa-solid fa-arrow-left"></i> Back to Directory
@@ -57,12 +57,12 @@
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="hidden" name="old_image" value="{{ product.image_url if product else '' }}">
 
-        <section class="bg-white p-6 rounded-lg shadow mb-8">
-            <h2 class="text-xl font-semibold mb-4 border-b pb-2">Catalog Information</h2>
+        <section class="bg-white p-6 rounded-lg shadow mb-2">
+            <h2 class="text-xl font-semibold mb-2 border-b pb-2">Catalog Information</h2>
             
             <div class="grid grid-cols-2 gap-4">
                 <!-- Image Section -->
-                <div class="col-span-2 flex items-center gap-6 mb-4">
+                <div class="col-span-2 flex items-center gap-6 mb-2">
                     <div class="w-24 h-24 bg-gray-100 rounded border flex items-center justify-center overflow-hidden shadow-inner">
                         {% if product and product.image_url %}
                             <img src="{{ url_for('static', filename='uploads/products/' + product.image_url) }}" 

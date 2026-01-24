@@ -1,5 +1,5 @@
-<section class="bg-white p-6 rounded-lg shadow mb-4">
-    <h2 class="text-md font-semibold mb-4 border-b pb-2">
+<section class="bg-white p-6 rounded-lg shadow mb-2">
+    <h2 class="text-md font-semibold mb-2 border-b pb-2">
         {{ table_name | 
             replace('po_types', 'PO Types') | 
             replace('product_categories', 'Product Categories') | 
@@ -10,7 +10,7 @@
     </h2>
     
     <!-- List and Archive Items  -->
-    <ul class="space-y-2 mb-4">
+    <ul class="space-y-2 mb-2">
         {% for item in items %}
         <li class="flex justify-between items-center bg-gray-50 p-2 rounded-lg border text-sm" id="item-{{ table_name }}-{{ item.id }}">
             <span>{{ item.type }}</span>

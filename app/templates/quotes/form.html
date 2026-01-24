@@ -18,7 +18,7 @@
 <div class="max-w-5xl mx-auto">
     
     <!-- 1. HEADER ACTION BAR -->
-    <div class="flex justify-between items-center mb-4">
+    <div class="flex justify-between items-center mb-2">
         <a href="{{ session.get('quotes_last_url', url_for('quotes.index')) }}" class="text-blue-600 hover:underline text-sm font-medium flex items-center gap-1">
             <i class="fa-solid fa-arrow-left"></i> Back to Directory
         </a>
@@ -55,8 +55,8 @@
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
         <!-- Header Information -->
-        <section class="bg-white p-6 rounded-lg shadow mb-8">
-            <h2 class="text-xl font-semibold mb-4 border-b pb-2">Quote Information</h2>
+        <section class="bg-white p-6 rounded-lg shadow mb-2">
+            <h2 class="text-xl font-semibold mb-2 border-b pb-2">Quote Information</h2>
             <div class="grid grid-cols-3 gap-4">
                 <div class="col-span-2">
                     <label class="block text-sm font-medium text-gray-500">Client</label>
@@ -135,8 +135,8 @@
         </section>
 
         <!-- Line Items Section -->
-        <section class="bg-white p-6 rounded-lg shadow mb-8">
-            <div class="flex justify-between items-center mb-4 border-b pb-2">
+        <section class="bg-white p-6 rounded-lg shadow mb-2">
+            <div class="flex justify-between items-center mb-2 border-b pb-2">
                 <h2 class="text-xl font-semibold">Products & Services</h2>
                 {% if mode != 'view' %}
                     <button type="button" 
