@@ -12,10 +12,7 @@
     </thead>
     <tbody class="divide-y divide-gray-100 bg-white">
         {% for quote in pagination.items %}
-        <tr class="hover:bg-blue-50/40 transition-colors cursor-pointer" 
-            hx-get="{{ url_for('quotes.view', id=quote.id) }}" 
-            hx-target="body" 
-            hx-push-url="true">
+        <tr class="hover:bg-blue-50/40 transition-colors">
             
             <!-- Status Pill Logic -->
             <td class="px-6 py-4 whitespace-nowrap">
@@ -55,7 +52,18 @@
             </td>
 
             <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
-                <span class="text-blue-600 font-medium">View</span>
+                <span class="text-gray-400 font-medium hover:text-blue-600 cursor-pointer"
+                      hx-get="{{ url_for('quotes.view', id=quote.id) }}" 
+                      hx-target="body" 
+                      hx-push-url="true">
+                    <i class="fa-regular fa-eye m-1" title="view"></i>
+                </span>
+                <span class="text-gray-400 font-medium hover:text-yellow-600 cursor-pointer"
+                      hx-get="{{ url_for('quotes.edit', id=quote.id) }}"
+                      hx-target="body"
+                      hx-push-url="true">
+                    <i class="fa-regular fa-pen-to-square m-1" title="edit"></i>
+                </span>
             </td>
         </tr>
         {% else %}

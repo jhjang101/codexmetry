@@ -31,13 +31,13 @@
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" 
                             class="text-red-400 px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-800 transition-colors">
-                        Archive Product
+                        Delete
                     </button>
                 </form>
 
                 <a href="{{ url_for('products.edit', id=product.id) }}" 
-                   class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors shadow-sm">
-                    Edit Product
+                   class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors">
+                    <i class="fa-regular fa-pen-to-square mr-1"></i>Edit Product
                 </a>
             {% else %}
                 <a href="{% if mode == 'add' %}{{ url_for('products.index') }}{% else %}{{ url_for('products.view', id=product.id) }}{% endif %}" 
@@ -45,8 +45,8 @@
                     Cancel
                 </a>
                 <button type="submit" form="product-main-form" 
-                        class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors shadow-sm">
-                    Save Product
+                        class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors">
+                    <i class="fa-regular fa-floppy-disk mr-1"></i>Save Product
                 </button>
             {% endif %}
         </div>

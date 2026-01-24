@@ -25,14 +25,27 @@
 
         <div class="flex gap-3 items-center">
             {% if mode == 'view' %}
-                <form action="{{ url_for('quotes.archive', id=quote.id) }}" method="POST" onsubmit="return confirm('Archive this quote?')">
+                <form action="{{ url_for('quotes.archive', id=quote.id) }}" method="POST" 
+                      onsubmit="return confirm('Archive this quote?')">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button type="submit" class="text-red-400 px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-800 transition-colors">Archive Quote</button>
+                    <button type="submit" 
+                            class="text-red-400 px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-800 transition-colors">
+                        Delete
+                    </button>
                 </form>
-                <a href="{{ url_for('quotes.edit', id=quote.id) }}" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors shadow-sm">Edit Quote</a>
+                <a href="{{ url_for('quotes.edit', id=quote.id) }}" 
+                   class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors shadow-sm">
+                    <i class="fa-regular fa-pen-to-square mr-1"></i>Edit Quote
+                </a>
             {% else %}
-                <a href="{% if mode == 'add' %}{{ url_for('quotes.index') }}{% else %}{{ url_for('quotes.view', id=quote.id) }}{% endif %}" class="text-gray-500 px-4 py-2 text-sm font-medium hover:text-gray-800">Cancel</a>
-                <button type="submit" form="quote-main-form" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors shadow-sm">Save Quote</button>
+                <a href="{% if mode == 'add' %}{{ url_for('quotes.index') }}{% else %}{{ url_for('quotes.view', id=quote.id) }}{% endif %}" 
+                   class="text-gray-500 px-4 py-2 text-sm font-medium hover:text-gray-800">
+                    Cancel
+                </a>
+                <button type="submit" form="quote-main-form" 
+                        class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors shadow-sm">
+                        <i class="fa-regular fa-floppy-disk mr-1"></i>Save Quote
+                </button>
             {% endif %}
         </div>
     </div>
