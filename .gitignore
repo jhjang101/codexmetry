@@ -11,3 +11,6 @@ wheels/
 
 # environment variables
 **/.env
+
+# others
+app/instance/codexmetry.db
