@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, sessio
 from ..services.quotes_service import QuoteService
 from ..services.products_service import ProductService
 from ..services.clients_service import ClientService
+from ..services.attachment_service import AttachmentService
 from ..utils.money import parse_to_cents, format_usd
 from ..utils.docs import generate_doc_number 
 from ..models import Quote
@@ -56,6 +57,12 @@ def add():
         items = _parse_items_form(request.form)
         QuoteService.update_items(new_quote.id, items)
 
+        # 3. COMMIT ATTACHMENTS
+        new_files = request.files.getlist('attachments')
+        print('new_files:', new_files)
+        # We call commit with an empty delete list because it's a new quote
+        AttachmentService.commit('Quote', new_quote.id, new_files=new_files)
+
         flash(f'Quote {new_quote.quote_number} added successfully!', 'success')
         return redirect(url_for('quotes.index'))
 
@@ -104,6 +111,12 @@ def edit(id):
         # 2. Update Line Items
         items = _parse_items_form(request.form)
         QuoteService.update_items(id, items)
+
+        # 3. COMMIT ATTACHMENTS
+        new_files = request.files.getlist('attachments')
+        raw_delete_ids = request.form.getlist('delete_ids[]') 
+        delete_ids = [int(fid) for fid in raw_delete_ids if fid.isdigit()]
+        AttachmentService.commit('Quote', id, new_files=new_files, delete_ids=delete_ids)
 
         flash(f'Quote {quote.quote_number} updated successfully!', 'success')
         return redirect(url_for('quotes.view', id=id))
@@ -155,11 +168,6 @@ def calculate():
     row_ids = request.form.getlist('row_ids[]')
     quantities = request.form.getlist('quantities[]')
     unit_prices = request.form.getlist('unit_prices[]')
-
-    print('row_id:', row_id)
-    print('row_ids:', row_ids)
-    print('quantities:', quantities)
-    print('unit_prices:', unit_prices)
 
     line_total = 0
     grand_total = 0

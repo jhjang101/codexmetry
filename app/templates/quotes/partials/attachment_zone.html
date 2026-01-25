@@ -1,0 +1,167 @@
+<div class="grid grid-cols-10 gap-4">
+    <!-- 1. Notes Area (Span 4) -->
+    <div class="col-span-4">
+        <label class="block text-sm font-medium text-gray-500 mb-1">Internal Notes</label>
+        {% if mode == 'view' %}
+            <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 whitespace-pre-wrap min-h-[120px] text-sm">{{ quote.note or '-' }}</p>
+        {% else %}
+            <textarea name="note" rows="5" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">{{ quote.note if quote else '' }}</textarea>
+        {% endif %}
+    </div>
+
+    <!-- 2. Dropzone (Span 3) -->
+    <div class="col-span-3">
+        <label class="block text-sm font-medium text-gray-500 mb-1">Upload Documents</label>
+        {% if mode == 'view' %}
+            <div class="mt-1 flex items-center justify-center w-full h-[120px] border-2 border-dashed border-gray-200 rounded-lg bg-gray-50 opacity-50">
+                <p class="text-xs text-gray-400 italic">Upload disabled in view mode</p>
+            </div>
+        {% else %}
+            <!-- This is the "Magic" Dropzone -->
+            <div id="dropzone" 
+                 class="mt-1 flex flex-col items-center justify-center w-full h-[120px] border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 hover:bg-blue-50 hover:border-blue-400 transition-all cursor-pointer group"
+                 onclick="document.getElementById('file-input').click()">
+                
+                <i class="fa-solid fa-cloud-arrow-up text-2xl text-gray-300 group-hover:text-blue-500 mb-2"></i>
+                <p class="text-[10px] text-gray-500 text-center px-4">Drag files here or <span class="text-blue-600 font-bold underline">browse</span></p>
+                
+                <!-- Hidden Real Input -->
+                <input type="file" id="file-input" name="attachments" multiple class="hidden" onchange="stageFiles(this.files)">
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- 3. Staging List (Span 3) -->
+    <div class="col-span-3">
+        <label class="block text-sm font-medium text-gray-500 mb-1">Attachments</label>
+        <div id="file-staging-list" class="mt-1 space-y-1 max-h-[120px] overflow-y-auto pr-2">
+            
+            <!-- Existing Files (From Database) -->
+            {% if quote and quote.attachments %}
+                {% for file in quote.attachments %}
+                <div class="flex justify-between items-center bg-gray-100 p-1 rounded-lg border text-[11px] group" id="existing-file-{{ file.id }}">
+                    <a href="{{ url_for('static', filename='uploads/quotes/' + file.file_path) }}" target="_blank" class="truncate font-medium text-blue-600 hover:underline">
+                        <i class="fa-solid fa-file-lines mr-1"></i>{{ file.file_name }}
+                    </a>
+                    {% if mode != 'view' %}
+                        <button type="button" onclick="toggleFileDelete('{{ file.id }}')" class="text-red-400 hover:text-red-600">
+                            <i class="fa-solid fa-trash-can" id="icon-{{ file.id }}"></i>
+                        </button>
+                        <input type="hidden" name="delete_ids[]" id="delete-input-{{ file.id }}" disabled value="{{ file.id }}">
+                    {% endif %}
+                </div>
+                {% endfor %}
+            {% elif mode == 'view' %}
+                <p class="text-center text-gray-400 italic text-xs py-4">No files attached.</p>
+            {% endif %}
+
+            <!-- New Files (Javascript will inject items here) -->
+            <div id="new-files-container" class="space-y-1"></div>
+        </div>
+    </div>
+</div>
+
+<!-- 4. The "Glue" Logic (Small Vanilla JS) -->
+<script>
+    // Limits (Matches standard business settings)
+    const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+    const MAX_FILES = 10;
+
+    // --- 1. NEW FILES LOGIC (Accumulation & Removal) ---
+    let stagedFiles = new DataTransfer();
+
+    function stageFiles(files) {
+        const container = document.getElementById('new-files-container');
+        const input = document.getElementById('file-input');
+
+        if (stagedFiles.files.length + files.length > MAX_FILES) {
+            alert(`You can only attach up to ${MAX_FILES} files.`);
+            return;
+        }
+
+        Array.from(files).forEach(file => {
+            if (file.size > MAX_FILE_SIZE) {
+                alert(`${file.name} is too large. Max size is 5MB.`);
+                return;
+            }
+
+            const fileKey = 'f' + Math.random().toString(36).substring(2, 10);
+            
+            // Prevent duplicates
+            let isDuplicate = false;
+            for (let i = 0; i < stagedFiles.files.length; i++) {
+                if (stagedFiles.files[i].name === file.name && stagedFiles.files[i].size === file.size) {
+                    isDuplicate = true;
+                }
+            }
+
+            if (!isDuplicate) {
+                stagedFiles.items.add(file);
+                const row = document.createElement('div');
+                row.id = 'staged-' + fileKey;
+                row.className = "flex justify-between items-center bg-green-50 p-1 rounded-lg border border-green-200 text-[11px] text-green-700 font-bold mb-1";
+                row.innerHTML = `
+                    <span class="truncate"><i class="fa-solid fa-file-circle-plus mr-1"></i>${file.name}</span>
+                    <button type="button" onclick="removeFromStage('${fileKey}')" class="text-green-800 hover:text-red-600 transition-colors">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                `;
+                container.appendChild(row);
+            }
+        });
+        input.files = stagedFiles.files;
+
+        input.value = ''; // Clear the input field after staging
+    }
+
+    function removeFromStage(fileKey) {
+        const input = document.getElementById('file-input');
+        const row = document.getElementById('staged-' + fileKey);
+        if(row) row.remove();
+
+        const newDT = new DataTransfer();
+        for (let i = 0; i < stagedFiles.files.length; i++) {
+            const file = stagedFiles.files[i];
+            if (btoa(file.name + file.size).substring(0, 16) !== fileKey) {
+                newDT.items.add(file);
+            }
+        }
+        stagedFiles = newDT;
+        input.files = stagedFiles.files;
+    }
+
+    // --- 2. EXISTING FILES LOGIC (Mark for Delete) ---
+    function toggleFileDelete(id) {
+        const row = document.getElementById('existing-file-' + id);
+        const input = document.getElementById('delete-input-' + id);
+        const icon = document.getElementById('icon-' + id);
+
+        if (input.disabled) {
+            // ACTION: Mark for Deletion
+            input.disabled = false; // Now it WILL be sent to Python
+            row.classList.add('opacity-50', 'line-through', 'bg-red-50', 'border-red-200', 'text-red-700');
+            row.classList.remove('bg-gray-100');
+            icon.classList.replace('fa-trash-can', 'fa-rotate-left');
+            icon.parentElement.title = "Undo delete";
+        } else {
+            // ACTION: Undo Mark
+            input.disabled = true; // Now it will be IGNORED by Python
+            row.classList.remove('opacity-50', 'line-through', 'bg-red-50', 'border-red-200', 'text-red-700');
+            row.classList.add('bg-gray-100');
+            icon.classList.replace('fa-rotate-left', 'fa-trash-can');
+            icon.parentElement.title = "Delete file";
+        }
+    }
+
+    // --- 3. DRAG AND DROP HANDLERS ---
+    const dz = document.getElementById('dropzone');
+    if(dz) {
+        ['dragenter', 'dragover'].forEach(n => dz.addEventListener(n, e => {
+            e.preventDefault(); dz.classList.add('bg-blue-100', 'border-blue-500');
+        }));
+        ['dragleave', 'drop'].forEach(n => dz.addEventListener(n, e => {
+            e.preventDefault(); dz.classList.remove('bg-blue-100', 'border-blue-500');
+        }));
+        dz.addEventListener('drop', e => { e.preventDefault(); stageFiles(e.dataTransfer.files); });
+    }
+</script>

@@ -146,6 +146,13 @@ class Quote(db.Model):
 
     client: Mapped["Client"] = relationship(back_populates="quotes")
     items: Mapped[list["QuoteItem"]] = relationship(back_populates="quote", cascade="all, delete-orphan")
+    attachments: Mapped[list["Attachment"]] = relationship(
+        primaryjoin="and_(Quote.id==Attachment.entity_id, Attachment.entity_type=='Quote')",
+        foreign_keys="[Attachment.entity_id]",
+        viewonly=True, # Safety: manage files via the AttachmentService, not this list
+        order_by="Attachment.uploaded_at.asc()"
+    )
+
 
 class PurchaseOrder(db.Model):
     __tablename__ = 'purchase_orders'

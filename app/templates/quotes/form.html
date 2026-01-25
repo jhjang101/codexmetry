@@ -51,7 +51,10 @@
     </div>
 
     <!-- 2. MAIN DATA FORM -->
-    <form id="quote-main-form" action="{% if mode == 'add' %}{{ url_for('quotes.add') }}{% else %}{{ url_for('quotes.edit', id=quote.id) }}{% endif %}" method="POST">
+    <form id="quote-main-form" 
+          action="{% if mode == 'add' %}{{ url_for('quotes.add') }}{% else %}{{ url_for('quotes.edit', id=quote.id) }}{% endif %}" 
+          method="POST"
+          enctype="multipart/form-data">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
         <!-- Header Information -->
@@ -190,14 +193,10 @@
 
         </section>
 
-        <section class="bg-white p-6 rounded-lg shadow">
-            <label class="block text-sm font-medium text-gray-500">Internal Notes</label>
-            {% if mode == 'view' %}
-                <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 whitespace-pre-wrap min-h-[100px]">{{ quote.note or '-' }}</p>
-            {% else %}
-                <textarea name="note" rows="4" class="mt-1 block w-full border rounded-lg p-2 focus:ring-1 focus:ring-blue-300 outline-none">{{ quote.note if quote else '' }}</textarea>
-            {% endif %}
+        <section class="bg-white p-6 rounded-lg shadow mb-2">
+            {% include 'quotes/partials/attachment_zone.html' %}
         </section>
+
     </form>
 </div>
 {% endblock %}
