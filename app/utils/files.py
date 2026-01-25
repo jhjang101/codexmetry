@@ -1,4 +1,5 @@
 import os
+import secrets
 from datetime import datetime
 from werkzeug.utils import secure_filename
 from flask import current_app
@@ -20,15 +21,28 @@ def save_file(file, subfolder: str) -> str | None:
     if not allowed_file(file.filename):
         return None
 
-    # 1. Generate unique filename (CDX Pattern: timestamp + secured name)
+    # 1. Generate unique identifiers
     timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
-    filename = f"{timestamp}_{secure_filename(file.filename)}"
+    random_suffix = secrets.token_hex(3) # Adds something like 'a1b2c3'
+    
+    # 2. Secure the name (strips non-ASCII)
+    secured_name = secure_filename(file.filename)
 
-    # 2. Ensure target directory exists
+    # 3. Handle non-ASCII fallbacks
+    if not secured_name or secured_name.startswith('.'):
+        ext = os.path.splitext(file.filename)[1]
+        secured_name = f"attachment{ext}"
+
+    # 4. Final UNIQUE internal path
+    # Format: TIMESTAMP_RANDOM_NAME.EXT
+    # Example: 20260124_a1b2c3_attachment.txt
+    filename = f"{timestamp}_{random_suffix}_{secured_name}"
+
+    # 5. Ensure target directory exists
     target_dir = os.path.join(current_app.config['UPLOAD_FOLDER'], subfolder)
     os.makedirs(target_dir, exist_ok=True)
 
-    # 3. Save to disk
+    # 6. Save to disk
     file.save(os.path.join(target_dir, filename))
 
     return filename

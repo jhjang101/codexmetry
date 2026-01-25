@@ -184,9 +184,6 @@ def calculate():
         price = parse_to_cents(item['price'])
         grand_total += qty * price
 
-    print('grand_total:', grand_total)
-
-
     return render_template('quotes/partials/calculation_result.html', 
                            row_id=row_id,
                            line_total=line_total, 

@@ -20,14 +20,19 @@
             <!-- This is the "Magic" Dropzone -->
             <div id="dropzone" 
                  class="mt-1 flex flex-col items-center justify-center w-full h-[120px] border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 hover:bg-blue-50 hover:border-blue-400 transition-all cursor-pointer group"
-                 onclick="document.getElementById('file-input').click()">
+                 onclick="document.getElementById('file-picker').click()">
                 
                 <i class="fa-solid fa-cloud-arrow-up text-2xl text-gray-300 group-hover:text-blue-500 mb-2"></i>
                 <p class="text-[10px] text-gray-500 text-center px-4">Drag files here or <span class="text-blue-600 font-bold underline">browse</span></p>
                 
-                <!-- Hidden Real Input -->
-                <input type="file" id="file-input" name="attachments" multiple class="hidden" onchange="stageFiles(this.files)">
+                <!-- 1. THE PICKER: No 'name' attribute, so it's never sent to the server. 
+                    We clear this every time files are staged. -->
+                <input type="file" id="file-picker" multiple class="hidden" onchange="stageFiles(this.files)">
             </div>
+
+            <!-- 2. THE SUBMITTER: This is the real input that Flask sees (name="attachments").
+                It is hidden and updated only by our Javascript. -->
+            <input type="file" id="file-submitter" name="attachments" multiple class="hidden">
         {% endif %}
     </div>
 
@@ -68,14 +73,16 @@
     const MAX_FILES = 10;
 
     // --- 1. NEW FILES LOGIC (Accumulation & Removal) ---
-    let stagedFiles = new DataTransfer();
+    let stagedFiles = new DataTransfer(); // Our "Source of Truth" in RAM
 
     function stageFiles(files) {
         const container = document.getElementById('new-files-container');
-        const input = document.getElementById('file-input');
+        const submitter = document.getElementById('file-submitter');
+        const picker = document.getElementById('file-picker');
 
         if (stagedFiles.files.length + files.length > MAX_FILES) {
-            alert(`You can only attach up to ${MAX_FILES} files.`);
+            alert(`Limit ${MAX_FILES} files.`);
+            picker.value = ''; 
             return;
         }
 
@@ -84,8 +91,6 @@
                 alert(`${file.name} is too large. Max size is 5MB.`);
                 return;
             }
-
-            const fileKey = 'f' + Math.random().toString(36).substring(2, 10);
             
             // Prevent duplicates
             let isDuplicate = false;
@@ -95,6 +100,9 @@
                 }
             }
 
+            const fileKey = 'f' + Math.random().toString(36).substring(2, 10);
+
+            // Add to UI
             if (!isDuplicate) {
                 stagedFiles.items.add(file);
                 const row = document.createElement('div');
@@ -102,32 +110,42 @@
                 row.className = "flex justify-between items-center bg-green-50 p-1 rounded-lg border border-green-200 text-[11px] text-green-700 font-bold mb-1";
                 row.innerHTML = `
                     <span class="truncate"><i class="fa-solid fa-file-circle-plus mr-1"></i>${file.name}</span>
-                    <button type="button" onclick="removeFromStage('${fileKey}')" class="text-green-800 hover:text-red-600 transition-colors">
+                    <button type="button" onclick="removeFromStage('${fileKey}', '${file.name.replace(/'/g, "\\'")}')" class="text-green-800 hover:text-red-600 transition-colors">
                         <i class="fa-solid fa-xmark"></i>
                     </button>
                 `;
                 container.appendChild(row);
             }
         });
-        input.files = stagedFiles.files;
 
-        input.value = ''; // Clear the input field after staging
+        // 1. Sync our memory to the hidden SUBMITTER
+        submitter.files = stagedFiles.files;
+
+        // 2. WIPE the PICKER (Safe because it's not holding our real data)
+        // This allows you to select the same file immediately after deleting it
+        picker.value = '';
+
+        console.log("Submitter now has:", submitter.files.length, "files");
     }
 
-    function removeFromStage(fileKey) {
-        const input = document.getElementById('file-input');
+    function removeFromStage(fileKey, fileName) {
+        const submitter = document.getElementById('file-submitter');
         const row = document.getElementById('staged-' + fileKey);
         if(row) row.remove();
 
+        // Rebuild the Source of Truth
         const newDT = new DataTransfer();
         for (let i = 0; i < stagedFiles.files.length; i++) {
             const file = stagedFiles.files[i];
-            if (btoa(file.name + file.size).substring(0, 16) !== fileKey) {
+            if (file.name !== fileName) {
                 newDT.items.add(file);
             }
         }
         stagedFiles = newDT;
-        input.files = stagedFiles.files;
+        
+        // Sync the Submitter again
+        submitter.files = stagedFiles.files;
+        console.log("After remove, Submitter has:", submitter.files.length);
     }
 
     // --- 2. EXISTING FILES LOGIC (Mark for Delete) ---
