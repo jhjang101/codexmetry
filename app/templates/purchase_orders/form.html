@@ -1,0 +1,231 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+    {% if mode == 'add' %}New PO
+    {% elif mode == 'edit' %}Edit PO - {{ po.po_number }}
+    {% else %}Purchase Orders - {{ po.po_number }}
+    {% endif %}
+{% endblock %}
+
+{% block header %}
+    {% if mode == 'add' %}New PO
+    {% elif mode == 'edit' %}<span class = "text-gray-400">Edit PO - </span>{{ po.po_number }}
+    {% else %}<span class = "text-gray-400">Purchase Orders - </span>{{ po.po_number }}
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+
+<div class="max-w-5xl mx-auto">
+    
+    <!-- 1. HEADER ACTION BAR -->
+    <div class="flex justify-between items-center mb-2">
+        <a href="{{ session.get('purchase_orders_last_url', url_for('purchase_orders.index')) }}" class="text-blue-600 hover:underline text-sm font-medium flex items-center gap-1">
+            <i class="fa-solid fa-arrow-left"></i> Back to Directory
+        </a>
+
+        <div class="flex gap-3 items-center">
+            {% if mode == 'view' %}
+                <form action="{{ url_for('purchase_orders.archive', id=po.id) }}" method="POST" 
+                      onsubmit="return confirm('Archive this po?')">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" 
+                            class="text-red-400 px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-800 transition-colors">
+                        Delete
+                    </button>
+                </form>
+                <a href="{{ url_for('purchase_orders.edit', id=po.id) }}" 
+                   class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors shadow-sm">
+                    <i class="fa-regular fa-pen-to-square mr-1"></i>Edit PO
+                </a>
+            {% else %}
+                <a href="{% if mode == 'add' %}{{ url_for('purchase_orders.index') }}{% else %}{{ url_for('purchase_orders.view', id=po.id) }}{% endif %}" 
+                   class="text-gray-500 px-4 py-2 text-sm font-medium hover:text-gray-800">
+                    Cancel
+                </a>
+                <button type="submit" form="po-main-form" 
+                        class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors shadow-sm">
+                        <i class="fa-regular fa-floppy-disk mr-1"></i>Save PO
+                </button>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- 2. MAIN DATA FORM -->
+    <form id="po-main-form" 
+          action="{% if mode == 'add' %}{{ url_for('purchase_orders.add') }}{% else %}{{ url_for('purchase_orders.edit', id=po.id) }}{% endif %}" 
+          method="POST"
+          enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <!-- Header Information -->
+        <section class="bg-white p-6 rounded-lg shadow mb-2">
+            <h2 class="text-xl font-semibold mb-2 border-b pb-2">PO Information</h2>
+            <div class="grid grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-500">Client</label>
+                    {% if mode == 'view' %}
+                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ po.client.company_name }}</p>
+                    {% else %}
+                        <div class="relative">
+                            <select name="client_id" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none appearance-none bg-transparent cursor-pointer pr-10" required>
+                                <option value="">Select Client...</option>
+                                {% for client in clients %}
+                                    <option value="{{ client.id }}" {{ 'selected' if (po and po.client_id == client.id) else '' }}>{{ client.company_name }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-400">
+                                <i class="fa-solid fa-chevron-down text-[10px]"></i>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-500">PO Number</label>
+                    {% if mode == 'view' %}
+                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm font-mono">{{ po.po_number or '-'}}</p>
+                    {% else %}
+                        <input type="text" name="po_number" value="{{ po.po_number if po else '' }}" 
+                               class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none transition-all">
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-500">PO Date</label>
+                    {% if mode == 'view' %}
+                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ po.po_date or '-' }}</p>
+                    {% else %}
+                        <input type="date" name="po_date" value="{{ po.po_date if po else now.strftime('%Y-%m-%d') }}" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-500">Bill To</label>
+                    {% if mode == 'view' %}
+                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ po.bill_to.company_name }}</p>
+                    {% else %}
+                        <div class="relative">
+                            <select name="bill_to_id" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none appearance-none bg-transparent cursor-pointer pr-10" required>
+                                <option value="">Select Client...</option>
+                                {% for client in clients %}
+                                    <option value="{{ client.id }}" {{ 'selected' if (po and po.client_id == client.id) else '' }}>{{ client.company_name }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-400">
+                                <i class="fa-solid fa-chevron-down text-[10px]"></i>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-500">PO Type</label>
+                    {% if mode == 'view' %}
+                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ po.type.type }}</p>
+                    {% else %}
+                        <div class="relative">
+                            <select name="po_type_id" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none appearance-none bg-transparent cursor-pointer pr-10" required>
+                                <option value="">Select Type...</option>
+                                {% for po_type in po_types %}
+                                    <option value="{{ po_type.id }}" {{ 'selected' if (po and po.po_type_id == po_type.id) else '' }}>{{ po_type.type }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-400">
+                                <i class="fa-solid fa-chevron-down text-[10px]"></i>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-500">Status</label>
+                    {% if mode == 'add' %}
+                        <p class="mt-1 block bg-gray-50 w-full border rounded-lg p-2 text-gray-500 italic">Open (Auto)</p>
+                    {% elif mode == 'view' %}
+                        <p class="p-2">
+                            {% if po.status == 'open' %}
+                            <span class="px-2 py-1 text-xs font-bold uppercase rounded-lg bg-red-100 text-red-700">Open</span>
+                            {% elif po.status == 'completed' %}
+                            <span class="px-2 py-1 text-xs font-bold uppercase rounded-lg bg-green-100 text-green-700">Completed</span>
+                            {% endif %}
+                        </p>
+                    {% else %}
+                        <div class="relative">
+                            <select name="status" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none appearance-none bg-transparent cursor-pointer pr-10">
+                                {% for s in ['open', 'completed'] %}
+                                    <option value="{{ s }}" {{ 'selected' if po.status == s else '' }}>{{ s|capitalize }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-400">
+                                <i class="fa-solid fa-chevron-down text-[10px]"></i>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </section>
+
+        <!-- Line Items Section -->
+        <section class="bg-white p-6 rounded-lg shadow mb-2">
+            <div class="flex justify-between items-center mb-2 border-b pb-2">
+                <h2 class="text-xl font-semibold">Products & Services</h2>
+                {% if mode != 'view' %}
+                    <button type="button" 
+                            hx-get="{{ url_for('purchase_orders.add_row') }}" 
+                            hx-target="#item-list" 
+                            hx-swap="beforeend"
+                            class="text-blue-600 hover:text-blue-800 text-sm font-bold flex items-center gap-1">
+                        + Add Item
+                    </button>
+                {% endif %}
+            </div>
+
+            <table class="w-full text-left">
+                <thead>
+                    <tr class="text-sm text-gray-500">
+                        <th class="pb-2 pl-2 font-medium">Product</th>
+                        <th class="pb-2 w-24 pl-2 font-medium">Qty</th>
+                        <th class="pb-2 w-32 pl-2 font-medium">Unit Price</th>
+                        <th class="pb-2 w-32 pl-2 font-medium">Total</th>
+                        {% if mode != 'view' %}<th class="pb-2 w-10"></th>{% endif %}
+                    </tr>
+                </thead>
+                <tbody id="item-list">
+                    {% if mode == 'view' or mode == 'edit' %}
+                        {% for item in po.items %}
+                            {% include 'purchase_orders/partials/item_row.html' %}
+                        {% endfor %}
+                    {% endif %}
+                    {% if mode == 'add' %}
+                        {% include 'purchase_orders/partials/item_row.html' %}
+                    {% endif %}
+                </tbody>
+            </table>
+
+            <!-- Grand Total Area (Moved here directly) -->
+            <div class="mt-6 pt-4 border-t border-gray-100 flex justify-end">
+                <div class="text-right" 
+                     id="grand-total-container"
+                     hx-post="{{ url_for('purchase_orders.calculate') }}"
+                     hx-trigger="recalculate from:body"
+                     hx-target="#calculation-sink"
+                     hx-include="#po-main-form">
+                    <span class="text-lg text-gray-700 font-medium mr-4">Grand Total:</span>
+                    <span class="text-lg font-bold text-blue-700" id="grand-total-display">
+                        {{ po.total_amount | usd if po else '$0.00' }}
+                    </span>
+                </div>
+            </div>
+            <!-- This hidden div catches the main response of the "recalculate" call -->
+            <div id="calculation-sink" class="hidden"></div>
+
+        </section>
+
+        <section class="bg-white p-6 rounded-lg shadow mb-2">
+            {% include 'purchase_orders/partials/attachment_zone.html' %}
+        </section>
+
+    </form>
+</div>
+
+{% endblock %}

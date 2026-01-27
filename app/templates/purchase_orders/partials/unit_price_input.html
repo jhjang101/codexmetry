@@ -1,0 +1,8 @@
+<input type="text" name="unit_prices[]" 
+       value="{{ price | usd if price is defined else (item.agreed_unit_price | usd if item else '$0.00') }}"
+       class="block w-full border rounded-lg p-2 text-sm text-right focus:ring-1 focus:ring-blue-300 outline-none"
+       hx-post="{{ url_for('purchase_orders.calculate') }}"
+       hx-vals='{"row_id": "{{ row_id }}"}'
+       hx-trigger="keyup changed delay:300ms, load" 
+       hx-target="#line-total-{{ row_id }}"
+       hx-include="#po-main-form">

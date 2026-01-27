@@ -59,7 +59,6 @@ def add():
 
         # 3. COMMIT ATTACHMENTS
         new_files = request.files.getlist('attachments')
-        print('new_files:', new_files)
         # We call commit with an empty delete list because it's a new quote
         AttachmentService.commit('Quote', new_quote.id, new_files=new_files)
 
@@ -142,8 +141,11 @@ def add_row():
     products = ProductService.get_all()
     # Generate a unique row_id based on a timestamp
     row_id = str(int(time.time() * 1000))
-    return render_template(
-            'quotes/partials/item_row.html', products=products, row_id=row_id, item=None, mode='add')
+    return render_template('quotes/partials/item_row.html', 
+                           products=products, 
+                           row_id=row_id, 
+                           item=None, 
+                           mode='add')
 
 @bp.route('/get-unit-price')
 def get_unit_price():

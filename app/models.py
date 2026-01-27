@@ -80,6 +80,11 @@ class Client(db.Model):
     
     contacts: Mapped[list["ClientContact"]] = relationship(back_populates="client", cascade="all, delete-orphan")
     quotes: Mapped[list["Quote"]] = relationship(back_populates="client")
+    purchase_orders: Mapped[list["PurchaseOrder"]] = relationship(back_populates="client", foreign_keys="[PurchaseOrder.client_id]")
+    po_billings: Mapped[list["PurchaseOrder"]] = relationship(back_populates="bill_to", foreign_keys="[PurchaseOrder.bill_to_id]")
+    invoices: Mapped[list["Invoice"]] = relationship(back_populates="client", foreign_keys="[Invoice.client_id]")
+    invoice_billings: Mapped[list["Invoice"]] = relationship(back_populates="bill_to", foreign_keys="[Invoice.bill_to_id]")
+
 
 class ClientContact(db.Model):
     __tablename__ = 'client_contacts'
@@ -131,6 +136,9 @@ class OrderRegistry(db.Model):
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.current_timestamp())
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
+    purchase_orders: Mapped[list["PurchaseOrder"]] = relationship(back_populates="order")
+    invoices: Mapped[list["Invoice"]] = relationship(back_populates="order")
+
 class Quote(db.Model):
     __tablename__ = 'quotes'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -153,7 +161,6 @@ class Quote(db.Model):
         order_by="Attachment.uploaded_at.asc()"
     )
 
-
 class PurchaseOrder(db.Model):
     __tablename__ = 'purchase_orders'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -168,7 +175,17 @@ class PurchaseOrder(db.Model):
     note: Mapped[str | None] = mapped_column(Text)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
+    order: Mapped["OrderRegistry"] = relationship(back_populates="purchase_orders")
+    client: Mapped["Client"] = relationship(back_populates="purchase_orders", foreign_keys=[client_id])
+    bill_to: Mapped["Client"] = relationship(back_populates="purchase_orders", foreign_keys=[bill_to_id])
     items: Mapped[list["PoItem"]] = relationship(back_populates="po", cascade="all, delete-orphan")
+    type: Mapped["PoType"] = relationship()
+    attachments: Mapped[list["Attachment"]] = relationship(
+        primaryjoin="and_(PurchaseOrder.id==Attachment.entity_id, Attachment.entity_type=='PurchaseOrder')",
+        foreign_keys="[Attachment.entity_id]",
+        viewonly=True,
+        order_by="Attachment.uploaded_at.asc()"
+    )
 
 class Invoice(db.Model):
     __tablename__ = 'invoices'
@@ -185,6 +202,9 @@ class Invoice(db.Model):
     note: Mapped[str | None] = mapped_column(Text)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
+    order: Mapped["OrderRegistry"] = relationship(back_populates="invoices")
+    client: Mapped["Client"] = relationship(back_populates="invoices", foreign_keys=[client_id])
+    bill_to: Mapped["Client"] = relationship(back_populates="invoices", foreign_keys=[bill_to_id])
     items: Mapped[list["InvoiceItem"]] = relationship(back_populates="invoice", cascade="all, delete-orphan")
 
 class Payment(db.Model):
@@ -245,6 +265,7 @@ class PoItem(db.Model):
     agreed_unit_price: Mapped[int] = mapped_column(Integer, default=0)
 
     po: Mapped["PurchaseOrder"] = relationship(back_populates="items")
+    product: Mapped["Product"] = relationship()
 
 class InvoiceItem(db.Model):
     __tablename__ = 'invoice_items'

@@ -1,0 +1,4 @@
+id,order_id,client_id,invoice_number,invoice_date,tracking_number,status,note
+1,1,1,25359,2025-12-29,,open,
+2,1,1,25357,2025-12-29,,open,
+3,2,2,25988,2025-12-29,,open,
