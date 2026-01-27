@@ -142,7 +142,7 @@ def archive(id):
         flash('PO not found.', 'error')
     return redirect(url_for('purchase_orders.index'))
 
-# --- HTMX CALCULATION ROUTES ---
+# --- HTMX Item-row and Calculation Routes ---
 
 @bp.route('/add-row')
 def add_row():
@@ -199,6 +199,17 @@ def calculate():
                            row_id=row_id,
                            line_total=line_total, 
                            grand_total=grand_total)
+
+# --- HTMX Client-Bill_to Cascade Routes ---
+
+@bp.route('/update-bill-to')
+def update_bill_to():
+    """Returns the Bill To dropdown with the selected client as default."""
+    client_id = request.args.get('client_id', type=int)
+    clients = ClientService.get_all()
+    return render_template('purchase_orders/partials/bill_to_select.html', 
+                           clients=clients, 
+                           selected_id=client_id)
 
 # --- INTERNAL HELPERS ---
 

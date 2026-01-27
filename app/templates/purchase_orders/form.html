@@ -68,7 +68,13 @@
                         <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ po.client.company_name }}</p>
                     {% else %}
                         <div class="relative">
-                            <select name="client_id" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none appearance-none bg-transparent cursor-pointer pr-10" required>
+                            <select name="client_id" 
+                                    class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none appearance-none bg-transparent cursor-pointer pr-10" 
+                                    hx-get="{{ url_for('purchase_orders.update_bill_to') }}"
+                                    hx-target="#bill-to-select-container"
+                                    hx-trigger="change"
+                                    hx-swap="outerHTML"
+                                    required>
                                 <option value="">Select Client...</option>
                                 {% for client in clients %}
                                     <option value="{{ client.id }}" {{ 'selected' if (po and po.client_id == client.id) else '' }}>{{ client.company_name }}</option>
@@ -104,27 +110,17 @@
                     {% if mode == 'view' %}
                         <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ po.bill_to.company_name }}</p>
                     {% else %}
-                        <div class="relative">
-                            <select name="bill_to_id" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none appearance-none bg-transparent cursor-pointer pr-10" required>
-                                <option value="">Select Client...</option>
-                                {% for client in clients %}
-                                    <option value="{{ client.id }}" {{ 'selected' if (po and po.bill_to_id == client.id) else '' }}>{{ client.company_name }}</option>
-                                {% endfor %}
-                            </select>
-                            <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-400">
-                                <i class="fa-solid fa-chevron-down text-[10px]"></i>
-                            </div>
-                        </div>
+                        {% include 'purchase_orders/partials/bill_to_select.html' with context %}
                     {% endif %}
                 </div>
 
                 <div>
                     <label class="block text-sm font-medium text-gray-500">PO Type</label>
                     {% if mode == 'view' %}
-                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ po.type.type }}</p>
+                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ po.po_type.type or '-' }}</p>
                     {% else %}
                         <div class="relative">
-                            <select name="po_type_id" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none appearance-none bg-transparent cursor-pointer pr-10" required>
+                            <select name="po_type_id" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none appearance-none bg-transparent cursor-pointer pr-10">
                                 <option value="">Select Type...</option>
                                 {% for po_type in po_types %}
                                     <option value="{{ po_type.id }}" {{ 'selected' if (po and po.po_type_id == po_type.id) else '' }}>{{ po_type.type }}</option>

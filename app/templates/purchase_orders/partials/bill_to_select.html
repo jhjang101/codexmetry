@@ -1,0 +1,19 @@
+<div class="relative" id="bill-to-select-container">
+    <select name="bill_to_id" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none appearance-none bg-transparent cursor-pointer pr-10" required>
+        <option value="">Select Client...</option>
+        {% for client in clients %}
+            <option value="{{ client.id }}" 
+                {% if po and po.bill_to_id == client.id and selected_id is not defined %}
+                selected
+                {% elif selected_id is defined and selected_id == client.id %}
+                selected
+                {% endif %}>
+                {{ client.company_name }}
+            </option>
+        {% endfor %}
+    </select>
+    <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-400">
+        <i class="fa-solid fa-chevron-down text-[10px]"></i>
+    </div>
+</div>
+

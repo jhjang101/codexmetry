@@ -177,9 +177,9 @@ class PurchaseOrder(db.Model):
 
     order: Mapped["OrderRegistry"] = relationship(back_populates="purchase_orders")
     client: Mapped["Client"] = relationship(back_populates="purchase_orders", foreign_keys=[client_id])
-    bill_to: Mapped["Client"] = relationship(back_populates="purchase_orders", foreign_keys=[bill_to_id])
+    bill_to: Mapped["Client"] = relationship(back_populates="po_billings", foreign_keys=[bill_to_id])
     items: Mapped[list["PoItem"]] = relationship(back_populates="po", cascade="all, delete-orphan")
-    type: Mapped["PoType"] = relationship()
+    po_type: Mapped["PoType"] = relationship()
     attachments: Mapped[list["Attachment"]] = relationship(
         primaryjoin="and_(PurchaseOrder.id==Attachment.entity_id, Attachment.entity_type=='PurchaseOrder')",
         foreign_keys="[Attachment.entity_id]",
