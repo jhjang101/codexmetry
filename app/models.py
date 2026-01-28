@@ -151,7 +151,8 @@ class Quote(db.Model):
     order_id: Mapped[int | None] = mapped_column(ForeignKey('orders.id')) # Linked after conversion
     note: Mapped[str | None] = mapped_column(Text)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
-
+    
+    purchase_orders: Mapped[list["PurchaseOrder"]] = relationship(back_populates="quote")
     client: Mapped["Client"] = relationship(back_populates="quotes")
     items: Mapped[list["QuoteItem"]] = relationship(back_populates="quote", cascade="all, delete-orphan")
     attachments: Mapped[list["Attachment"]] = relationship(
@@ -165,6 +166,7 @@ class PurchaseOrder(db.Model):
     __tablename__ = 'purchase_orders'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     order_id: Mapped[int] = mapped_column(ForeignKey('orders.id'), nullable=False)
+    quote_id: Mapped[int | None] = mapped_column(ForeignKey('quotes.id'))
     client_id: Mapped[int] = mapped_column(ForeignKey('clients.id'), nullable=False)
     bill_to_id: Mapped[int] = mapped_column(ForeignKey('clients.id'), nullable=False)
     po_number: Mapped[str | None] = mapped_column(String(100))
@@ -176,6 +178,7 @@ class PurchaseOrder(db.Model):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
     order: Mapped["OrderRegistry"] = relationship(back_populates="purchase_orders")
+    quote: Mapped["Quote | None"] = relationship(back_populates="purchase_orders")
     client: Mapped["Client"] = relationship(back_populates="purchase_orders", foreign_keys=[client_id])
     bill_to: Mapped["Client"] = relationship(back_populates="po_billings", foreign_keys=[bill_to_id])
     items: Mapped[list["PoItem"]] = relationship(back_populates="po", cascade="all, delete-orphan")
