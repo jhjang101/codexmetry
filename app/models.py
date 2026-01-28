@@ -145,7 +145,7 @@ class Quote(db.Model):
     client_id: Mapped[int] = mapped_column(ForeignKey('clients.id'), nullable=False)
     quote_number: Mapped[str] = mapped_column(String(100), nullable=False) # Not unique
     total_amount: Mapped[int] = mapped_column(Integer, default=0)
-    quote_date: Mapped[date] = mapped_column(Date, server_default=func.current_timestamp())
+    quote_date: Mapped[date] = mapped_column(Date, server_default=func.current_date())
     expiration_date: Mapped[date | None] = mapped_column(Date)
     status: Mapped[str] = mapped_column(String(20), default='draft') # draft, sent, accepted, expired
     order_id: Mapped[int | None] = mapped_column(ForeignKey('orders.id')) # Linked after conversion
@@ -169,7 +169,7 @@ class PurchaseOrder(db.Model):
     bill_to_id: Mapped[int] = mapped_column(ForeignKey('clients.id'), nullable=False)
     po_number: Mapped[str | None] = mapped_column(String(100))
     total_amount: Mapped[int] = mapped_column(Integer, default=0)
-    po_date: Mapped[date] = mapped_column(Date, server_default=func.current_timestamp())
+    po_date: Mapped[date] = mapped_column(Date, server_default=func.current_date())
     po_type_id: Mapped[int | None] = mapped_column(ForeignKey('po_types.id'))
     status: Mapped[str] = mapped_column(String(20), default='open')
     note: Mapped[str | None] = mapped_column(Text)
@@ -196,7 +196,7 @@ class Invoice(db.Model):
     bill_to_id: Mapped[int] = mapped_column(ForeignKey('clients.id'), nullable=False)
     invoice_number: Mapped[str] = mapped_column(String(100), nullable=False) # Not unique
     total_amount: Mapped[int] = mapped_column(Integer, default=0)
-    invoice_date: Mapped[date] = mapped_column(Date, server_default=func.current_timestamp())
+    invoice_date: Mapped[date] = mapped_column(Date, server_default=func.current_date())
     tracking_number: Mapped[str | None] = mapped_column(String(100))
     status: Mapped[str] = mapped_column(String(20), default='open')
     note: Mapped[str | None] = mapped_column(Text)
@@ -216,7 +216,7 @@ class Payment(db.Model):
     paid_from_id: Mapped[int] = mapped_column(ForeignKey('clients.id'), nullable=False)
     payment_type_id: Mapped[int | None] = mapped_column(ForeignKey('payment_types.id'))
     amount: Mapped[int] = mapped_column(Integer, nullable=False)
-    payment_date: Mapped[date] = mapped_column(Date, server_default=func.current_timestamp())
+    payment_date: Mapped[date] = mapped_column(Date, server_default=func.current_date())
     note: Mapped[str | None] = mapped_column(Text)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
@@ -227,7 +227,7 @@ class Expense(db.Model):
     vendor_id: Mapped[int] = mapped_column(ForeignKey('vendors.id'), nullable=False)
     category_id: Mapped[int | None] = mapped_column(ForeignKey('expense_categories.id'))
     total_amount: Mapped[int] = mapped_column(Integer, default=0)
-    expense_date: Mapped[date] = mapped_column(Date, server_default=func.current_timestamp())
+    expense_date: Mapped[date] = mapped_column(Date, server_default=func.current_date())
     note: Mapped[str | None] = mapped_column(Text)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
@@ -239,7 +239,7 @@ class Transaction(db.Model):
     transaction_number: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
     description: Mapped[str | None] = mapped_column(String(255))
     amount: Mapped[int] = mapped_column(Integer, nullable=False)
-    transaction_date: Mapped[date] = mapped_column(Date, server_default=func.current_timestamp())
+    transaction_date: Mapped[date] = mapped_column(Date, server_default=func.current_date())
     category_id: Mapped[int | None] = mapped_column(ForeignKey('transaction_categories.id'))
     note: Mapped[str | None] = mapped_column(Text)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)

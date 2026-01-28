@@ -47,14 +47,22 @@ class PurchaseOrderService(BaseService):
         db.session.flush() # Flush to get registry.id before commit
 
         # 3. Create the Purchase Order
+        client_id = data.get('client_id')
+        bill_to_id = data.get('bill_to_id') or client_id # Fallback logic
+        po_date = data.get('po_date')
+        po_type_id = data.get('po_type_id')
+
         po = PurchaseOrder()
         po.order_id = registry.id
-        po.client_id = data.get('client_id')
-        # PRD 4.3: Bill To defaults to Client but can be overridden
-        po.bill_to_id = data.get('bill_to_id') or data.get('client_id')
+        if client_id is None:
+            raise ValueError("Client ID is required.")
+        po.client_id = int(client_id)
+        po.bill_to_id = int(bill_to_id) if bill_to_id else int(client_id)
+        if po_date:
+            po.po_date = po_date
+        if po_type_id:
+            po.po_type_id = po_type_id
         po.po_number = data.get('po_number') # Client's reference
-        po.po_date = data.get('po_date')
-        po.po_type_id = data.get('po_type_id')
         po.note = data.get('note')
         po.status = 'open'
 
