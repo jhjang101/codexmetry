@@ -14,3 +14,4 @@ wheels/
 
 # others
 app/instance/codexmetry.db
+app/static/uploads/
