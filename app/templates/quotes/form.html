@@ -59,7 +59,15 @@
 
         <!-- Header Information -->
         <section class="bg-white p-6 rounded-lg shadow mb-2">
-            <h2 class="text-xl font-semibold mb-2 border-b pb-2">Quote Information</h2>
+            <div class="flex flex-col">
+                <h2 class="text-xl font-semibold">Quote Information</h2>
+                {% if quote and quote.order_id %}
+                <span class="text-xs text-gray-500 mb-2 border-b pb-2">Order Ref: {{ quote.order.order_number }}</span>
+                {% else %}
+                <span class="text-xs text-gray-500 mb-2 border-b pb-2"></span>
+                {% endif %}
+            </div>
+
             <div class="grid grid-cols-3 gap-4">
                 <div class="col-span-2">
                     <label class="block text-sm font-medium text-gray-500">Client</label>
