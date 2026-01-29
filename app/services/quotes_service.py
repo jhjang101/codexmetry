@@ -63,3 +63,13 @@ class QuoteService(BaseService):
             quote.total_amount = total_cents
         
         db.session.commit()
+
+    @classmethod
+    def get_eligible_for_po(cls, client_id: int):
+        """Returns Sent or Draft quotes for a specific client."""
+        stmt = select(cls.model).where(
+            cls.model.client_id == client_id,
+            cls.model.is_active == True,
+            cls.model.status.in_(['sent', 'draft', 'accepted', 'expired'])
+        ).order_by(cls.model.quote_date.desc())
+        return db.session.execute(stmt).scalars().all()

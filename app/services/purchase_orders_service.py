@@ -1,5 +1,5 @@
 from .base_service import BaseService
-from ..models import PurchaseOrder, PoItem, OrderRegistry, Client
+from ..models import PurchaseOrder, PoItem, OrderRegistry, Client, Quote
 from ..extensions import db
 from ..utils.docs import generate_doc_number
 from sqlalchemy import select, or_
@@ -35,7 +35,7 @@ class PurchaseOrderService(BaseService):
     @classmethod
     def create_with_registry(cls, data: dict) -> PurchaseOrder:
         """
-        Creates a new Order Registry entry and links the PO to it.
+        Creates a new Order Registry entry and links the PO and Quote to it.
         """
         # 1. Generate the next CDX number using the registry model
         cdx_number = generate_doc_number(prefix='CDX', model=OrderRegistry, column_name='order_number')
@@ -48,25 +48,72 @@ class PurchaseOrderService(BaseService):
 
         # 3. Create the Purchase Order
         client_id = data.get('client_id')
+        quote_id = data.get('quote_id')
         bill_to_id = data.get('bill_to_id') or client_id # Fallback logic
+        po_number = data.get('po_number') # Client's reference
         po_date = data.get('po_date')
         po_type_id = data.get('po_type_id')
 
         po = PurchaseOrder()
         po.order_id = registry.id
+        po.quote_id = int(quote_id) if quote_id else None
         if client_id is None:
             raise ValueError("Client ID is required.")
         po.client_id = int(client_id)
         po.bill_to_id = int(bill_to_id) if bill_to_id else int(client_id)
+        po.po_number = po_number 
         if po_date:
             po.po_date = po_date
         if po_type_id:
             po.po_type_id = po_type_id
-        po.po_number = data.get('po_number') # Client's reference
         po.note = data.get('note')
         po.status = 'open'
 
+        # 4. Link and Accept Quote if provided
+        if po.quote_id:
+            quote = db.session.get(Quote, po.quote_id)
+            if quote:
+                quote.status = 'accepted'
+                quote.order_id = po.order_id # Share the Registry ID
+
         db.session.add(po)
+        db.session.commit()
+        return po
+    
+    @classmethod
+    def update_po(cls, id: int, data: dict) -> PurchaseOrder | None:
+        """
+        Specialized update to handle 'Release & Re-link' logic for Quotes.
+        """
+        po = cls.get_by_id(id)
+        if not po:
+            return None
+
+        old_quote_id = po.quote_id
+        quote_id = data.get('quote_id')
+        new_quote_id = int(quote_id) if quote_id else None
+
+        # 1. If the quote changed, manage the states
+        if old_quote_id != new_quote_id:
+            # Release the old quote
+            if old_quote_id:
+                old_quote = db.session.get(Quote, old_quote_id)
+                if old_quote:
+                    old_quote.status = 'sent'
+                    old_quote.order_id = None
+            
+            # Capture the new quote
+            if new_quote_id:
+                new_quote = db.session.get(Quote, new_quote_id)
+                if new_quote:
+                    new_quote.status = 'accepted'
+                    new_quote.order_id = po.order_id
+
+        # 2. Standard Update logic
+        for key, value in data.items():
+            if hasattr(po, key):
+                setattr(po, key, value)
+
         db.session.commit()
         return po
 

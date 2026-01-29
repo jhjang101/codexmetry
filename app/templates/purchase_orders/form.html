@@ -60,9 +60,17 @@
 
         <!-- Header Information -->
         <section class="bg-white p-6 rounded-lg shadow mb-2">
-            <h2 class="text-xl font-semibold mb-2 border-b pb-2">PO Information</h2>
-            <div class="grid grid-cols-3 gap-4">
-                <div>
+            <div class="flex flex-col">
+                <h2 class="text-xl font-semibold">PO Information</h2>
+                {% if po and po.order_id %}
+                <span class="text-xs text-gray-500 mb-2 border-b pb-2">Order Ref: {{ po.order.order_number }}</span>
+                {% else %}
+                <span class="text-xs text-gray-500 mb-2 border-b pb-2"></span>
+                {% endif %}
+            </div>
+            
+            <div class="grid grid-cols-9 gap-4">
+                <div class="col-span-3">
                     <label class="block text-sm font-medium text-gray-500">Client</label>
                     {% if mode == 'view' %}
                         <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ po.client.company_name }}</p>
@@ -70,10 +78,9 @@
                         <div class="relative">
                             <select name="client_id" 
                                     class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none appearance-none bg-transparent cursor-pointer pr-10" 
-                                    hx-get="{{ url_for('purchase_orders.update_bill_to') }}"
-                                    hx-target="#bill-to-select-container"
+                                    hx-get="{{ url_for('purchase_orders.update_client_cascades') }}"
+                                    hx-target="#none" {# We use OOB swaps, so the main target is ignored #}
                                     hx-trigger="change"
-                                    hx-swap="outerHTML"
                                     required>
                                 <option value="">Select Client...</option>
                                 {% for client in clients %}
@@ -86,7 +93,8 @@
                         </div>
                     {% endif %}
                 </div>
-                <div>
+                
+                <div class="col-span-2">
                     <label class="block text-sm font-medium text-gray-500">PO Number</label>
                     {% if mode == 'view' %}
                         <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm font-mono">{{ po.po_number or '-'}}</p>
@@ -96,47 +104,21 @@
                     {% endif %}
                 </div>
                 
-                <div>
-                    <label class="block text-sm font-medium text-gray-500">PO Date</label>
-                    {% if mode == 'view' %}
-                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ po.po_date or '-' }}</p>
-                    {% else %}
-                        <input type="date" name="po_date" value="{{ po.po_date if po else now.strftime('%Y-%m-%d') }}" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">
-                    {% endif %}
+                <div class="col-span-2">
+                    <label class="block text-sm font-medium text-gray-500">Source Quote (Optional)</label>
+                    <div id="quote-select-container">
+                        {% if mode == 'view' %}
+                            <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ po.quote.quote_number if po.quote else 'Manual PO' }}</p>
+                        {% else %}
+                            {% include 'purchase_orders/partials/quote_select.html' with context %}
+                        {% endif %}
+                    </div>
                 </div>
 
-                <div>
-                    <label class="block text-sm font-medium text-gray-500">Bill To</label>
-                    {% if mode == 'view' %}
-                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ po.bill_to.company_name }}</p>
-                    {% else %}
-                        {% include 'purchase_orders/partials/bill_to_select.html' with context %}
-                    {% endif %}
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-500">PO Type</label>
-                    {% if mode == 'view' %}
-                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ po.po_type.type or '-' }}</p>
-                    {% else %}
-                        <div class="relative">
-                            <select name="po_type_id" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none appearance-none bg-transparent cursor-pointer pr-10">
-                                <option value="">Select Type...</option>
-                                {% for po_type in po_types %}
-                                    <option value="{{ po_type.id }}" {{ 'selected' if (po and po.po_type_id == po_type.id) else '' }}>{{ po_type.type }}</option>
-                                {% endfor %}
-                            </select>
-                            <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-400">
-                                <i class="fa-solid fa-chevron-down text-[10px]"></i>
-                            </div>
-                        </div>
-                    {% endif %}
-                </div>
-
-                <div>
+                <div class="col-span-2">
                     <label class="block text-sm font-medium text-gray-500">Status</label>
                     {% if mode == 'add' %}
-                        <p class="mt-1 block bg-gray-50 w-full border rounded-lg p-2 text-gray-500 italic">Open (Auto)</p>
+                        <p class="mt-1 block bg-gray-50 w-full border rounded-lg p-2 text-sm text-gray-500 italic">Open (Auto)</p>
                     {% elif mode == 'view' %}
                         <p class="p-2">
                             {% if po.status == 'open' %}
@@ -158,6 +140,51 @@
                         </div>
                     {% endif %}
                 </div>
+
+                
+                <div class="col-span-3">
+                    <label class="block text-sm font-medium text-gray-500">Bill To</label>
+                    <div id="bill-to-select-container">
+                        {# Handled by OOB or po_view #}
+                        {% if mode == 'view' %}
+                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ po.bill_to.company_name }}</p>
+                        {% else %}
+                        <!-- Initial state: use a simple placeholder or include current logic -->
+                        {% include 'purchase_orders/partials/bill_to_select.html' with context %}
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="col-span-2">
+                    <label class="block text-sm font-medium text-gray-500">PO Date</label>
+                    {% if mode == 'view' %}
+                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ po.po_date or '-' }}</p>
+                    {% else %}
+                        <input type="date" name="po_date" value="{{ po.po_date if po else now.strftime('%Y-%m-%d') }}" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">
+                    {% endif %}
+                </div>
+
+                <div class="col-span-2">
+                    <label class="block text-sm font-medium text-gray-500">PO Type</label>
+                    {% if mode == 'view' %}
+                    <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ po.po_type.type or '-' }}</p>
+                    {% else %}
+                    <div class="relative">
+                        <select name="po_type_id" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none appearance-none bg-transparent cursor-pointer pr-10">
+                            <option value="">Select Type...</option>
+                            {% for po_type in po_types %}
+                            <option value="{{ po_type.id }}" {{ 'selected' if (po and po.po_type_id == po_type.id) else '' }}>{{ po_type.type }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-400">
+                            <i class="fa-solid fa-chevron-down text-[10px]"></i>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- A hidden target for the client-cascades request since it's all OOB -->
+                <div id="none" class="hidden"></div>
             </div>
         </section>
 

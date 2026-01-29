@@ -1,5 +1,6 @@
-from flask import Blueprint, render_template, request, redirect, url_for, session, flash
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash, make_response
 from ..services.purchase_orders_service import PurchaseOrderService
+from ..services.quotes_service import QuoteService
 from ..services.products_service import ProductService
 from ..services.clients_service import ClientService
 from ..services.settings_service import PoTypeService
@@ -39,6 +40,7 @@ def add():
         po_number = request.form.get('po_number', '') # Client Reference
         bill_to_id = request.form.get('bill_to_id')
         po_date = request.form.get('po_date')
+        quote_id = request.form.get('quote_id')
         po_type_id = request.form.get('po_type_id')
         note = request.form.get('note')
 
@@ -47,6 +49,7 @@ def add():
             'po_number': po_number, 
             'bill_to_id': int(bill_to_id) if bill_to_id else int(client_id) if client_id else None,
             'po_date': datetime.strptime(po_date, '%Y-%m-%d').date() if po_date else None,
+            'quote_id': int(quote_id) if quote_id else None,
             'po_type_id': int(po_type_id) if po_type_id else None,
             'note': note
         }
@@ -93,6 +96,7 @@ def edit(id):
         po_number = request.form.get('po_number', '')
         bill_to_id = request.form.get('bill_to_id')
         po_date = request.form.get('po_date')
+        quote_id = request.form.get('quote_id')
         po_type_id = request.form.get('po_type_id')
         note = request.form.get('note')
         status = request.form.get('status')
@@ -102,13 +106,14 @@ def edit(id):
             'po_number': po_number, 
             'bill_to_id': int(bill_to_id) if bill_to_id else int(client_id) if client_id else None,
             'po_date': datetime.strptime(po_date, '%Y-%m-%d').date() if po_date else None,
+            'quote_id': int(quote_id) if quote_id else None,
             'po_type_id': int(po_type_id) if po_type_id else None,
             'note': note,
             'status': status
         }
 
         # 2. Update Header
-        PurchaseOrderService.update(id, **po_data)
+        PurchaseOrderService.update_po(id, po_data)
 
         # 3. Update Line Items
         items = _parse_items_form(request.form)
@@ -126,12 +131,15 @@ def edit(id):
     clients = ClientService.get_all()
     products = ProductService.get_all()
     po_types = PoTypeService.get_all()
+    quotes = QuoteService.get_eligible_for_po(po.client_id)
+
     return render_template('purchase_orders/form.html', 
                            mode='edit', 
                            po=po, 
                            clients=clients, 
                            products=products,
-                           po_types=po_types)
+                           po_types=po_types,
+                           quotes=quotes)
 
 @bp.route('/archive/<int:id>', methods=['POST'])
 def archive(id):
@@ -200,16 +208,58 @@ def calculate():
                            line_total=line_total, 
                            grand_total=grand_total)
 
-# --- HTMX Client-Bill_to Cascade Routes ---
+# --- HTMX Client Cascade Routes ---
 
-@bp.route('/update-bill-to')
-def update_bill_to():
-    """Returns the Bill To dropdown with the selected client as default."""
+@bp.route('/update-client-cascades')
+def update_client_cascades():
+    """Unified route to update both Bill-To and Quote dropdowns via OOB."""
     client_id = request.args.get('client_id', type=int)
+    
+    # 1. Get data for both dropdowns
     clients = ClientService.get_all()
-    return render_template('purchase_orders/partials/bill_to_select.html', 
+    # Use the service method we planned earlier
+    quotes = QuoteService.get_eligible_for_po(client_id) if client_id else []
+    
+    # 2. Return a single partial containing both components
+    return render_template('purchase_orders/partials/client_cascades.html', 
                            clients=clients, 
+                           quotes=quotes, 
                            selected_id=client_id)
+
+# --- HTMX Quote-Itmes Cascade Routes ---
+
+@bp.route('/load-quote-items')
+def load_quote_items():
+    """Step 2: Returns multiple item_row partials based on a selected Quote."""
+    quote_id = request.args.get('quote_id', type=int)
+    quote = QuoteService.get_by_id(quote_id)
+    if not quote:
+        return "" # If 'No Quote' selected, do nothing or return a blank row
+
+    products = ProductService.get_all()
+    html_rows = ""
+    
+    # We iterate through Quote items and render them as PO rows
+    for idx, q_item in enumerate(quote.items):
+        # Generate a unique row_id for each row (timestamp + index)
+        row_id = f"{int(time.time() * 1000)}{idx}"
+        
+        # Format data to match what item_row.html expects
+        item_data = {
+            'product_id': q_item.product_id,
+            'product': q_item.product,
+            'quantity': q_item.quantity,
+            'agreed_unit_price': q_item.quoted_unit_price
+        }
+        
+        html_rows += render_template('purchase_orders/partials/item_row.html',
+                                   item=item_data, products=products, 
+                                   row_id=row_id, mode='add')
+
+    # Trigger 'recalculate' on the body so the Grand Total updates immediately
+    resp = make_response(html_rows)
+    resp.headers['HX-Trigger-After-Swap'] = 'recalculate'
+    return resp
 
 # --- INTERNAL HELPERS ---
 
