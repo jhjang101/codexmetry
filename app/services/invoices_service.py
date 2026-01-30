@@ -4,6 +4,7 @@ from ..extensions import db
 from ..utils.docs import generate_doc_number
 from sqlalchemy import select, or_, func
 from sqlalchemy.orm import joinedload
+from datetime import datetime
 
 class InvoiceService(BaseService):
     model = Invoice
@@ -69,7 +70,7 @@ class InvoiceService(BaseService):
                     'product_id': po_item.product_id,
                     'product': po_item.product,
                     'quantity': remaining_qty,
-                    'unit_price': po_item.agreed_unit_price # Default to PO price
+                    'billed_unit_price': po_item.agreed_unit_price # Default to PO price
                 })
         
         return remaining_items
@@ -78,20 +79,26 @@ class InvoiceService(BaseService):
     def create_invoice(cls, data: dict) -> Invoice:
         """Saves the Invoice header, inheriting Registry ID from the PO."""
 
-         # 1. Define required fields and their "Nice Names" for the error message
+         # 1. First, validate that po_id exists
+        po_id = data.get('po_id')
+        if not po_id:
+            raise ValueError("Purchase Order link is required.")
+
+        # 2. Look up the Purchase Order to get the order_id (Registry Link)
+        po = db.session.get(PurchaseOrder, int(po_id))
+        if not po:
+            raise ValueError("The selected Purchase Order does not exist.")
+
+        # 3. Define other required fields
         required_fields = {
-            'order_id': 'Order Registry ID',
-            'po_id': 'Purchase Order Link',
             'client_id': 'Client',
             'bill_to_id': 'Billing Entity',
             'invoice_number': 'Invoice Number'
         }
 
-        # 2. Perform the validation loop
+        # 4. Perform the validation loop
         for field, label in required_fields.items():
             value = data.get(field)
-            
-            # Check for None, empty string, or whitespace-only strings
             if value is None or (isinstance(value, str) and not value.strip()):
                 raise ValueError(f"{label} is required.")
         
@@ -100,13 +107,13 @@ class InvoiceService(BaseService):
 
         # 3. If validation passes, proceed to create the object
         invoice = Invoice()
-        invoice.order_id = int(data['order_id'])
-        invoice.po_id = int(data['po_id'])
+        invoice.order_id = po.order_id
+        invoice.po_id = po.id
         invoice.client_id = int(data['client_id'])
         invoice.bill_to_id = int(data['bill_to_id'])
         invoice.invoice_number = data['invoice_number'].strip()
         if invoice_date:
-            invoice.invoice_date = invoice_date
+            invoice.invoice_date = datetime.strptime(invoice_date, '%Y-%m-%d').date() if invoice_date else None
         invoice.tracking_number = data.get('tracking_number')
         invoice.note = data.get('note')
         invoice.status = 'open'

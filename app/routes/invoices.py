@@ -62,6 +62,7 @@ def view(id):
     invoice = InvoiceService.get_by_id(id)
     return render_template('invoices/form.html', mode='view', invoice=invoice)
 
+@bp.route('/edit/<int:id>', methods=['GET', 'POST'])
 def edit(id):
     """Edit mode: handles header updates and item list synchronization."""
     invoice = InvoiceService.get_by_id(id)
@@ -214,8 +215,17 @@ def load_po_details():
 # --- INTERNAL HELPERS ---
 
 def _parse_items_form(form_data):
-    p_ids = form_data.getlist('product_ids[]')
-    qtys = form_data.getlist('quantities[]')
-    prices = form_data.getlist('unit_prices[]')
-    return [{'product_id': pid, 'quantity': q, 'unit_price': p} 
-            for pid, q, p in zip(p_ids, qtys, prices) if pid]
+    """Parses parallel lists from form into a list of dictionaries."""
+    product_ids = form_data.getlist('product_ids[]')
+    quantities = form_data.getlist('quantities[]')
+    unit_prices = form_data.getlist('unit_prices[]')
+    
+    items = []
+    for pid, q, p in zip(product_ids, quantities, unit_prices):
+        if pid:
+            items.append({
+                'product_id': int(pid),
+                'quantity': int(q) if q else 1,
+                'unit_price': parse_to_cents(p)
+            })
+    return items

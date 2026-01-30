@@ -45,7 +45,7 @@
     <!-- Unit Price Cell -->
     <td class="py-2 px-2" id="unit-price-cell-{{ row_id }}">
         {% if mode == 'view' %}
-            <p class="block bg-gray-100 border rounded-lg p-2 text-sm text-right">{{ item.unit_price | usd if item else '$0.00' }}</p>
+            <p class="block bg-gray-100 border rounded-lg p-2 text-sm text-right">{{ item.billed_unit_price | usd if item else '$0.00' }}</p>
         {% else %}
             {# Even though it's a separate file for HTMX, we 'include' it to keep it inline #}
             {% include 'invoices/partials/unit_price_input.html' %}
@@ -55,7 +55,7 @@
     <!-- Line Total Display -->
     <td class="py-2 px-2">
         <div id="line-total-{{ row_id }}" class="block bg-gray-100 border rounded-lg p-2 text-sm font-bold text-right text-gray-700">
-            {% if item %}{{ (item.quantity * item.unit_price) | usd }}{% else %}$0.00{% endif %}
+            {% if item %}{{ (item.quantity * item.billed_unit_price) | usd }}{% else %}$0.00{% endif %}
         </div>
     </td>
 
