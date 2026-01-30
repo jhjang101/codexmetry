@@ -1,0 +1,22 @@
+<div class="relative" id="po-select-container">
+    <select name="po_id" 
+            class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none appearance-none bg-transparent cursor-pointer pr-10"
+            hx-get="{{ url_for('invoices.load_po_details') }}"
+            hx-target="#item-list"
+            hx-trigger="change"
+            hx-confirm="This will replace all current line items with items from the selected PO. Proceed?">
+        <option value="">No PO</option>
+        {% for po in pos %}
+            <option value="{{ po.id }}"
+            {# Logic: Select if this is the po currently saved on the Invoice #}
+                {% if invoice and invoice.po_id == po.id %}
+                    selected
+                {% endif %}>
+            {{ po.po_number }} ({{ po.total_amount | usd }})
+        </option>
+        {% endfor %}
+    </select>
+    <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-400">
+        <i class="fa-solid fa-chevron-down text-[10px]"></i>
+    </div>
+</div>

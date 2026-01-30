@@ -150,3 +150,13 @@ class PurchaseOrderService(BaseService):
             po.total_amount = total_cents
         
         db.session.commit()
+
+    @classmethod
+    def get_eligible_for_invoice(cls, client_id: int):
+        """Returns Open pos for a specific client."""
+        stmt = select(cls.model).where(
+            cls.model.client_id == client_id,
+            cls.model.is_active == True,
+            cls.model.status.in_(['open', 'completed'])
+        ).order_by(cls.model.po_date.desc())
+        return db.session.execute(stmt).scalars().all()
