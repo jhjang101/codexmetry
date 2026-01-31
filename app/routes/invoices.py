@@ -3,6 +3,7 @@ from ..services.invoices_service import InvoiceService
 from ..services.purchase_orders_service import PurchaseOrderService
 from ..services.products_service import ProductService
 from ..services.clients_service import ClientService
+from ..services.attachment_service import AttachmentService
 from ..utils.money import parse_to_cents, format_usd
 from ..extensions import db
 from datetime import datetime
@@ -41,6 +42,11 @@ def add():
             # Save items using the shared parser
             items = _parse_items_form(request.form)
             InvoiceService.update_items(new_invoice.id, items)
+
+            # 4. COMMIT ATTACHMENTS
+            new_files = request.files.getlist('attachments')
+            # We call commit with an empty delete list because it's a new quote
+            AttachmentService.commit('Invoice', new_invoice.id, new_files=new_files)
             
             flash(f"Invoice {new_invoice.invoice_number} created!", "success")
             return redirect(url_for('invoices.index'))
@@ -48,6 +54,7 @@ def add():
             db.session.rollback()
             flash(str(e), "error")
             return redirect(url_for('invoices.add'))
+        
         
     clients=ClientService.get_all()
     products=ProductService.get_all()
@@ -86,6 +93,11 @@ def edit(id):
             # Update items using the shared parser
             items = _parse_items_form(request.form)
             InvoiceService.update_items(id, items)
+
+            # 4. Commit Attachments (Handle new and marked for delete)
+            new_files = request.files.getlist('attachments')
+            delete_ids = [int(fid) for fid in request.form.getlist('delete_ids[]') if fid.isdigit()]
+            AttachmentService.commit('Invoice', id, new_files=new_files, delete_ids=delete_ids)
 
             flash(f"Invoice {invoice.invoice_number} updated successfully!", "success")
             return redirect(url_for('invoices.view', id=id))
