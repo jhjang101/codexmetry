@@ -23,7 +23,7 @@
             hx-confirm="This will replace all current line items with items from the selected quote. Proceed?">
         <option value="">No Quote (Manual Entry)</option>
         {% for quote in quotes %}
-            <option value="{{ q.id }}">
+            <option value="{{ quote.id }}">
                 {{ quote.quote_number }} ({{ quote.total_amount | usd }})
             </option>
         {% endfor %}
