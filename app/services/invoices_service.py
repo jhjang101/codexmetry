@@ -2,6 +2,7 @@ from .base_service import BaseService
 from ..models import Invoice, InvoiceItem, PurchaseOrder, PoItem, OrderRegistry, Client
 from ..extensions import db
 from ..utils.docs import generate_doc_number
+from ..utils.money import parse_to_cents
 from sqlalchemy import select, or_, func
 from sqlalchemy.orm import joinedload
 from datetime import datetime
@@ -79,117 +80,142 @@ class InvoiceService(BaseService):
     def create_invoice(cls, data: dict) -> Invoice:
         """Saves the Invoice header, inheriting Registry ID from the PO."""
 
-         # 1. First, validate that po_id exists
-        po_id = data.get('po_id')
-        if not po_id:
-            raise ValueError("Purchase Order link is required.")
-
-        # 2. Look up the Purchase Order to get the order_id (Registry Link)
-        po = db.session.get(PurchaseOrder, int(po_id))
-        if not po:
-            raise ValueError("The selected Purchase Order does not exist.")
-
-        # 3. Define other required fields
+        # 1. Define required fields
         required_fields = {
+            'po_id': 'Purchase Order',
             'client_id': 'Client',
             'bill_to_id': 'Billing Entity',
             'invoice_number': 'Invoice Number'
         }
 
-        # 4. Perform the validation loop
+        # 2. Perform the validation loop
         for field, label in required_fields.items():
             value = data.get(field)
             if value is None or (isinstance(value, str) and not value.strip()):
                 raise ValueError(f"{label} is required.")
-        
-        # Inherit from provided data
-        invoice_date = data.get('invoice_date')
 
-        # 3. If validation passes, proceed to create the object
+        # 3. Look up the Purchase Order to get the order_id (Registry Link)
+        po_id = data['po_id']
+        po = db.session.get(PurchaseOrder, int(po_id))
+        if not po:
+            raise ValueError("The selected Purchase Order does not exist.")
+
+        # 4. Read data
+        client_id = data['client_id']
+        bill_to_id = data['bill_to_id']
+        invoice_number = data['invoice_number']
+        invoice_date = data.get('invoice_date')
+        tracking_number = data.get('tracking_number')
+        note = data.get('note')
+
+        # 5. Proceed to create the object
         invoice = Invoice()
         invoice.order_id = po.order_id
         invoice.po_id = po.id
-        invoice.client_id = int(data['client_id'])
-        invoice.bill_to_id = int(data['bill_to_id'])
-        invoice.invoice_number = data['invoice_number'].strip()
+        invoice.client_id = int(client_id)
+        invoice.bill_to_id = int(bill_to_id)
+        invoice.invoice_number = invoice_number.strip()
         if invoice_date:
-            invoice.invoice_date = datetime.strptime(invoice_date, '%Y-%m-%d').date() if invoice_date else None
-        invoice.tracking_number = data.get('tracking_number')
-        invoice.note = data.get('note')
-        invoice.status = 'open'
+            invoice.invoice_date = datetime.strptime(invoice_date, '%Y-%m-%d').date()
+        invoice.tracking_number = tracking_number.strip() if tracking_number else ''
+        invoice.note = note if note else ''
 
+        # 6. Commit
         db.session.add(invoice)
         db.session.commit()
 
         return invoice
     
     @classmethod
+    def update_invoice(cls, id: int, data: dict) -> Invoice | None:
+        """Updates the Invoice header"""
+        invoice = cls.get_by_id(id)
+        if not invoice:
+            return None
+
+        # 1. Define required fields
+        required_fields = {
+            'po_id': 'Purchase Order',
+            'client_id': 'Client',
+            'bill_to_id': 'Billing Entity',
+            'invoice_number': 'Invoice Number'
+        }
+
+        # 2. Perform the validation loop
+        for field, label in required_fields.items():
+            value = data.get(field)
+            if value is None or (isinstance(value, str) and not value.strip()):
+                raise ValueError(f"{label} is required.")
+
+        # 3. Look up the Purchase Order to get the order_id (Registry Link)
+        po_id = data['po_id']
+        po = db.session.get(PurchaseOrder, int(po_id))
+        if not po:
+            raise ValueError("The selected Purchase Order does not exist.")
+
+        # 4. Read data
+        client_id = data['client_id']
+        bill_to_id = data['bill_to_id']
+        invoice_number = data['invoice_number']
+        invoice_date = data.get('invoice_date')
+        tracking_number = data.get('tracking_number')
+        status = data.get('status')
+        note = data.get('note')
+
+        # 5. Transform data
+        invoice_data = {
+            'po_id': po.id,
+            'order_id': po.order_id,
+            'client_id': int(client_id),
+            'bill_to_id': int(bill_to_id),
+            'invoice_number': invoice_number.strip(),
+            'invoice_date': datetime.strptime(invoice_date, '%Y-%m-%d').date() if invoice_date else None,
+            'tracking_number': tracking_number.strip() if tracking_number else '',
+            'status': status if status else None,
+            'note': note if note else ''
+        }
+
+        # 6. Update the object
+        for key, value in invoice_data.items():
+            if hasattr(invoice, key):
+                setattr(invoice, key, value)
+        db.session.commit()
+
+        return invoice
+    
+    @classmethod
     def update_items(cls, invoice_id: int, items_data: list[dict]):
-        """Wipes current Invoice items and re-inserts new ones with total recalculation."""
+        """
+        Wipe current items and re-insert new ones.
+        Calculates and updates the Invoice.total_amount denormalized column.
+        """
         # 1. Delete old items
-        db.session.execute(db.delete(InvoiceItem).where(InvoiceItem.invoice_id == invoice_id))
+        delete_stmt = db.delete(InvoiceItem).where(InvoiceItem.invoice_id == invoice_id)
+        db.session.execute(delete_stmt)
 
         total_cents = 0
+
+        # 2. Add new items
         for data in items_data:
-            raw_pid = data.get('product_id')
-            if raw_pid:
-                qty = int(data.get('quantity', 0))
-                price = int(data.get('unit_price', 0))
-                total_cents += (qty * price)
+            product_id = data.get('product_id')
+
+            if product_id:
+                product_id = int(product_id)
+                qty = int(data.get('quantity', 1))
+                price = parse_to_cents((data.get('unit_price', 0)))
+                line_total = qty * price
+                total_cents += line_total
 
                 new_item = InvoiceItem()
                 new_item.invoice_id = invoice_id
-                new_item.product_id = int(raw_pid)
+                new_item.product_id = product_id
                 new_item.quantity = qty
                 new_item.billed_unit_price = price
                 db.session.add(new_item)
 
-        # 2. Update the parent total
-        invoice = cls.get_by_id(invoice_id)
-        if invoice:
-            invoice.total_amount = total_cents
+        # 3. Update the Parent Total
+        quote = cls.get_by_id(invoice_id)
+        if quote:
+            quote.total_amount = total_cents
         
         db.session.commit()
-
-
-
-
-
-    # from datetime import datetime
-
-    # @classmethod
-    # def add_with_validation(cls, data: dict) -> Invoice:
-    #     """
-    #     Validates, Transforms, and Saves the Invoice Header.
-    #     Handles string-to-type conversion here to keep routes clean.
-    #     """
-    #     # 1. Extraction & Transformation
-    #     raw_cid = data.get('client_id')
-    #     raw_bid = data.get('bill_to_id')
-    #     raw_oid = data.get('order_id')
-    #     raw_pid = data.get('po_id')
-    #     raw_num = data.get('invoice_number', '').strip()
-    #     raw_date = data.get('invoice_date')
-
-    #     # 2. Validation
-    #     if not all([raw_cid, raw_oid, raw_pid, raw_num]):
-    #         raise ValueError("Client, PO, and Invoice Number are required.")
-
-    #     # 3. Construction
-    #     invoice = Invoice()
-    #     invoice.client_id = int(raw_cid)
-    #     invoice.bill_to_id = int(raw_bid) if raw_bid else int(raw_cid)
-    #     invoice.order_id = int(raw_oid)
-    #     invoice.po_id = int(raw_pid)
-    #     invoice.invoice_number = raw_num
-        
-    #     if raw_date:
-    #         invoice.invoice_date = datetime.strptime(raw_date, '%Y-%m-%d').date()
-        
-    #     invoice.tracking_number = data.get('tracking_number')
-    #     invoice.note = data.get('note')
-    #     invoice.status = 'open'
-
-    #     db.session.add(invoice)
-    #     db.session.commit()
-    #     return invoice

@@ -20,7 +20,8 @@
             hx-get="{{ url_for('invoices.load_po_details') }}"
             hx-target="#item-list"
             hx-trigger="change"
-            hx-confirm="This will replace all current line items with items from the selected PO. Proceed?">
+            hx-confirm="This will replace all current line items with items from the selected PO. Proceed?"
+            required>
         <option value="">No PO</option>
         {% for po in pos %}
             <option value="{{ po.id }}">

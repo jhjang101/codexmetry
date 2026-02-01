@@ -42,9 +42,6 @@ class AttachmentService(BaseService):
 
         # --- 2. HANDLE NEW UPLOADS ---
         for file in files_to_save:
-
-            print('file:', file)
-
             if file and file.filename != '':
                 # Save to disk using our utility
                 # Subfolder is 'quotes', 'invoices', etc.

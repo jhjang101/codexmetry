@@ -4,7 +4,9 @@ from ..services.purchase_orders_service import PurchaseOrderService
 from ..services.products_service import ProductService
 from ..services.clients_service import ClientService
 from ..services.attachment_service import AttachmentService
-from ..utils.money import parse_to_cents, format_usd
+from ..utils.money import parse_to_cents
+from ..utils.docs import generate_doc_number
+from ..models import Invoice
 from ..extensions import db
 from datetime import datetime
 import time
@@ -36,16 +38,24 @@ def index():
 def add():
     if request.method == 'POST':
         try:
-            # Pass the whole request.form to the service for validation/transform
-            new_invoice = InvoiceService.create_invoice(request.form)
-            
-            # Save items using the shared parser
+            # 1. Save Invoice Header
+            invoice_data = {
+                'client_id': request.form.get('client_id'),
+                'invoice_number': request.form.get('invoice_number'),
+                'po_id': request.form.get('po_id'),
+                'bill_to_id': request.form.get('bill_to_id'),
+                'invoice_date': request.form.get('invoice_date'),
+                'tracking_number': request.form.get('tracking_number'),
+                'note': request.form.get('note')
+            }
+            new_invoice = InvoiceService.create_invoice(invoice_data)
+
+            # 2. Save Invoice Line Items
             items = _parse_items_form(request.form)
             InvoiceService.update_items(new_invoice.id, items)
 
-            # 4. COMMIT ATTACHMENTS
+            # 3. Save Attachments
             new_files = request.files.getlist('attachments')
-            # We call commit with an empty delete list because it's a new quote
             AttachmentService.commit('Invoice', new_invoice.id, new_files=new_files)
             
             flash(f"Invoice {new_invoice.invoice_number} created!", "success")
@@ -55,13 +65,17 @@ def add():
             flash(str(e), "error")
             return redirect(url_for('invoices.add'))
         
-        
+    # GET: Prepare form data    
     clients=ClientService.get_all()
     products=ProductService.get_all()
+    suggested_number = generate_doc_number(prefix='INV', model=Invoice, column_name='invoice_number')
     initial_row_id = str(int(time.time() * 1000))
-    return render_template('invoices/form.html', mode='add', invoice=None, 
+    return render_template('invoices/form.html', 
+                           mode='add', 
+                           invoice=None, 
                            clients=clients, 
                            products=products,
+                           suggested_number=suggested_number,
                            timestamp=initial_row_id)
 
 @bp.route('/view/<int:id>')
@@ -76,27 +90,27 @@ def edit(id):
     
     if request.method == 'POST':
         try:
-            raw_date = request.form.get('invoice_date')
-            
+            # 1. Update Invoice Header
             invoice_data = {
-                'invoice_number': request.form.get('invoice_number', '').strip(),
-                'invoice_date': datetime.strptime(raw_date, '%Y-%m-%d').date() if raw_date else None,
-                'tracking_number': request.form.get('tracking_number'),
+                'client_id': request.form.get('client_id'),
+                'invoice_number': request.form.get('invoice_number'),
+                'po_id': request.form.get('po_id'),
                 'status': request.form.get('status'),
+                'bill_to_id': request.form.get('bill_to_id'),
+                'invoice_date': request.form.get('invoice_date'),
+                'tracking_number': request.form.get('tracking_number'),
                 'note': request.form.get('note')
             }
-            
-            # Note: For data integrity, we usually don't change client_id or po_id 
-            # after an invoice is created. If they picked the wrong PO, they should archive and recreate.
-            InvoiceService.update(id, **invoice_data)
+            InvoiceService.update_invoice(id, invoice_data)
 
-            # Update items using the shared parser
+            # 2. Update Invoice Line Items
             items = _parse_items_form(request.form)
             InvoiceService.update_items(id, items)
 
-            # 4. Commit Attachments (Handle new and marked for delete)
+            # 3. Update Attachments (Handle new and marked for delete)
             new_files = request.files.getlist('attachments')
-            delete_ids = [int(fid) for fid in request.form.getlist('delete_ids[]') if fid.isdigit()]
+            raw_delete_ids = request.form.getlist('delete_ids[]') 
+            delete_ids = [int(fid) for fid in raw_delete_ids if fid.isdigit()]
             AttachmentService.commit('Invoice', id, new_files=new_files, delete_ids=delete_ids)
 
             flash(f"Invoice {invoice.invoice_number} updated successfully!", "success")
@@ -107,12 +121,11 @@ def edit(id):
             flash(str(e), "error")
             return redirect(url_for('invoices.edit', id=id))
 
-    # GET hydration: Populate dropdowns for the edit form
+    # GET: Populate dropdowns for the edit form
     clients = ClientService.get_all()
     products = ProductService.get_all()
-    # Fetch all POs for this specific client so the dropdown is populated on load
+    # Fetch eligible POs for this specific client so the dropdown is populated on load
     pos = PurchaseOrderService.get_eligible_for_invoice(invoice.client_id) 
-    
     return render_template('invoices/form.html', 
                            mode='edit', 
                            invoice=invoice, 
@@ -126,6 +139,8 @@ def archive(id):
     invoice = InvoiceService.archive(id)
     if invoice:
         flash(f'Invoice {invoice.invoice_number} moved to archives.', 'warning')
+    else:
+        flash(f'Invoice {invoice.invoice_number} not found.', 'error')
     return redirect(url_for('invoices.index'))
 
 # --- HTMX Item-row and Calculation Routes ---
@@ -166,8 +181,6 @@ def calculate():
     quantities = request.form.getlist('quantities[]')
     unit_prices = request.form.getlist('unit_prices[]')
 
-    print(row_id)
-
     line_total = 0
     grand_total = 0
 
@@ -194,8 +207,9 @@ def calculate():
 def update_client_cascades():
     """Triggered by Client change: updates Bill-To and PO dropdowns."""
     client_id = request.args.get('client_id', type=int)
+    # Prefill Bill_to with this client
     clients = ClientService.get_all()
-    # Only show 'open' POs for this client
+    # Populate eligible POs for this client
     pos = PurchaseOrderService.get_eligible_for_invoice(client_id) if client_id else []
     
     return render_template('invoices/partials/client_cascades.html', 
@@ -206,7 +220,8 @@ def load_po_details():
     """Triggered by PO selection: updates Order ID and pre-fills remaining items."""
     po_id = request.args.get('po_id', type=int)
     po = PurchaseOrderService.get_by_id(po_id)
-    if not po: return ""
+    if not po: 
+        return ""
 
     # 1. Get remaining items from the Invoice Service (Partial Billing Logic)
     if po_id:
@@ -233,11 +248,11 @@ def _parse_items_form(form_data):
     unit_prices = form_data.getlist('unit_prices[]')
     
     items = []
-    for pid, q, p in zip(product_ids, quantities, unit_prices):
-        if pid:
+    for product_id, qty, price in zip(product_ids, quantities, unit_prices):
+        if product_id:
             items.append({
-                'product_id': int(pid),
-                'quantity': int(q) if q else 1,
-                'unit_price': parse_to_cents(p)
+                'product_id': product_id,
+                'quantity': qty,
+                'unit_price': price
             })
     return items
