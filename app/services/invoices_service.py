@@ -1,5 +1,5 @@
 from .base_service import BaseService
-from ..models import Invoice, InvoiceItem, PurchaseOrder, PoItem, OrderRegistry, Client
+from ..models import Invoice, InvoiceItem, PurchaseOrder, PoItem, OrderRegistry, Client, Payment
 from ..extensions import db
 from ..utils.docs import generate_doc_number
 from ..utils.money import parse_to_cents
@@ -228,4 +228,26 @@ class InvoiceService(BaseService):
                 cls.model.is_active == True
             ).order_by(cls.model.invoice_date.desc())
         return db.session.execute(stmt).scalars().all()
+    
+    @classmethod
+    def get_invoice_by_id(cls, id: int) -> Invoice | None:
+        """
+        Unified Invoice Fetcher:
+        Returns the Invoice record augmented with .balance.
+        Used for Cascades and Source-Driven logic.
+        """
+        # 1. Fetch the base Invoice record
+        invoice = cls.get_by_id(id)
+        if not invoice:
+            return None
+        
+        # 2. Calculate Balance total amount - sum of paid amount
+        payment_sum_stmt = select(func.sum(Payment.amount)).where(
+            Payment.invoice_id == invoice.id,
+            Payment.is_active == True
+        )
+        total_paid = db.session.execute(payment_sum_stmt).scalar() or 0
+        invoice.balance = invoice.total_amount - total_paid
+
+        return invoice
 
