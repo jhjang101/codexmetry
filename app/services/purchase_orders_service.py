@@ -1,8 +1,8 @@
 from .base_service import BaseService
-from ..models import PurchaseOrder, PoItem, OrderRegistry, Client, Quote
+from ..models import PurchaseOrder, PoItem, OrderRegistry, Client, Quote, Invoice, InvoiceItem, Payment
 from ..extensions import db
 from ..utils.docs import generate_doc_number
-from sqlalchemy import select, or_
+from sqlalchemy import select, or_, func
 
 class PurchaseOrderService(BaseService):
     model = PurchaseOrder
@@ -160,3 +160,51 @@ class PurchaseOrderService(BaseService):
             cls.model.status.in_(['open', 'completed'])
         ).order_by(cls.model.po_date.desc())
         return db.session.execute(stmt).scalars().all()
+    
+    @classmethod
+    def get_po_by_id(cls, id: int) -> PurchaseOrder | None:
+        """
+        Unified PO Fetcher:
+        Returns the PO record augmented with .balance and .remaining_items.
+        Used for Cascades and Source-Driven logic.
+        """
+        # 1. Fetch the base PO record
+        po = cls.get_by_id(id)
+        if not po:
+            return None
+        
+        # 2. Calculate Balance total amount - sum of invoiced amount
+        invoice_sum_stmt = select(func.sum(Invoice.total_amount)).where(
+            Invoice.po_id == po.id,
+            Invoice.is_active == True
+        )
+        total_invoiced = db.session.execute(invoice_sum_stmt).scalar() or 0
+        po.balance = po.total_amount - total_invoiced
+
+        # 3. Calculate Remaining Items
+        remaining_items = []
+        for po_item in po.items:
+            # Sum up how many of this product have already been invoiced for this PO
+            already_invoiced_stmt = (
+                select(func.sum(InvoiceItem.quantity))
+                .join(InvoiceItem.invoice)
+                .where(
+                    Invoice.po_id == po.id,
+                    InvoiceItem.product_id == po_item.product_id,
+                    Invoice.is_active == True
+                )
+            )
+            already_invoiced = db.session.execute(already_invoiced_stmt).scalar() or 0
+            remaining_qty = po_item.quantity - already_invoiced
+
+            # Only include items that haven't been fully invoiced
+            if remaining_qty > 0:
+                remaining_items.append({
+                    'product_id': po_item.product_id,
+                    'product': po_item.product,
+                    'quantity': remaining_qty,
+                    'agreed_unit_price': po_item.agreed_unit_price
+                })
+        po.remaining_items = remaining_items
+
+        return po
