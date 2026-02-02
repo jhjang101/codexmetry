@@ -84,7 +84,8 @@ class Client(db.Model):
     po_billing: Mapped[list["PurchaseOrder"]] = relationship(back_populates="bill_to", foreign_keys="[PurchaseOrder.bill_to_id]")
     invoice: Mapped[list["Invoice"]] = relationship(back_populates="client", foreign_keys="[Invoice.client_id]")
     invoice_billing: Mapped[list["Invoice"]] = relationship(back_populates="bill_to", foreign_keys="[Invoice.bill_to_id]")
-
+    payment: Mapped[list["Payment"]] = relationship(back_populates="client", foreign_keys="[Payment.client_id]")
+    paid_from_payment: Mapped[list["Payment"]] = relationship(back_populates="paid_from", foreign_keys="[Payment.paid_from_id]")
 
 class ClientContact(db.Model):
     __tablename__ = 'client_contacts'
@@ -139,6 +140,7 @@ class OrderRegistry(db.Model):
     quote: Mapped[list["Quote"]] = relationship(back_populates="order")
     purchase_order: Mapped[list["PurchaseOrder"]] = relationship(back_populates="order")
     invoice: Mapped[list["Invoice"]] = relationship(back_populates="order")
+    payment: Mapped[list["Payment"]] = relationship(back_populates="order")
 
 class Quote(db.Model):
     __tablename__ = 'quotes'
@@ -182,6 +184,7 @@ class PurchaseOrder(db.Model):
     order: Mapped["OrderRegistry"] = relationship(back_populates="purchase_order")
     quote: Mapped["Quote | None"] = relationship(back_populates="purchase_order")
     invoice: Mapped[list["Invoice"]] = relationship(back_populates="purchase_order")
+    payment: Mapped[list["Payment"]] = relationship(back_populates="purchase_order")
     client: Mapped["Client"] = relationship(back_populates="purchase_order", foreign_keys=[client_id])
     bill_to: Mapped["Client"] = relationship(back_populates="po_billing", foreign_keys=[bill_to_id])
     items: Mapped[list["PoItem"]] = relationship(back_populates="po", cascade="all, delete-orphan")
@@ -210,6 +213,7 @@ class Invoice(db.Model):
 
     order: Mapped["OrderRegistry"] = relationship(back_populates="invoice")
     purchase_order: Mapped["PurchaseOrder"] = relationship(back_populates="invoice")
+    payment: Mapped[list["Payment"]] = relationship(back_populates="invoice")
     client: Mapped["Client"] = relationship(back_populates="invoice", foreign_keys=[client_id])
     bill_to: Mapped["Client"] = relationship(back_populates="invoice_billing", foreign_keys=[bill_to_id])
     items: Mapped[list["InvoiceItem"]] = relationship(back_populates="invoice", cascade="all, delete-orphan")
@@ -224,6 +228,7 @@ class Payment(db.Model):
     __tablename__ = 'payments'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     order_id: Mapped[int] = mapped_column(ForeignKey('orders.id'), nullable=False)
+    po_id: Mapped[int] = mapped_column(ForeignKey('purchase_orders.id'), nullable=False)
     invoice_id: Mapped[int | None] = mapped_column(ForeignKey('invoices.id'))
     client_id: Mapped[int] = mapped_column(ForeignKey('clients.id'), nullable=False)
     paid_from_id: Mapped[int] = mapped_column(ForeignKey('clients.id'), nullable=False)
@@ -232,6 +237,19 @@ class Payment(db.Model):
     payment_date: Mapped[date] = mapped_column(Date, server_default=func.current_date())
     note: Mapped[str | None] = mapped_column(Text)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+
+    order: Mapped["OrderRegistry"] = relationship(back_populates="payment")
+    purchase_order: Mapped["PurchaseOrder"] = relationship(back_populates="payment")
+    invoice: Mapped["Invoice | None"] = relationship(back_populates="payment")
+    client: Mapped["Client"] = relationship(back_populates="payment", foreign_keys=[client_id])
+    paid_from: Mapped["Client"] = relationship(back_populates="paid_from_payment", foreign_keys=[paid_from_id])
+    payment_type: Mapped["PaymentType"] = relationship()
+    attachments: Mapped[list["Attachment"]] = relationship(
+        primaryjoin="and_(Payment.id==Attachment.entity_id, Attachment.entity_type=='Payment')",
+        foreign_keys="[Attachment.entity_id]",
+        viewonly=True,
+        order_by="Attachment.uploaded_at.asc()"
+    )
 
 class Expense(db.Model):
     __tablename__ = 'expenses'
