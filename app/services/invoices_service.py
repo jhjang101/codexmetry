@@ -219,3 +219,13 @@ class InvoiceService(BaseService):
             quote.total_amount = total_cents
         
         db.session.commit()
+
+    @classmethod
+    def get_eligible_by_po(cls, po_id: int):
+        """Returns active Invoices for a specific Purchase Order."""
+        stmt = select(cls.model).where(
+                cls.model.po_id == po_id,
+                cls.model.is_active == True
+            ).order_by(cls.model.invoice_date.desc())
+        return db.session.execute(stmt).scalars().all()
+

@@ -152,7 +152,7 @@ class PurchaseOrderService(BaseService):
         db.session.commit()
 
     @classmethod
-    def get_eligible_for_invoice(cls, client_id: int):
+    def get_eligible_by_client(cls, client_id: int):
         """Returns Open pos for a specific client."""
         stmt = select(cls.model).where(
             cls.model.client_id == client_id,

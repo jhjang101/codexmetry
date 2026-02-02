@@ -125,7 +125,7 @@ def edit(id):
     clients = ClientService.get_all()
     products = ProductService.get_all()
     # Fetch eligible POs for this specific client so the dropdown is populated on load
-    pos = PurchaseOrderService.get_eligible_for_invoice(invoice.client_id) 
+    pos = PurchaseOrderService.get_eligible_by_client(invoice.client_id) 
     return render_template('invoices/form.html', 
                            mode='edit', 
                            invoice=invoice, 
@@ -210,7 +210,7 @@ def update_client_cascades():
     # Prefill Bill_to with this client
     clients = ClientService.get_all()
     # Populate eligible POs for this client
-    pos = PurchaseOrderService.get_eligible_for_invoice(client_id) if client_id else []
+    pos = PurchaseOrderService.get_eligible_by_client(client_id) if client_id else []
     
     return render_template('invoices/partials/client_cascades.html', 
                            clients=clients, pos=pos, selected_id=client_id)
