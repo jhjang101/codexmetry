@@ -1,0 +1,13 @@
+<div id="amount-input-container">
+    {% set display_val = "$0.00" %}
+    {% if payment %}
+        {% set display_val = payment.amount | usd %}
+    {% elif invoice and invoice.balance %}
+        {% set display_val = invoice.balance | usd %}
+    {% elif po and po.balance %}
+        {% set display_val = po.balance | usd %}
+    {% endif %}
+
+    <input type="text" name="amount" value="{{ display_val }}"
+           class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none transition-all">
+</div>

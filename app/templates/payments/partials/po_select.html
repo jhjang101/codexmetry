@@ -1,0 +1,18 @@
+<div class="relative" id="po-select-container">
+    <select name="po_id" 
+            class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none appearance-none bg-transparent cursor-pointer pr-10"
+            hx-get="{{ url_for('payments.update_po_cascades') }}"
+            hx-target="#none"
+            hx-trigger="change"
+            required>
+        <option value="">Select PO...</option>
+        {% for p in pos %}
+            <option value="{{ p.id }}" {{ 'selected' if (payment and payment.po_id == p.id) or (po and po.id == p.id) else '' }}>
+                {{ p.order.order_number }} ({{ p.po_number or 'No Ref' }})
+            </option>
+        {% endfor %}
+    </select>
+    <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-400">
+        <i class="fa-solid fa-chevron-down text-[10px]"></i>
+    </div>
+</div>

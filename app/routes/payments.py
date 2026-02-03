@@ -3,6 +3,7 @@ from ..services.payments_service import PaymentService
 from ..services.invoices_service import InvoiceService
 from ..services.purchase_orders_service import PurchaseOrderService
 from ..services.clients_service import ClientService
+from ..services.settings_service import PaymentTypeService
 from ..services.attachment_service import AttachmentService
 from ..utils.money import parse_to_cents
 from ..extensions import db
@@ -18,7 +19,7 @@ def index():
 
     # RECORD THE STATE: Save the current full URL into the session
     # request.full_path includes the ?search=...&page=...
-    session['invoices_last_url'] = request.full_path
+    session['payments_last_url'] = request.full_path
 
     # pagination is an object containing .items, .has_next, .has_prev, etc.
     pagination = PaymentService.get_all_with_search(search_term, page=page, per_page=10)
@@ -38,7 +39,7 @@ def add():
             payment_data = {
                 'client_id': request.form.get('client_id'),
                 'po_id': request.form.get('po_id'),
-                'invoice_number': request.form.get('invoice_number'),
+                'invoice_id': request.form.get('invoice_id'),
                 'paid_from_id': request.form.get('paid_from_id'),
                 'payment_type_id': request.form.get('payment_type_id'),
                 'amount': request.form.get('amount'),
@@ -49,7 +50,7 @@ def add():
 
             # 2. Save Attachments
             new_files = request.files.getlist('attachments')
-            AttachmentService.commit('Invoice', new_payment.id, new_files=new_files)
+            AttachmentService.commit('Payment', new_payment.id, new_files=new_files)
             
             # 3. Flash message
             if new_payment.invoice:
@@ -67,20 +68,37 @@ def add():
         
     # GET: Prepare form data    
     clients=ClientService.get_all()
-    return render_template('invoices/form.html', 
+    payment_types = PaymentTypeService.get_all()
+    return render_template('payments/form.html', 
                            mode='add', 
                            invoice=None, 
-                           clients=clients)
+                           clients=clients,
+                           payment_types=payment_types)
 
 @bp.route('/view/<int:id>')
 def view(id):
     payment = PaymentService.get_by_id(id)
-    return render_template('payments/form.html', mode='view', payment=payment)
+    if payment.invoice:
+        payment_number = f'invoice# {payment.invoice.invoice_number}'
+    elif payment.purchase_order:
+        payment_number = f'PO# {payment.purchase_order.po_number}'
+    else:
+        payment_number = f'order# {payment.order.order_number}'
+    return render_template('payments/form.html', 
+                           mode='view', 
+                           payment=payment,
+                           payment_number=payment_number)
 
 @bp.route('/edit/<int:id>', methods=['GET', 'POST'])
 def edit(id):
     """Edit mode: handles header updates."""
     payment = PaymentService.get_by_id(id)
+    if payment.invoice:
+        payment_number = f'invoice# {payment.invoice.invoice_number}'
+    elif payment.purchase_order:
+        payment_number = f'PO# {payment.purchase_order.po_number}'
+    else:
+        payment_number = f'order# {payment.order.order_number}'
     
     if request.method == 'POST':
         try:
@@ -88,7 +106,7 @@ def edit(id):
             payment_data = {
                 'client_id': request.form.get('client_id'),
                 'po_id': request.form.get('po_id'),
-                'invoice_number': request.form.get('invoice_number'),
+                'invoice_id': request.form.get('invoice_id'),
                 'paid_from_id': request.form.get('paid_from_id'),
                 'payment_type_id': request.form.get('payment_type_id'),
                 'amount': request.form.get('amount'),
@@ -104,12 +122,6 @@ def edit(id):
             AttachmentService.commit('Payment', id, new_files=new_files, delete_ids=delete_ids)
 
             # 3. Flash
-            if payment.invoice:
-                payment_number = f'invoice {payment.invoice.invoice_number}'
-            elif payment.purchase_order:
-                payment_number = f'PO {payment.purchase_order.po_number}'
-            else:
-                payment_number = f'order {payment.order.order_number}'
             flash(f"Payment for {payment_number} updated successfully!", "success")
             return redirect(url_for('payments.view', id=id))
         
@@ -120,10 +132,13 @@ def edit(id):
     
     # GET: Populate dropdowns for the edit form
     clients = ClientService.get_all()
+    payment_types = PaymentTypeService.get_all()
     return render_template('payments/form.html', 
                            mode='edit', 
                            payment=payment, 
-                           clients=clients)
+                           clients=clients,
+                           payment_number=payment_number,
+                           payment_types=payment_types)
 
 @bp.route('/archive/<int:id>', methods=['POST'])
 def archive(id):

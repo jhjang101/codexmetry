@@ -1,0 +1,70 @@
+<div class="grid grid-cols-10 gap-4">
+    <!-- 1. Notes Area (Span 4) -->
+    <div class="col-span-4">
+        <label class="block text-sm font-medium text-gray-500 mb-1">Internal Notes</label>
+        {% if mode == 'view' %}
+            <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 whitespace-pre-wrap min-h-[120px] text-sm">{{ payment.note or '-' }}</p>
+        {% else %}
+            <textarea name="note" rows="5" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">{{ payment.note if payment else '' }}</textarea>
+        {% endif %}
+    </div>
+
+    <!-- 2. Dropzone (Span 3) -->
+    <div class="col-span-3">
+        <label class="block text-sm font-medium text-gray-500 mb-1">Upload Documents</label>
+        {% if mode == 'view' %}
+            <div class="mt-1 flex items-center justify-center w-full h-[120px] border-2 border-dashed border-gray-200 rounded-lg bg-gray-50 opacity-50">
+                <p class="text-xs text-gray-400 italic">Upload disabled in view mode</p>
+            </div>
+        {% else %}
+            <!-- This is the "Magic" Dropzone -->
+            <div id="dropzone" 
+                 class="mt-1 flex flex-col items-center justify-center w-full h-[120px] border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 hover:bg-blue-50 hover:border-blue-400 transition-all cursor-pointer group"
+                 onclick="document.getElementById('file-picker').click()">
+                
+                <i class="fa-solid fa-cloud-arrow-up text-2xl text-gray-300 group-hover:text-blue-500 mb-2"></i>
+                <p class="text-[10px] text-gray-500 text-center px-4">Drag files here or <span class="text-blue-600 font-bold underline">browse</span></p>
+                
+                <!-- 1. THE PICKER: No 'name' attribute, so it's never sent to the server. 
+                    We clear this every time files are staged. -->
+                <input type="file" id="file-picker" multiple class="hidden" onchange="stageFiles(this.files)">
+            </div>
+
+            <!-- 2. THE SUBMITTER: This is the real input that Flask sees (name="attachments").
+                It is hidden and updated only by our Javascript. -->
+            <input type="file" id="file-submitter" name="attachments" multiple class="hidden">
+        {% endif %}
+    </div>
+
+    <!-- 3. Staging List (Span 3) -->
+    <div class="col-span-3">
+        <label class="block text-sm font-medium text-gray-500 mb-1">Attachments</label>
+        <div id="file-staging-list" class="mt-1 space-y-1 max-h-[120px] overflow-y-auto pr-2">
+            
+            <!-- Existing Files (From Database) -->
+            {% if payment and payment.attachments %}
+                {% for file in payment.attachments %}
+                <div class="flex justify-between items-center bg-gray-100 p-1 rounded-lg border text-[11px] group" id="existing-file-{{ file.id }}">
+                    <a href="{{ url_for('static', filename='uploads/payments/' + file.file_path) }}" target="_blank" class="truncate font-medium text-blue-600 hover:underline">
+                        <i class="fa-solid fa-file-lines mr-1"></i>{{ file.file_name }}
+                    </a>
+                    {% if mode != 'view' %}
+                        <button type="button" onclick="toggleFileDelete('{{ file.id }}')" class="text-red-400 hover:text-red-600">
+                            <i class="fa-solid fa-trash-can" id="icon-{{ file.id }}"></i>
+                        </button>
+                        <input type="hidden" name="delete_ids[]" id="delete-input-{{ file.id }}" disabled value="{{ file.id }}">
+                    {% endif %}
+                </div>
+                {% endfor %}
+            {% elif mode == 'view' %}
+                <p class="text-center text-gray-400 italic text-xs py-4">No files attached.</p>
+            {% endif %}
+
+            <!-- New Files (Javascript will inject items here) -->
+            <div id="new-files-container" class="space-y-1"></div>
+        </div>
+    </div>
+</div>
+
+<!-- 4. The "Glue" Logic (Small Vanilla JS) -->
+<script>initAttachmentZone();</script>

@@ -1,0 +1,181 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+    {% if mode == 'add' %}New Payment
+    {% elif mode == 'edit' %}Edit Payment - {{ payment_number }}
+    {% else %}Payment - {{ payment_number }}
+    {% endif %}
+{% endblock %}
+
+{% block header %}
+    {% if mode == 'add' %}New Payment
+    {% elif mode == 'edit' %}<span class = "text-gray-400">Edit Payment - </span>{{ payment_number }}
+    {% else %}<span class = "text-gray-400">Payments - </span>{{ payment_number }}
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+
+<div class="max-w-5xl mx-auto">
+    
+    <!-- 1. HEADER ACTION BAR -->
+    <div class="flex justify-between items-center mb-2">
+        <a href="{{ session.get('payments_last_url', url_for('payments.index')) }}" class="text-blue-600 hover:underline text-sm font-medium flex items-center gap-1">
+            <i class="fa-solid fa-arrow-left"></i> Back to Directory
+        </a>
+
+        <div class="flex gap-3 items-center">
+            {% if mode == 'view' %}
+                <form action="{{ url_for('payments.archive', id=payment.id) }}" method="POST" 
+                      onsubmit="return confirm('Archive this payment?')">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" 
+                            class="text-red-400 px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-800 transition-colors">
+                        Delete
+                    </button>
+                </form>
+                <a href="{{ url_for('payments.edit', id=payment.id) }}" 
+                   class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors shadow-sm">
+                    <i class="fa-regular fa-pen-to-square mr-1"></i>Edit Payment
+                </a>
+            {% else %}
+                <a href="{% if mode == 'add' %}{{ url_for('payments.index') }}{% else %}{{ url_for('payments.view', id=payment.id) }}{% endif %}" 
+                   class="text-gray-500 px-4 py-2 text-sm font-medium hover:text-gray-800">
+                    Cancel
+                </a>
+                <button type="submit" form="payment-main-form" 
+                        class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors shadow-sm">
+                        <i class="fa-regular fa-floppy-disk mr-1"></i>Save Payment
+                </button>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- 2. MAIN DATA FORM -->
+    <form id="payment-main-form" 
+          action="{% if mode == 'add' %}{{ url_for('payments.add') }}{% else %}{{ url_for('payments.edit', id=payment.id) }}{% endif %}" 
+          method="POST"
+          enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <!-- Header Information -->
+        <section class="bg-white p-6 rounded-lg shadow mb-2">
+            <div class="flex flex-col">
+                <h2 class="text-xl font-semibold">Payment Information</h2>
+                {% if payment and payment.order_id %}
+                <span class="text-xs text-gray-500 mb-2 border-b pb-2">Order Ref: {{ payment.order.order_number }}</span>
+                {% else %}
+                <span class="text-xs text-gray-500 mb-2 border-b pb-2"></span>
+                {% endif %}
+            </div>
+            
+            <div class="grid grid-cols-9 gap-4">
+                <div class="col-span-3">
+                    <label class="block text-sm font-medium text-gray-500">Client</label>
+                    {% if mode == 'view' %}
+                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ payment.client.company_name }}</p>
+                    {% else %}
+                        <div class="relative">
+                            <select name="client_id" 
+                                    class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none appearance-none bg-transparent cursor-pointer pr-10" 
+                                    hx-get="{{ url_for('payments.update_client_cascades') }}"
+                                    hx-target="#none" {# We use OOB swaps, so the main target is ignored #}
+                                    hx-trigger="change"
+                                    required>
+                                <option value="">Select Client...</option>
+                                {% for client in clients %}
+                                    <option value="{{ client.id }}" {{ 'selected' if (payment and payment.client_id == client.id) else '' }}>{{ client.company_name }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-400">
+                                <i class="fa-solid fa-chevron-down text-[10px]"></i>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="col-span-3">
+                    <label class="block text-sm font-medium text-gray-500">PO Number</label>
+                    <div id="po-select-container">
+                        {% if mode == 'view' %}
+                            <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ payment.purchase_order.po_number if payment.purchase_order else '-' }}</p>
+                        {% else %}
+                            {% include 'payments/partials/po_select.html' with context %}
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="col-span-3">
+                    <label class="block text-sm font-medium text-gray-500">Invoice Number</label>
+                    <div id="invoice-select-container">
+                    {% if mode == 'view' %}
+                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm font-mono">{{ payment.invoice.invoice_number if payment.invoice else '-' }}</p>
+                    {% else %}
+                        {% include 'payments/partials/invoice_select.html' with context %}
+                    {% endif %}
+                    </div>
+                </div>
+                
+                <div class="col-span-3">
+                    <label class="block text-sm font-medium text-gray-500">Paid From</label>
+                    <div id="paid-from-select-container">
+                        {% if mode == 'view' %}
+                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ payment.paid_from.company_name if payment.paid_from else '-'}}</p>
+                        {% else %}
+                            {% include 'payments/partials/paid_from_select.html' with context %}
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="col-span-2">
+                    <label class="block text-sm font-medium text-gray-500">Amount</label>
+                    {% if mode == 'view' %}
+                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm font-bold text-blue-700">{{ payment.amount | usd }}</p>
+                    {% else %}
+                        {% include 'payments/partials/amount_input.html' with context %}
+                    {% endif %}
+                </div>
+                
+                <div class="col-span-2">
+                    <label class="block text-sm font-medium text-gray-500">Payment Date</label>
+                    {% if mode == 'view' %}
+                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ payment.payment_date or '-' }}</p>
+                    {% else %}
+                        <input type="date" name="payment_date" value="{{ payment.payment_date if payment else now.strftime('%Y-%m-%d') }}" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">
+                    {% endif %}
+                </div>
+
+                <div class="col-span-2">
+                    <label class="block text-sm font-medium text-gray-500">Payment Type</label>
+                    {% if mode == 'view' %}
+                    <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ payment.payment_type.type if payment.payment_type else '-' }}</p>
+                    {% else %}
+                    <div class="relative">
+                        <select name="payment_type_id" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none appearance-none bg-transparent cursor-pointer pr-10">
+                            <option value="">Select Type...</option>
+                            {% for payment_type in payment_types %}
+                            <option value="{{ payment_type.id }}" {{ 'selected' if (payment and payment.payment_type_id == payment_type.id) else '' }}>
+                                {{ payment_type.type }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-400">
+                            <i class="fa-solid fa-chevron-down text-[10px]"></i>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- A hidden target for the client-cascades request since it's all OOB -->
+                <div id="none" class="hidden"></div>
+            </div>
+        </section>
+
+        <section class="bg-white p-6 rounded-lg shadow mb-2">
+            {% include 'payments/partials/attachment_zone.html' %}
+        </section>
+
+    </form>
+</div>
+
+{% endblock %}

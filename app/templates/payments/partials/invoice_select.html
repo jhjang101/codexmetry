@@ -1,0 +1,19 @@
+<div class="relative" id="invoice-select-container">
+    {% set is_disabled = not invoices and mode == 'add' %}
+    <select name="invoice_id" 
+            class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none appearance-none pr-10 {{ 'bg-gray-50 text-gray-400 cursor-not-allowed' if is_disabled else 'bg-transparent cursor-pointer' }}"
+            {% if is_disabled %}disabled{% endif %}
+            hx-get="{{ url_for('payments.update_invoice_cascades') }}"
+            hx-target="#none"
+            hx-trigger="change">
+        <option value="">{{ 'Select PO first...' if is_disabled else 'No Invoice (Down Payment)' }}</option>
+        {% for inv in invoices %}
+            <option value="{{ inv.id }}" {{ 'selected' if (payment and payment.invoice_id == inv.id) or (invoice and invoice.id == inv.id) else '' }}>
+                {{ inv.invoice_number }} ({{ inv.total_amount | usd }})
+            </option>
+        {% endfor %}
+    </select>
+    <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-400">
+        <i class="fa-solid fa-chevron-down text-[10px]"></i>
+    </div>
+</div>
