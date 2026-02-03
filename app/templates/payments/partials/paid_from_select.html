@@ -4,7 +4,7 @@
             required>
         <option value="">Select Payer...</option>
         {% for client in clients %}
-            <option value="{{ client.id }}" {{ 'selected' if payer_id == client.id else '' }}>
+            <option value="{{ client.id }}" {{ 'selected' if (payment and payment.paid_from_id == client.id) else '' }}>
                 {{ client.company_name }}
             </option>
         {% endfor %}

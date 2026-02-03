@@ -132,11 +132,17 @@ def edit(id):
     
     # GET: Populate dropdowns for the edit form
     clients = ClientService.get_all()
+    # Fetch eligible POs for this specific client so the dropdown is populated on load
+    pos = PurchaseOrderService.get_eligible_by_client(payment.client_id)
+    # Fetch eligible Invoices for this specific po so the dropdown is populated on load
+    invoices = InvoiceService.get_eligible_by_po(payment.po_id)
     payment_types = PaymentTypeService.get_all()
     return render_template('payments/form.html', 
                            mode='edit', 
                            payment=payment, 
                            clients=clients,
+                           pos=pos,
+                           invoices=invoices,
                            payment_number=payment_number,
                            payment_types=payment_types)
 
