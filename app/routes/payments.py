@@ -150,13 +150,53 @@ def update_client_cascades():
     Updates: PO List, Paid-From (matches client), resets Invoice, resets Amount.
     """
     client_id = request.args.get('client_id', type=int)
-    # Prefill Paid_from with this client
-    clients = ClientService.get_all()
+    # Populate clients for the Paid-from
+    clients = ClientService.get_all() # For the Paid-From list
     # Populate eligible POs for this client
     pos = PurchaseOrderService.get_eligible_by_client(client_id) if client_id else []
     return render_template('payments/partials/client_cascades.html', 
-                           clients=clients, pos=pos, selected_id=client_id)
+                           clients=clients, 
+                           pos=pos, 
+                           payer_id=client_id)
 
+@bp.route('/update-po-cascades')
+def update_po_cascades():
+    """
+    Triggered by PO slelct.
+    Updates: Invoice List, Paid-From (matches po.bill_to), Amount (matches po.balance) 
+    """
+    po_id = request.args.get('po_id', type=int)
+    # Populate clients for the Paid-from
+    clients = ClientService.get_all() # For the Paid-From list
+    # Prefill Paid_from and Amount with this po
+    po = PurchaseOrderService.get_po_by_id(po_id) if po_id else None
+    payer_id = po.bill_to_id if po else None
+    # Populate eligible Invoices for this PO
+    invoices = InvoiceService.get_eligible_by_po(po_id) if po_id else []
+    return render_template('payments/partials/po_cascades.html', 
+                           clients=clients, 
+                           po=po, 
+                           invoices=invoices, 
+                           payer_id=payer_id)
+
+@bp.route('/update-invoice-cascades')
+def update_invoice_cascades():
+    """
+    Triggered by Invoice select.
+    Updates: Paid-From (matches invoice.bill_to) Amount (matches invoice.balance)
+    """
+    invoice_id = request.args.get('invoice_id', type=int)
+    # Populate clients for the Paid-from
+    clients = ClientService.get_all() # For the Paid-From list
+    # Prefill Paid_from and Amount with this invoice
+    invoice = InvoiceService.get_invoice_by_id(invoice_id) if invoice_id else None
+    payer_id = invoice.bill_to_id if invoice else None
+    return render_template('payments/partials/invoice_cascades.html', 
+                           clients=clients, 
+                           invoice=invoice, 
+                           payer_id=payer_id)
+
+    
 
 
 

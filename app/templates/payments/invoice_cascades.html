@@ -1,0 +1,20 @@
+<!-- 1. Update Paid From (OOB - Default to Invoice's Bill-To) -->
+<div id="paid-from-select-container" hx-swap-oob="true" class="relative">
+    <select name="paid_from_id" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none appearance-none bg-transparent cursor-pointer pr-10" required>
+        <option value="">Select Payer...</option>
+        {% for client in clients %}
+            <option value="{{ client.id }}" {{ 'selected' if payer_id == client.id else '' }}>
+                {{ client.company_name }}
+            </option>
+        {% endfor %}
+    </select>
+    <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-400">
+        <i class="fa-solid fa-chevron-down text-[10px]"></i>
+    </div>
+</div>
+
+<!-- 2. Pre-fill Amount Field (OOB - Set to Invoice Balance) -->
+<div id="amount-input-container" hx-swap-oob="true">
+    <input type="text" name="amount" value="{{ invoice.balance | usd if invoice else '$0.00' }}"
+           class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none transition-all">
+</div>
