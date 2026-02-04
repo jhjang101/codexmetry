@@ -36,6 +36,10 @@
             </td>
 
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                {{ payment.payment_type.type if payment.payment_type else '-'}}
+            </td>
+
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                 {{ payment.payment_date.strftime('%Y-%m-%d') if payment.payment_date else '-' }}
             </td>
 
