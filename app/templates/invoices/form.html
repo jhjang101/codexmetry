@@ -204,6 +204,7 @@
                         {% if mode != 'view' %}<th class="pb-2 w-10"></th>{% endif %}
                     </tr>
                 </thead>
+                <!-- HTMX will teleport the new tbody here -->
                 <tbody id="item-list">
                     {% if mode == 'view' or mode == 'edit' %}
                         {% for item in invoice.items %}

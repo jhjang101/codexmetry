@@ -219,23 +219,36 @@ def update_client_cascades():
 def load_po_details():
     """Triggered by PO selection: updates Bill-To and pre-fills remaining items."""
     po_id = request.args.get('po_id', type=int)
-    po = PurchaseOrderService.get_by_id(po_id)
+    po = PurchaseOrderService.get_po_by_id(po_id) if po_id else None
     if not po: 
         return ""
 
     # 1. Get remaining items from the Invoice Service (Partial Billing Logic)
-    if po_id:
-        remaining_items = InvoiceService.get_remaining_items(po_id)
-    
-    products = ProductService.get_all()
-    html_rows = ""
-    for idx, item in enumerate(remaining_items):
-        row_id = f"{int(time.time() * 1000)}{idx}"
-        html_rows += render_template('invoices/partials/item_row.html',
-                                   item=item, products=products, row_id=row_id, mode='add')
+    if po and po.remaining_items: # type: ignore
+        remaining_items = po.remaining_items # type: ignore
+    else:
+        remaining_items = []
 
-    # 2. Prepare OOB response to Bill-To and pre-fills items
-    resp = make_response(html_rows)
+    # Changed agreed_unit_price to billed_unit_price in the remaining_items key
+    for idx, item in enumerate(remaining_items):
+        item['billed_unit_price'] = item.pop('agreed_unit_price')
+        item['row_id'] = f"{int(time.time() * 1000)}{idx}"
+
+
+    # 2. Populate clients and products list for bill_to and item_row
+    clients = ClientService.get_all()
+    products = ProductService.get_all()
+    
+    # 3. Return the single unified OOB template
+    resp = make_response(render_template(
+        'invoices/partials/po_selection_oob.html',
+        po=po,
+        items=remaining_items,
+        clients=clients,
+        products=products
+    ))
+
+    # 4. Trigger math recalculation
     resp.headers['HX-Trigger-After-Swap'] = 'recalculate' # Trigger grand total
     return resp
 
