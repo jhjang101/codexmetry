@@ -295,6 +295,37 @@ def archive_lookup(table_name, id):
 
 
 
+@app.route('/test')
+def test():
+    return render_template('test.html')
+
+# --- HTMX Client Cascade
+@app.route('/client-cascade')
+def client_cascade():
+    client_id = request.args.get('client_id')
+
+    pos_by_client = {'client 1' : ['po 11', 'po 12'], 
+                     'client 2' : ['po 21', 'po 22'], 
+                     'client 3' : ['po 31', 'po 32']}
+    if client_id:
+        pos = pos_by_client.get(client_id) 
+
+    id = '003'
+
+    print(client_id)
+    
+    return render_template('partials/po_select.html', pos=pos, id=id)
+
+
+
+
+
+
+
+
+
+
+
 
 
 if __name__ == '__main__':
