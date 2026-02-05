@@ -217,7 +217,7 @@ def update_client_cascades():
 
 @bp.route('/load-po-details')
 def load_po_details():
-    """Triggered by PO selection: updates Order ID and pre-fills remaining items."""
+    """Triggered by PO selection: updates Bill-To and pre-fills remaining items."""
     po_id = request.args.get('po_id', type=int)
     po = PurchaseOrderService.get_by_id(po_id)
     if not po: 
@@ -234,7 +234,7 @@ def load_po_details():
         html_rows += render_template('invoices/partials/item_row.html',
                                    item=item, products=products, row_id=row_id, mode='add')
 
-    # 2. Prepare OOB response to update the Order ID and Bill-To
+    # 2. Prepare OOB response to Bill-To and pre-fills items
     resp = make_response(html_rows)
     resp.headers['HX-Trigger-After-Swap'] = 'recalculate' # Trigger grand total
     return resp
