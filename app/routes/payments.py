@@ -6,6 +6,7 @@ from ..services.clients_service import ClientService
 from ..services.settings_service import PaymentTypeService
 from ..services.attachment_service import AttachmentService
 from ..utils.money import parse_to_cents
+from ..utils.sync import sync_invoice_status
 from ..extensions import db
 
 bp = Blueprint('payments', __name__)
@@ -48,11 +49,16 @@ def add():
             }
             new_payment = PaymentService.create_payment(payment_data)
 
-            # 2. Save Attachments
+            # 2. Sync invoice status
+            invoice_status_updated = False
+            if new_payment.invoice:
+                invoice_status_updated = sync_invoice_status(new_payment.invoice_id)
+
+            # 3. Save Attachments
             new_files = request.files.getlist('attachments')
             AttachmentService.commit('Payment', new_payment.id, new_files=new_files)
             
-            # 3. Flash message
+            # 4. Flash message
             if new_payment.invoice:
                 payment_number = f'invoice {new_payment.invoice.invoice_number}'
             elif new_payment.purchase_order:
@@ -60,6 +66,10 @@ def add():
             else:
                 payment_number = f'order {new_payment.order.order_number}'
             flash(f"Payment for {payment_number} created successfully!", "success")
+
+            if new_payment.invoice and invoice_status_updated:
+                flash(f"Status of invoice {new_payment.invoice.invoice_number} updated successfully!", "success")
+                
             return redirect(url_for('payments.index'))
         except ValueError as e:
             db.session.rollback()
@@ -115,14 +125,21 @@ def edit(id):
             }
             PaymentService.update_payment(id, payment_data)
 
-            # 2. Update Attachments (Handle new and marked for delete)
+            # 2. Sync invoice status
+            invoice_status_updated = False
+            if payment.invoice:
+                invoice_status_updated = sync_invoice_status(payment.invoice_id)
+
+            # 3. Update Attachments (Handle new and marked for delete)
             new_files = request.files.getlist('attachments')
             raw_delete_ids = request.form.getlist('delete_ids[]') 
             delete_ids = [int(fid) for fid in raw_delete_ids if fid.isdigit()]
             AttachmentService.commit('Payment', id, new_files=new_files, delete_ids=delete_ids)
 
-            # 3. Flash
+            # 4. Flash
             flash(f"Payment for {payment_number} updated successfully!", "success")
+            if payment.invoice and invoice_status_updated:
+                flash(f"Status of invoice {payment.invoice.invoice_number} updated successfully!", "success")
             return redirect(url_for('payments.view', id=id))
         
         except ValueError as e:
@@ -150,6 +167,11 @@ def edit(id):
 def archive(id):
     """Soft delete the payment."""
     payment = PaymentService.archive(id)
+    # Sync invoice status
+    invoice_status_updated = False
+    if payment.invoice:
+        invoice_status_updated = sync_invoice_status(payment.invoice_id)
+    # Flash
     if payment:
         if payment.invoice:
             payment_number = f'invoice {payment.invoice.invoice_number}'
@@ -158,6 +180,8 @@ def archive(id):
         else:
             payment_number = f'order {payment.order.order_number}'
         flash(f'Payment for {payment_number} moved to archives.', 'warning')
+        if payment.invoice and invoice_status_updated:
+            flash(f"Status of invoice {payment.invoice.invoice_number} updated successfully!", "success")
     else:
         flash(f'Payment not found.', 'error')
     return redirect(url_for('payments.index'))

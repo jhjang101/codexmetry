@@ -6,6 +6,7 @@ from ..services.clients_service import ClientService
 from ..services.attachment_service import AttachmentService
 from ..utils.money import parse_to_cents
 from ..utils.docs import generate_doc_number
+from ..utils.sync import sync_invoice_status
 from ..models import Invoice
 from ..extensions import db
 from datetime import datetime
@@ -107,6 +108,9 @@ def edit(id):
             items = _parse_items_form(request.form)
             InvoiceService.update_items(id, items)
 
+            # Sync invoice status
+            sync_invoice_status(invoice.id)
+            
             # 3. Update Attachments (Handle new and marked for delete)
             new_files = request.files.getlist('attachments')
             raw_delete_ids = request.form.getlist('delete_ids[]') 
