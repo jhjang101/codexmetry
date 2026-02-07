@@ -24,7 +24,7 @@ def index():
 
     # pagination is an object containing .items, .has_next, .has_prev, etc.
     pagination = PurchaseOrderService.get_all_with_search(search_term, page=page, per_page=10)
-    
+
     if request.headers.get('HX-Request'):
         return render_template('purchase_orders/partials/list.html', pagination=pagination)
     

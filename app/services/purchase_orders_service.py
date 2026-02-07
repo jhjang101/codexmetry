@@ -3,6 +3,7 @@ from ..models import PurchaseOrder, PoItem, OrderRegistry, Client, Quote, Invoic
 from ..extensions import db
 from ..utils.docs import generate_doc_number
 from sqlalchemy import select, or_, func
+from ..utils.manual_pagination import ManualPagination
 
 class PurchaseOrderService(BaseService):
     model = PurchaseOrder
@@ -12,11 +13,48 @@ class PurchaseOrderService(BaseService):
         """
         Fetches active POs with search and pagination.
         Joins with OrderRegistry (CDX#) and Client (Name).
+        Use subquery to calculate balance.
         """
-        # 1. Base statement with eager joins
-        stmt = select(cls.model).join(cls.model.order).join(cls.model.client).where(cls.model.is_active == True)
+        # 1. Subquery for Invoiced Sum
+        inv_sub = (
+            select(
+                Invoice.po_id, 
+                func.sum(Invoice.total_amount).label('total_invoiced')
+            )
+            .where(Invoice.is_active == True)
+            .group_by(Invoice.po_id)
+            .subquery()
+        )
 
-        # 2. Apply filters
+        # 2. Subquery for Invoiceless Payment Sum
+        pay_sub = (
+            select(
+                Payment.po_id, 
+                func.sum(Payment.amount).label('total_invoiceless')
+            )
+            .where(Payment.invoice_id == None, Payment.is_active == True)
+            .group_by(Payment.po_id)
+            .subquery()
+        )
+
+        # 3. Main Query with Calculated Balance Label
+        stmt = (
+            select(
+                cls.model,
+                (
+                    cls.model.total_amount - 
+                    func.coalesce(inv_sub.c.total_invoiced, 0) - 
+                    func.coalesce(pay_sub.c.total_invoiceless, 0)
+                ).label('calculated_balance')
+            )
+            .join(cls.model.order)
+            .join(cls.model.client)
+            .outerjoin(inv_sub, inv_sub.c.po_id == cls.model.id)
+            .outerjoin(pay_sub, pay_sub.c.po_id == cls.model.id)
+            .where(cls.model.is_active == True)
+        )
+
+        # 4. Apply filters
         if search_term:
             stmt = stmt.where(
                 or_(
@@ -27,10 +65,42 @@ class PurchaseOrderService(BaseService):
                 )
             )
 
-        # 3. Order by Registry creation (Newest first)
+        # 4. Order by Registry creation (Newest first)
         stmt = stmt.order_by(OrderRegistry.created_at.desc())
 
-        return cls.paginate(stmt, page=page, per_page=per_page)
+
+        # 1. Calculate Total Items (for the pagination numbers)
+        # We create a count query derived from your main statement
+        count_stmt = select(func.count()).select_from(stmt.subquery())
+        total = db.session.execute(count_stmt).scalar()
+
+        # 2. Fetch the Page of Items (keeping the tuples!)
+        # Apply limit and offset manually
+        paginated_stmt = stmt.limit(per_page).offset((page - 1) * per_page)
+        
+        # KEY DIFFERENCE: Use db.session.execute() instead of db.paginate()
+        # This returns 'Row' objects containing (PurchaseOrder, calculated_balance)
+        rows = db.session.execute(paginated_stmt).all()
+
+        # 3. Unwrap and Attach Balance
+        items = []
+        for row in rows:
+            po = row[0]              # The PurchaseOrder model
+            po.balance = row[1]      # The calculated_balance
+            print(po.balance)
+            items.append(po)
+
+        # 4. Create the Pagination Object Manually
+        # Signature: Pagination(query, page, per_page, total, items)
+        # We pass None for 'query' because we handled it ourselves.
+        return ManualPagination(items=items, page=page, per_page=per_page, total=total)
+
+
+
+
+
+
+
 
     @classmethod
     def create_with_registry(cls, data: dict) -> PurchaseOrder:
@@ -179,7 +249,15 @@ class PurchaseOrderService(BaseService):
             Invoice.is_active == True
         )
         total_invoiced = db.session.execute(invoice_sum_stmt).scalar() or 0
-        po.balance = po.total_amount - total_invoiced
+
+        invoiceless_payment_stmt = select(func.sum(Payment.amount)).where(
+            Payment.po_id == po.id,
+            Payment.invoice_id == None, # Explicitly check for NULL
+            Payment.is_active == True
+        )
+        total_invoiceless_paid = db.session.execute(invoiceless_payment_stmt).scalar() or 0
+
+        po.balance = po.total_amount - total_invoiced - total_invoiceless_paid
 
         # 3. Calculate Remaining Items
         remaining_items = []
