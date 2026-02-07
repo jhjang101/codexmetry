@@ -3,8 +3,9 @@ from ..models import Invoice, InvoiceItem, PurchaseOrder, PoItem, OrderRegistry,
 from ..extensions import db
 from ..utils.docs import generate_doc_number
 from ..utils.money import parse_to_cents
+from ..utils.manual_pagination import ManualPagination
 from sqlalchemy import select, or_, func
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import contains_eager
 from datetime import datetime
 
 class InvoiceService(BaseService):
@@ -15,32 +16,80 @@ class InvoiceService(BaseService):
         """
         Fetches active Invoices with search and pagination.
         Joins with OrderRegistry (CDX#) and Client (Name)
+        Use subquery to calculate balance.
         """
-        # 1. Base statement
-        stmt = select(cls.model).join(cls.model.order).join(cls.model.client).where(cls.model.is_active == True)
+        # 1. Subquery for Payment Sum
+        pay_sub = (
+            select(
+                Payment.invoice_id, 
+                func.sum(Payment.amount).label('total_paid')
+            )
+            .where(Payment.is_active == True)
+            .group_by(Payment.invoice_id)
+            .subquery()
+        )
 
-        # Eager load relationships for the list view
-        # stmt = stmt.options(
-        #     joinedload(cls.model.order),
-        #     joinedload(cls.model.purchase_order),
-        #     joinedload(cls.model.client)
-        # )
+        # 2. Main Query with Calculated Balance Label
+        stmt = (
+            select(
+                cls.model,
+                (
+                    cls.model.total_amount - 
+                    func.coalesce(pay_sub.c.total_paid, 0)
+                ).label('calculated_balance')
+            )
+            .join(cls.model.order)
+            .join(cls.model.purchase_order)
+            .join(cls.model.client)
+            .outerjoin(pay_sub, pay_sub.c.invoice_id == cls.model.id)
+            .where(cls.model.is_active == True)
+        )
 
-        # 2. Apply filters
+        # 2.1. Eager load relationships for the list view
+        stmt = stmt.options(
+            contains_eager(cls.model.order),
+            contains_eager(cls.model.purchase_order),
+            contains_eager(cls.model.client)
+        )
+
+        # 3. Apply filters
         if search_term:
             stmt = stmt.where(
                 or_(
                     OrderRegistry.order_number.icontains(search_term),
+                    PurchaseOrder.po_number.icontains(search_term),
                     cls.model.invoice_number.icontains(search_term),
                     Client.company_name.icontains(search_term),
                     cls.model.status.icontains(search_term)
                 )
             )
 
-        # 3. Order by Registry creation (Newest first)
+        # 4. Order by Registry creation (Newest first)
         stmt = stmt.order_by(OrderRegistry.created_at.desc())
 
-        return cls.paginate(stmt, page=page, per_page=per_page)
+        # 6. Calculate Total Items (for the pagination numbers)
+        # 5.1. We create a count query derived from your main statement
+        count_stmt = select(func.count()).select_from(stmt.subquery())
+        total = db.session.execute(count_stmt).scalar()
+
+        # 5.2. Fetch the Page of Items (keeping the tuples!)
+        # Apply limit and offset manually
+        paginated_stmt = stmt.limit(per_page).offset((page - 1) * per_page)
+        
+        # KEY DIFFERENCE: Use db.session.execute() instead of db.paginate()
+        # This returns 'Row' objects containing (PurchaseOrder, calculated_balance)
+        rows = db.session.execute(paginated_stmt).all()
+
+        # 6.3. Unwrap and Attach Balance
+        items = []
+        for row in rows:
+            invoice = row[0]              # The Invoice model
+            invoice.balance = row[1]      # The calculated_balance
+            print(invoice.balance)
+            items.append(invoice)
+
+        # 6.4. Create the Pagination Object Manually
+        return ManualPagination(items=items, page=page, per_page=per_page, total=total)
     
     @classmethod
     def get_remaining_items(cls, po_id: int):
