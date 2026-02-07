@@ -68,13 +68,12 @@ class PurchaseOrderService(BaseService):
         # 4. Order by Registry creation (Newest first)
         stmt = stmt.order_by(OrderRegistry.created_at.desc())
 
-
-        # 1. Calculate Total Items (for the pagination numbers)
-        # We create a count query derived from your main statement
+        # 5. Calculate Total Items (for the pagination numbers)
+        # 5.1. We create a count query derived from your main statement
         count_stmt = select(func.count()).select_from(stmt.subquery())
         total = db.session.execute(count_stmt).scalar()
 
-        # 2. Fetch the Page of Items (keeping the tuples!)
+        # 5.2. Fetch the Page of Items (keeping the tuples!)
         # Apply limit and offset manually
         paginated_stmt = stmt.limit(per_page).offset((page - 1) * per_page)
         
@@ -82,7 +81,7 @@ class PurchaseOrderService(BaseService):
         # This returns 'Row' objects containing (PurchaseOrder, calculated_balance)
         rows = db.session.execute(paginated_stmt).all()
 
-        # 3. Unwrap and Attach Balance
+        # 5.3. Unwrap and Attach Balance
         items = []
         for row in rows:
             po = row[0]              # The PurchaseOrder model
@@ -90,17 +89,8 @@ class PurchaseOrderService(BaseService):
             print(po.balance)
             items.append(po)
 
-        # 4. Create the Pagination Object Manually
-        # Signature: Pagination(query, page, per_page, total, items)
-        # We pass None for 'query' because we handled it ourselves.
+        # 5.4. Create the Pagination Object Manually
         return ManualPagination(items=items, page=page, per_page=per_page, total=total)
-
-
-
-
-
-
-
 
     @classmethod
     def create_with_registry(cls, data: dict) -> PurchaseOrder:
