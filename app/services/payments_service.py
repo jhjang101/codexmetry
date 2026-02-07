@@ -4,7 +4,7 @@ from ..extensions import db
 from ..utils.docs import generate_doc_number
 from ..utils.money import parse_to_cents
 from sqlalchemy import select, or_, func
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import contains_eager
 from datetime import datetime
 
 class PaymentService(BaseService):
@@ -27,11 +27,12 @@ class PaymentService(BaseService):
         )
 
         # Eager load relationships for the list view
-        # stmt = stmt.options(
-        #     joinedload(cls.model.order),
-        #     joinedload(cls.model.purchase_order),
-        #     joinedload(cls.model.client)
-        # )
+        stmt = stmt.options(
+            contains_eager(cls.model.order),
+            contains_eager(cls.model.client),
+            contains_eager(cls.model.purchase_order),
+            contains_eager(cls.model.invoice) # Even the outer join can be eagerly loaded
+        )
 
         # 2. Apply filters
         if search_term:
