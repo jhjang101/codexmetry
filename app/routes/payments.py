@@ -103,6 +103,8 @@ def view(id):
 def edit(id):
     """Edit mode: handles header updates."""
     payment = PaymentService.get_by_id(id)
+    
+    # payment_number represents the initial identity for the page title/header
     if payment.invoice:
         payment_number = f'invoice# {payment.invoice.invoice_number}'
     elif payment.purchase_order:
@@ -112,7 +114,11 @@ def edit(id):
     
     if request.method == 'POST':
         try:
-            # 1. Update Payment Header
+            # 1. Capture State BEFORE update
+            old_invoice_id = payment.invoice_id
+            old_invoice_number = payment.invoice.invoice_number if payment.invoice else None
+
+            # 2. Update Payment Header
             payment_data = {
                 'client_id': request.form.get('client_id'),
                 'po_id': request.form.get('po_id'),
@@ -124,22 +130,40 @@ def edit(id):
                 'note': request.form.get('note')
             }
             PaymentService.update_payment(id, payment_data)
-
-            # 2. Sync invoice status
+            
+            # 3. Capture State AFTER update
+            new_invoice_id = payment.invoice_id
+            
+            # 4. Sync Brain Logic
             invoice_status_updated = False
-            if payment.invoice:
-                invoice_status_updated = sync_invoice_status(payment.invoice_id)
+            old_invoice_status_updated = False
 
-            # 3. Update Attachments (Handle new and marked for delete)
+            # If the invoice link changed, sync the old one first
+            if old_invoice_id != new_invoice_id:
+                if old_invoice_id:
+                    old_invoice_status_updated = sync_invoice_status(old_invoice_id)
+            
+            # Sync the current (new) invoice link
+            if new_invoice_id:
+                invoice_status_updated = sync_invoice_status(new_invoice_id)
+
+            # 5. Update Attachments
             new_files = request.files.getlist('attachments')
             raw_delete_ids = request.form.getlist('delete_ids[]') 
             delete_ids = [int(fid) for fid in raw_delete_ids if fid.isdigit()]
             AttachmentService.commit('Payment', id, new_files=new_files, delete_ids=delete_ids)
 
-            # 4. Flash
-            flash(f"Payment for {payment_number} updated successfully!", "success")
+            # 6. Flash Messages
+            flash(f"Payment updated successfully!", "success")
+            
+            # Flash for the current invoice
             if payment.invoice and invoice_status_updated:
                 flash(f"Status of invoice {payment.invoice.invoice_number} updated successfully!", "success")
+            
+            # Flash for the old invoice (if it was swapped)
+            if old_invoice_id and old_invoice_status_updated:
+                flash(f"Status of invoice {old_invoice_number} updated successfully!", "success")
+                
             return redirect(url_for('payments.view', id=id))
         
         except ValueError as e:
@@ -147,11 +171,9 @@ def edit(id):
             flash(str(e), "error")
             return redirect(url_for('payments.edit', id=id))
     
-    # GET: Populate dropdowns for the edit form
+    # GET logic remains the same...
     clients = ClientService.get_all()
-    # Fetch eligible POs for this specific client so the dropdown is populated on load
     pos = PurchaseOrderService.get_eligible_by_client(payment.client_id)
-    # Fetch eligible Invoices for this specific po so the dropdown is populated on load
     invoices = InvoiceService.get_eligible_by_po(payment.po_id)
     payment_types = PaymentTypeService.get_all()
     return render_template('payments/form.html', 

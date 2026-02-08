@@ -263,9 +263,9 @@ class InvoiceService(BaseService):
                 db.session.add(new_item)
 
         # 3. Update the Parent Total
-        quote = cls.get_by_id(invoice_id)
-        if quote:
-            quote.total_amount = total_cents
+        invoice = cls.get_by_id(invoice_id)
+        if invoice:
+            invoice.total_amount = total_cents
         
         db.session.commit()
 

@@ -108,7 +108,7 @@
                     <label class="block text-sm font-medium text-gray-500">Source PO</label>
                     <div id="po-select-container">
                         {% if mode == 'view' %}
-                            <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ invoice.purchase_order.po_number if invoice.purchase_order else '-' }}</p>
+                            <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ invoice.purchase_order.po_number or '-' }}</p>
                         {% else %}
                             {% include 'invoices/partials/po_select.html' with context %}
                         {% endif %}

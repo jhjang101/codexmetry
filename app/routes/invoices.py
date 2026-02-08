@@ -6,7 +6,7 @@ from ..services.clients_service import ClientService
 from ..services.attachment_service import AttachmentService
 from ..utils.money import parse_to_cents
 from ..utils.docs import generate_doc_number
-from ..utils.sync import sync_invoice_status
+from ..utils.sync import sync_invoice_status, sync_po_status
 from ..models import Invoice
 from ..extensions import db
 from datetime import datetime
@@ -55,11 +55,19 @@ def add():
             items = _parse_items_form(request.form)
             InvoiceService.update_items(new_invoice.id, items)
 
+            # 2.1. Sync po status
+            po_status_updated = False
+            if new_invoice.po_id:
+                po_status_updated = sync_po_status(new_invoice.po_id)
+
             # 3. Save Attachments
             new_files = request.files.getlist('attachments')
             AttachmentService.commit('Invoice', new_invoice.id, new_files=new_files)
             
             flash(f"Invoice {new_invoice.invoice_number} created!", "success")
+            if new_invoice.po_id and po_status_updated:
+                flash(f"Status of PO {new_invoice.purchase_order.po_number} updated successfully!", "success")
+
             return redirect(url_for('invoices.index'))
         except ValueError as e:
             db.session.rollback()
@@ -102,7 +110,14 @@ def edit(id):
                 'tracking_number': request.form.get('tracking_number'),
                 'note': request.form.get('note')
             }
+            old_po_id = invoice.po_id if invoice else None
+            old_po_number = invoice.purchase_order.po_number or invoice.order.order_number
             InvoiceService.update_invoice(id, invoice_data)
+            po_id = invoice.po_id if invoice else None
+            po_number = invoice.purchase_order.po_number or invoice.order.order_number
+            
+            print(old_po_number)
+            print(po_number)
 
             # 2. Update Invoice Line Items
             items = _parse_items_form(request.form)
@@ -110,6 +125,14 @@ def edit(id):
 
             # Sync invoice status
             sync_invoice_status(invoice.id)
+
+            # 2.1. Sync po status
+            po_status_updated = False
+            old_po_status_updated = False
+
+            if old_po_id != po_id:
+                old_po_status_updated = sync_po_status(old_po_id)
+            po_status_updated = sync_po_status(po_id)
             
             # 3. Update Attachments (Handle new and marked for delete)
             new_files = request.files.getlist('attachments')
@@ -118,6 +141,12 @@ def edit(id):
             AttachmentService.commit('Invoice', id, new_files=new_files, delete_ids=delete_ids)
 
             flash(f"Invoice {invoice.invoice_number} updated successfully!", "success")
+            if po_id and po_status_updated:
+                flash(f"Status of PO {po_number} updated successfully!", "success")
+            if old_po_id and old_po_status_updated:
+                flash(f"Status of PO {old_po_number} updated successfully!", "success")
+
+
             return redirect(url_for('invoices.view', id=id))
             
         except ValueError as e:
@@ -141,8 +170,16 @@ def edit(id):
 def archive(id):
     """Soft delete the invoice."""
     invoice = InvoiceService.archive(id)
+
+    # Sync po status
+    po_status_updated = False
+    if invoice.po_id:
+        po_status_updated = sync_po_status(invoice.po_id)
+
     if invoice:
         flash(f'Invoice {invoice.invoice_number} moved to archives.', 'warning')
+        if invoice.po_id and po_status_updated:
+            flash(f'Status of PO {invoice.purchase_order.po_number} updated successfully!', 'success')
     else:
         flash(f'Invoice {invoice.invoice_number} not found.', 'error')
     return redirect(url_for('invoices.index'))

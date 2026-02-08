@@ -6,6 +6,7 @@ from ..services.clients_service import ClientService
 from ..services.settings_service import PoTypeService
 from ..services.attachment_service import AttachmentService
 from ..utils.money import parse_to_cents, format_usd
+from ..utils.sync import sync_po_status
 from datetime import datetime
 import time 
 
@@ -118,6 +119,9 @@ def edit(id):
         # 3. Update Line Items
         items = _parse_items_form(request.form)
         PurchaseOrderService.update_items(id, items)
+
+        # Sync PO Status
+        sync_po_status(po.id)
 
         # 4. Commit Attachments (Handle new and marked for delete)
         new_files = request.files.getlist('attachments')
