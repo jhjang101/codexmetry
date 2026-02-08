@@ -113,6 +113,16 @@ class ProductService(BaseService):
         db.session.commit()
 
         return product
-
+    
+    @classmethod
+    def get_all_products(cls):
+        """
+        Fetches all active non-system products.
+        """
+        stmt = select(cls.model).where(
+            cls.model.is_active == True,
+            cls.model.is_system == False
+            ).order_by(cls.model.name.asc())
+        return db.session.execute(stmt).scalars().all()
 
 

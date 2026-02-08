@@ -67,7 +67,7 @@ def add():
 
     # GET: Prepare form data
     clients = ClientService.get_all()
-    products = ProductService.get_all()
+    products = ProductService.get_all_products()
     suggested_number = generate_doc_number(prefix='Q', model=Quote, column_name='quote_number')
     initial_row_id = str(int(time.time() * 1000))   
     return render_template('quotes/form.html', 
@@ -121,7 +121,7 @@ def edit(id):
         return redirect(url_for('quotes.view', id=id))
 
     clients = ClientService.get_all()
-    products = ProductService.get_all()
+    products = ProductService.get_all_products()
     return render_template('quotes/form.html', mode='edit', quote=quote, clients=clients, products=products)
 
 @bp.route('/archive/<int:id>', methods=['POST'])
@@ -138,7 +138,7 @@ def archive(id):
 @bp.route('/add-row')
 def add_row():
     """Returns a blank product row for the dynamic sub-form."""
-    products = ProductService.get_all()
+    products = ProductService.get_all_products()
     # Generate a unique row_id based on a timestamp
     row_id = str(int(time.time() * 1000))
     return render_template('quotes/partials/item_row.html', 

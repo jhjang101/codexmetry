@@ -72,7 +72,7 @@ def add():
 
     # GET: Prepare form data
     clients = ClientService.get_all()
-    products = ProductService.get_all()
+    products = ProductService.get_all_products()
     po_types = PoTypeService.get_all()
     initial_row_id = str(int(time.time() * 1000))   
     return render_template('purchase_orders/form.html', 
@@ -133,7 +133,7 @@ def edit(id):
 
     # GET: Prepare form data
     clients = ClientService.get_all()
-    products = ProductService.get_all()
+    products = ProductService.get_all_products()
     po_types = PoTypeService.get_all()
     quotes = QuoteService.get_eligible_for_po(po.client_id)
 
@@ -159,7 +159,7 @@ def archive(id):
 @bp.route('/add-row')
 def add_row():
     """Returns a blank product row for the dynamic sub-form."""
-    products = ProductService.get_all()
+    products = ProductService.get_all_products()
     # Generate a unique row_id based on a timestamp
     row_id = str(int(time.time() * 1000))
     return render_template('purchase_orders/partials/item_row.html',

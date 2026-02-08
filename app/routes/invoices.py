@@ -76,7 +76,7 @@ def add():
         
     # GET: Prepare form data    
     clients=ClientService.get_all()
-    products=ProductService.get_all()
+    products=ProductService.get_all_products()
     suggested_number = generate_doc_number(prefix='INV', model=Invoice, column_name='invoice_number')
     initial_row_id = str(int(time.time() * 1000))
     return render_template('invoices/form.html', 
@@ -189,7 +189,7 @@ def archive(id):
 @bp.route('/add-row')
 def add_row():
     """Returns a blank product row for the dynamic sub-form."""
-    products = ProductService.get_all()
+    products = ProductService.get_all_products()
     # Generate a unique row_id based on a timestamp
     row_id = str(int(time.time() * 1000))
     return render_template('invoices/partials/item_row.html',
