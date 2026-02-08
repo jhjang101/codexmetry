@@ -3,6 +3,7 @@ from ..services.products_service import ProductService
 from ..services.settings_service import ProductCategoryService
 from ..utils.images import save_image
 from ..utils.money import parse_to_cents
+from ..extensions import db
 
 bp = Blueprint('products', __name__)
 
@@ -55,35 +56,60 @@ def add():
 
 @bp.route('/view/<int:id>')
 def view(id):
-    product = ProductService.get_by_id_with_category(id)
+    try:
+        product = ProductService.get_product_by_id(id)
+        if not product:
+            flash("Product not found.", "error")
+            return redirect(url_for('products.index'))
+        
+    except ValueError as e:
+        db.session.rollback()
+        flash(str(e), 'error')
+        return redirect(url_for('products.index'))
 
     return render_template('products/form.html', mode='view', product=product)
 
 @bp.route('/edit/<int:id>', methods=['GET', 'POST'])
 def edit(id):
-    product = ProductService.get_by_id(id)
+    try:
+        product = ProductService.get_product_by_id(id)
+        if not product:
+            flash("Product not found.", "error")
+            return redirect(url_for('products.index'))
+    except ValueError as e:
+        db.session.rollback()
+        flash(str(e), 'error')
+        return redirect(url_for('products.index'))
     
     if request.method == 'POST':
-        # 1. Handle Image Update (includes physical cleanup of old file)
-        image_file = request.files.get('image')
-        old_image = request.form.get('old_image')
-        saved_filename = save_image(image_file, subfolder='products', old_filename=old_image)
+        try:
+            # 1. Handle Image Update (includes physical cleanup of old file)
+            image_file = request.files.get('image')
+            old_image = request.form.get('old_image')
+            saved_filename = save_image(image_file, subfolder='products', old_filename=old_image)
 
-        # 2. Update Product Data
-        product_data = {
-            'name': request.form.get('name'),
-            'catalog_number': request.form.get('catalog_number'),
-            'category_id': request.form.get('category_id') or None,
-            'default_unit_price': parse_to_cents(request.form.get('unit_price', '')),
-        }
+            # 2. Update Product Data
+            product_data = {
+                'name': request.form.get('name'),
+                'catalog_number': request.form.get('catalog_number'),
+                'category_id': request.form.get('category_id') or None,
+                'default_unit_price': request.form.get('unit_price', ''),
+            }
+            
+            # Only update image_url in DB if a new file was actually uploaded
+            if saved_filename:
+                product_data['image_url'] = saved_filename
+
+            ProductService.update_product(id, product_data)
+            product_name = product.name if product else ''
+            flash(f'Product {product_name} updated successfully!', 'success')
+            return redirect(url_for('products.view', id=id))
         
-        # Only update image_url in DB if a new file was actually uploaded
-        if saved_filename:
-            product_data['image_url'] = saved_filename
+        except ValueError as e:
+            db.session.rollback()
+            flash(str(e), 'error')
+            return redirect(url_for('products.edit', id=id))
 
-        ProductService.update(id, **product_data)
-        flash(f'Product {product.name} updated successfully!', 'success')
-        return redirect(url_for('products.view', id=id))
 
     # GET: Load categories for the dropdown
     categories = ProductCategoryService.get_all()
@@ -91,9 +117,15 @@ def edit(id):
 
 @bp.route('/archive/<int:id>', methods=['POST'])
 def archive(id):
-    product = ProductService.archive(id)
-    if product:
-        flash(f'Product {product.name} has been moved to archives.', 'warning')
-    else:
-        flash('Product not found.', 'error')
+    try:
+        product = ProductService.archive_product(id)
+        if not product:
+            flash("Product not found.", "error")
+            return redirect(url_for('products.index'))
+    except ValueError as e:
+        db.session.rollback()
+        flash(str(e), 'error')
+        return redirect(url_for('products.index'))
+
+    flash(f'Product {product.name} has been moved to archives.', 'warning')
     return redirect(url_for('products.index'))
