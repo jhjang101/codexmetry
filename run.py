@@ -32,6 +32,7 @@ if __name__ == '__main__':
             system_product.is_active = True
 
             db.session.add(system_product)
+            db.session.commit()
             print("System Product 'Applied Deposit' seeded successfully.")
 
     app.run(host='0.0.0.0', debug=True, port=5001)
