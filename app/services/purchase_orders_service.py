@@ -1,8 +1,9 @@
 from .base_service import BaseService
-from ..models import PurchaseOrder, PoItem, OrderRegistry, Client, Quote, Invoice, InvoiceItem, Payment
+from ..models import PurchaseOrder, PoItem, OrderRegistry, Client, Quote, Invoice, InvoiceItem, Payment, Product
 from ..extensions import db
 from ..utils.docs import generate_doc_number
 from sqlalchemy import select, or_, func
+from sqlalchemy.orm import contains_eager
 from ..utils.manual_pagination import ManualPagination
 
 class PurchaseOrderService(BaseService):
@@ -52,6 +53,12 @@ class PurchaseOrderService(BaseService):
             .outerjoin(inv_sub, inv_sub.c.po_id == cls.model.id)
             .outerjoin(pay_sub, pay_sub.c.po_id == cls.model.id)
             .where(cls.model.is_active == True)
+        )
+
+        # 3.1. Eager load relationship for list view
+        stmt = stmt.options(
+            contains_eager(cls.model.order),
+            contains_eager(cls.model.client)
         )
 
         # 4. Apply filters
@@ -225,7 +232,7 @@ class PurchaseOrderService(BaseService):
     def get_po_by_id(cls, id: int) -> PurchaseOrder | None:
         """
         Unified PO Fetcher:
-        Returns the PO record augmented with .balance and .remaining_items.
+        Returns the PO record augmented with .balance, .remaining_deposit, and .remaining_items.
         Used for Cascades and Source-Driven logic.
         """
         # 1. Fetch the base PO record
@@ -233,13 +240,14 @@ class PurchaseOrderService(BaseService):
         if not po:
             return None
         
-        # 2. Calculate Balance total amount - sum of invoiced amount
+        # 2. Calculate Total Invoiced (Sum of all Invoice Headers)
         invoice_sum_stmt = select(func.sum(Invoice.total_amount)).where(
             Invoice.po_id == po.id,
             Invoice.is_active == True
         )
         total_invoiced = db.session.execute(invoice_sum_stmt).scalar() or 0
 
+        # 3. Calculate Total Invoiceless Paid (The Initial Cash Deposit)
         invoiceless_payment_stmt = select(func.sum(Payment.amount)).where(
             Payment.po_id == po.id,
             Payment.invoice_id == None, # Explicitly check for NULL
@@ -247,19 +255,41 @@ class PurchaseOrderService(BaseService):
         )
         total_invoiceless_paid = db.session.execute(invoiceless_payment_stmt).scalar() or 0
 
+        # 4. Calculate Total Applied Deposit (Sum of 'Applied Deposit' line items)
+        applied_dep_stmt = (
+            select(func.sum(InvoiceItem.quantity * InvoiceItem.billed_unit_price))
+            .join(Invoice)
+            .join(Product)
+            .where(
+                Invoice.po_id == po.id,
+                Invoice.is_active == True,
+                Product.is_system == True
+            )
+        )
+        total_applied_deposit = db.session.execute(applied_dep_stmt).scalar() or 0
+
+        # 5. Final Attribute Assignment
+        # 5.1. po.balance: Financial exposure (What is still to be invoiced)
         po.balance = po.total_amount - total_invoiced - total_invoiceless_paid
 
-        # 3. Calculate Remaining Items
+        # 5.2. po.remaining_deposit: The Credit Pool (Deposit we received but haven't applied to invoice yet)
+        # We add because total_applied_deposit is negative (e.g. 1000 + -300 = 700)
+        remaining = total_invoiceless_paid + total_applied_deposit
+        po.remaining_deposit = max(0, remaining) # Floor at 0
+
+        # 6. Calculate Remaining Items (Fulfillment)
         remaining_items = []
         for po_item in po.items:
             # Sum up how many of this product have already been invoiced for this PO
             already_invoiced_stmt = (
                 select(func.sum(InvoiceItem.quantity))
                 .join(InvoiceItem.invoice)
+                .join(InvoiceItem.product)
                 .where(
                     Invoice.po_id == po.id,
                     InvoiceItem.product_id == po_item.product_id,
-                    Invoice.is_active == True
+                    Invoice.is_active == True,
+                    Product.is_system == False # ONLY real products
                 )
             )
             already_invoiced = db.session.execute(already_invoiced_stmt).scalar() or 0
