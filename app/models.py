@@ -126,6 +126,7 @@ class Product(db.Model):
     image_url: Mapped[str | None] = mapped_column(String(255))
     default_unit_price: Mapped[int] = mapped_column(Integer, default=0)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    is_system: Mapped[bool] = mapped_column(Boolean, default=False)
 
     category: Mapped["ProductCategory"] = relationship()
 
