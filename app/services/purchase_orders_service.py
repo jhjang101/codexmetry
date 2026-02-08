@@ -277,8 +277,8 @@ class PurchaseOrderService(BaseService):
         remaining = total_invoiceless_paid + total_applied_deposit
         po.remaining_deposit = max(0, remaining) # Floor at 0
 
-        # 6. Calculate Remaining Items (Fulfillment)
         remaining_items = []
+        # 6. Calculate Remaining Items (Fulfillment)
         for po_item in po.items:
             # Sum up how many of this product have already been invoiced for this PO
             already_invoiced_stmt = (
@@ -303,6 +303,22 @@ class PurchaseOrderService(BaseService):
                     'quantity': remaining_qty,
                     'agreed_unit_price': po_item.agreed_unit_price
                 })
+
+        # 7. Inject Applied Deposit into the list for the UI
+        if po.remaining_deposit > 0:
+            # Fetch the System Product safely
+            system_product = db.session.execute(
+                select(Product).where(Product.is_system == True, Product.name == 'Applied Deposit')
+            ).scalar_one_or_none()
+            
+            if system_product:
+                remaining_items.append({
+                    'product_id': system_product.id,
+                    'product': system_product,
+                    'quantity': 1,
+                    'agreed_unit_price': -(po.remaining_deposit) # Negative!
+                })
+
         po.remaining_items = remaining_items
 
         return po

@@ -45,10 +45,14 @@ def sync_po_status(po_id: int | None):
     po = PurchaseOrderService.get_po_by_id(po_id)
     if not po or not po.is_active:
         return False
+    
+    # Apply logic: Filter the list to only look at REAL products
+    # We ignore the 'Applied Deposit' line for status purposes.
+    real_items_left = [item for item in po.remaining_items if not item['product'].is_system] # type: ignore
 
     # 2. Apply logic: If the list of items needing invoicing is empty, it's done.
     # We use len(po.remaining_items) == 0 as our "Fulfillment" check.
-    new_status = 'completed' if len(po.remaining_items) == 0 else 'open' # type: ignore
+    new_status = 'completed' if len(real_items_left) == 0 else 'open'
 
     # 3. Update and Commit if the status changed
     if po.status != new_status:
