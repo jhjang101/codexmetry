@@ -236,7 +236,8 @@ class InvoiceService(BaseService):
     def update_items(cls, invoice_id: int, items_data: list[dict]):
         """
         Wipe current items and re-insert new ones.
-        Calculates and updates the Invoice.total_amount denormalized column.
+        Calculates and updates the Invoice.total_amount (Grand Total).
+        Supports negative totals (Applied Deposits/Discounts).
         """
         # 1. Delete old items
         delete_stmt = db.delete(InvoiceItem).where(InvoiceItem.invoice_id == invoice_id)
