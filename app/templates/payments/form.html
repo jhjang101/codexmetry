@@ -114,7 +114,16 @@
                     <label class="block text-sm font-medium text-gray-500">Invoice Number</label>
                     <div id="invoice-select-container">
                     {% if mode == 'view' %}
-                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm font-mono">{{ payment.invoice.invoice_number if payment.invoice else '-' }}</p>
+                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm font-mono">
+                            {% if payment.invoice %}
+                                <span class="{{ 'text-gray-500' if not payment.invoice.is_active else '' }}">
+                                    {{ payment.invoice.invoice_number }}
+                                    {% if not payment.invoice.is_active %}(Archived){% endif %}
+                                </span>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </p>
                     {% else %}
                         {% include 'payments/partials/invoice_select.html' with context %}
                     {% endif %}

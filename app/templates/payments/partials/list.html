@@ -27,7 +27,14 @@
             </td>
 
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-mono">
-                {{ payment.invoice.invoice_number if payment.invoice else '-'}}
+                {% if payment.invoice %}
+                    <span class="{{ 'text-gray-500' if not payment.invoice.is_active else '' }}">
+                        {{ payment.invoice.invoice_number }}
+                        {% if not payment.invoice.is_active %}(Archived){% endif %}
+                    </span>
+                {% else %}
+                    -
+                {% endif %}
             </td>
 
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-bold">

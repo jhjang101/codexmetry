@@ -176,20 +176,32 @@ def edit(id):
 
 @bp.route('/archive/<int:id>', methods=['POST'])
 def archive(id):
-    """Soft delete the invoice."""
-    invoice = InvoiceService.archive(id)
+    """Specialized archive for invoices with money safety warnings."""
+    # 1. Perform specialized archive
+    invoice, has_payments = InvoiceService.archive_invoice(id)
 
-    # Sync po status
+    if not invoice:
+        flash(f'Invoice not found.', 'error')
+        return redirect(url_for('invoices.index'))
+
+    # 2. Sync parent PO status (since an invoice just disappeared)
     po_status_updated = False
     if invoice.po_id:
         po_status_updated = sync_po_status(invoice.po_id)
 
-    if invoice:
-        flash(f'Invoice {invoice.invoice_number} moved to archives.', 'warning')
-        if invoice.po_id and po_status_updated:
-            flash(f'Status of PO {invoice.purchase_order.po_number} updated successfully!', 'success')
-    else:
-        flash(f'Invoice {invoice.invoice_number} not found.', 'error')
+    # 3. Flash Messages
+    flash(f'Invoice {invoice.invoice_number} moved to archives.', 'warning')
+
+    # MONEY SAFETY WARNING: Tell the user exactly where the money went
+    if has_payments:
+        po_name = invoice.purchase_order.po_number or invoice.order.order_number
+        flash(f'ATTENTION: This invoice had active payments. These funds are now sitting as a credit on PO {po_name}.', 'error')
+
+    # PO SYNC FEEDBACK
+    if invoice.po_id and po_status_updated:
+        po_name = invoice.purchase_order.po_number or invoice.order.order_number
+        flash(f'Status of PO {po_name} updated successfully!', 'success')
+        
     return redirect(url_for('invoices.index'))
 
 # --- HTMX Item-row and Calculation Routes ---

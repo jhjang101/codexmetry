@@ -309,3 +309,21 @@ class InvoiceService(BaseService):
 
         return invoice
 
+    @classmethod
+    def archive_invoice(cls, id: int):
+        """
+        Specialized archive for Invoices.
+        Checks for active payments and returns (invoice, has_payments).
+        """
+        invoice = cls.get_by_id(id)
+        if not invoice:
+            return None, False
+
+        # Check for active payments specifically linked to this invoice
+        has_payments = any(p.is_active for p in invoice.payment)
+
+        # Soft delete
+        invoice.is_active = False
+        db.session.commit()
+
+        return invoice, has_payments

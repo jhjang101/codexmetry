@@ -7,10 +7,22 @@
             hx-target="#none"
             hx-trigger="change">
         <option value="">{{ 'Select PO first...' if is_disabled else 'No Invoice (Down Payment)' }}</option>
-        {% for inv in invoices %}
-            <option value="{{ inv.id }}" {{ 'selected' if (payment and payment.invoice_id == inv.id) or (invoice and invoice.id == inv.id) else '' }}>
-                {{ inv.invoice_number }} ({{ inv.total_amount | usd }})
+        {# 1. Handle the Archived Invoice Case #}
+        {% if payment and payment.invoice and not payment.invoice.is_active %}
+            <option value="{{ payment.invoice_id }}" selected>
+                {{ payment.invoice.invoice_number }} (Archived)
             </option>
+        {% endif %}
+
+        {# 2. Loop through Eligible (Active) Invoices #}
+        {% for inv in invoices %}
+            {% if payment and inv.id == payment.invoice_id and not payment.invoice.is_active %}
+                {# Skip - already rendered #}
+            {% else %}
+                <option value="{{ inv.id }}" {{ 'selected' if (payment and payment.invoice_id == inv.id) else '' }}>
+                    {{ inv.invoice_number }} ({{ inv.total_amount | usd }})
+                </option>
+            {% endif %}
         {% endfor %}
     </select>
     <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-400">
