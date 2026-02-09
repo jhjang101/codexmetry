@@ -1,4 +1,5 @@
 {% set row_id = row_id if row_id else (item.id if item else timestamp) %}
+{% set is_system = item.product.is_system if (item and item.product) else False %}
 
 <tr class="item-row group">
     <input type="hidden" name="row_ids[]" value="{{ row_id }}">
@@ -6,6 +7,14 @@
     <td class="py-2 pr-2">
         {% if mode == 'view' %}
             <p class="block bg-gray-100 border rounded-lg p-2 text-sm">{{ item.product.name }}</p>
+
+        {% elif is_system %}
+            <!-- Locked System Product: Show text and send ID via hidden input -->
+            <div class="block bg-gray-100 border rounded-lg p-2 text-sm">
+                {{ item.product.name }}
+            </div>
+            <input type="hidden" name="product_ids[]" value="{{ item.product_id }}">
+
         {% else %}
             <div class="relative">
                 <select name="product_ids[]" 
@@ -33,7 +42,12 @@
             <p class="block bg-gray-100 border rounded-lg p-2 text-sm text-right">{{ item.quantity }}</p>
         {% else %}
             <input type="number" name="quantities[]" value="{{ item.quantity if item else 1 }}" 
+                    {% if is_system %}
+                    readonly
+                    class="block w-full bg-gray-100 border rounded-lg p-2 text-sm text-center outline-none"
+                    {% else %}
                     class="block w-full border rounded-lg p-2 text-sm text-center focus:ring-1 focus:ring-blue-300 outline-none"
+                    {% endif %}
                     hx-post="{{ url_for('invoices.calculate') }}"
                     hx-vals='{"row_id": "{{ row_id }}"}'
                     hx-trigger="change delay:300ms"
@@ -60,7 +74,7 @@
     </td>
 
     <td class="py-2 pl-2 text-center">
-        {% if mode != 'view' %}
+        {% if mode != 'view' and not is_system %}
         <button type="button" class="text-red-400 hover:text-red-800 remove-row"
                 onclick="this.closest('.item-row').remove(); htmx.trigger('body', 'recalculate')">
             <i class="fa-solid fa-xmark"></i>

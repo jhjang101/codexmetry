@@ -1,6 +1,11 @@
 <input type="text" name="unit_prices[]" 
        value="{{ price | usd if price is defined else (item.billed_unit_price | usd if item else '$0.00') }}"
+       {% if is_system %}
+       readonly
+       class="block w-full bg-gray-100 border rounded-lg p-2 text-sm text-right outline-none"
+       {% else %}
        class="block w-full border rounded-lg p-2 text-sm text-right focus:ring-1 focus:ring-blue-300 outline-none"
+       {% endif %}
        hx-post="{{ url_for('invoices.calculate') }}"
        hx-vals='{"row_id": "{{ row_id }}"}'
        hx-trigger="keyup changed delay:300ms, load" 
