@@ -90,6 +90,14 @@ def add():
 @bp.route('/view/<int:id>')
 def view(id):
     invoice = InvoiceService.get_invoice_by_id(id)
+
+
+    print('invoice.total_amount:', invoice.total_amount)
+    print('invoice.total_due:', invoice.total_due)
+    print('invoice.remaining_deposit:', invoice.remaining_deposit)
+    print('invoice.balance:', invoice.balance)
+
+
     return render_template('invoices/form.html', mode='view', invoice=invoice)
 
 @bp.route('/edit/<int:id>', methods=['GET', 'POST'])

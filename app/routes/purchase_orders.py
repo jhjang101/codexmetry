@@ -85,7 +85,13 @@ def add():
 
 @bp.route('/view/<int:id>')
 def view(id):
-    po = PurchaseOrderService.get_by_id(id)
+    po = PurchaseOrderService.get_po_by_id(id)
+
+    print('po.total_amount:', po.total_amount)
+    print('po.balance:', po.balance)
+    print('po.remaining_deposit:', po.remaining_deposit)
+
+
     return render_template('purchase_orders/form.html', mode='view', po=po)
 
 @bp.route('/edit/<int:id>', methods=['GET', 'POST'])

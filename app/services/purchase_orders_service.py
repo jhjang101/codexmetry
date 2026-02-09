@@ -94,7 +94,6 @@ class PurchaseOrderService(BaseService):
         for row in rows:
             po = row[0]              # The PurchaseOrder model
             po.balance = row[1]      # The calculated_balance
-            print(po.balance)
             items.append(po)
 
         # 6.4. Create the Pagination Object Manually
@@ -272,13 +271,21 @@ class PurchaseOrderService(BaseService):
         )
         total_applied_deposit = db.session.execute(applied_dep_stmt).scalar() or 0
 
+        # 5. Sum of Negative Grand Totals (The "Refund" or "Credit Carry-over")
+        neg_total_stmt = select(func.sum(Invoice.total_amount)).where(
+            Invoice.po_id == po.id,
+            Invoice.is_active == True,
+            Invoice.total_amount < 0 # Only capture negative totals
+        )
+        total_negative_grand_total = db.session.execute(neg_total_stmt).scalar() or 0
+
         # 5. Final Attribute Assignment
         # 5.1. po.balance: Financial exposure (What is still to be invoiced)
         po.balance = po.total_amount - total_invoiced - total_invoiceless_paid
 
         # 5.2. po.remaining_deposit: The Credit Pool (Deposit we received but haven't applied to invoice yet)
         # We add because total_applied_deposit is negative (e.g. 1000 + -300 = 700)
-        remaining = total_invoiceless_paid + total_applied_deposit
+        remaining = total_invoiceless_paid + total_applied_deposit - total_negative_grand_total
         po.remaining_deposit = max(0, remaining) # Floor at 0
 
         remaining_items = []
