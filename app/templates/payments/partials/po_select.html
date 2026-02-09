@@ -6,10 +6,23 @@
             hx-trigger="change"
             required>
         <option value="">Select PO...</option>
-        {% for p in pos %}
-            <option value="{{ p.id }}" {{ 'selected' if (payment and payment.po_id == p.id) or (po and po.id == p.id) else '' }}>
-                {{ p.order.order_number }} ({{ p.po_number or 'No Ref' }})
+        {# 1. HANDLE THE ARCHIVED PO CASE #}
+        {% if payment and payment.purchase_order and not payment.purchase_order.is_active %}
+            <option value="{{ payment.po_id }}" selected>
+                {{ payment.purchase_order.po_number or payment.order.order_number }} (Archived)
             </option>
+        {% endif %}
+
+        {# 2. LOOP THROUGH ELIGIBLE (ACTIVE) POS #}
+        {% for p in pos %}
+            {# We skip the payment's PO if we already rendered it in the Archived check above #}
+            {% if payment and p.id == payment.po_id and not payment.purchase_order.is_active %}
+                {# Already rendered #}
+            {% else %}
+                <option value="{{ p.id }}" {{ 'selected' if (payment and payment.po_id == p.id) or (po and po.id == p.id) else '' }}>
+                    {{ p.order.order_number }} ({{ p.po_number or 'No Ref' }})
+                </option>
+            {% endif %}
         {% endfor %}
     </select>
     <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-400">

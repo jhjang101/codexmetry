@@ -27,7 +27,7 @@
         <div class="flex gap-3 items-center">
             {% if mode == 'view' %}
                 <form action="{{ url_for('purchase_orders.archive', id=po.id) }}" method="POST" 
-                      onsubmit="return confirm('Archive this po?')">
+                      onsubmit="return confirm('CRITICAL WARNING: This is a cascading action!\n\n- ALL linked Invoices will be archived.\n- The Order Registry ID will be deactivated.\n- The associated Quote will be reverted to lead status.\n\nAre you sure you want to proceed?')">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" 
                             class="text-red-400 px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-800 transition-colors">

@@ -20,7 +20,10 @@
             </td>
 
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-mono">
-            {{ payment.purchase_order.po_number if payment.purchase_order else '-' }}
+            <span class="{{ 'text-gray-500' if not payment.purchase_order.is_active else '' }}">
+                {{ payment.purchase_order.po_number or payment.order.order_number }}
+                {% if not payment.purchase_order.is_active %}(Archived){% endif %}
+            </span>
             </td>
 
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-mono">

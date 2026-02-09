@@ -153,9 +153,22 @@ def edit(id):
 
 @bp.route('/archive/<int:id>', methods=['POST'])
 def archive(id):
-    po = PurchaseOrderService.archive(id)
+    """Specialized archive for PO with dependency ripples."""
+    po, has_payments = PurchaseOrderService.archive_po(id)
+
     if po:
-        flash(f'PO {po.po_number} has been moved to archives.', 'warning')
+        # Use the CDX fallback for the flash message
+        po_name = po.po_number or po.order.order_number
+        flash(f'PO {po_name}, its Registry ID, and all linked Invoices have been archived.', 'warning')
+
+        # Free the Quote? Notify the user.
+        if po.quote_id:
+            flash(f'Quote {po.quote.quote_number} has been reverted to "Sent" status.', 'success')
+
+        # MONEY SAFETY WARNING
+        if has_payments:
+            flash(f'ATTENTION: This PO has active payments. Money records were NOT archived. Please manage them manually.', 'error')
+
     else:
         flash('PO not found.', 'error')
     return redirect(url_for('purchase_orders.index'))

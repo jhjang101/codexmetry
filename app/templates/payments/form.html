@@ -98,7 +98,12 @@
                     <label class="block text-sm font-medium text-gray-500">PO Number</label>
                     <div id="po-select-container">
                         {% if mode == 'view' %}
-                            <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ payment.purchase_order.po_number if payment.purchase_order else '-' }}</p>
+                            <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">
+                                <span class="{{ 'text-gray-500' if not payment.purchase_order.is_active else '' }}">
+                                    {{ payment.purchase_order.po_number or payment.order.order_number }}
+                                    {% if not payment.purchase_order.is_active %}(Archived){% endif %}
+                                </span>
+                            </p>
                         {% else %}
                             {% include 'payments/partials/po_select.html' with context %}
                         {% endif %}

@@ -333,3 +333,36 @@ class PurchaseOrderService(BaseService):
         po.remaining_items = remaining_items
 
         return po
+    
+    @classmethod
+    def archive_po(cls, id: int):
+        """
+        Specialized archive that ripples through Registry, Quotes, and Invoices.
+        Returns (PO object, has_payments boolean).
+        """
+        po = cls.get_by_id(id)
+        if not po:
+            return None, False
+
+        # 1. Check for active payments (Money Safety)
+        # We check the collection for any item where is_active is True
+        has_payments = any(payment.is_active for payment in po.payment)
+
+        # 2. Archive the Registry (frees the CDX number)
+        if po.order:
+            po.order.is_active = False
+
+        # 3. Revert the Quote (liberates it back to Lead status)
+        if po.quote:
+            po.quote.status = 'sent'
+            po.quote.order_id = None
+
+        # 4. Ripple Archive to Invoices
+        for inv in po.invoice:
+            inv.is_active = False
+
+        # 5. Archive the PO itself
+        po.is_active = False
+
+        db.session.commit()
+        return po, has_payments
