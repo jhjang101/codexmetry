@@ -241,10 +241,13 @@ class PurchaseOrderService(BaseService):
         if not po:
             return None
         
-        # 2. Calculate Total Invoiced (Sum of all Invoice Headers)
+        # 2. Calculate Total Invoiced (Value Accounted For)
+        # We ONLY sum totals that are greater than zero. 
+        # Negative invoices (credits) do not reduce the contract gap.
         invoice_sum_stmt = select(func.sum(Invoice.total_amount)).where(
             Invoice.po_id == po.id,
-            Invoice.is_active == True
+            Invoice.is_active == True,
+            Invoice.total_amount > 0  # CRITICAL: Only count positive "Due" amounts
         )
         total_invoiced = db.session.execute(invoice_sum_stmt).scalar() or 0
 
