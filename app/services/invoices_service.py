@@ -4,7 +4,7 @@ from ..extensions import db
 from ..utils.docs import generate_doc_number
 from ..utils.money import parse_to_cents
 from ..utils.manual_pagination import ManualPagination
-from sqlalchemy import select, or_, func
+from sqlalchemy import select, or_, func, case
 from sqlalchemy.orm import contains_eager
 from datetime import datetime
 
@@ -34,7 +34,8 @@ class InvoiceService(BaseService):
             select(
                 cls.model,
                 (
-                    cls.model.total_amount - 
+                    # We use a CASE to clamp total_amount at 0 for the balance math
+                    case((cls.model.total_amount > 0, cls.model.total_amount), else_=0) - 
                     func.coalesce(pay_sub.c.total_paid, 0)
                 ).label('calculated_balance')
             )
@@ -85,7 +86,7 @@ class InvoiceService(BaseService):
         for row in rows:
             invoice = row[0]              # The Invoice model
             invoice.balance = row[1]      # The calculated_balance
-            print(invoice.balance)
+            invoice.total_due = max(0, invoice.total_amount)
             items.append(invoice)
 
         # 6.4. Create the Pagination Object Manually
@@ -297,7 +298,9 @@ class InvoiceService(BaseService):
             Payment.is_active == True
         )
         total_paid = db.session.execute(payment_sum_stmt).scalar() or 0
-        invoice.balance = invoice.total_amount - total_paid
+        # Calculate Balance based on Total Due (clamped at 0)
+        total_due = max(0, invoice.total_amount)
+        invoice.balance = total_due - total_paid
 
         return invoice
 
