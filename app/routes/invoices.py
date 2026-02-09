@@ -244,8 +244,8 @@ def calculate():
     # 3. Derive UI-only properties
     # Total Due is the amount the client must pay (never less than 0)
     total_due = max(0, grand_total_cents)
-    # Remaining Credit is the excess deposit (absolute value of negative total)
-    remaining_credit = abs(min(0, grand_total_cents))
+    # Remaining Deposit is the excess deposit (absolute value of negative total)
+    remaining_deposit = abs(min(0, grand_total_cents))
 
     return render_template(
         'invoices/partials/calculation_result.html',
@@ -253,7 +253,7 @@ def calculate():
         line_total=line_total_cents,
         grand_total=grand_total_cents,
         total_due=total_due,
-        remaining_credit=remaining_credit
+        remaining_deposit=remaining_deposit
     )
 
 # --- HTMX CASCADE ROUTES ---
