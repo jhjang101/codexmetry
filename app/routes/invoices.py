@@ -216,31 +216,45 @@ def get_unit_price():
 
 @bp.route('/calculate', methods=['POST'])
 def calculate():
-    """Calculates the specific Line Total and the global Grand Total."""
+    """
+    Dynamically calculates Line Total, Grand Total, Total Due and Remaining Deposit logic.
+    Returns targeted swaps for the row and OOB swaps for the footer.
+    """
     row_id = request.form.get('row_id')
     row_ids = request.form.getlist('row_ids[]')
     quantities = request.form.getlist('quantities[]')
     unit_prices = request.form.getlist('unit_prices[]')
 
-    line_total = 0
-    grand_total = 0
+    line_total_cents = 0
+    grand_total_cents = 0
 
-    # If this is the row the user is currently editing, capture its total
-    if row_id in row_ids:
-        idx = row_ids.index(row_id)
-        line_total = int(quantities[idx]) * parse_to_cents(unit_prices[idx])
+    # 1. Iterate through all rows to calculate the Grand Total
+    for r_id, qty, price_str in zip(row_ids, quantities, unit_prices):
+        q = int(qty) if qty else 0
+        # parse_to_cents handles the negative sign from the Applied Deposit row
+        p = parse_to_cents(price_str)
+        
+        row_total = q * p
+        grand_total_cents += row_total
 
-    # calculate grand total
-    items = [{'qty': q, 'price': p} for q, p in zip(quantities, unit_prices)]
-    for item in items:
-        qty = int(item['qty'])
-        price = parse_to_cents(item['price'])
-        grand_total += qty * price
+        # 2. Capture the Line Total for the specific row being edited
+        if r_id == row_id:
+            line_total_cents = row_total
 
-    return render_template('invoices/partials/calculation_result.html', 
-                           row_id=row_id,
-                           line_total=line_total, 
-                           grand_total=grand_total)
+    # 3. Derive UI-only properties
+    # Total Due is the amount the client must pay (never less than 0)
+    total_due = max(0, grand_total_cents)
+    # Remaining Credit is the excess deposit (absolute value of negative total)
+    remaining_credit = abs(min(0, grand_total_cents))
+
+    return render_template(
+        'invoices/partials/calculation_result.html',
+        row_id=row_id,
+        line_total=line_total_cents,
+        grand_total=grand_total_cents,
+        total_due=total_due,
+        remaining_credit=remaining_credit
+    )
 
 # --- HTMX CASCADE ROUTES ---
 

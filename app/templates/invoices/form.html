@@ -225,10 +225,20 @@
                      hx-trigger="recalculate from:body"
                      hx-target="#calculation-sink"
                      hx-include="#invoice-main-form">
-                    <span class="text-lg text-gray-700 font-medium mr-4">Grand Total:</span>
-                    <span class="text-lg font-bold text-blue-700" id="grand-total-display">
-                        {{ invoice.total_amount | usd if invoice else '$0.00' }}
-                    </span>
+
+                    <!-- Grand Total Line -->
+                    <div class="flex items-baseline justify-end gap-4">
+                        <span class="text-sm text-gray-700 font-medium">Grand Total:</span>
+                        <span class="text-sm font-bold text-blue-700" id="grand-total-display">
+                            {{ invoice.total_amount | usd if invoice else '$0.00' }}
+                        </span>
+                    </div>
+
+                    <!-- NEW: The Target for the Financial Summary (Due/Credit) -->
+                    <div id="financial-summary-container">
+                        <!-- This will be populated by calculation_result.html -->
+                    </div>
+
                 </div>
             </div>
             <!-- This hidden div catches the main response of the "recalculate" call -->
