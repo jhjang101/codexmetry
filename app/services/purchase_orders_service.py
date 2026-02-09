@@ -16,13 +16,14 @@ class PurchaseOrderService(BaseService):
         Joins with OrderRegistry (CDX#) and Client (Name).
         Use subquery to calculate balance.
         """
-        # 1. Subquery for Invoiced Sum
+        # 1. Subquery for Invoiced Sum (FILTERED TO POSITIVE TOTALS ONLY)
+        # Invoices with total <= 0 are covered by deposits and shouldn't reduce the contract gap.
         inv_sub = (
             select(
                 Invoice.po_id, 
                 func.sum(Invoice.total_amount).label('total_invoiced')
             )
-            .where(Invoice.is_active == True)
+            .where(Invoice.is_active == True, Invoice.total_amount > 0) # Added > 0 filter
             .group_by(Invoice.po_id)
             .subquery()
         )
