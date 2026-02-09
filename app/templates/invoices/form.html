@@ -236,6 +236,20 @@
 
                     <!-- NEW: The Target for the Financial Summary (Due/Credit) -->
                     <div id="financial-summary-container">
+                        {% if mode == 'view' %}
+                            <div class="mt-2 text-right">
+                                <div class="text-sm font-medium text-gray-700">
+                                    Total Due: <span class="text-blue-700 font-bold ml-1">{{ invoice.total_due | usd }}</span>
+                                </div>
+                                
+                                {% if invoice.remaining_deposit > 0 %}
+                                <div class="text-sm font-medium text-green-600 mt-1">
+                                    Remaining Credit: <span class="font-bold ml-1">{{ invoice.remaining_deposit | usd }}</span>
+                                </div>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                        <!-- In Edit/Add mode, this remains empty and waits for the HTMX OOB swap -->
                         <!-- This will be populated by calculation_result.html -->
                     </div>
 

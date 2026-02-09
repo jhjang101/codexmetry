@@ -89,13 +89,13 @@ def add():
 
 @bp.route('/view/<int:id>')
 def view(id):
-    invoice = InvoiceService.get_by_id(id)
+    invoice = InvoiceService.get_invoice_by_id(id)
     return render_template('invoices/form.html', mode='view', invoice=invoice)
 
 @bp.route('/edit/<int:id>', methods=['GET', 'POST'])
 def edit(id):
     """Edit mode: handles header updates and item list synchronization."""
-    invoice = InvoiceService.get_by_id(id)
+    invoice = InvoiceService.get_invoice_by_id(id)
     
     if request.method == 'POST':
         try:
@@ -111,10 +111,10 @@ def edit(id):
                 'note': request.form.get('note')
             }
             old_po_id = invoice.po_id if invoice else None
-            old_po_number = invoice.purchase_order.po_number or invoice.order.order_number
+            old_po_number = invoice.purchase_order.po_number or invoice.order.order_number # type: ignore
             InvoiceService.update_invoice(id, invoice_data)
             po_id = invoice.po_id if invoice else None
-            po_number = invoice.purchase_order.po_number or invoice.order.order_number
+            po_number = invoice.purchase_order.po_number or invoice.order.order_number # type: ignore
             
             print(old_po_number)
             print(po_number)
@@ -124,7 +124,7 @@ def edit(id):
             InvoiceService.update_items(id, items)
 
             # Sync invoice status
-            sync_invoice_status(invoice.id)
+            sync_invoice_status(invoice.id) # type: ignore
 
             # 2.1. Sync po status
             po_status_updated = False
@@ -140,7 +140,7 @@ def edit(id):
             delete_ids = [int(fid) for fid in raw_delete_ids if fid.isdigit()]
             AttachmentService.commit('Invoice', id, new_files=new_files, delete_ids=delete_ids)
 
-            flash(f"Invoice {invoice.invoice_number} updated successfully!", "success")
+            flash(f"Invoice {invoice.invoice_number} updated successfully!", "success") # type: ignore
             if po_id and po_status_updated:
                 flash(f"Status of PO {po_number} updated successfully!", "success")
             if old_po_id and old_po_status_updated:
@@ -158,7 +158,7 @@ def edit(id):
     clients = ClientService.get_all()
     products = ProductService.get_all()
     # Fetch eligible POs for this specific client so the dropdown is populated on load
-    pos = PurchaseOrderService.get_eligible_by_client(invoice.client_id) 
+    pos = PurchaseOrderService.get_eligible_by_client(invoice.client_id) # type: ignore
     return render_template('invoices/form.html', 
                            mode='edit', 
                            invoice=invoice, 

@@ -298,9 +298,14 @@ class InvoiceService(BaseService):
             Payment.is_active == True
         )
         total_paid = db.session.execute(payment_sum_stmt).scalar() or 0
-        # Calculate Balance based on Total Due (clamped at 0)
-        total_due = max(0, invoice.total_amount)
-        invoice.balance = total_due - total_paid
+        
+        # Attach attributes
+        # Total Due: What they owe now (never negative)
+        invoice.total_due = max(0, invoice.total_amount)
+        # Remaining Deposit: The deposit snapshot for this document (abs of negative total)
+        invoice.remaining_deposit = abs(min(0, invoice.total_amount))
+        # Balance: Based on what is actually due after payments
+        invoice.balance = invoice.total_due - total_paid
 
         return invoice
 
