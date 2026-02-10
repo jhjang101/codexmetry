@@ -245,6 +245,13 @@ def calculate():
     quantities = request.form.getlist('quantities[]')
     unit_prices = request.form.getlist('unit_prices[]')
 
+    # Extract the hidden deposit pool value (it is stored in cents)
+    try:
+        po_total_deposit = int(request.form.get('po_total_deposit', 0))
+    except (ValueError, TypeError):
+        po_total_deposit = 0
+
+    # Initialize variables
     line_total_cents = 0
     grand_total_cents = 0
 
@@ -273,7 +280,8 @@ def calculate():
         line_total=line_total_cents,
         grand_total=grand_total_cents,
         total_due=total_due,
-        remaining_deposit=remaining_deposit
+        remaining_deposit=remaining_deposit,
+        po_total_deposit=po_total_deposit
     )
 
 # --- HTMX CASCADE ROUTES ---
@@ -313,6 +321,8 @@ def load_po_details():
     # 2. Populate clients and products list for bill_to and item_row
     clients = ClientService.get_all()
     products = ProductService.get_all()
+
+    print('po.po_total_deposit:', po.po_total_deposit)
     
     # 3. Return the single unified OOB template
     resp = make_response(render_template(

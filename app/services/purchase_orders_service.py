@@ -288,6 +288,9 @@ class PurchaseOrderService(BaseService):
         remaining = total_invoiceless_paid + total_applied_deposit - total_negative_grand_total
         po.remaining_deposit = max(0, remaining) # Floor at 0
 
+        # 5.3. po.po_total_deposit: The total cash ever received for this PO (without invoices)
+        po.po_total_deposit = total_invoiceless_paid
+
         remaining_items = []
         # 6. Calculate Remaining Items (Fulfillment)
         for po_item in po.items:

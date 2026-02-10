@@ -242,7 +242,7 @@
                                     Total Due: <span class="text-blue-700 font-bold ml-1">{{ invoice.total_due | usd }}</span>
                                 </div>
                                 
-                                {% if invoice.remaining_deposit > 0 %}
+                                {% if invoice.po_total_deposit > 0 %}
                                 <div class="text-sm font-medium text-green-600 mt-1">
                                     Remaining Credit: <span class="font-bold ml-1">{{ invoice.remaining_deposit | usd }}</span>
                                 </div>
@@ -263,6 +263,13 @@
         <section class="bg-white p-6 rounded-lg shadow mb-2">
             {% include 'invoices/partials/attachment_zone.html' %}
         </section>
+
+        <!-- Add a hidden input inside the form so the calculation engine can "see" the deposit pool. --> 
+        <!-- Use this to display "Remaining Credit" even if the remaining credit become 0  -->
+        <input type="hidden" 
+               id="po_total_deposit" 
+               name="po_total_deposit" 
+               value="{{ invoice.po_total_deposit if invoice else 0 }}">
 
     </form>
 </div>

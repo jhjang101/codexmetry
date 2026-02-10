@@ -298,6 +298,14 @@ class InvoiceService(BaseService):
             Payment.is_active == True
         )
         total_paid = db.session.execute(payment_sum_stmt).scalar() or 0
+
+        # 3. The total cash ever received for this PO (without invoices)
+        invoiceless_pay_stmt = select(func.sum(Payment.amount)).where(
+            Payment.po_id == invoice.po_id,
+            Payment.invoice_id == None,
+            Payment.is_active == True
+        )
+        po_total_deposit = db.session.execute(invoiceless_pay_stmt).scalar() or 0
         
         # Attach attributes
         # Total Due: What they owe now (never negative)
@@ -306,6 +314,8 @@ class InvoiceService(BaseService):
         invoice.remaining_deposit = abs(min(0, invoice.total_amount))
         # Balance: Based on what is actually due after payments
         invoice.balance = invoice.total_due - total_paid
+        # The total cash ever received for the linked PO (without invoices)
+        invoice.po_total_deposit = po_total_deposit
 
         return invoice
 
