@@ -187,25 +187,41 @@ def edit(id):
 
 @bp.route('/archive/<int:id>', methods=['POST'])
 def archive(id):
-    """Soft delete the payment."""
-    payment = PaymentService.archive(id)
-    # Sync invoice status
-    invoice_status_updated = False
-    if payment.invoice:
-        invoice_status_updated = sync_invoice_status(payment.invoice_id)
-    # Flash
-    if payment:
+    """Soft delete the payment with credit pool validation."""
+    try:
+        # 1. Attempt specialized archive
+        payment = PaymentService.archive_payment(id)
+        
+        if not payment:
+            flash(f'Payment not found.', 'error')
+            return redirect(url_for('payments.index'))
+        
+        # 2. Sync invoice status (if this was a standard invoice payment)
+        invoice_status_updated = False
+        if payment.invoice_id:
+            invoice_status_updated = sync_invoice_status(payment.invoice_id)
+
+        # 3. Success Flashes
+        # Document name logic for the message
         if payment.invoice:
             payment_number = f'invoice {payment.invoice.invoice_number}'
         elif payment.purchase_order:
-            payment_number = f'PO {payment.purchase_order.po_number}'
+            payment_number = f'PO {payment.purchase_order.po_number or payment.order.order_number}'
         else:
             payment_number = f'order {payment.order.order_number}'
+
         flash(f'Payment for {payment_number} moved to archives.', 'warning')
-        if payment.invoice and invoice_status_updated:
+        
+        if payment.invoice_id and invoice_status_updated:
             flash(f"Status of invoice {payment.invoice.invoice_number} updated successfully!", "success")
-    else:
-        flash(f'Payment not found.', 'error')
+
+    except ValueError as e:
+        # 4. Handle "Idiotic Operation" protection
+        db.session.rollback()
+        flash(str(e), "error")
+        # Redirect back to the view page so they can see the conflict
+        return redirect(url_for('payments.view', id=id))
+
     return redirect(url_for('payments.index'))
 
 # --- HTMX CASCADE ROUTES ---

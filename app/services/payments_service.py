@@ -157,3 +157,30 @@ class PaymentService(BaseService):
 
         return payment
     
+    @classmethod
+    def archive_payment(cls, id: int):
+        """
+        Specialized archive for Payments with Credit Pool protection.
+        """
+        payment = cls.get_by_id(id)
+        if not payment:
+            return None
+
+        # 1. Guard for Deposit Payments (Invoiceless)
+        if payment.invoice_id is None:
+            from .purchase_orders_service import PurchaseOrderService
+            po = PurchaseOrderService.get_po_by_id(payment.po_id)
+            
+            # If the payment amount being deleted is greater than the current pool,
+            # it means an invoice is currently "using" this cash.
+            if po and payment.amount > po.remaining_deposit: # type: ignore
+                from ..utils.money import format_usd
+                raise ValueError(
+                    f"Cannot archive this payment. {format_usd(payment.amount)} of credit "
+                    f"is currently reserved by active invoices. Archive the invoices first."
+                )
+
+        # 2. Perform the Soft Delete
+        payment.is_active = False
+        db.session.commit()
+        return payment
