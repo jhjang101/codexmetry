@@ -78,11 +78,10 @@
                     {% elif category == 'success' %} text-green-700 bg-green-100 border-l-4 border-green-400
                     {% elif category == 'warning' %} text-yellow-700 bg-yellow-100
                     {% else %} text-gray-700 bg-gray-100
-                    {% endif %}"
-                    onclick="this.remove()">
+                    {% endif %}">
                     <div class="flex justify-between items-center w-full">
                         <span>{{ message }}</span>
-                        <span class="pl-2 pr-2 cursor-pointer hover:text-gray-900" onclick="this.parentElement.remove()">
+                        <span class="pl-4 pr-2 cursor-pointer hover:text-gray-900" onclick="this.closest('.mb-2').remove()">
                             <i class="fa-solid fa-xmark opacity-50 text-lg"></i>
                         </span>
                     </div>
