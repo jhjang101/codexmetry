@@ -330,7 +330,7 @@ class InvoiceService(BaseService):
             return None, False
 
         # Check for active payments specifically linked to this invoice
-        has_payments = any(p.is_active for p in invoice.payment)
+        has_payments = any(p.is_active for p in invoice.payments)
 
         # Soft delete
         invoice.is_active = False

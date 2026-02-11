@@ -349,7 +349,7 @@ class PurchaseOrderService(BaseService):
 
         # 1. Check for active payments (Money Safety)
         # We check the collection for any item where is_active is True
-        has_payments = any(payment.is_active for payment in po.payment)
+        has_payments = any(payment.is_active for payment in po.payments)
 
         # 2. Archive the Registry (frees the CDX number)
         if po.order:
@@ -361,7 +361,7 @@ class PurchaseOrderService(BaseService):
             po.quote.order_id = None
 
         # 4. Ripple Archive to Invoices
-        for inv in po.invoice:
+        for inv in po.invoices:
             inv.is_active = False
 
         # 5. Archive the PO itself
