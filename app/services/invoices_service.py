@@ -1,8 +1,8 @@
 from .base_service import BaseService
-from ..models import Invoice, InvoiceItem, PurchaseOrder, PoItem, OrderRegistry, Client, Payment
+from ..models import Invoice, InvoiceItem, PurchaseOrder, PoItem, OrderRegistry, Client, Payment, Product
 from ..extensions import db
 from ..utils.docs import generate_doc_number
-from ..utils.money import parse_to_cents
+from ..utils.money import parse_to_cents, format_usd
 from ..utils.manual_pagination import ManualPagination
 from sqlalchemy import select, or_, func, case
 from sqlalchemy.orm import contains_eager
@@ -239,7 +239,74 @@ class InvoiceService(BaseService):
         Wipe current items and re-insert new ones.
         Calculates and updates the Invoice.total_amount (Grand Total).
         Supports negative totals (Applied Deposits/Discounts).
+        Includes a Validation Guard to prevent 'Double Spending' of deposits.
         """
+        # --- Validation Guard to prevent 'Double Spending' of deposits--------
+        invoice = cls.get_by_id(invoice_id)
+        po_id = invoice.po_id
+
+        # 1. IDENTIFY THE SYSTEM PRODUCT
+        system_product_id = db.session.execute(
+            select(Product.id).where(Product.is_system == True, Product.name == 'Applied Deposit')
+        ).scalar()
+
+        # 2. CALCULATE PROPOSED CONSUMPTION FROM THE FORM DATA
+        proposed_total_cents = 0
+        proposed_deposit_line = 0
+        
+        for data in items_data:
+            qty = int(data.get('quantity', 1))
+            price = parse_to_cents(data.get('unit_price', 0))
+            line_total = qty * price
+            proposed_total_cents += line_total
+            
+            if int(data.get('product_id', 0)) == system_product_id:
+                proposed_deposit_line = line_total
+
+        # Consumption = (Amount reserved) - (Amount returned to pool as negative total)
+        # We use absolute values to keep the logic clear
+        proposed_neg_total = min(0, proposed_total_cents)
+        proposed_consumption = abs(proposed_deposit_line - proposed_neg_total)
+
+        # 3. CALCULATE CONSUMPTION BY ALL *OTHER* ACTIVE INVOICES
+        # A: Get Total Cash Available
+        pay_stmt = select(func.sum(Payment.amount)).where(
+            Payment.po_id == po_id, Payment.invoice_id == None, Payment.is_active == True
+        )
+        total_cash = db.session.execute(pay_stmt).scalar() or 0
+
+        # B: Get consumption of other invoices
+        # We need the sum of lines and sum of negative totals for OTHER invoices
+        other_lines_stmt = (
+            select(func.sum(InvoiceItem.quantity * InvoiceItem.billed_unit_price))
+            .join(Invoice).join(Product)
+            .where(
+                Invoice.po_id == po_id, Invoice.is_active == True, 
+                Product.is_system == True, Invoice.id != invoice_id
+            )
+        )
+        other_lines_total = db.session.execute(other_lines_stmt).scalar() or 0
+
+        other_neg_stmt = select(func.sum(Invoice.total_amount)).where(
+            Invoice.po_id == po_id, Invoice.is_active == True, 
+            Invoice.total_amount < 0, Invoice.id != invoice_id
+        )
+        other_neg_total = db.session.execute(other_neg_stmt).scalar() or 0
+        
+        # Consumption of others = (Sum of their deposit lines) - (Sum of their negative totals)
+        other_consumption = abs(other_lines_total - other_neg_total)
+
+        # 4. THE VALIDATION GUARD
+        if (other_consumption + proposed_consumption) > total_cash:
+            from ..utils.money import format_usd
+            available = max(0, total_cash - other_consumption)
+            raise ValueError(
+                f"Insufficient Deposit Credit. Other active invoices are already using the pool. "
+                f"Available for this invoice: {format_usd(available)}"
+            )
+
+        # 5. IF VALID, PROCEED WITH SAVE (Your existing code)
+        # --- Wipe current items and re-insert new items --------
         # 1. Delete old items
         delete_stmt = db.delete(InvoiceItem).where(InvoiceItem.invoice_id == invoice_id)
         db.session.execute(delete_stmt)
