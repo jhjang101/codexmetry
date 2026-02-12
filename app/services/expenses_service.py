@@ -39,46 +39,76 @@ class ExpenseService(BaseService):
         return cls.paginate(stmt, page=page, per_page=per_page)
     
     @classmethod
-    def create_expense(cls, data: dict) -> Expense:
+    def create_expense(cls, data: dict, items_data: list[dict]) -> Expense:
         """
-        Creates an Expense header with automated EXP numbering.
+        Atomics creation of Expense header and items.
+        Logic: If description is blank, fall back to the first item description.
         """
         from datetime import date
+        from .base_service import db
+        from ..models import ExpenseItem
 
-        # 1. Generate the next EXP number
+        # 1. Generate Number
         expense_number = generate_doc_number(prefix='EXP', model=cls.model, column_name='expense_number')
 
-        # 2. Extract and Validate
+        # 2. Validation
         vendor_id = data.get('vendor_id')
-        description = data.get('description', '').strip()
-
         if not vendor_id:
             raise ValueError("Vendor is required.")
+        
+        if not items_data:
+            raise ValueError("At least one expense item is required.")
+
+        # 3. Description Fallback Logic (The Brain)
+        description = data.get('description', '').strip()
         if not description:
-            raise ValueError("Description is required.")
+            # Take the description of the first item in the list
+            description = items_data[0].get('item', '').strip()
+        
+        if not description:
+            raise ValueError("Description is required or must be provided in the first item line.")
 
-        # 3. Extract oters and transform Date string to object
-        category_id = data.get('category_id')
-
+        # 4. Transform Date
         raw_date = data.get('expense_date')
-        if raw_date and isinstance(raw_date, str):
-            expense_date = datetime.strptime(raw_date, '%Y-%m-%d').date()
-        else:
-            expense_date = date.today()
+        category_id = data.get('category_id')
+        expense_date = datetime.strptime(raw_date, '%Y-%m-%d').date() if raw_date else date.today()
 
-        # 4. Create the Header Object
+        # 5. Create Header
         expense = cls.model()
         expense.expense_number = expense_number
         expense.vendor_id = int(vendor_id)
         expense.description = description
-        expense.category_id = category_id if category_id else None
+        expense.category_id = int(category_id) if category_id else None
         expense.expense_date = expense_date
         expense.note = data.get('note', '')
-
+        
         db.session.add(expense)
-        db.session.commit()
-        return expense
+        db.session.flush() # Flush to get expense.id for the line items
 
+        # 6. Create Items and Calculate Total
+        total_cents = 0
+        for item_data in items_data:
+            item_text = item_data.get('item', '').strip()
+            if not item_text:
+                raise ValueError("Item description is required for all rows.")
+
+            qty = int(item_data.get('quantity', 1))
+            price = parse_to_cents(str(item_data.get('unit_price', 0)))
+            total_cents += (qty * price)
+
+            new_item = ExpenseItem()
+            new_item.expense_id = expense.id
+            new_item.item = item_text
+            new_item.quantity = qty
+            new_item.unit_price = price
+            db.session.add(new_item)
+
+        # 7. Update Header Total and Commit
+        expense.total_amount = total_cents
+        db.session.commit()
+
+        return expense
+    
     @classmethod
     def update_items(cls, expense_id: int, items_data: list[dict]):
         """

@@ -49,7 +49,7 @@
                     {% if mode == 'view' %}
                         <p class="mt-1 block bg-gray-100 border rounded-lg p-2 text-sm">{{ expense.description }}</p>
                     {% else %}
-                        <input type="text" name="description" value="{{ expense.description if expense else '' }}" required
+                        <input type="text" name="description" value="{{ expense.description if expense else '' }}" 
                                placeholder="e.g. Flight to Chicago" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300">
                     {% endif %}
                 </div>

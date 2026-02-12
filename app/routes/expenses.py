@@ -33,38 +33,44 @@ def index():
 def add():
     if request.method == 'POST':
         try:
-            # 1. Prepare Header Data
-            expense_data = {
+            # 1. Extract Header Data
+            header_data = {
                 'vendor_id': request.form.get('vendor_id'),
                 'category_id': request.form.get('category_id'),
-                'description': request.form.get('description'),
+                'description': request.form.get('description'), # Might be empty, Brain handles fallback
                 'expense_date': request.form.get('expense_date'),
                 'note': request.form.get('note')
             }
             
-            # 2. Create Header (Brain handles numbering)
-            new_expense = ExpenseService.create_expense(expense_data)
-
-            # 3. Process and Save Line Items (Strings, not Product IDs)
+            # 2. Extract and Parse Items
+            # This helper converts the parallel lists into a list of dictionaries
             items = _parse_items_form(request.form)
-            ExpenseService.update_items(new_expense.id, items)
+            
+            # 3. Call the Atomic Service method
+            # This handles numbering, fallback logic, and line item saving
+            new_expense = ExpenseService.create_expense(header_data, items)
 
-            # 4. Commit Attachments
+            # 4. Handle Attachments
+            # We call this after the service returns the saved expense object
             new_files = request.files.getlist('attachments')
             AttachmentService.commit('Expense', new_expense.id, new_files=new_files)
             
+            # 5. Success Feedback
             flash(f"Expense {new_expense.expense_number} recorded successfully!", "success")
             return redirect(url_for('expenses.index'))
             
         except ValueError as e:
+            # Rollback any partial database state (like the CDX registry increment)
             db.session.rollback()
             flash(str(e), "error")
             return redirect(url_for('expenses.add'))
         
-    # GET: Prepare form data    
+    # GET: Prepare form data for the initial render
     vendors = VendorService.get_all()
     categories = ExpenseCategoryService.get_all()
+    # Generate a unique timestamp for the first dynamic row
     initial_row_id = str(int(time.time() * 1000))
+    
     return render_template('expenses/form.html', 
                            mode='add', 
                            expense=None, 
@@ -79,42 +85,60 @@ def view(id):
 
 @bp.route('/edit/<int:id>', methods=['GET', 'POST'])
 def edit(id):
+    # 1. Fetch existing expense
     expense = ExpenseService.get_by_id(id)
     
     if request.method == 'POST':
         try:
-            # 1. Update Header (Manual date parsing for BaseService)
-            vendor_id = request.form.get('vendor_id')
-            expense_date = request.form.get('expense_date')
-            category_id = request.form.get('category_id')
+            # 2. Parse Items first (required for the description fallback check)
+            items = _parse_items_form(request.form)
+            
+            # 3. Handle Description Fallback Logic
+            description = request.form.get('description', '').strip()
+            if not description and items:
+                # Use the description from the first line item
+                description = items[0].get('item', '').strip()
+            
+            if not description:
+                raise ValueError("Description is required or must be provided in the first item line.")
 
+            # 4. Prepare and Parse Header Data
+            raw_date = request.form.get('expense_date')
+            category_id = request.form.get('category_id')
+            expense_date = datetime.strptime(raw_date, '%Y-%m-%d').date() if raw_date else None
+            
             header_data = {
-                'vendor_id': int(vendor_id) if vendor_id else None,
+                'vendor_id': int(request.form.get('vendor_id', 0)),
                 'category_id': int(category_id) if category_id else None,
-                'description': request.form.get('description', '').strip(),
-                'expense_date': datetime.strptime(expense_date, '%Y-%m-%d').date() if expense_date else None,
+                'description': description,
+                'expense_date': expense_date,
                 'note': request.form.get('note', '')
             }
+
+            # 5. Update Header via BaseService
             ExpenseService.update(id, **header_data)
 
-            # 2. Update Line Items
-            items = _parse_items_form(request.form)
+            # 6. Update Line Items via Specialized Service method
+            # This also updates the Expense.total_amount header
             ExpenseService.update_items(id, items)
 
-            # 3. Update Attachments
+            # 7. Update Attachments
             new_files = request.files.getlist('attachments')
-            delete_ids = [int(fid) for fid in request.form.getlist('delete_ids[]') if fid.isdigit()]
+            raw_delete_ids = request.form.getlist('delete_ids[]') 
+            delete_ids = [int(fid) for fid in raw_delete_ids if fid.isdigit()]
             AttachmentService.commit('Expense', id, new_files=new_files, delete_ids=delete_ids)
 
+            # 8. Success Feedback
             flash(f"Expense {expense.expense_number} updated successfully!", "success")
             return redirect(url_for('expenses.view', id=id))
             
         except ValueError as e:
+            # Rollback to prevent partial updates
             db.session.rollback()
             flash(str(e), "error")
             return redirect(url_for('expenses.edit', id=id))
 
-    # GET: Populate dropdowns
+    # GET: Populate dropdowns for the edit form
     vendors = VendorService.get_all()
     categories = ExpenseCategoryService.get_all()
     return render_template('expenses/form.html', 
