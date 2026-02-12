@@ -1,0 +1,67 @@
+{% set row_id = row_id if row_id else (item.id if item else timestamp) %}
+<tr class="item-row group">
+    <input type="hidden" name="row_ids[]" value="{{ row_id }}">
+
+    <td class="py-2 pr-2">
+        {% if mode == 'view' %}
+            <p class="block bg-gray-100 border rounded-lg p-2 text-sm">{{ item.item }}</p>
+        {% else %}
+            <input type="text" 
+                   name="items[]" 
+                   value="{{ item.item if item else '' }}" 
+                   required
+                   class="block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none"
+                   placeholder="Item name...">
+        {% endif %}
+    </td>
+
+    <td class="py-2 px-2">
+        {% if mode == 'view' %}
+            <p class="block bg-gray-100 border rounded-lg p-2 text-sm text-center">{{ item.quantity }}</p>
+        {% else %}
+            <input type="number" 
+                   name="quantities[]" 
+                   value="{{ item.quantity if item else 1 }}" 
+                   class="block w-full border rounded-lg p-2 text-sm text-center focus:ring-1 focus:ring-blue-300 outline-none"
+                   hx-post="{{ url_for('expenses.calculate') }}" 
+                   hx-vals='{"row_id": "{{ row_id }}"}' 
+                   hx-trigger="change delay:300ms"
+                   hx-target="#line-total-{{ row_id }}" 
+                   hx-include="#expense-main-form">
+        {% endif %}
+    </td>
+
+    <td class="py-2 px-2">
+        {% if mode == 'view' %}
+            <p class="block bg-gray-100 border rounded-lg p-2 text-sm text-right">{{ item.unit_price | usd }}</p>
+        {% else %}
+            <input type="text" 
+                   name="unit_prices[]" 
+                   value="{{ item.unit_price | usd if item else '$0.00' }}" 
+                   class="block w-full border rounded-lg p-2 text-sm text-right focus:ring-1 focus:ring-blue-300 outline-none"
+                   hx-post="{{ url_for('expenses.calculate') }}" 
+                   hx-vals='{"row_id": "{{ row_id }}"}' 
+                   hx-trigger="keyup changed delay:300ms"
+                   hx-target="#line-total-{{ row_id }}" 
+                   hx-include="#expense-main-form">
+        {% endif %}
+    </td>
+
+    <td class="py-2 px-2">
+        <div id="line-total-{{ row_id }}" 
+             class="block bg-gray-100 border rounded-lg p-2 text-sm font-bold text-right text-gray-700">
+            {{ (item.quantity * item.unit_price) | usd if item else '$0.00' }}
+        </div>
+    </td>
+
+    <td class="py-2 pl-2 text-center">
+        {% if mode != 'view' %}
+        <button type="button" 
+                class="text-red-400 hover:text-red-800" 
+                onclick="this.closest('.item-row').remove(); 
+                htmx.trigger('body', 'recalculate')">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+        {% endif %}
+    </td>
+</tr>

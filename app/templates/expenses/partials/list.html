@@ -1,0 +1,38 @@
+<table class="min-w-full divide-y divide-gray-200">
+    <thead class="bg-gray-50">
+        <tr>
+            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Exp #</th>
+            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Vendor</th>
+            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Description</th>
+            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Category</th>
+            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Amount</th>
+            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Date</th>
+            <th class="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase">Actions</th>
+        </tr>
+    </thead>
+    <tbody class="divide-y divide-gray-100 bg-white">
+        {% for exp in pagination.items %}
+        <tr class="hover:bg-blue-50/40 transition-colors">
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">{{ exp.expense_number }}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-blue-700">{{ exp.vendor.company_name }}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600 truncate max-w-xs">{{ exp.description }}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <span class="px-2 py-1 bg-gray-100 rounded-md text-[11px] font-medium uppercase">{{ exp.category.type if exp.category else 'Uncategorized' }}</span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-red-600">{{ exp.total_amount | usd }}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ exp.expense_date.strftime('%Y-%m-%d') }}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
+                <span class="text-gray-400 hover:text-blue-600 cursor-pointer" hx-get="{{ url_for('expenses.view', id=exp.id) }}" hx-target="body" hx-push-url="true">
+                    <i class="fa-regular fa-eye m-1"></i>
+                </span>
+                <span class="text-gray-400 hover:text-yellow-600 cursor-pointer" hx-get="{{ url_for('expenses.edit', id=exp.id) }}" hx-target="body" hx-push-url="true">
+                    <i class="fa-regular fa-pen-to-square m-1"></i>
+                </span>
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" class="py-12 text-center text-gray-400 italic text-sm">No expenses found.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+<!-- Reuse your existing pagination footer logic here -->
