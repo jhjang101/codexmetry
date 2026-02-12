@@ -279,12 +279,21 @@ class Transaction(db.Model):
     __tablename__ = 'transactions'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     transaction_number: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
-    description: Mapped[str | None] = mapped_column(String(255))
+    description: Mapped[str] = mapped_column(String(255), nullable=False)
     amount: Mapped[int] = mapped_column(Integer, nullable=False)
     transaction_date: Mapped[date] = mapped_column(Date, server_default=func.current_date())
     category_id: Mapped[int | None] = mapped_column(ForeignKey('transaction_categories.id'))
     note: Mapped[str | None] = mapped_column(Text)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+
+    category: Mapped["TransactionCategory"] = relationship()
+    attachments: Mapped[list["Attachment"]] = relationship(
+        primaryjoin="and_(Transaction.id==Attachment.entity_id, Attachment.entity_type=='Transaction')",
+        foreign_keys="[Attachment.entity_id]",
+        viewonly=True,
+        order_by="Attachment.uploaded_at.asc()"
+    )
+
 
 # --- 6. LINE ITEMS ---
 class QuoteItem(db.Model):
