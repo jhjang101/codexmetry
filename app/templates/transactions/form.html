@@ -1,0 +1,84 @@
+{% extends 'layout.html' %}
+{% block title %}{{ 'New Transaction' if mode == 'add' else 'Transaction ' + trx.transaction_number }}{% endblock %}
+
+{% block header %}
+    {% if mode == 'add' %}New Transaction
+    {% else %}<span class="text-gray-400">{{ 'Edit' if mode == 'edit' else 'View' }} Transaction - </span>{{ trx.transaction_number }}
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <div class="flex justify-between items-center mb-2">
+        <a href="{{ session.get('transactions_last_url', url_for('transactions.index')) }}" class="text-blue-600 text-sm font-medium"><i class="fa-solid fa-arrow-left"></i> Back</a>
+        <div class="flex gap-3">
+            {% if mode == 'view' %}
+                <form action="{{ url_for('transactions.archive', id=trx.id) }}" method="POST" onsubmit="return confirm('Archive this transaction?')">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="text-red-400 px-4 py-2 text-sm hover:bg-red-800 hover:text-white rounded-lg">Delete</button>
+                </form>
+                <a href="{{ url_for('transactions.edit', id=trx.id) }}" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm">Edit Transaction</a>
+            {% else %}
+                <a href="{% if mode == 'add' %}{{ url_for('transactions.index') }}{% else %}{{ url_for('transactions.view', id=trx.id) }}{% endif %}" class="text-gray-500 px-4 py-2 text-sm">Cancel</a>
+                <button type="submit" form="trx-main-form" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm">Save Transaction</button>
+            {% endif %}
+        </div>
+    </div>
+
+    <form id="trx-main-form" method="POST" enctype="multipart/form-data"
+          action="{% if mode == 'add' %}{{ url_for('transactions.add') }}{% else %}{{ url_for('transactions.edit', id=trx.id) }}{% endif %}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <section class="bg-white p-6 rounded-lg shadow mb-2">
+            <h2 class="text-xl font-semibold border-b pb-2 mb-4">Financial Details</h2>
+            <div class="grid grid-cols-4 gap-4">
+                <div class="col-span-2">
+                    <label class="block text-sm font-medium text-gray-500">Description</label>
+                    {% if mode == 'view' %}
+                        <p class="mt-1 block bg-gray-100 border rounded-lg p-2 text-sm">{{ trx.description }}</p>
+                    {% else %}
+                        <input type="text" name="description" value="{{ trx.description if trx else '' }}" required
+                               placeholder="e.g. Bank Interest, Annual Fee" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300">
+                    {% endif %}
+                </div>
+
+                <div class="col-span-1">
+                    <label class="block text-sm font-medium text-gray-500">Amount</label>
+                    {% if mode == 'view' %}
+                        <p class="mt-1 block bg-gray-100 border rounded-lg p-2 text-sm font-bold {{ 'text-green-600' if trx.amount >= 0 else 'text-red-600' }}">{{ trx.amount | usd }}</p>
+                    {% else %}
+                        <input type="text" name="amount" value="{{ trx.amount | usd if trx else '$0.00' }}" required
+                               class="mt-1 block w-full border rounded-lg p-2 text-sm font-bold focus:ring-1 focus:ring-blue-300">
+                    {% endif %}
+                </div>
+
+                <div class="col-span-1">
+                    <label class="block text-sm font-medium text-gray-500">Date</label>
+                    {% if mode == 'view' %}
+                        <p class="mt-1 block bg-gray-100 border rounded-lg p-2 text-sm">{{ trx.transaction_date }}</p>
+                    {% else %}
+                        <input type="date" name="transaction_date" value="{{ trx.transaction_date if trx else now.strftime('%Y-%m-%d') }}" 
+                               class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300">
+                    {% endif %}
+                </div>
+
+                <div class="col-span-2">
+                    <label class="block text-sm font-medium text-gray-500">Category</label>
+                    {% if mode == 'view' %}
+                        <p class="mt-1 block bg-gray-100 border rounded-lg p-2 text-sm">{{ trx.category.type if trx.category else '-' }}</p>
+                    {% else %}
+                        <select name="category_id" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300">
+                            <option value="">Select Category...</option>
+                            {% for c in categories %}<option value="{{ c.id }}" {{ 'selected' if (trx and trx.category_id == c.id) else '' }}>{{ c.type }}</option>{% endfor %}
+                        </select>
+                    {% endif %}
+                </div>
+            </div>
+        </section>
+
+        <section class="bg-white p-6 rounded-lg shadow mb-2">
+            {% include 'transactions/partials/attachment_zone.html' %}
+        </section>
+    </form>
+</div>
+{% endblock %}
