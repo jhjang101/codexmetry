@@ -18,6 +18,7 @@ bp = Blueprint('invoices', __name__)
 
 @bp.route('/')
 def index():
+    """Main directory for Invoices module."""
     search_term = request.args.get('search', '')
     page = request.args.get('page', 1, type=int)
 
@@ -49,26 +50,27 @@ def add():
                 'tracking_number': request.form.get('tracking_number'),
                 'note': request.form.get('note')
             }
-            new_invoice = InvoiceService.create_invoice(invoice_data)
 
-            # 2. Save Invoice Line Items
+            # 2. Parse Items
             items = _parse_items_form(request.form)
-            InvoiceService.update_items(new_invoice.id, items)
 
-            # 2.1. Sync po status
-            po_status_updated = False
-            if new_invoice.po_id:
-                po_status_updated = sync_po_status(new_invoice.po_id)
+            # 3. Save Invoice and Line Items
+            new_invoice = InvoiceService.add_invoice(header_data, items)
 
-            # 3. Save Attachments
+            # 4. Sync po status
+            po_status_updated = sync_po_status(new_invoice.po_id)
+
+            # 5. Save Attachments
             new_files = request.files.getlist('attachments')
             AttachmentService.commit('Invoice', new_invoice.id, new_files=new_files)
             
             flash(f"Invoice {new_invoice.invoice_number} created!", "success")
-            if new_invoice.po_id and po_status_updated:
-                flash(f"Status of PO {new_invoice.purchase_order.po_number} updated successfully!", "success")
+            if po_status_updated:
+                po_name = new_invoice.purchase_order.po_number or new_invoice.order.order_number
+                flash(f"Status of PO {po_name} updated successfully!", "success")
 
             return redirect(url_for('invoices.index'))
+        
         except ValueError as e:
             db.session.rollback()
             flash(str(e), "error")
@@ -90,12 +92,16 @@ def add():
 @bp.route('/view/<int:id>')
 def view(id):
     invoice = InvoiceService.get_invoice_by_id(id)
+    if not invoice:
+        flash("Invoice not found.", "error")
+        return redirect(url_for('invoices.index'))
 
 
     print('invoice.total_amount:', invoice.total_amount)
     print('invoice.total_due:', invoice.total_due)
-    print('invoice.remaining_deposit:', invoice.remaining_deposit)
+    print('invoice.remaining_deposit:', invoice.remaining_credit)
     print('invoice.balance:', invoice.balance)
+    print('invoice.po_total_deposit:', invoice.po_total_prepayment)
 
 
     return render_template('invoices/form.html', mode='view', invoice=invoice)
@@ -104,11 +110,18 @@ def view(id):
 def edit(id):
     """Edit mode: handles header updates and item list synchronization."""
     invoice = InvoiceService.get_invoice_by_id(id)
+    if not invoice:
+        flash("Invoice not found.", "error")
+        return redirect(url_for('invoices.index'))
     
     if request.method == 'POST':
         try:
-            # 1. Update Invoice Header
-            invoice_data = {
+            # 1. Capture State for Sync ripples
+            old_po_id = invoice.po_id
+            old_po_name = invoice.purchase_order.po_number or invoice.order.order_number
+
+            # 2. Prepare Header Data
+            header_data = {
                 'client_id': request.form.get('client_id'),
                 'invoice_number': request.form.get('invoice_number'),
                 'po_id': request.form.get('po_id'),
@@ -118,42 +131,35 @@ def edit(id):
                 'tracking_number': request.form.get('tracking_number'),
                 'note': request.form.get('note')
             }
-            old_po_id = invoice.po_id if invoice else None
-            old_po_number = invoice.purchase_order.po_number or invoice.order.order_number # type: ignore
-            InvoiceService.update_invoice(id, invoice_data)
-            po_id = invoice.po_id if invoice else None
-            po_number = invoice.purchase_order.po_number or invoice.order.order_number # type: ignore
-            
-            print(old_po_number)
-            print(po_number)
 
-            # 2. Update Invoice Line Items
+            # 3. Parse Items
             items = _parse_items_form(request.form)
-            InvoiceService.update_items(id, items)
 
-            # Sync invoice status
-            sync_invoice_status(invoice.id) # type: ignore
+            # 4. Update Invoice and Line Items
+            InvoiceService.edit_invoice(id, header_data, items)
 
-            # 2.1. Sync po status
-            po_status_updated = False
+            # 5. Sync logic (Invoice and PO status ripples)
+            sync_invoice_status(invoice.id)
+
+            new_po_id = invoice.po_id
+            po_status_updated = sync_po_status(new_po_id)
             old_po_status_updated = False
-
-            if old_po_id != po_id:
+            if old_po_id != new_po_id:
                 old_po_status_updated = sync_po_status(old_po_id)
-            po_status_updated = sync_po_status(po_id)
             
-            # 3. Update Attachments (Handle new and marked for delete)
+            # 6. Update Attachments (Handle new and marked for delete)
             new_files = request.files.getlist('attachments')
             raw_delete_ids = request.form.getlist('delete_ids[]') 
             delete_ids = [int(fid) for fid in raw_delete_ids if fid.isdigit()]
             AttachmentService.commit('Invoice', id, new_files=new_files, delete_ids=delete_ids)
 
-            flash(f"Invoice {invoice.invoice_number} updated successfully!", "success") # type: ignore
-            if po_id and po_status_updated:
-                flash(f"Status of PO {po_number} updated successfully!", "success")
+            # 7. Flash Messages
+            flash(f"Invoice {invoice.invoice_number} updated successfully!", "success")
+            if po_status_updated:
+                new_po_name = invoice.purchase_order.po_number or invoice.order.order_number
+                flash(f"Status of PO {new_po_name} updated successfully!", "success")
             if old_po_id and old_po_status_updated:
-                flash(f"Status of PO {old_po_number} updated successfully!", "success")
-
+                flash(f"Status of PO {old_po_name} updated successfully!", "success")
 
             return redirect(url_for('invoices.view', id=id))
             
@@ -166,7 +172,7 @@ def edit(id):
     clients = ClientService.get_all()
     products = ProductService.get_all()
     # Fetch eligible POs for this specific client so the dropdown is populated on load
-    pos = PurchaseOrderService.get_eligible_by_client(invoice.client_id) # type: ignore
+    pos = PurchaseOrderService.get_pos_by_client(invoice.client_id)
     return render_template('invoices/form.html', 
                            mode='edit', 
                            invoice=invoice, 
@@ -176,7 +182,7 @@ def edit(id):
 
 @bp.route('/archive/<int:id>', methods=['POST'])
 def archive(id):
-    """Specialized archive for invoices with money safety warnings."""
+    """Specialized archive for invoices with payment protection."""
     # 1. Perform specialized archive
     invoice, has_payments = InvoiceService.archive_invoice(id)
 
@@ -185,9 +191,7 @@ def archive(id):
         return redirect(url_for('invoices.index'))
 
     # 2. Sync parent PO status (since an invoice just disappeared)
-    po_status_updated = False
-    if invoice.po_id:
-        po_status_updated = sync_po_status(invoice.po_id)
+    po_status_updated = sync_po_status(invoice.po_id)
 
     # 3. Flash Messages
     flash(f'Invoice {invoice.invoice_number} moved to archives.', 'warning')
@@ -198,7 +202,7 @@ def archive(id):
         flash(f'ATTENTION: This invoice had active payments. These funds are now sitting as a credit on PO {po_name}.', 'error')
 
     # PO SYNC FEEDBACK
-    if invoice.po_id and po_status_updated:
+    if po_status_updated:
         po_name = invoice.purchase_order.po_number or invoice.order.order_number
         flash(f'Status of PO {po_name} updated successfully!', 'success')
         
@@ -228,16 +232,16 @@ def get_unit_price():
 
     # Query product for its default price
     product = ProductService.get_by_id(product_id)
-    default_unit_price = product.default_unit_price if product else 0
+    price = product.default_unit_price if product else 0
 
     return render_template('invoices/partials/unit_price_input.html',
                            row_id=row_id,
-                           price=default_unit_price)
+                           price=price)
 
 @bp.route('/calculate', methods=['POST'])
 def calculate():
     """
-    Dynamically calculates Line Total, Grand Total, Total Due and Remaining Deposit logic.
+    Dynamically calculates Line Total, Grand Total, Total Due and Remaining Credit logic.
     Returns targeted swaps for the row and OOB swaps for the footer.
     """
     row_id = request.form.get('row_id')
@@ -247,13 +251,13 @@ def calculate():
 
     # Extract the hidden deposit pool value (it is stored in cents)
     try:
-        po_total_deposit = int(request.form.get('po_total_deposit', 0))
+        po_total_prepayment = int(request.form.get('po_total_prepayment', 0))
     except (ValueError, TypeError):
-        po_total_deposit = 0
+        po_total_prepayment = 0
 
     # Initialize variables
-    line_total_cents = 0
-    grand_total_cents = 0
+    line_total = 0
+    grand_total = 0
 
     # 1. Iterate through all rows to calculate the Grand Total
     for r_id, qty, price_str in zip(row_ids, quantities, unit_prices):
@@ -261,27 +265,27 @@ def calculate():
         # parse_to_cents handles the negative sign from the Applied Deposit row
         p = parse_to_cents(price_str)
         
-        row_total = q * p
-        grand_total_cents += row_total
+        total = q * p
+        total_cents += total
 
         # 2. Capture the Line Total for the specific row being edited
         if r_id == row_id:
-            line_total_cents = row_total
+            line_total = total
 
     # 3. Derive UI-only properties
     # Total Due is the amount the client must pay (never less than 0)
-    total_due = max(0, grand_total_cents)
+    total_due = max(0, grand_total)
     # Remaining Deposit is the excess deposit (absolute value of negative total)
-    remaining_deposit = abs(min(0, grand_total_cents))
+    remaining_credit = abs(min(0, grand_total))
 
     return render_template(
         'invoices/partials/calculation_result.html',
         row_id=row_id,
-        line_total=line_total_cents,
-        grand_total=grand_total_cents,
+        line_total=line_total,
+        grand_total=grand_total,
         total_due=total_due,
-        remaining_deposit=remaining_deposit,
-        po_total_deposit=po_total_deposit
+        remaining_credit=remaining_credit,
+        po_total_prepayment=po_total_prepayment
     )
 
 # --- HTMX CASCADE ROUTES ---
@@ -293,24 +297,23 @@ def update_client_cascades():
     # Prefill Bill_to with this client
     clients = ClientService.get_all()
     # Populate eligible POs for this client
-    pos = PurchaseOrderService.get_eligible_by_client(client_id) if client_id else []
+    pos = PurchaseOrderService.get_pos_by_client(client_id) if client_id else []
     
     return render_template('invoices/partials/client_cascades.html', 
-                           clients=clients, pos=pos, selected_id=client_id)
+                           clients=clients, 
+                           pos=pos, 
+                           selected_id=client_id)
 
 @bp.route('/load-po-details')
 def load_po_details():
-    """Triggered by PO selection: updates Bill-To and pre-fills remaining items."""
+    """OOB Teleportation: Prefills Bill-To, Pool Value, and Remaining Items when PO changes."""
     po_id = request.args.get('po_id', type=int)
     po = PurchaseOrderService.get_po_by_id(po_id) if po_id else None
     if not po: 
         return ""
 
-    # 1. Get remaining items from the Invoice Service (Partial Billing Logic)
-    if po and po.remaining_items: # type: ignore
-        remaining_items = po.remaining_items # type: ignore
-    else:
-        remaining_items = []
+    # 1. Get remaining items from PO
+    remaining_items = po.remaining_items # type: ignore
 
     # Changed agreed_unit_price to billed_unit_price in the remaining_items key
     for idx, item in enumerate(remaining_items):
@@ -322,8 +325,10 @@ def load_po_details():
     clients = ClientService.get_all()
     products = ProductService.get_all()
 
-    print('po.po_total_deposit:', po.po_total_deposit)
+
+    print('po.po_total_deposit:', po.po_total_prepayment)
     
+
     # 3. Return the single unified OOB template
     resp = make_response(render_template(
         'invoices/partials/po_selection_oob.html',
@@ -350,7 +355,7 @@ def _parse_items_form(form_data):
         if product_id:
             items.append({
                 'product_id': product_id,
-                'quantity': qty,
+                'quantity': int(qty) if qty else 1,
                 'unit_price': price
             })
     return items
