@@ -299,7 +299,10 @@ class PurchaseOrderService(BaseService):
     
     @classmethod
     def get_pos_by_client(cls, client_id: int):
-        """Returns Open pos for a specific client."""
+        """
+        Fetcher: Returns 'open' pos for a client.
+        Used for the Invoice and Payment creation dropdown.
+        """
         stmt = select(cls.model).where(
             cls.model.client_id == client_id,
             cls.model.is_active == True,
