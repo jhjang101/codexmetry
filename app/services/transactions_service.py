@@ -59,25 +59,21 @@ class TransactionService(BaseService):
             raise ValueError("Amount is required.")
 
         # 3. Transform Data
-        # Date parsing
         raw_date = data.get('transaction_date')
-        category_id = data.get('category_id')
-        if raw_date and isinstance(raw_date, str):
-            transaction_date = datetime.strptime(raw_date, '%Y-%m-%d').date()
-        else:
-            transaction_date = date.today()
+        raw_category = data.get('category_id')
+        transaction_date = datetime.strptime(raw_date, '%Y-%m-%d').date() if raw_date else date.today()
+        category_id = int(raw_category) if raw_category else None
 
         # Currency parsing (handles gains like '5.00' or losses like '-2.50')
         amount_cents = parse_to_cents(str(amount_raw))
         
-
         # 4. Create Object
         trx = cls.model()
         trx.transaction_number = trx_number
         trx.description = description
         trx.amount = amount_cents
         trx.transaction_date = transaction_date
-        trx.category_id = int(category_id) if category_id else None
+        trx.category_id = category_id
         trx.note = data.get('note', '')
 
         db.session.add(trx)
