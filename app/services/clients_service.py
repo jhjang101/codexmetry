@@ -2,6 +2,7 @@ from .base_service import BaseService
 from ..models import Client, ClientContact
 from ..extensions import db
 from sqlalchemy import select, or_
+from sqlalchemy.orm import contains_eager
 
 class ClientService(BaseService):
     model = Client
@@ -13,11 +14,16 @@ class ClientService(BaseService):
         Searches across Company Name, Address, Contact names, and Contact Emails.
         """
         # 1. Base statement (Active only)
-        stmt = select(cls.model).where(cls.model.is_active == True)
+        stmt = (
+            select(cls.model)
+            .outerjoin(ClientContact)
+            .options(contains_eager(cls.model.contacts))
+            .where(cls.model.is_active == True)
+        )
 
         # 2. Apply filters if search_term exists
         if search_term:
-            stmt = stmt.outerjoin(cls.model.contacts).where(
+            stmt = stmt.where(
                 or_(
                     cls.model.company_name.icontains(search_term),
                     cls.model.address.icontains(search_term),
@@ -30,30 +36,86 @@ class ClientService(BaseService):
         # 3. Order by name
         stmt = stmt.order_by(cls.model.company_name.asc())
 
-        # 4. Use the paginate helper
         return cls.paginate(stmt, page=page, per_page=per_page)
 
     @classmethod
-    def update_personnel(cls, client_id: int, contacts_data: list[dict]):
+    def add_client(cls, data, contacts_data) -> Client:
         """
-        Handles the dynamic personnel sub-form.
-        Strategy: Wipe existing contacts and re-insert new ones (Simple Update Pattern).
+        Create new client with contacts
         """
-        # 1. Remove all current contacts for this client
-        delete_stmt = db.delete(ClientContact).where(ClientContact.client_id == client_id)
-        db.session.execute(delete_stmt)
+        # 1. Validate & transform
+        clean_data = cls._validate_and_transform(data)
 
-        # 2. Add new contacts from the list
-        for data in contacts_data:
-            # Only save if at least one name field is provided
-            if data.get('first_name') or data.get('last_name'):
-                new_contact = ClientContact()
+        # 2. Create client
+        client = cls.model(**clean_data)
+        db.session.add(client)
+        db.session.flush() # Get ID for contacts
 
-                new_contact.client_id = client_id
-                new_contact.first_name = data.get('first_name')
-                new_contact.last_name = data.get('last_name')
-                new_contact.email = data.get('email')
-                
-                db.session.add(new_contact)
+        # 3. Save contacts
+        cls._save_contacts(client.id, contacts_data)
 
         db.session.commit()
+        return client
+
+    @classmethod
+    def edit_client(cls, client_id: int, data, contacts_data) -> Client:
+        """
+        Update client with contacts
+        """
+        # 1. Validation
+        client = cls.get_by_id(client_id)
+        if not client:
+            raise ValueError("Client not found.")
+        
+        # 2. Validate & transform
+        clean_data = cls._validate_and_transform(data)
+
+        # 3. Update client
+        for key, value in clean_data.items():
+            setattr(client, key, value)
+
+        # 4. Save contacts (Wipe and re-insert)
+        cls._save_contacts(client.id, contacts_data)
+
+        db.session.commit()
+        return client
+
+    # --- Helper Functions ---
+    @classmethod
+    def _validate_and_transform(cls, data: dict) -> dict:
+        """Handles header validation and string cleaning."""
+        # 1. Validation
+        company_name = data.get('company_name', '').strip()
+        if not company_name:
+            raise ValueError("Company Name is required.")
+        
+        # 2. Transform data
+        clean_data = {
+            'company_name': company_name,
+            'address': data.get('address', '').strip()
+        }
+        
+        return clean_data
+    
+    @classmethod
+    def _save_contacts(cls, client_id: int, contacts_data: list[dict]):
+        """Manages the child contact rows."""
+        # 1. Remove all current contacts for this client
+        db.session.execute(
+            db.delete(ClientContact).where(ClientContact.client_id == client_id)
+        )
+
+        # 2. Re-insert current list
+        for row in contacts_data:
+            first = row.get('first_name', '').strip()
+            last = row.get('last_name', '').strip()
+            email = row.get('email', '').strip()
+
+            # Guard: Only save if at least one field is provided
+            if any([first, last, email]):
+                contact = ClientContact()
+                contact.client_id = client_id
+                contact.first_name = first
+                contact.last_name = last
+                contact.email = email
+                db.session.add(contact)

@@ -16,7 +16,7 @@ def index():
     session['clients_last_url'] = request.full_path
 
     # pagination is an object containing .items, .has_next, .has_prev, etc.
-    pagination = ClientService.get_all_with_search(search_term, page=page, per_page=2)
+    pagination = ClientService.get_all_with_search(search_term, page=page, per_page=10)
 
     # If HTMX request, return only the table partial
     if request.headers.get('HX-Request'):
