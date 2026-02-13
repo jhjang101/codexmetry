@@ -347,7 +347,7 @@ class PurchaseOrderService(BaseService):
         for row in items_data:
             product_id = row.get('product_id')
             if product_id:
-                qty = int(row.get('quantity', 0))
+                qty = int(row.get('quantity', 1))
                 price = parse_to_cents(str(row.get('unit_price', 0)))
                 total_cents += (qty * price)
 

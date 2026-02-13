@@ -1,7 +1,6 @@
 from .base_service import BaseService
-from ..models import Invoice, InvoiceItem, PurchaseOrder, PoItem, OrderRegistry, Client, Payment, Product
+from ..models import Invoice, InvoiceItem, PurchaseOrder, OrderRegistry, Client, Payment, Product
 from ..extensions import db
-from ..utils.docs import generate_doc_number
 from ..utils.money import parse_to_cents, format_usd
 from ..utils.manual_pagination import ManualPagination
 from sqlalchemy import select, or_, func, case
@@ -16,7 +15,7 @@ class InvoiceService(BaseService):
         """
         Fetches active Invoices with search and pagination.
         Joins with OrderRegistry (CDX#) and Client (Name)
-        Use subquery to calculate balance.
+        Use subquery to calculate balance and total due.
         """
         # 1. Subquery for Payment Sum
         pay_sub = (
@@ -34,7 +33,7 @@ class InvoiceService(BaseService):
             select(
                 cls.model,
                 (
-                    # We use a CASE to clamp total_amount at 0 for the balance math
+                    #  Balance = Total Due (clamped at 0) - Payments
                     case((cls.model.total_amount > 0, cls.model.total_amount), else_=0) - 
                     func.coalesce(pay_sub.c.total_paid, 0)
                 ).label('calculated_balance')
@@ -86,266 +85,58 @@ class InvoiceService(BaseService):
         for row in rows:
             invoice = row[0]              # The Invoice model
             invoice.balance = row[1]      # The calculated_balance
-            invoice.total_due = max(0, invoice.total_amount)
+            invoice.total_due = max(0, invoice.total_amount) # The calculated_total_due
             items.append(invoice)
 
         # 6.4. Create the Pagination Object Manually
         return ManualPagination(items=items, page=page, per_page=per_page, total=total)
     
     @classmethod
-    def get_remaining_items(cls, po_id: int):
+    def add_invoice(cls, data: dict, items_data: list[dict]) -> Invoice:
         """
-        Logic for Partial Invoice
-        Returns a list of dicts with product details and remaining quantity.
-        """
-        po = db.session.get(PurchaseOrder, po_id)
-        if not po:
-            return []
-
-        remaining_items = []
-        for po_item in po.items:
-            # 1. Sum up how many of this product have already been invoiced for this PO
-            already_invoiced_stmt = select(func.sum(InvoiceItem.quantity)).join(Invoice).where(
-                Invoice.po_id == po_id,
-                InvoiceItem.product_id == po_item.product_id,
-                Invoice.is_active == True
-            )
-            already_invoiced = db.session.execute(already_invoiced_stmt).scalar() or 0
-
-            # 2. Calculate what's left
-            remaining_qty = po_item.quantity - already_invoiced
-            
-            # 3. Only suggest items that have a remaining balance
-            if remaining_qty > 0:
-                remaining_items.append({
-                    'product_id': po_item.product_id,
-                    'product': po_item.product,
-                    'quantity': remaining_qty,
-                    'billed_unit_price': po_item.agreed_unit_price # Default to PO price
-                })
-        
-        return remaining_items
-    
-    @classmethod
-    def create_invoice(cls, data: dict) -> Invoice:
-        """Saves the Invoice header, inheriting Registry ID from the PO."""
-
-        # 1. Define required fields
-        required_fields = {
-            'po_id': 'Purchase Order',
-            'client_id': 'Client',
-            'bill_to_id': 'Billing Entity',
-            'invoice_number': 'Invoice Number'
-        }
-
-        # 2. Perform the validation loop
-        for field, label in required_fields.items():
-            value = data.get(field)
-            if value is None or (isinstance(value, str) and not value.strip()):
-                raise ValueError(f"{label} is required.")
-
-        # 3. Look up the Purchase Order to get the order_id (Registry Link)
-        po_id = data['po_id']
-        po = db.session.get(PurchaseOrder, int(po_id))
-        if not po:
-            raise ValueError("The selected Purchase Order does not exist.")
-
-        # 4. Read data
-        client_id = data['client_id']
-        bill_to_id = data['bill_to_id']
-        invoice_number = data['invoice_number']
-        invoice_date = data.get('invoice_date')
-        tracking_number = data.get('tracking_number')
-        note = data.get('note')
-
-        # 5. Proceed to create the object
-        invoice = Invoice()
-        invoice.order_id = po.order_id
-        invoice.po_id = po.id
-        invoice.client_id = int(client_id)
-        invoice.bill_to_id = int(bill_to_id)
-        invoice.invoice_number = invoice_number.strip()
-        if invoice_date:
-            invoice.invoice_date = datetime.strptime(invoice_date, '%Y-%m-%d').date()
-        invoice.tracking_number = tracking_number.strip() if tracking_number else ''
-        invoice.note = note if note else ''
-
-        # 6. Commit
-        db.session.add(invoice)
-        db.session.commit()
-
-        return invoice
-    
-    @classmethod
-    def update_invoice(cls, id: int, data: dict) -> Invoice | None:
-        """Updates the Invoice header"""
-        invoice = cls.get_by_id(id)
-        if not invoice:
-            return None
-
-        # 1. Define required fields
-        required_fields = {
-            'po_id': 'Purchase Order',
-            'client_id': 'Client',
-            'bill_to_id': 'Billing Entity',
-            'invoice_number': 'Invoice Number'
-        }
-
-        # 2. Perform the validation loop
-        for field, label in required_fields.items():
-            value = data.get(field)
-            if value is None or (isinstance(value, str) and not value.strip()):
-                raise ValueError(f"{label} is required.")
-
-        # 3. Look up the Purchase Order to get the order_id (Registry Link)
-        po_id = data['po_id']
-        po = db.session.get(PurchaseOrder, int(po_id))
-        if not po:
-            raise ValueError("The selected Purchase Order does not exist.")
-
-        # 4. Read data
-        client_id = data['client_id']
-        bill_to_id = data['bill_to_id']
-        invoice_number = data['invoice_number']
-        invoice_date = data.get('invoice_date')
-        tracking_number = data.get('tracking_number')
-        status = data.get('status')
-        note = data.get('note')
-
-        # 5. Transform data
-        invoice_data = {
-            'po_id': po.id,
-            'order_id': po.order_id,
-            'client_id': int(client_id),
-            'bill_to_id': int(bill_to_id),
-            'invoice_number': invoice_number.strip(),
-            'invoice_date': datetime.strptime(invoice_date, '%Y-%m-%d').date() if invoice_date else None,
-            'tracking_number': tracking_number.strip() if tracking_number else '',
-            'status': status if status else None,
-            'note': note if note else ''
-        }
-
-        # 6. Update the object
-        for key, value in invoice_data.items():
-            if hasattr(invoice, key):
-                setattr(invoice, key, value)
-        db.session.commit()
-
-        return invoice
-    
-    @classmethod
-    def update_items(cls, invoice_id: int, items_data: list[dict]):
-        """
-        Wipe current items and re-insert new ones.
-        Calculates and updates the Invoice.total_amount (Grand Total).
-        Supports negative totals (Applied Deposits/Discounts).
+        Saves the Invoice header and items, inheriting Registry ID from the PO.
         Includes a Validation Guard to prevent 'Double Spending' of deposits.
         """
-        # --- Validation Guard to prevent 'Double Spending' of deposits--------
-        invoice = cls.get_by_id(invoice_id)
-        po_id = invoice.po_id
 
-        # 1. IDENTIFY THE SYSTEM PRODUCT
-        system_product_id = db.session.execute(
-            select(Product.id).where(Product.is_system == True, Product.name == 'Applied Deposit')
-        ).scalar()
+        # 1. Validate & Transform
+        clean_data = cls._validate_and_transform(data)
 
-        # 2. CALCULATE PROPOSED CONSUMPTION FROM THE FORM DATA
-        proposed_total_cents = 0
-        proposed_deposit_line = 0
-        
-        for data in items_data:
-            qty = int(data.get('quantity', 1))
-            price = parse_to_cents(data.get('unit_price', 0))
-            line_total = qty * price
-            proposed_total_cents += line_total
-            
-            if int(data.get('product_id', 0)) == system_product_id:
-                proposed_deposit_line = line_total
+        # 2. Double-Spending Guard
+        cls._validate_deposit_usage(po_id=clean_data['po_id'], items_data=items_data)
 
-        # Consumption = (Amount reserved) - (Amount returned to pool as negative total)
-        # We use absolute values to keep the logic clear
-        proposed_neg_total = min(0, proposed_total_cents)
-        proposed_consumption = abs(proposed_deposit_line - proposed_neg_total)
+        # 3. Create header (Inherits registry link from PO)
+        invoice = cls.model(**clean_data)
+        db.session.add(invoice)
+        db.session.flush()
 
-        # 3. CALCULATE CONSUMPTION BY ALL *OTHER* ACTIVE INVOICES
-        # A: Get Total Cash Available
-        pay_stmt = select(func.sum(Payment.amount)).where(
-            Payment.po_id == po_id, Payment.invoice_id == None, Payment.is_active == True
-        )
-        total_cash = db.session.execute(pay_stmt).scalar() or 0
+        # 4. Save items and calculate total
+        cls._save_items(invoice, items_data)
 
-        # B: Get consumption of other invoices
-        # We need the sum of lines and sum of negative totals for OTHER invoices
-        other_lines_stmt = (
-            select(func.sum(InvoiceItem.quantity * InvoiceItem.billed_unit_price))
-            .join(Invoice).join(Product)
-            .where(
-                Invoice.po_id == po_id, Invoice.is_active == True, 
-                Product.is_system == True, Invoice.id != invoice_id
-            )
-        )
-        other_lines_total = db.session.execute(other_lines_stmt).scalar() or 0
-
-        other_neg_stmt = select(func.sum(Invoice.total_amount)).where(
-            Invoice.po_id == po_id, Invoice.is_active == True, 
-            Invoice.total_amount < 0, Invoice.id != invoice_id
-        )
-        other_neg_total = db.session.execute(other_neg_stmt).scalar() or 0
-        
-        # Consumption of others = (Sum of their deposit lines) - (Sum of their negative totals)
-        other_consumption = abs(other_lines_total - other_neg_total)
-
-        # 4. THE VALIDATION GUARD
-        if (other_consumption + proposed_consumption) > total_cash:
-            from ..utils.money import format_usd
-            available = max(0, total_cash - other_consumption)
-            raise ValueError(
-                f"Insufficient Deposit Credit. Other active invoices are already using the pool. "
-                f"Available for this invoice: {format_usd(available)}"
-            )
-
-        # 5. IF VALID, PROCEED WITH SAVE (Your existing code)
-        # --- Wipe current items and re-insert new items --------
-        # 1. Delete old items
-        delete_stmt = db.delete(InvoiceItem).where(InvoiceItem.invoice_id == invoice_id)
-        db.session.execute(delete_stmt)
-
-        total_cents = 0
-
-        # 2. Add new items
-        for data in items_data:
-            product_id = data.get('product_id')
-
-            if product_id:
-                product_id = int(product_id)
-                qty = int(data.get('quantity', 1))
-                price = parse_to_cents((data.get('unit_price', 0)))
-                line_total = qty * price
-                total_cents += line_total
-
-                new_item = InvoiceItem()
-                new_item.invoice_id = invoice_id
-                new_item.product_id = product_id
-                new_item.quantity = qty
-                new_item.billed_unit_price = price
-                db.session.add(new_item)
-
-        # 3. Update the Parent Total
-        invoice = cls.get_by_id(invoice_id)
-        if invoice:
-            invoice.total_amount = total_cents
-        
         db.session.commit()
-
+        return invoice
+    
     @classmethod
-    def get_eligible_by_po(cls, po_id: int):
-        """Returns active Invoices for a specific Purchase Order."""
-        stmt = select(cls.model).where(
-                cls.model.po_id == po_id,
-                cls.model.is_active == True
-            ).order_by(cls.model.invoice_date.desc())
-        return db.session.execute(stmt).scalars().all()
+    def edit_invoice(cls, id: int, data: dict, items_data: list[dict]) -> Invoice:
+        """Atomic update of header and items with credit pool validation."""
+        invoice = cls.get_by_id(id)
+        if not invoice:
+            raise ValueError("Invoice not found.")
+
+        # 1. Validate & Transform
+        clean_data = cls._validate_and_transform(data)
+
+        # 2. Double-Spending Guard
+        cls._validate_deposit_usage(po_id=clean_data['po_id'], items_data=items_data, invoice_id=id)
+
+        # 3. Update Header
+        for key, value in clean_data.items():
+            setattr(invoice, key, value)
+
+        # 4. Save items
+        cls._save_items(invoice, items_data)
+
+        db.session.commit()
+        return invoice
     
     @classmethod
     def get_invoice_by_id(cls, id: int) -> Invoice | None:
@@ -354,35 +145,34 @@ class InvoiceService(BaseService):
         Returns the Invoice record augmented with .balance.
         Used for Cascades and Source-Driven logic.
         """
-        # 1. Fetch the base Invoice record
         invoice = cls.get_by_id(id)
         if not invoice:
             return None
         
-        # 2. Calculate Balance total amount - sum of paid amount
-        payment_sum_stmt = select(func.sum(Payment.amount)).where(
-            Payment.invoice_id == invoice.id,
+        # 1. Total Paid toward this specific invoice
+        pay_stmt = select(func.sum(Payment.amount)).where(
+            Payment.invoice_id == invoice.id, 
             Payment.is_active == True
         )
-        total_paid = db.session.execute(payment_sum_stmt).scalar() or 0
+        total_paid = db.session.execute(pay_stmt).scalar() or 0
 
-        # 3. The total cash ever received for this PO (without invoices)
-        invoiceless_pay_stmt = select(func.sum(Payment.amount)).where(
-            Payment.po_id == invoice.po_id,
-            Payment.invoice_id == None,
+        # 2. The total cash ever received for the linked PO (Initial pool)
+        prepay_stmt = select(func.sum(Payment.amount)).where(
+            Payment.po_id == invoice.po_id, 
+            Payment.invoice_id == None, 
             Payment.is_active == True
         )
-        po_total_deposit = db.session.execute(invoiceless_pay_stmt).scalar() or 0
+        po_total_prepayment = db.session.execute(prepay_stmt).scalar() or 0
         
-        # Attach attributes
+        # Attach dynamic UI attributes
         # Total Due: What they owe now (never negative)
         invoice.total_due = max(0, invoice.total_amount)
-        # Remaining Deposit: The deposit snapshot for this document (abs of negative total)
-        invoice.remaining_deposit = abs(min(0, invoice.total_amount))
+        # Remaining Credit: The remaining credit snapshot for this document (abs of negative total)
+        invoice.remaining_credit = abs(min(0, invoice.total_amount))
         # Balance: Based on what is actually due after payments
         invoice.balance = invoice.total_due - total_paid
         # The total cash ever received for the linked PO (without invoices)
-        invoice.po_total_deposit = po_total_deposit
+        invoice.po_total_prepayment = po_total_prepayment
 
         return invoice
 
@@ -404,3 +194,109 @@ class InvoiceService(BaseService):
         db.session.commit()
 
         return invoice, has_payments
+    
+    @classmethod
+    def get_invoices_by_po(cls, po_id: int):
+        """Cascades: Returns active invoices for a specific PO."""
+        stmt = select(cls.model).where(
+            cls.model.po_id == po_id, cls.model.is_active == True
+        ).order_by(cls.model.invoice_date.desc())
+        return db.session.execute(stmt).scalars().all()
+    
+    # --- INTERNAL HELPERS ---
+
+    @classmethod
+    def _validate_and_transform(cls, data: dict) -> dict:
+        """Header validation and registry link inheritance."""
+        po_id = data.get('po_id')
+        if not po_id:
+            raise ValueError("Source Purchase Order is required.")
+
+        po = db.session.get(PurchaseOrder, int(po_id))
+        if not po:
+            raise ValueError("The selected Purchase Order does not exist.")
+
+        raw_date = data.get('invoice_date')
+        invoice_date = datetime.strptime(raw_date, '%Y-%m-%d').date() if raw_date else datetime.now().date()
+
+        clean_data = {
+            'order_id': po.order_id,
+            'po_id': po.id,
+            'client_id': int(data.get('client_id', po.client_id)),
+            'bill_to_id': int(data.get('bill_to_id', po.bill_to_id)),
+            'invoice_number': data.get('invoice_number', '').strip(),
+            'invoice_date': invoice_date,
+            'tracking_number': data.get('tracking_number', '').strip(),
+            'status': data.get('status', 'open'),
+            'note': data.get('note', '').strip()
+        }
+
+        return clean_data
+    
+    @classmethod
+    def _save_items(cls, invoice: Invoice, items_data: list[dict]):
+        """Manages InvoiceItem snapshot and updates total_amount."""
+        db.session.execute(db.delete(InvoiceItem).where(InvoiceItem.invoice_id == invoice.id))
+
+        total_cents = 0
+        for row in items_data:
+            product_id = row.get('product_id')
+            if product_id:
+                qty = int(row.get('quantity', 1))
+                price = parse_to_cents(str(row.get('unit_price', 0)))
+                line_total = qty * price
+                total_cents += line_total
+
+                item = InvoiceItem()
+                item.invoice_id = invoice.id
+                item.product_id = int(product_id)
+                item.quantity = qty
+                item.billed_unit_price = price
+                db.session.add(item)
+
+        invoice.total_amount = total_cents
+
+    @classmethod
+    def _validate_deposit_usage(cls, po_id: int, items_data: list[dict], invoice_id: int | None = None):
+        """Brain: Prevents over-spending the credit pool (Double-Spending guard)."""
+        system_product = db.session.execute(
+            select(Product.id).where(Product.is_system == True, Product.name == 'Applied Deposit')
+        ).scalar()
+
+        # 1. Calc Proposed Consumption
+        proposed_total = 0
+        proposed_dep_line = 0
+        for row in items_data:
+            qty = int(row.get('quantity', 1))
+            price = parse_to_cents(str(row.get('unit_price', 0)))
+            line = qty * price
+            proposed_total += line
+            if int(row.get('product_id', 0)) == system_product:
+                proposed_dep_line = line
+        
+        proposed_consumption = abs(proposed_dep_line - min(0, proposed_total))
+
+        # 2. Calc Total Cash Pool
+        cash_stmt = select(func.sum(Payment.amount)).where(
+            Payment.po_id == po_id, Payment.invoice_id == None, Payment.is_active == True
+        )
+        total_cash = db.session.execute(cash_stmt).scalar() or 0
+
+        # 3. Calc Consumption by all OTHER invoices
+        other_lines = db.session.execute(
+            select(func.sum(InvoiceItem.quantity * InvoiceItem.billed_unit_price))
+            .join(Invoice).join(Product)
+            .where(Invoice.po_id == po_id, Invoice.is_active == True, Product.is_system == True, Invoice.id != invoice_id)
+        ).scalar() or 0
+
+        other_negs = db.session.execute(
+            select(func.sum(Invoice.total_amount)).where(
+                Invoice.po_id == po_id, Invoice.is_active == True, Invoice.total_amount < 0, Invoice.id != invoice_id
+            )
+        ).scalar() or 0
+        
+        other_consumption = abs(other_lines - other_negs)
+
+        if (other_consumption + proposed_consumption) > total_cash:
+            available = max(0, total_cash - other_consumption)
+            raise ValueError(f"Insufficient credit. Available: {format_usd(available)}")
