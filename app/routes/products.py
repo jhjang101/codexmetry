@@ -20,7 +20,7 @@ def index():
     session['products_last_url'] = request.full_path
 
     # pagination is an object containing .items, .has_next, .has_prev, etc.
-    pagination = ProductService.get_all_with_search(search_term, page=page, per_page=2)
+    pagination = ProductService.get_all_with_search(search_term, page=page, per_page=10)
     
     if request.headers.get('HX-Request'):
         return render_template('products/partials/list.html', pagination=pagination)
@@ -32,23 +32,31 @@ def index():
 @bp.route('/add', methods=['GET', 'POST'])
 def add():
     if request.method == 'POST':
-        # 1. Handle Image Upload via Utility
-        image_file = request.files.get('image')
-        # subfolder 'products' ensures images go to static/uploads/products/
-        saved_filename = save_image(image_file, subfolder='products')
+        try:
+            # 1. Handle Image Upload via Utility
+            image_file = request.files.get('image')
+            # subfolder 'products' ensures images go to static/uploads/products/
+            saved_filename = save_image(image_file, subfolder='products')
 
-        # 2. Prepare and Save Product Data
-        product_data = {
-            'name': request.form.get('name'),
-            'catalog_number': request.form.get('catalog_number'),
-            'category_id': request.form.get('category_id') or None,
-            'default_unit_price': parse_to_cents(request.form.get('unit_price', '')),
-            'image_url': saved_filename
-        }
-        new_product = ProductService.add(**product_data)
+            # 2. Prepare data
+            product_data = {
+                'name': request.form.get('name'),
+                'catalog_number': request.form.get('catalog_number'),
+                'category_id': request.form.get('category_id'),
+                'default_unit_price': request.form.get('unit_price'),
+                'image_url': saved_filename
+            }
 
-        flash(f'Product {new_product.name} added successfully!', 'success')
-        return redirect(url_for('products.index'))
+            # 3. Call Service
+            ProductService.add_product(product_data)
+
+            flash('Product added successfully!', 'success')
+            return redirect(url_for('products.index'))
+        
+        except ValueError as e:
+            db.session.rollback()
+            flash(str(e), 'error')
+            return redirect(url_for('products.add'))
 
     # GET: Load categories for the dropdown
     categories = ProductCategoryService.get_all()
@@ -88,7 +96,7 @@ def edit(id):
             old_image = request.form.get('old_image')
             saved_filename = save_image(image_file, subfolder='products', old_filename=old_image)
 
-            # 2. Update Product Data
+            # 2. Prepare data
             product_data = {
                 'name': request.form.get('name'),
                 'catalog_number': request.form.get('catalog_number'),
@@ -100,16 +108,17 @@ def edit(id):
             if saved_filename:
                 product_data['image_url'] = saved_filename
 
-            ProductService.update_product(id, product_data)
-            product_name = product.name if product else ''
-            flash(f'Product {product_name} updated successfully!', 'success')
+            # 3. Call Service
+            ProductService.edit_product(id, product_data)
+
+            # 4. Flash
+            flash(f'Product {product.name} updated successfully!', 'success')
             return redirect(url_for('products.view', id=id))
         
         except ValueError as e:
             db.session.rollback()
             flash(str(e), 'error')
             return redirect(url_for('products.edit', id=id))
-
 
     # GET: Load categories for the dropdown
     categories = ProductCategoryService.get_all()
@@ -122,10 +131,11 @@ def archive(id):
         if not product:
             flash("Product not found.", "error")
             return redirect(url_for('products.index'))
+        
+        flash(f'Product {product.name} has been moved to archives.', 'warning')
+        
     except ValueError as e:
         db.session.rollback()
         flash(str(e), 'error')
-        return redirect(url_for('products.index'))
 
-    flash(f'Product {product.name} has been moved to archives.', 'warning')
     return redirect(url_for('products.index'))
