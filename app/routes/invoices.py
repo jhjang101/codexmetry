@@ -41,7 +41,7 @@ def add():
     if request.method == 'POST':
         try:
             # 1. Save Invoice Header
-            invoice_data = {
+            header_data = {
                 'client_id': request.form.get('client_id'),
                 'invoice_number': request.form.get('invoice_number'),
                 'po_id': request.form.get('po_id'),
@@ -99,7 +99,7 @@ def view(id):
 
     print('invoice.total_amount:', invoice.total_amount)
     print('invoice.total_due:', invoice.total_due)
-    print('invoice.remaining_deposit:', invoice.remaining_credit)
+    print('invoice.remaining_credit:', invoice.remaining_credit)
     print('invoice.balance:', invoice.balance)
     print('invoice.po_total_deposit:', invoice.po_total_prepayment)
 
@@ -266,7 +266,7 @@ def calculate():
         p = parse_to_cents(price_str)
         
         total = q * p
-        total_cents += total
+        grand_total += total
 
         # 2. Capture the Line Total for the specific row being edited
         if r_id == row_id:
@@ -324,10 +324,6 @@ def load_po_details():
     # 2. Populate clients and products list for bill_to and item_row
     clients = ClientService.get_all()
     products = ProductService.get_all()
-
-
-    print('po.po_total_deposit:', po.po_total_prepayment)
-    
 
     # 3. Return the single unified OOB template
     resp = make_response(render_template(
