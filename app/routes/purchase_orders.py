@@ -5,8 +5,8 @@ from ..services.products_service import ProductService
 from ..services.clients_service import ClientService
 from ..services.settings_service import PoTypeService
 from ..services.attachment_service import AttachmentService
-from ..utils.money import parse_to_cents, format_usd
-from ..utils.sync import sync_po_status
+from ..utils.money import parse_to_cents
+from ..extensions import db
 from datetime import datetime
 import time 
 
@@ -36,39 +36,36 @@ def index():
 @bp.route('/add', methods=['GET', 'POST'])
 def add():
     if request.method == 'POST':
-        # 1. Extract and Transform
-        client_id = request.form.get('client_id')
-        po_number = request.form.get('po_number', '') # Client Reference
-        bill_to_id = request.form.get('bill_to_id')
-        po_date = request.form.get('po_date')
-        quote_id = request.form.get('quote_id')
-        po_type_id = request.form.get('po_type_id')
-        note = request.form.get('note')
+        try:
+            # 1. Prepare Header Data
+            header_data = {
+                'client_id': request.form.get('client_id'),
+                'bill_to_id': request.form.get('bill_to_id'),
+                'po_number': request.form.get('po_number'), # Client reference
+                'po_date': request.form.get('po_date'),
+                'quote_id': request.form.get('quote_id'),
+                'po_type_id': request.form.get('po_type_id'),
+                'note': request.form.get('note')
+            }
 
-        po_data = {
-            'client_id': int(client_id) if client_id else None,
-            'po_number': po_number, 
-            'bill_to_id': int(bill_to_id) if bill_to_id else int(client_id) if client_id else None,
-            'po_date': datetime.strptime(po_date, '%Y-%m-%d').date() if po_date else None,
-            'quote_id': int(quote_id) if quote_id else None,
-            'po_type_id': int(po_type_id) if po_type_id else None,
-            'note': note
-        }
+            # 2. Parse Items
+            items = _parse_items_form(request.form)
 
-        # 2. Save PurchaseOrder
-        new_po = PurchaseOrderService.create_with_registry(po_data)
+            # 3. Call Atomic Service (Handles Registry birth and Quote linking)
+            new_po = PurchaseOrderService.add_po(header_data, items)
 
-        # 3. Process and Save Line Items
-        items = _parse_items_form(request.form)
-        PurchaseOrderService.update_items(new_po.id, items)
+            # 4. Handle Attachments
+            new_files = request.files.getlist('attachments')
+            AttachmentService.commit('PurchaseOrder', new_po.id, new_files=new_files)
 
-        # 4. COMMIT ATTACHMENTS
-        new_files = request.files.getlist('attachments')
-        # We call commit with an empty delete list because it's a new quote
-        AttachmentService.commit('PurchaseOrder', new_po.id, new_files=new_files)
+            flash(f'PO {new_po.order.order_number} created successfully!', 'success')
+            return redirect(url_for('purchase_orders.index'))
+        
+        except ValueError as e:
+            db.session.rollback()
+            flash(str(e), 'error')
+            return redirect(url_for('purchase_orders.add'))
 
-        flash(f'PO {new_po.po_number} added successfully!', 'success')
-        return redirect(url_for('purchase_orders.index'))
 
     # GET: Prepare form data
     clients = ClientService.get_all()
@@ -85,63 +82,66 @@ def add():
 
 @bp.route('/view/<int:id>')
 def view(id):
+    # Use augmented fetcher to get calculated financial attributes
     po = PurchaseOrderService.get_po_by_id(id)
+    if not po:
+        flash("Purchase Order not found.", "error")
+        return redirect(url_for('purchase_orders.index'))
 
     print('po.total_amount:', po.total_amount)
     print('po.balance:', po.balance)
-    print('po.remaining_deposit:', po.remaining_deposit)
-
+    print('po.po_total_deposit:', po.total_prepayment)
+    print('po.remaining_deposit:', po.remaining_credit)
 
     return render_template('purchase_orders/form.html', mode='view', po=po)
 
 @bp.route('/edit/<int:id>', methods=['GET', 'POST'])
 def edit(id):
     po = PurchaseOrderService.get_by_id(id)
+    if not po:
+        flash("Purchase Order not found.", "error")
+        return redirect(url_for('purchase_orders.index'))
+
     if request.method == 'POST':
         # 1. Extract and Transform
-        client_id = request.form.get('client_id')
-        po_number = request.form.get('po_number', '')
-        bill_to_id = request.form.get('bill_to_id')
-        po_date = request.form.get('po_date')
-        quote_id = request.form.get('quote_id')
-        po_type_id = request.form.get('po_type_id')
-        note = request.form.get('note')
-        status = request.form.get('status')
+        try:
+            # 1. Prepare Data
+            header_data = {
+                'client_id': request.form.get('client_id'),
+                'bill_to_id': request.form.get('bill_to_id'),
+                'po_number': request.form.get('po_number'),
+                'po_date': request.form.get('po_date'),
+                'quote_id': request.form.get('quote_id'),
+                'po_type_id': request.form.get('po_type_id'),
+                'status': request.form.get('status'),
+                'note': request.form.get('note')
+            }
 
-        po_data = {
-            'client_id': int(client_id) if client_id else None,
-            'po_number': po_number, 
-            'bill_to_id': int(bill_to_id) if bill_to_id else int(client_id) if client_id else None,
-            'po_date': datetime.strptime(po_date, '%Y-%m-%d').date() if po_date else None,
-            'quote_id': int(quote_id) if quote_id else None,
-            'po_type_id': int(po_type_id) if po_type_id else None,
-            'note': note,
-            'status': status
-        }
+            # 2. Parse Line Items
+            items = _parse_items_form(request.form)
 
-        # 2. Update Header
-        PurchaseOrderService.update_po(id, po_data)
+            # 3. Call Service (Handles Quote Release/Re-link)
+            PurchaseOrderService.edit_po(id, header_data, items)
 
-        # 3. Update Line Items
-        items = _parse_items_form(request.form)
-        PurchaseOrderService.update_items(id, items)
+            # 4. Update Attachments
+            new_files = request.files.getlist('attachments')
+            raw_delete_ids = request.form.getlist('delete_ids[]')
+            delete_ids = [int(fid) for fid in raw_delete_ids if fid.isdigit()]
+            AttachmentService.commit('PurchaseOrder', id, new_files=new_files, delete_ids=delete_ids)
 
-        # Sync PO Status
-        sync_po_status(po.id)
-
-        # 4. Commit Attachments (Handle new and marked for delete)
-        new_files = request.files.getlist('attachments')
-        delete_ids = [int(fid) for fid in request.form.getlist('delete_ids[]') if fid.isdigit()]
-        AttachmentService.commit('PurchaseOrder', id, new_files=new_files, delete_ids=delete_ids)
-
-        flash(f'PO {po.po_number} updated successfully!', 'success')
-        return redirect(url_for('purchase_orders.view', id=id))
+            flash(f'PO {po.order.order_number} updated successfully!', 'success')
+            return redirect(url_for('purchase_orders.view', id=id))
+        
+        except ValueError as e:
+            db.session.rollback()
+            flash(str(e), 'error')
+            return redirect(url_for('purchase_orders.edit', id=id))
 
     # GET: Prepare form data
     clients = ClientService.get_all()
     products = ProductService.get_all_products()
     po_types = PoTypeService.get_all()
-    quotes = QuoteService.get_eligible_for_po(po.client_id)
+    quotes = QuoteService.get_quotes_by_client(po.client_id)
 
     return render_template('purchase_orders/form.html', 
                            mode='edit', 
@@ -159,7 +159,7 @@ def archive(id):
     if po:
         # Use the CDX fallback for the flash message
         po_name = po.po_number or po.order.order_number
-        flash(f'PO {po_name}, its Registry ID, and all linked Invoices have been archived.', 'warning')
+        flash(f'PO {po_name}, its Order Ref, and all linked Invoices have been archived.', 'warning')
 
         # Free the Quote? Notify the user.
         if po.quote_id:
@@ -167,7 +167,7 @@ def archive(id):
 
         # MONEY SAFETY WARNING
         if has_payments:
-            flash(f'ATTENTION: This PO has active payments. Money records were NOT archived. Please manage them manually.', 'error')
+            flash(f'ATTENTION: Active payments exist for this PO. The pyayment records were NOT archived. Please manage them manually.', 'error')
 
     else:
         flash('PO not found.', 'error')
@@ -197,11 +197,11 @@ def get_unit_price():
 
     # Query product for its default price
     product = ProductService.get_by_id(product_id)
-    default_unit_price = product.default_unit_price if product else 0
+    price = product.default_unit_price if product else 0
 
     return render_template('purchase_orders/partials/unit_price_input.html',
                            row_id=row_id,
-                           price=default_unit_price)
+                           price=price)
 
 @bp.route('/calculate', methods=['POST'])
 def calculate():
@@ -214,17 +214,16 @@ def calculate():
     line_total = 0
     grand_total = 0
 
-    # If this is the row the user is currently editing, capture its total
-    if row_id in row_ids:
-        idx = row_ids.index(row_id)
-        line_total = int(quantities[idx]) * parse_to_cents(unit_prices[idx])
-
     # calculate grand total
-    items = [{'qty': q, 'price': p} for q, p in zip(quantities, unit_prices)]
-    for item in items:
-        qty = int(item['qty'])
-        price = parse_to_cents(item['price'])
-        grand_total += qty * price
+    for r_id, qty, price in zip(row_ids, quantities, unit_prices):
+        q = int(qty) if qty else 0
+        p = parse_to_cents(price)
+        total = q * p
+        grand_total += total
+
+        # If this is the row the user is currently editing, capture its total
+        if r_id == row_id:
+            line_total = total
 
     return render_template('purchase_orders/partials/calculation_result.html', 
                            row_id=row_id,
@@ -235,13 +234,13 @@ def calculate():
 
 @bp.route('/update-client-cascades')
 def update_client_cascades():
-    """Unified route to update both Bill-To and Quote dropdowns via OOB."""
+    """Unified route to Updates Bill-To and Quotes when Client changes via OOB."""
     client_id = request.args.get('client_id', type=int)
     
     # 1. Get data for both dropdowns
     clients = ClientService.get_all()
-    # Use the service method we planned earlier
-    quotes = QuoteService.get_eligible_for_po(client_id) if client_id else []
+    # Use the service method to populate quotes
+    quotes = QuoteService.get_quotes_by_client(client_id) if client_id else []
     
     # 2. Return a single partial containing both components
     return render_template('purchase_orders/partials/client_cascades.html', 
@@ -253,7 +252,7 @@ def update_client_cascades():
 
 @bp.route('/load-quote-items')
 def load_quote_items():
-    """Step 2: Returns multiple item_row partials based on a selected Quote."""
+    """Returns multiple item_row partials based on a selected Quote."""
     quote_id = request.args.get('quote_id', type=int)
     quote = QuoteService.get_by_id(quote_id)
     if not quote:
@@ -276,8 +275,10 @@ def load_quote_items():
         }
         
         html_rows += render_template('purchase_orders/partials/item_row.html',
-                                   item=item_data, products=products, 
-                                   row_id=row_id, mode='add')
+                                   item=item_data, 
+                                   products=products, 
+                                   row_id=row_id, 
+                                   mode='add')
 
     # Trigger 'recalculate' on the body so the Grand Total updates immediately
     resp = make_response(html_rows)
@@ -298,6 +299,6 @@ def _parse_items_form(form_data):
             items.append({
                 'product_id': int(pid),
                 'quantity': int(q) if q else 1,
-                'unit_price': parse_to_cents(p)
+                'unit_price': p # Service handles parse_to_cents
             })
     return items
