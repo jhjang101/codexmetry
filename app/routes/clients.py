@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash
 from ..services.clients_service import ClientService
+from ..extensions import db
 
 bp = Blueprint('clients', __name__)
 
@@ -29,18 +30,25 @@ def index():
 @bp.route('/add', methods=['GET', 'POST'])
 def add():
     if request.method == 'POST':
-        # 1. Save Main Client Data
-        client_data = {
-            'company_name': request.form.get('company_name'),
-            'address': request.form.get('address')
-        }
-        new_client = ClientService.add(**client_data)
+        try:
+            # 1. Prepare data
+            client_data = {
+                'company_name': request.form.get('company_name'),
+                'address': request.form.get('address')
+            }
+            contacts_data = _parse_contact_form(request.form)
 
-        # 2. Process and Save Personnel (Contacts)
-        contacts = _parse_contact_form(request.form)
-        ClientService.update_personnel(new_client.id, contacts)
+            # 2. Save data
+            new_client = ClientService.add_client(client_data, contacts_data)
 
-        flash(f'Client {new_client.company_name} added successfully!', 'success')
+            # 3. Flash message
+            flash(f'Client {new_client.company_name} added successfully!', 'success')
+
+        except ValueError as e:
+            db.session.rollback()
+            flash(str(e), 'error')
+            return redirect(url_for('clients.add'))
+
         return redirect(url_for('clients.index'))
 
     return render_template('clients/form.html', mode='add', client=None)
@@ -53,32 +61,37 @@ def view(id):
 @bp.route('/edit/<int:id>', methods=['GET', 'POST'])
 def edit(id):
     client = ClientService.get_by_id(id)
+
     if request.method == 'POST':
-        # 1. Update Main Client Data
-        client_data = {
-            'company_name': request.form.get('company_name'),
-            'address': request.form.get('address')
-        }
-        ClientService.update(id, **client_data)
+        try:
+            # 1. Prepare data
+            client_data = {
+                'company_name': request.form.get('company_name'),
+                'address': request.form.get('address')
+            }
+            contacts = _parse_contact_form(request.form)
 
-        # 2. Update Personnel (Contacts)
-        contacts = _parse_contact_form(request.form)
-        ClientService.update_personnel(id, contacts)
+            # 2. Update data
+            ClientService.edit_client(id, client_data, contacts)
 
-        flash(f'Client {client.company_name} updated successfully!', 'success')
-        return redirect(url_for('clients.view', id=id))
+            # 3. Flash
+            flash(f'Client {client.company_name} updated successfully!', 'success')
+            return redirect(url_for('clients.view', id=id))
+        
+        except ValueError as e:
+            db.session.rollback()
+            flash(str(e), 'error')
+            return redirect(url_for('clients.edit', id=id))
 
     return render_template('clients/form.html', mode='edit', client=client)
 
 @bp.route('/archive/<int:id>', methods=['POST'])
 def archive(id):
     client = ClientService.archive(id)
-
     if client:
         flash(f'Client {client.company_name} has been moved to archives.', 'warning')
     else:
         flash('Client not found.', 'error')
-        
     return redirect(url_for('clients.index'))
 
 # --- HTMX PARTIALS ---

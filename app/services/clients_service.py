@@ -80,7 +80,8 @@ class ClientService(BaseService):
         db.session.commit()
         return client
 
-    # --- Helper Functions ---
+    # --- INTERNAL HELPERS ---
+    
     @classmethod
     def _validate_and_transform(cls, data: dict) -> dict:
         """Handles header validation and string cleaning."""
