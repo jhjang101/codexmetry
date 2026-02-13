@@ -31,23 +31,23 @@
                 <span class="text-sm font-bold text-blue-700">{{ quote.client.company_name }}</span>
             </td>
 
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-mono">
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                 {{ quote.quote_number }}
             </td>
 
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                 {% if quote.order_id %}
-                    <span class="text-green-600 font-medium italic">Converted</span>
+                    <span>{{ quote.order.order_number }}</span>
                 {% else %}
-                    <span class="text-gray-400 italic text-xs">Unlinked</span>
+                    <span>-</span>
                 {% endif %}
             </td>
 
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-bold">
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
                 {{ quote.total_amount | usd }}
             </td>
 
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                 {{ quote.quote_date.strftime('%Y-%m-%d') if quote.quote_date else '-' }}
             </td>
 

@@ -1,13 +1,14 @@
-from flask import Blueprint, render_template, request, redirect, url_for, session, flash
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash, make_response
 from ..services.quotes_service import QuoteService
-from ..services.products_service import ProductService
 from ..services.clients_service import ClientService
+from ..services.products_service import ProductService
 from ..services.attachment_service import AttachmentService
-from ..utils.money import parse_to_cents, format_usd
-from ..utils.docs import generate_doc_number 
+from ..utils.money import parse_to_cents
+from ..utils.docs import generate_doc_number
 from ..models import Quote
+from ..extensions import db
 from datetime import datetime
-import time 
+import time
 
 bp = Blueprint('quotes', __name__)
 
@@ -35,41 +36,41 @@ def index():
 @bp.route('/add', methods=['GET', 'POST'])
 def add():
     if request.method == 'POST':
-        # 1. Save Quote Header
-        client_id = request.form.get('client_id')
-        quote_number = request.form.get('quote_number', '').strip()
-        if not quote_number:
-            quote_number = generate_doc_number(prefix='Q', model=Quote, column_name='quote_number')
-        quote_date = request.form.get('quote_date')
-        expiration_date = request.form.get('expiration_date')
-        note = request.form.get('note')
+        try:
+            # 1. Prepare Header Data
+            header_data = {
+                'client_id': request.form.get('client_id'),
+                'quote_number': request.form.get('quote_number'),
+                'quote_date': request.form.get('quote_date'),
+                'expiration_date': request.form.get('expiration_date'),
+                'status': request.form.get('status'),
+                'note': request.form.get('note')
+            }
 
-        quote_data = {
-            'client_id': int(client_id) if client_id else None,
-            'quote_number': quote_number,
-            'quote_date': datetime.strptime(quote_date, '%Y-%m-%d').date() if quote_date else None,
-            'expiration_date': datetime.strptime(expiration_date, '%Y-%m-%d').date() if expiration_date else None,
-            'note': note
-        }
-        new_quote = QuoteService.add(**quote_data)
+            # 2. Parse Items
+            items = _parse_items_form(request.form)
 
-        # 2. Process and Save Line Items
-        items = _parse_items_form(request.form)
-        QuoteService.update_items(new_quote.id, items)
+            # 3. Call Service
+            new_quote = QuoteService.add_quote(header_data, items)
 
-        # 3. COMMIT ATTACHMENTS
-        new_files = request.files.getlist('attachments')
-        # We call commit with an empty delete list because it's a new quote
-        AttachmentService.commit('Quote', new_quote.id, new_files=new_files)
+            # 4. Save Attachments
+            new_files = request.files.getlist('attachments')
+            AttachmentService.commit('Quote', new_quote.id, new_files=new_files)
+            
+            flash(f"Quote {new_quote.quote_number} added successfully!", "success")
+            return redirect(url_for('quotes.index'))
 
-        flash(f'Quote {new_quote.quote_number} added successfully!', 'success')
-        return redirect(url_for('quotes.index'))
+        except ValueError as e:
+            db.session.rollback()
+            flash(str(e), "error")
+            return redirect(url_for('quotes.add'))
 
     # GET: Prepare form data
     clients = ClientService.get_all()
     products = ProductService.get_all_products()
     suggested_number = generate_doc_number(prefix='Q', model=Quote, column_name='quote_number')
-    initial_row_id = str(int(time.time() * 1000))   
+    initial_row_id = str(int(time.time() * 1000))
+
     return render_template('quotes/form.html', 
                            mode='add', 
                            quote=None, 
@@ -80,52 +81,68 @@ def add():
 
 @bp.route('/view/<int:id>')
 def view(id):
-    quote = QuoteService.get_by_id(id)
+    try:
+        quote = QuoteService.get_by_id(id)
+        if not quote:
+            flash("Quote not found.", "error")
+            return redirect(url_for('quotes.index'))
+    except Exception as e:
+        flash(f"Error loading quote: {str(e)}", "error")
+        return redirect(url_for('quotes.index'))
+
     return render_template('quotes/form.html', mode='view', quote=quote)
 
 @bp.route('/edit/<int:id>', methods=['GET', 'POST'])
 def edit(id):
     quote = QuoteService.get_by_id(id)
+    if not quote:
+        flash("Quote not found.", "error")
+        return redirect(url_for('quotes.index'))
+    
     if request.method == 'POST':
-        # 1. Update Header
-        client_id = request.form.get('client_id')
-        quote_number = request.form.get('quote_number', '').strip()
-        if not quote_number:
-            quote_number = generate_doc_number(prefix='Q', model=Quote, column_name='quote_number')
-        quote_date = request.form.get('quote_date')
-        expiration_date = request.form.get('expiration_date')
-        note = request.form.get('note')
-        status = request.form.get('status')
+        try:
+            # 1. Prepare Header Data
+            header_data = {
+                'client_id': request.form.get('client_id'),
+                'quote_number': request.form.get('quote_number'),
+                'quote_date': request.form.get('quote_date'),
+                'expiration_date': request.form.get('expiration_date'),
+                'status': request.form.get('status'),
+                'note': request.form.get('note')
+            }
 
-        quote_data = {
-            'client_id': int(client_id) if client_id else None,
-            'quote_number': quote_number, 
-            'quote_date': datetime.strptime(quote_date, '%Y-%m-%d').date() if quote_date else None,
-            'expiration_date': datetime.strptime(expiration_date, '%Y-%m-%d').date() if expiration_date else None,
-            'note': note,
-            'status': status
-        }
-        QuoteService.update(id, **quote_data)
+            # 2. Parse Items
+            items = _parse_items_form(request.form)
 
-        # 2. Update Line Items
-        items = _parse_items_form(request.form)
-        QuoteService.update_items(id, items)
+            # 3. Call Service
+            QuoteService.edit_quote(id, header_data, items)
 
-        # 3. COMMIT ATTACHMENTS
-        new_files = request.files.getlist('attachments')
-        raw_delete_ids = request.form.getlist('delete_ids[]') 
-        delete_ids = [int(fid) for fid in raw_delete_ids if fid.isdigit()]
-        AttachmentService.commit('Quote', id, new_files=new_files, delete_ids=delete_ids)
+            # 4. Update Attachments
+            new_files = request.files.getlist('attachments')
+            raw_delete_ids = request.form.getlist('delete_ids[]') 
+            delete_ids = [int(fid) for fid in raw_delete_ids if fid.isdigit()]
+            AttachmentService.commit('Quote', id, new_files=new_files, delete_ids=delete_ids)
 
-        flash(f'Quote {quote.quote_number} updated successfully!', 'success')
-        return redirect(url_for('quotes.view', id=id))
-
+            flash(f"Quote {quote.quote_number} updated successfully!", "success")
+            return redirect(url_for('quotes.view', id=id))
+        
+        except ValueError as e:
+            db.session.rollback()
+            flash(str(e), "error")
+            return redirect(url_for('quotes.edit', id=id))
+        
+    # GET: Prepare form data
     clients = ClientService.get_all()
     products = ProductService.get_all_products()
-    return render_template('quotes/form.html', mode='edit', quote=quote, clients=clients, products=products)
+    return render_template('quotes/form.html', 
+                           mode='edit', 
+                           quote=quote, 
+                           clients=clients, 
+                           products=products)
 
 @bp.route('/archive/<int:id>', methods=['POST'])
 def archive(id):
+    """Soft delete the quote."""
     quote = QuoteService.archive(id)
     if quote:
         flash(f'Quote {quote.quote_number} has been moved to archives.', 'warning')
@@ -150,22 +167,17 @@ def add_row():
 @bp.route('/get-unit-price')
 def get_unit_price():
     """Returns the default_unit_price for the selected product."""
-    raw_pid = request.args.get('product_ids[]')
+    product_id = request.args.get('product_ids[]', type=int)
     row_id = request.args.get('row_id')
-    
-    product_id = int(raw_pid) if raw_pid and raw_pid.strip() else None
-    
-    # Query product for its default price
-    product = ProductService.get_by_id(product_id) if product_id else None 
-    default_unit_price = product.default_unit_price if product else 0
-    
-    return render_template('quotes/partials/unit_price_input.html', 
-                           row_id=row_id, 
-                           price=default_unit_price)
+
+    product = ProductService.get_by_id(product_id)
+    price = product.default_unit_price if product else 0
+
+    return render_template('quotes/partials/unit_price_input.html', row_id=row_id, price=price)
 
 @bp.route('/calculate', methods=['POST'])
 def calculate():
-    """Calculates the specific Line Total and the global Grand Total."""
+    """Calculates the specific Line Total and the Grand Total."""
     row_id = request.form.get('row_id')
     row_ids = request.form.getlist('row_ids[]')
     quantities = request.form.getlist('quantities[]')
@@ -174,17 +186,16 @@ def calculate():
     line_total = 0
     grand_total = 0
 
-    # If this is the row the user is currently editing, capture its total
-    if row_id in row_ids:
-        idx = row_ids.index(row_id)
-        line_total = int(quantities[idx]) * parse_to_cents(unit_prices[idx])
-
     # calculate grand total
-    items = [{'qty': q, 'price': p} for q, p in zip(quantities, unit_prices)]
-    for item in items:
-        qty = int(item['qty'])
-        price = parse_to_cents(item['price'])
-        grand_total += qty * price
+    for r_id, qty, price in zip(row_ids, quantities, unit_prices):
+        q = int(qty) if qty else 0
+        p = parse_to_cents(price)
+        total = q * p
+        grand_total += total
+
+        # If this is the row the user is currently editing, capture its total
+        if r_id == row_id:
+            line_total = total
 
     return render_template('quotes/partials/calculation_result.html', 
                            row_id=row_id,
@@ -205,6 +216,6 @@ def _parse_items_form(form_data):
             items.append({
                 'product_id': int(pid),
                 'quantity': int(q) if q else 1,
-                'unit_price': parse_to_cents(p)
+                'unit_price': p # Service handles parse_to_cents
             })
     return items
