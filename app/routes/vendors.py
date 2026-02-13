@@ -52,12 +52,31 @@ def add():
 
 @bp.route('/view/<int:id>')
 def view(id):
-    vendor = VendorService.get_by_id(id)
+    try:
+        vendor = VendorService.get_by_id(id)
+        if not vendor:
+            flash("Vendor not found.", "error")
+            return redirect(url_for('vendors.index'))
+        
+    except ValueError as e:
+        db.session.rollback()
+        flash(str(e), 'error')
+        return redirect(url_for('vendors.index'))
+    
     return render_template('vendors/form.html', mode='view', vendor=vendor)
 
 @bp.route('/edit/<int:id>', methods=['GET', 'POST'])
 def edit(id):
-    vendor = VendorService.get_by_id(id)
+    try:
+        vendor = VendorService.get_by_id(id)
+        if not vendor:
+            flash("Vendor not found.", "error")
+            return redirect(url_for('vendors.index'))
+        
+    except ValueError as e:
+        db.session.rollback()
+        flash(str(e), 'error')
+        return redirect(url_for('vendors.index'))
 
     if request.method == 'POST':
         try:

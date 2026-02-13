@@ -2,7 +2,6 @@ from flask import Blueprint, render_template, request, redirect, url_for, sessio
 from ..services.products_service import ProductService
 from ..services.settings_service import ProductCategoryService
 from ..utils.images import save_image
-from ..utils.money import parse_to_cents
 from ..extensions import db
 
 bp = Blueprint('products', __name__)

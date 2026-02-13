@@ -55,12 +55,31 @@ def add():
 
 @bp.route('/view/<int:id>')
 def view(id):
-    client = ClientService.get_by_id(id)
+    try:
+        client = ClientService.get_by_id(id)
+        if not client:
+            flash("Client not found.", "error")
+            return redirect(url_for('clients.index'))
+        
+    except ValueError as e:
+        db.session.rollback()
+        flash(str(e), 'error')
+        return redirect(url_for('clients.index'))
+
     return render_template('clients/form.html', mode='view', client=client)
 
 @bp.route('/edit/<int:id>', methods=['GET', 'POST'])
 def edit(id):
-    client = ClientService.get_by_id(id)
+    try:
+        client = ClientService.get_by_id(id)
+        if not client:
+            flash("Client not found.", "error")
+            return redirect(url_for('clients.index'))
+        
+    except ValueError as e:
+        db.session.rollback()
+        flash(str(e), 'error')
+        return redirect(url_for('clients.index'))
 
     if request.method == 'POST':
         try:
