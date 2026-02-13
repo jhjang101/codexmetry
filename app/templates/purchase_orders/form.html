@@ -2,15 +2,15 @@
 
 {% block title %}
     {% if mode == 'add' %}New PO
-    {% elif mode == 'edit' %}Edit PO - {{ po.po_number }}
-    {% else %}Purchase Orders - {{ po.po_number }}
+    {% elif mode == 'edit' %}Edit PO - {{ po.order.order_number }}
+    {% else %}Purchase Orders - {{ po.order.order_number }}
     {% endif %}
 {% endblock %}
 
 {% block header %}
     {% if mode == 'add' %}New PO
-    {% elif mode == 'edit' %}<span class = "text-gray-400">Edit PO - </span>{{ po.po_number }}
-    {% else %}<span class = "text-gray-400">Purchase Orders - </span>{{ po.po_number }}
+    {% elif mode == 'edit' %}<span class = "text-gray-400">Edit PO - </span>{{ po.order.order_number }}
+    {% else %}<span class = "text-gray-400">Purchase Orders - </span>{{ po.order.order_number }}
     {% endif %}
 {% endblock %}
 
@@ -30,7 +30,7 @@
                       onsubmit="return confirm('CRITICAL WARNING: This is a cascading action!\n\n- ALL linked Invoices will be archived.\n- The Order Registry ID will be deactivated.\n- The associated Quote will be reverted to lead status.\n\nAre you sure you want to proceed?')">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" 
-                            class="text-red-400 px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-800 transition-colors">
+                            class="text-red-400 px-2 py-2 rounded-lg text-sm font-medium hover:bg-red-800 transition-colors">
                         Delete
                     </button>
                 </form>
@@ -97,7 +97,7 @@
                 <div class="col-span-2">
                     <label class="block text-sm font-medium text-gray-500">PO Number</label>
                     {% if mode == 'view' %}
-                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm font-mono">{{ po.po_number or '-'}}</p>
+                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ po.po_number or '-'}}</p>
                     {% else %}
                         <input type="text" name="po_number" value="{{ po.po_number if po else '' }}" 
                                class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none transition-all">
@@ -118,7 +118,9 @@
                 <div class="col-span-2">
                     <label class="block text-sm font-medium text-gray-500">Status</label>
                     {% if mode == 'add' %}
-                        <p class="mt-1 block bg-gray-50 w-full border rounded-lg p-2 text-sm text-gray-500 italic">Open (Auto)</p>
+                        <p class="p-2">
+                            <span class="px-2 py-1 text-xs font-bold uppercase rounded-lg bg-red-100 text-red-700">Open</span>
+                        </p>
                     {% elif mode == 'view' %}
                         <p class="p-2">
                             {% if po.status == 'open' %}

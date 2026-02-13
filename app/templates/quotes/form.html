@@ -2,15 +2,15 @@
 
 {% block title %}
     {% if mode == 'add' %}New Quote
-    {% elif mode == 'edit' %}Edit Quote - {{ quote.quote_number }}
-    {% else %}Quotes - {{ quote.quote_number }}
+    {% elif mode == 'edit' %}Edit Quote - {{ quote.order.order_number if quote.order else quote.quote_number }}
+    {% else %}Quotes - {{ quote.order.order_number if quote.order else quote.quote_number }}
     {% endif %}
 {% endblock %}
 
 {% block header %}
     {% if mode == 'add' %}New Quote
-    {% elif mode == 'edit' %}<span class = "text-gray-400">Edit Quote - </span>{{ quote.quote_number }}
-    {% else %}<span class = "text-gray-400">Quote - </span>{{ quote.quote_number }}
+    {% elif mode == 'edit' %}<span class = "text-gray-400">Edit Quote - </span>{{ quote.order.order_number if quote.order else quote.quote_number }}
+    {% else %}<span class = "text-gray-400">Quote - </span>{{ quote.order.order_number if quote.order else quote.quote_number }}
     {% endif %}
 {% endblock %}
 
