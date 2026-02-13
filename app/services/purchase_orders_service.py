@@ -297,6 +297,17 @@ class PurchaseOrderService(BaseService):
         db.session.commit()
         return po, has_payments
     
+    @classmethod
+    def get_pos_by_client(cls, client_id: int):
+        """Returns Open pos for a specific client."""
+        stmt = select(cls.model).where(
+            cls.model.client_id == client_id,
+            cls.model.is_active == True,
+            cls.model.status.in_(['open', 'completed'])
+        ).order_by(cls.model.po_date.desc())
+
+        return db.session.execute(stmt).scalars().all()
+    
     # --- INTERNAL HELPERS ---
 
     @classmethod
