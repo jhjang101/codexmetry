@@ -278,6 +278,9 @@ def calculate():
     # Remaining Deposit is the excess deposit (absolute value of negative total)
     remaining_credit = abs(min(0, grand_total))
 
+    print('po_total_prepayment:', po_total_prepayment)
+    print('total_due:', total_due)
+
     return render_template(
         'invoices/partials/calculation_result.html',
         row_id=row_id,
@@ -324,6 +327,9 @@ def load_po_details():
     # 2. Populate clients and products list for bill_to and item_row
     clients = ClientService.get_all()
     products = ProductService.get_all()
+
+    print('po.total_prepayment:', po.total_prepayment)
+    print('po.remaining_credit:', po.remaining_credit)
 
     # 3. Return the single unified OOB template
     resp = make_response(render_template(

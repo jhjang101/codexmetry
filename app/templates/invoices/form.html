@@ -2,15 +2,15 @@
 
 {% block title %}
     {% if mode == 'add' %}New Invoice
-    {% elif mode == 'edit' %}Edit Invoice - {{ invoice.invoice_number }}
-    {% else %}Invoice - {{ invoice.invoice_number }}
+    {% elif mode == 'edit' %}Edit Invoice - {{invoice.order.order_number if invoice.order else invoice.invoice_number }}
+    {% else %}Invoice - {{invoice.order.order_number if invoice.order else invoice.invoice_number }}
     {% endif %}
 {% endblock %}
 
 {% block header %}
     {% if mode == 'add' %}New Invoice
-    {% elif mode == 'edit' %}<span class = "text-gray-400">Edit Invoice - </span>{{ invoice.invoice_number }}
-    {% else %}<span class = "text-gray-400">invoice - </span>{{ invoice.invoice_number }}
+    {% elif mode == 'edit' %}<span class = "text-gray-400">Edit Invoice - </span>{{invoice.order.order_number if invoice.order else invoice.invoice_number }}
+    {% else %}<span class = "text-gray-400">invoice - </span>{{invoice.order.order_number if invoice.order else invoice.invoice_number }}
     {% endif %}
 {% endblock %}
 
@@ -118,7 +118,9 @@
                 <div class="col-span-2">
                     <label class="block text-sm font-medium text-gray-500">Status</label>
                     {% if mode == 'add' %}
-                        <p class="mt-1 block bg-gray-50 w-full border rounded-lg p-2 text-sm text-gray-500 italic">Open (Auto)</p>
+                        <p class="p-2">
+                            <span class="px-2 py-1 text-xs font-bold uppercase rounded-lg bg-red-100 text-red-700">Open</span>
+                        </p>
                     {% elif mode == 'view' %}
                         <p class="p-2">
                             {% if invoice.status == 'open' %}
@@ -242,9 +244,9 @@
                                     Total Due: <span class="text-blue-700 font-bold ml-1">{{ invoice.total_due | usd }}</span>
                                 </div>
                                 
-                                {% if invoice.po_total_deposit > 0 %}
+                                {% if invoice.po_total_prepayment > 0 %}
                                 <div class="text-sm font-medium text-green-600 mt-1">
-                                    Remaining Credit: <span class="font-bold ml-1">{{ invoice.remaining_deposit | usd }}</span>
+                                    Remaining Credit: <span class="font-bold ml-1">{{ invoice.remaining_credit | usd }}</span>
                                 </div>
                                 {% endif %}
                             </div>
@@ -267,9 +269,9 @@
         <!-- Add a hidden input inside the form so the calculation engine can "see" the deposit pool. --> 
         <!-- Use this to display "Remaining Credit" even if the remaining credit become 0  -->
         <input type="hidden" 
-               id="po_total_deposit" 
-               name="po_total_deposit" 
-               value="{{ invoice.po_total_deposit if invoice else 0 }}">
+               id="po_total_prepayment" 
+               name="po_total_prepayment" 
+               value="{{ invoice.po_total_prepayment if invoice else 0 }}">
 
     </form>
 </div>

@@ -173,8 +173,8 @@ def edit(id):
     
     # GET logic remains the same...
     clients = ClientService.get_all()
-    pos = PurchaseOrderService.get_eligible_by_client(payment.client_id)
-    invoices = InvoiceService.get_eligible_by_po(payment.po_id)
+    pos = PurchaseOrderService.get_pos_by_client(payment.client_id)
+    invoices = InvoiceService.get_invoices_by_po(payment.po_id)
     payment_types = PaymentTypeService.get_all()
     return render_template('payments/form.html', 
                            mode='edit', 
@@ -236,7 +236,7 @@ def update_client_cascades():
     # Populate clients for the Paid-from
     clients = ClientService.get_all() # For the Paid-From list
     # Populate eligible POs for this client
-    pos = PurchaseOrderService.get_eligible_by_client(client_id) if client_id else []
+    pos = PurchaseOrderService.get_pos_by_client(client_id) if client_id else []
     return render_template('payments/partials/client_cascades.html', 
                            clients=clients, 
                            pos=pos, 
@@ -255,7 +255,7 @@ def update_po_cascades():
     po = PurchaseOrderService.get_po_by_id(po_id) if po_id else None
     payer_id = po.bill_to_id if po else None
     # Populate eligible Invoices for this PO
-    invoices = InvoiceService.get_eligible_by_po(po_id) if po_id else []
+    invoices = InvoiceService.get_invoices_by_po(po_id) if po_id else []
     return render_template('payments/partials/po_cascades.html', 
                            clients=clients, 
                            po=po, 

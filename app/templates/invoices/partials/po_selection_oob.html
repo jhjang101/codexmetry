@@ -12,9 +12,9 @@
 
 <!-- 3. Teleport the new Pool Value to the hidden input -->
 <input type="hidden" 
-       id="po_total_deposit" 
-       name="po_total_deposit" 
-       value="{{ po.po_total_deposit if po else 0 }}" 
+       id="po_total_prepayment" 
+       name="po_total_prepayment" 
+       value="{{ po.total_prepayment if po else 0 }}" 
        hx-swap-oob="true">
 
 <!-- 3. Teleport the Items List -->

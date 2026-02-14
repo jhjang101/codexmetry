@@ -17,11 +17,11 @@
         <div class="text-lg font-bold w-20 text-blue-700">{{ total_due | usd }}</div>
     </div>
     
-    {# UI LOGIC: Show if a deposit ever existed on this PO #}
-    {% if po_total_deposit > 0 %}
+    {# UI LOGIC: Show if a premayment ever existed on this PO #}
+    {% if po_total_prepayment > 0 %}
     <div class="flex items-baseline justify-end gap-4">
-        <div class="text-lg text-gray-700 font-medium">Remaining Deposit:</div>
-        <div class="text-lg font-bold w-20 text-green-600">{{ remaining_deposit | usd }}</div>
+        <div class="text-lg text-gray-700 font-medium">Remaining Credit:</div>
+        <div class="text-lg font-bold w-20 text-green-600">{{ remaining_credit | usd }}</div>
     </div>
     {% endif %}
 </div>
