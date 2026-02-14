@@ -45,7 +45,7 @@
             {% if trx and trx.attachments %}
                 {% for file in trx.attachments %}
                 <div class="flex justify-between items-center bg-gray-100 p-1 rounded-lg border text-[11px] group" id="existing-file-{{ file.id }}">
-                    <a href="{{ url_for('static', filename='uploads/transaction/' + file.file_path) }}" target="_blank" class="truncate font-medium text-blue-600 hover:underline">
+                    <a href="{{ url_for('static', filename='uploads/transactions/' + file.file_path) }}" target="_blank" class="truncate font-medium text-blue-600 hover:underline">
                         <i class="fa-solid fa-file-lines mr-1"></i>{{ file.file_name }}
                     </a>
                     {% if mode != 'view' %}
