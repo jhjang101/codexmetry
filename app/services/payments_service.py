@@ -1,4 +1,5 @@
 from .base_service import BaseService
+from .purchase_orders_service import PurchaseOrderService
 from ..models import Payment, Invoice, InvoiceItem, Product, PurchaseOrder, OrderRegistry, Client
 from ..extensions import db
 from ..utils.money import parse_to_cents, format_usd
@@ -69,80 +70,67 @@ class PaymentService(BaseService):
     def edit_payment(cls, payment_id: int, data: dict) -> Payment:
         """
         Update existing payment.
-        If credit has already been used by an invoice, 
-        only the internal note can be modified.
+        If credit has already been used by an invoice,
+        the payment amount cannotbe reduced.
         """
         # 1. Validation
         payment = cls.get_by_id(payment_id)
         if not payment:
             raise ValueError("Payment not found.")
         
-        # 1. THE SNAPSHOT LOCK GUARD
-        # If this is a prepayment and the credit is already in use
-        if payment.invoice_id is None and cls._is_credit_used(payment.po_id):
-            clean_data = cls._validate_and_transform(data)
+        # 1. GUARD FOR PREPAYMENT EDITS (Amount Reduction)
+        if payment.invoice_id is None:
+            po = PurchaseOrderService.get_po_by_id(payment.po_id)
             
-            # Check if the user is trying to change anything OTHER than the note
-            # We compare the submitted clean_data against the stored object
-            restricted_fields = [
-                'client_id', 'po_id', 'invoice_id', 'paid_from_id', 
-                'payment_type_id', 'amount', 'payment_date'
-            ]
-            
-            for field in restricted_fields:
-                if getattr(payment, field) != clean_data.get(field):
+            if po:
+                new_amount = parse_to_cents(str(data.get('amount', 0)))
+                # Calculate how much the user is trying to "Take Back" from the pool
+                reduction = payment.amount - new_amount
+                
+                # You can only take back what hasn't been spent yet
+                if reduction > po.remaining_credit: # type: ignore
                     raise ValueError(
-                        "Foundation Lock: This payment's credit has already been applied to an active invoice. "
-                        "Only the 'Internal Note' can be modified. To change financials, archive the invoices first."
+                        f"Cannot reduce payment amount by {format_usd(reduction)}. "
+                        f"Only {format_usd(po.remaining_credit)} of remaining credit is currently available." # type: ignore
                     )
-            
-            # Only update the note
-            payment.note = clean_data.get('note', '')
 
-        else:
-            # 2. Validate & transform
-            clean_data = cls._validate_and_transform(data)
+        # 2. Standard Validate & transform
+        clean_data = cls._validate_and_transform(data)
 
-            # 3. Update header
-            for key, value in clean_data.items():
-                setattr(payment, key, value)
+        # 3. Update header
+        for key, value in clean_data.items():
+            setattr(payment, key, value)
 
         db.session.commit()
         return payment
     
     @classmethod
     def archive_payment(cls, id: int) -> Payment | None:
-        """Soft delete with Snapshot Lock protection."""
+        """
+        Specialized archive with Credit Pool protection (Funding Deletion Guard).
+        """
         payment = cls.get_by_id(id)
         if not payment:
             return None
 
-        if payment.invoice_id is None and cls._is_credit_used(payment.po_id):
-            raise ValueError(
-                "Foundation Lock: This payment's credit is currently in use by an invoice. "
-                "Archive the invoices first before deleting the funding payment."
-            )
+        # 1. Guard for Prepayments (Invoiceless Payments)
+        # If this is a deposit, we must ensure it hasn't been "spent" by a credit invoice.
+        if payment.invoice_id is None:
+            po = PurchaseOrderService.get_po_by_id(payment.po_id)
+            
+            # Check if deleting this cash would make the pool negative
+            if po and payment.amount > po.remaining_credit: # type: ignore
+                raise ValueError(
+                    f"Cannot archive this payment. {format_usd(payment.amount)} of credit "
+                    f"is currently reserved by active invoices. Archive the invoices first."
+                )
 
+        # 2. Perform the Soft Delete
         payment.is_active = False
         db.session.commit()
         return payment
     
     # --- INTERNAL HELPERS ---
-
-    @classmethod
-    def _is_credit_used(cls, po_id: int) -> bool:
-        """Checks if any invoice for this PO has an 'Applied Deposit' line."""
-        usage_stmt = (
-            select(func.count(InvoiceItem.id))
-            .join(Invoice).join(Product)
-            .where(
-                Invoice.po_id == po_id,
-                Invoice.is_active == True,
-                Product.is_system == True
-            )
-        )
-        count = db.session.execute(usage_stmt).scalar() or 0
-        return count > 0
     
     @classmethod
     def _validate_and_transform(cls, data: dict) -> dict:
@@ -157,11 +145,6 @@ class PaymentService(BaseService):
         if not paid_from_id: raise ValueError("Payer (Paid From) is required.")
 
         # 2. Look up the Purchase Order to get the order_id (Registry Link)
-        po = db.session.get(PurchaseOrder, int(po_id))
-        if not po:
-            raise ValueError("The selected Purchase Order does not exist.")
-
-        # 2. Document Resolution
         po = db.session.get(PurchaseOrder, int(po_id))
         if not po:
             raise ValueError("The selected Purchase Order does not exist.")
