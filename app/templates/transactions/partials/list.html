@@ -1,7 +1,7 @@
 <table class="min-w-full divide-y divide-gray-200">
     <thead class="bg-gray-50">
         <tr>
-            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">TRX #</th>
+            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Transaction Number</th>
             <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Description</th>
             <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Category</th>
             <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Amount</th>
@@ -12,20 +12,24 @@
     <tbody class="divide-y divide-gray-100 bg-white">
         {% for trx in pagination.items %}
         <tr class="hover:bg-blue-50/40 transition-colors">
-            <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">{{ trx.transaction_number }}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-700 truncate max-w-xs">{{ trx.description }}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                <span class="px-2 py-1 bg-gray-100 rounded-md text-[11px] font-medium uppercase">{{ trx.category.type if trx.category else 'Misc' }}</span>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold {{ 'text-green-600' if trx.amount >= 0 else 'text-red-600' }}">
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ trx.transaction_number }}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 truncate max-w-xs">{{ trx.description }}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ trx.category.type if trx.category else '-' }}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium {{ 'text-green-600' if trx.amount >= 0 else 'text-red-600' }}">
                 {{ trx.amount | usd }}
             </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ trx.transaction_date.strftime('%Y-%m-%d') }}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ trx.transaction_date.strftime('%Y-%m-%d') }}</td>
             <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
-                <span class="text-gray-400 hover:text-blue-600 cursor-pointer" hx-get="{{ url_for('transactions.view', id=trx.id) }}" hx-target="body" hx-push-url="true">
+                <span class="text-gray-400 hover:text-blue-600 cursor-pointer" 
+                      hx-get="{{ url_for('transactions.view', id=trx.id) }}" 
+                      hx-target="body" 
+                      hx-push-url="true">
                     <i class="fa-regular fa-eye m-1"></i>
                 </span>
-                <span class="text-gray-400 hover:text-yellow-600 cursor-pointer" hx-get="{{ url_for('transactions.edit', id=trx.id) }}" hx-target="body" hx-push-url="true">
+                <span class="text-gray-400 hover:text-yellow-600 cursor-pointer" 
+                      hx-get="{{ url_for('transactions.edit', id=trx.id) }}" 
+                      hx-target="body" 
+                      hx-push-url="true">
                     <i class="fa-regular fa-pen-to-square m-1"></i>
                 </span>
             </td>
@@ -35,4 +39,32 @@
         {% endfor %}
     </tbody>
 </table>
-<!-- Reuse your existing pagination footer here -->
+
+<!-- Pagination Footer -->
+<div class="bg-gray-50 px-6 py-4 flex items-center justify-between border-t border-gray-200">
+    <div class="text-xs text-gray-500">
+        Showing page <b>{{ pagination.page }}</b> of <b>{{ pagination.pages }}</b>
+    </div>
+    
+    <div class="flex gap-2">
+        {% if pagination.has_prev %}
+        <button hx-get="{{ url_for('transaction.index', page=pagination.prev_num) }}"
+                hx-target="#trx-list-container"
+                hx-include="[name='search']"
+                hx-push-url="true"
+                class="px-3 py-1 bg-white border rounded text-xs text-gray-500 font-semibold hover:bg-gray-100 transition-colors">
+            <i class="fa-solid fa-chevron-left mr-1"></i> Previous
+        </button>
+        {% endif %}
+
+        {% if pagination.has_next %}
+        <button hx-get="{{ url_for('transaction.index', page=pagination.next_num) }}"
+                hx-target="#trx-list-container"
+                hx-include="[name='search']"
+                hx-push-url="true"
+                class="px-3 py-1 bg-white border rounded text-xs text-gray-500 font-semibold hover:bg-gray-100 transition-colors">
+            Next <i class="fa-solid fa-chevron-right ml-1"></i>
+        </button>
+        {% endif %}
+    </div>
+</div>

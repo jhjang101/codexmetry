@@ -39,17 +39,49 @@ class TransactionService(BaseService):
         return cls.paginate(stmt, page=page, per_page=per_page)
 
     @classmethod
-    def create_transaction(cls, data: dict) -> Transaction:
+    def add_transaction(cls, data: dict) -> Transaction:
         """
-        Brain logic for creating a non-operational transaction.
-        Handles TRX- numbering and date/currency parsing.
+        Atomic creation of a non-operational transaction.
         """
-        from datetime import date
+        # 1. Validate & transform
+        clean_data = cls._validate_and_transform(data)
 
-        # 1. Generate unique TRX number
+        # 2. Generate Number
         trx_number = generate_doc_number(prefix='TRX', model=cls.model, column_name='transaction_number')
 
-        # 2. Validation
+        # 3. Create header
+        trx = cls.model(**clean_data)
+        trx.transaction_number = trx_number
+        db.session.add(trx)
+        
+        db.session.commit()
+        return trx
+
+    @classmethod
+    def edit_transaction(cls, trx_id: int, data: dict) -> Transaction:
+        """
+        Update an existing transaction.
+        """
+        # 1. Validation
+        trx = cls.get_by_id(trx_id)
+        if not trx:
+            raise ValueError("Transaction not found.")
+
+        # 2. Validate & transform
+        clean_data = cls._validate_and_transform(data)
+
+        # 3. Update attributes
+        for key, value in clean_data.items():
+            setattr(trx, key, value)
+
+        db.session.commit()
+        return trx
+
+    # --- INTERNAL HELPERS ---
+
+    @classmethod
+    def _validate_and_transform(cls, data: dict) -> dict:
+        """Handles validation and type conversion."""
         description = data.get('description', '').strip()
         amount_raw = data.get('amount', '0')
         
@@ -58,24 +90,17 @@ class TransactionService(BaseService):
         if not amount_raw:
             raise ValueError("Amount is required.")
 
-        # 3. Transform Data
+        # Parse Date
         raw_date = data.get('transaction_date')
-        raw_category = data.get('category_id')
-        transaction_date = datetime.strptime(raw_date, '%Y-%m-%d').date() if raw_date else date.today()
-        category_id = int(raw_category) if raw_category else None
+        trx_date = datetime.strptime(raw_date, '%Y-%m-%d').date() if isinstance(raw_date, str) else datetime.now().date()
+        category_id = data.get('category_id')
 
-        # Currency parsing (handles gains like '5.00' or losses like '-2.50')
-        amount_cents = parse_to_cents(str(amount_raw))
-        
-        # 4. Create Object
-        trx = cls.model()
-        trx.transaction_number = trx_number
-        trx.description = description
-        trx.amount = amount_cents
-        trx.transaction_date = transaction_date
-        trx.category_id = category_id
-        trx.note = data.get('note', '')
+        clean_data = {
+            'description': description,
+            'amount': parse_to_cents(str(amount_raw)),
+            'transaction_date': trx_date,
+            'category_id': int(category_id) if category_id else None,
+            'note': data.get('note', '').strip()
+        }
 
-        db.session.add(trx)
-        db.session.commit()
-        return trx
+        return clean_data
