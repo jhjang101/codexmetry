@@ -30,7 +30,7 @@
                       onsubmit="return confirm('Archive this payment?')">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" 
-                            class="text-red-400 px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-800 transition-colors">
+                            class="text-red-400 px-2 py-2 rounded-lg text-sm font-medium hover:bg-red-800 transition-colors">
                         Delete
                     </button>
                 </form>
@@ -114,7 +114,7 @@
                     <label class="block text-sm font-medium text-gray-500">Invoice Number</label>
                     <div id="invoice-select-container">
                     {% if mode == 'view' %}
-                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm font-mono">
+                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">
                             {% if payment.invoice %}
                                 <span class="{{ 'text-gray-500' if not payment.invoice.is_active else '' }}">
                                     {{ payment.invoice.invoice_number }}
@@ -144,7 +144,7 @@
                 <div class="col-span-2">
                     <label class="block text-sm font-medium text-gray-500">Amount</label>
                     {% if mode == 'view' %}
-                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm font-bold text-blue-700">{{ payment.amount | usd }}</p>
+                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm font-medium">{{ payment.amount | usd }}</p>
                     {% else %}
                         {% include 'payments/partials/amount_input.html' with context %}
                     {% endif %}
