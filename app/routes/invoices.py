@@ -358,6 +358,6 @@ def _parse_items_form(form_data):
             items.append({
                 'product_id': product_id,
                 'quantity': int(qty) if qty else 1,
-                'unit_price': price
+                'unit_price': price # Service handles parse_to_cents
             })
     return items

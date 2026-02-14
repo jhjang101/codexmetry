@@ -48,7 +48,7 @@ def add():
             
             # 3. Call the Atomic Service method
             # This handles numbering, fallback logic, and line item saving
-            new_expense = ExpenseService.create_expense(header_data, items)
+            new_expense = ExpenseService.add_expense(header_data, items)
 
             # 4. Handle Attachments
             # We call this after the service returns the saved expense object
@@ -80,55 +80,47 @@ def add():
 
 @bp.route('/view/<int:id>')
 def view(id):
-    expense = ExpenseService.get_by_id(id)
+    try:
+        expense = ExpenseService.get_by_id(id)
+        if not expense:
+            flash("Expense not found.", "error")
+            return redirect(url_for('expenses.index'))
+    except Exception as e:
+        flash(f"Error loading expense: {str(e)}", "error")
+        return redirect(url_for('expenses.index'))
+
     return render_template('expenses/form.html', mode='view', expense=expense)
 
 @bp.route('/edit/<int:id>', methods=['GET', 'POST'])
 def edit(id):
-    # 1. Fetch existing expense
     expense = ExpenseService.get_by_id(id)
+    if not expense:
+        flash("Expense not found.", "error")
+        return redirect(url_for('expenses.index'))
     
     if request.method == 'POST':
         try:
-            # 2. Parse Items first (required for the description fallback check)
-            items = _parse_items_form(request.form)
-            
-            # 3. Handle Description Fallback Logic
-            description = request.form.get('description', '').strip()
-            if not description and items:
-                # Use the description from the first line item
-                description = items[0].get('item', '').strip()
-            
-            if not description:
-                raise ValueError("Description is required or must be provided in the first item line.")
-
-            # 4. Prepare and Parse Header Data
-            raw_date = request.form.get('expense_date')
-            category_id = request.form.get('category_id')
-            expense_date = datetime.strptime(raw_date, '%Y-%m-%d').date() if raw_date else None
-            
+            # 1. Prepare Header Data
             header_data = {
-                'vendor_id': int(request.form.get('vendor_id', 0)),
-                'category_id': int(category_id) if category_id else None,
-                'description': description,
-                'expense_date': expense_date,
-                'note': request.form.get('note', '')
+                'vendor_id': request.form.get('vendor_id'),
+                'category_id': request.form.get('category_id'),
+                'description': request.form.get('description'),
+                'expense_date': request.form.get('expense_date'),
+                'note': request.form.get('note')
             }
 
-            # 5. Update Header via BaseService
-            ExpenseService.update(id, **header_data)
+            # 2. Parse Items
+            items = _parse_items_form(request.form)
 
-            # 6. Update Line Items via Specialized Service method
-            # This also updates the Expense.total_amount header
-            ExpenseService.update_items(id, items)
+            # 3. Call Atomic Service
+            ExpenseService.edit_expense(id, header_data, items)
 
-            # 7. Update Attachments
+            # 4. Update Attachments
             new_files = request.files.getlist('attachments')
             raw_delete_ids = request.form.getlist('delete_ids[]') 
             delete_ids = [int(fid) for fid in raw_delete_ids if fid.isdigit()]
             AttachmentService.commit('Expense', id, new_files=new_files, delete_ids=delete_ids)
 
-            # 8. Success Feedback
             flash(f"Expense {expense.expense_number} updated successfully!", "success")
             return redirect(url_for('expenses.view', id=id))
             

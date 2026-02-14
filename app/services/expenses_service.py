@@ -49,7 +49,7 @@ class ExpenseService(BaseService):
         clean_data = cls._validate_and_transform(data, items_data)
 
         # 2. Generate Number
-        expense_number = generate_doc_number(prefix='EXP', model=cls.model, column_name='expense_number')
+        expense_number = generate_doc_number(prefix='EP', model=cls.model, column_name='expense_number')
 
         # 3. Create header
         expense = cls.model(**clean_data)
