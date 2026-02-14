@@ -15,7 +15,7 @@
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ trx.transaction_number }}</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 truncate max-w-xs">{{ trx.description }}</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ trx.category.type if trx.category else '-' }}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium {{ 'text-green-600' if trx.amount >= 0 else 'text-red-600' }}">
+            <td class="px-6 py-4 whitespace-nowrap text-sm {{ 'text-green-700' if trx.amount >= 0 else 'text-red-600' }}">
                 {{ trx.amount | usd }}
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ trx.transaction_date.strftime('%Y-%m-%d') }}</td>
