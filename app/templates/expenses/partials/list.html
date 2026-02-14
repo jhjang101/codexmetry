@@ -13,14 +13,12 @@
     <tbody class="divide-y divide-gray-100 bg-white">
         {% for exp in pagination.items %}
         <tr class="hover:bg-blue-50/40 transition-colors">
-            <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">{{ exp.expense_number }}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ exp.expense_number }}</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-blue-700">{{ exp.vendor.company_name }}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600 truncate max-w-xs">{{ exp.description }}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                <span class="px-2 py-1 bg-gray-100 rounded-md text-[11px] font-medium uppercase">{{ exp.category.type if exp.category else 'Uncategorized' }}</span>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-red-600">{{ exp.total_amount | usd }}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ exp.expense_date.strftime('%Y-%m-%d') }}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 truncate max-w-xs">{{ exp.description }}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ exp.category.type if exp.category else 'Uncategorized' }}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-red-600">{{ exp.total_amount | usd }}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ exp.expense_date.strftime('%Y-%m-%d') }}</td>
             <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
                 <span class="text-gray-400 hover:text-blue-600 cursor-pointer" hx-get="{{ url_for('expenses.view', id=exp.id) }}" hx-target="body" hx-push-url="true">
                     <i class="fa-regular fa-eye m-1"></i>

@@ -28,12 +28,12 @@
         <!-- Add Quote Button -->
         <a href="{{ url_for('expenses.add') }}" 
            class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors shadow-sm">
-            <i class="fa-solid fa-plus mr-1"></i> Record Expense
+            <i class="fa-solid fa-plus mr-1"></i> Add New Expense
         </a>
     </div>
 
     <!-- Table Container (HTMX Target) -->
-    <div id="quote-list-container" class="bg-white rounded-lg shadow border border-gray-200 overflow-hidden">
+    <div id="expenses-list-container" class="bg-white rounded-lg shadow border border-gray-200 overflow-hidden">
         {% include 'expenses/partials/list.html' %}
     </div>
 

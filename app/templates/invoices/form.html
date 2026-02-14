@@ -21,7 +21,7 @@
     <!-- 1. HEADER ACTION BAR -->
     <div class="flex justify-between items-center mb-2">
         <a href="{{ session.get('invoices_last_url', url_for('invoices.index')) }}" class="text-blue-600 hover:underline text-sm font-medium flex items-center gap-1">
-            <i class="fa-solid fa-arrow-left"></i> Back to Directory
+            <i class="fa-solid fa-arrow-left"></i> Back to Invoices List
         </a>
 
         <div class="flex gap-3 items-center">
@@ -30,7 +30,7 @@
                       onsubmit="return confirm('Archive this invoice?')">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" 
-                            class="text-red-400 px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-800 transition-colors">
+                            class="text-red-400 px-2 py-2 rounded-lg text-sm font-medium hover:bg-red-800 transition-colors">
                         Delete
                     </button>
                 </form>

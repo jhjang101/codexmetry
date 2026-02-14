@@ -10,7 +10,7 @@
 {% block content %}
 <div class="max-w-4xl mx-auto">
     <div class="flex justify-between items-center mb-2">
-        <a href="{{ session.get('transactions_last_url', url_for('transactions.index')) }}" class="text-blue-600 text-sm font-medium"><i class="fa-solid fa-arrow-left"></i> Back</a>
+        <a href="{{ session.get('transactions_last_url', url_for('transactions.index')) }}" class="text-blue-600 text-sm font-medium"><i class="fa-solid fa-arrow-left"></i> Back to Transactions List</a>
         <div class="flex gap-3">
             {% if mode == 'view' %}
                 <form action="{{ url_for('transactions.archive', id=trx.id) }}" method="POST" onsubmit="return confirm('Archive this transaction?')">

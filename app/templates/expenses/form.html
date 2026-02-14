@@ -10,12 +10,12 @@
 {% block content %}
 <div class="max-w-5xl mx-auto">
     <div class="flex justify-between items-center mb-2">
-        <a href="{{ session.get('expenses_last_url', url_for('expenses.index')) }}" class="text-blue-600 text-sm font-medium"><i class="fa-solid fa-arrow-left"></i> Back</a>
+        <a href="{{ session.get('expenses_last_url', url_for('expenses.index')) }}" class="text-blue-600 text-sm font-medium"><i class="fa-solid fa-arrow-left"></i> Back to Expenses List</a>
         <div class="flex gap-3">
             {% if mode == 'view' %}
                 <form action="{{ url_for('expenses.archive', id=expense.id) }}" method="POST" onsubmit="return confirm('Archive this expense?')">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button type="submit" class="text-red-400 px-4 py-2 text-sm hover:bg-red-800 hover:text-white rounded-lg">Delete</button>
+                    <button type="submit" class="text-red-400 px-2 py-2 rounded-lg text-sm font-medium hover:bg-red-800 transition-colors">Delete</button>
                 </form>
                 <a href="{{ url_for('expenses.edit', id=expense.id) }}" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm">Edit Expense</a>
             {% else %}
