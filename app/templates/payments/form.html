@@ -144,7 +144,7 @@
                 <div class="col-span-2">
                     <label class="block text-sm font-medium text-gray-500">Amount</label>
                     {% if mode == 'view' %}
-                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm font-medium">{{ payment.amount | usd }}</p>
+                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm {{ 'text-green-700' if payment.amount >= 0 else 'text-red-600' }}">{{ payment.amount | usd }}</p>
                     {% else %}
                         {% include 'payments/partials/amount_input.html' with context %}
                     {% endif %}

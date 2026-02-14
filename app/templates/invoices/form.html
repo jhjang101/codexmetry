@@ -231,7 +231,7 @@
                     <!-- Grand Total Line -->
                     <div class="flex items-baseline justify-end gap-4">
                         <span class="text-sm text-gray-700 font-medium">Grand Total:</span>
-                        <span class="text-sm font-bold text-blue-700" id="grand-total-display">
+                        <span class="text-sm font-medium w-20 text-blue-700" id="grand-total-display">
                             {{ invoice.total_amount | usd if invoice else '$0.00' }}
                         </span>
                     </div>
@@ -239,17 +239,17 @@
                     <!-- NEW: The Target for the Financial Summary (Due/Credit) -->
                     <div id="financial-summary-container">
                         {% if mode == 'view' %}
-                            <div class="mt-2 text-right">
-                                <div class="text-sm font-medium text-gray-700">
-                                    Total Due: <span class="text-blue-700 font-bold ml-1">{{ invoice.total_due | usd }}</span>
-                                </div>
-                                
-                                {% if invoice.po_total_prepayment > 0 %}
-                                <div class="text-sm font-medium text-green-600 mt-1">
-                                    Remaining Credit: <span class="font-bold ml-1">{{ invoice.remaining_credit | usd }}</span>
-                                </div>
-                                {% endif %}
+                            <div class="flex items-baseline justify-end gap-4">
+                                <div class="text-lg text-gray-700 font-medium">Total Due:</div>
+                                <div class="text-lg font-medium w-20 text-blue-700">{{ invoice.total_due | usd }}</div>
                             </div>
+                            
+                            {% if invoice.po_total_prepayment > 0 %}
+                            <div class="flex items-baseline justify-end gap-4">
+                                <div class="text-lg text-gray-700 font-medium">Remaining Credit:</div>
+                                <div class="text-lg font-medium w-20 text-blue-700">{{ invoice.remaining_credit | usd }}</div>
+                            </div>
+                            {% endif %}
                         {% endif %}
                         <!-- In Edit/Add mode, this remains empty and waits for the HTMX OOB swap -->
                         <!-- This will be populated by calculation_result.html -->

@@ -90,7 +90,7 @@
                 <div>
                     <label class="block text-sm font-medium text-gray-500">Quote Number</label>
                     {% if mode == 'view' %}
-                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm font-mono">{{ quote.quote_number }}</p>
+                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ quote.quote_number }}</p>
                     {% else %}
                         <input type="text" name="quote_number" value="{{ quote.quote_number if quote else suggested_number }}" 
                                class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none transition-all" required>
@@ -193,7 +193,7 @@
                      hx-target="#calculation-sink"
                      hx-include="#quote-main-form">
                     <span class="text-lg text-gray-700 font-medium mr-4">Grand Total:</span>
-                    <span class="text-lg font-bold text-blue-700" id="grand-total-display">
+                    <span class="text-lg font-medium text-blue-700" id="grand-total-display">
                         {{ quote.total_amount | usd if quote else '$0.00' }}
                     </span>
                 </div>

@@ -45,9 +45,14 @@
                 <div class="col-span-1">
                     <label class="block text-sm font-medium text-gray-500">Amount</label>
                     {% if mode == 'view' %}
-                        <p class="mt-1 block bg-gray-100 border rounded-lg p-2 text-sm font-medium {{ 'text-green-600' if trx.amount >= 0 else 'text-red-600' }}">{{ trx.amount | usd }}</p>
+                        <p class="mt-1 block bg-gray-100 border rounded-lg p-2 text-sm {{ 'text-green-700' if trx.amount >= 0 else 'text-red-600' }}">
+                            {{ trx.amount | usd }}
+                        </p>
                     {% else %}
-                        <input type="text" name="amount" value="{{ trx.amount | usd if trx else '$0.00' }}" required
+                        <input type="text" 
+                               name="amount" 
+                               value="{{ trx.amount | usd if trx else '$0.00' }}" 
+                               required
                                class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300">
                     {% endif %}
                 </div>

@@ -6,7 +6,7 @@
 {# 2. OOB SWAP: Updates the Grand Total display #}
 <span id="grand-total-display" 
       hx-swap-oob="true" 
-      class="text-sm font-bold w-20 {{ 'text-red-600' if grand_total < 0 else 'text-blue-700' }}">
+      class="text-sm font-medium w-20 text-blue-700">
     {{ grand_total | usd }}
 </span>
 
@@ -14,14 +14,14 @@
 <div id="financial-summary-container" hx-swap-oob="true">
     <div class="flex items-baseline justify-end gap-4">
         <div class="text-lg text-gray-700 font-medium">Total Due:</div>
-        <div class="text-lg font-bold w-20 text-blue-700">{{ total_due | usd }}</div>
+        <div class="text-lg font-medium w-20 text-blue-700">{{ total_due | usd }}</div>
     </div>
     
     {# UI LOGIC: Show if a premayment ever existed on this PO #}
     {% if po_total_prepayment > 0 %}
     <div class="flex items-baseline justify-end gap-4">
         <div class="text-lg text-gray-700 font-medium">Remaining Credit:</div>
-        <div class="text-lg font-bold w-20 text-green-600">{{ remaining_credit | usd }}</div>
+        <div class="text-lg font-medium w-20 text-blue-700">{{ remaining_credit | usd }}</div>
     </div>
     {% endif %}
 </div>

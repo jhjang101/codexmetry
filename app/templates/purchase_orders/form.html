@@ -236,7 +236,7 @@
                      hx-target="#calculation-sink"
                      hx-include="#po-main-form">
                     <span class="text-lg text-gray-700 font-medium mr-4">Grand Total:</span>
-                    <span class="text-lg font-bold text-blue-700" id="grand-total-display">
+                    <span class="text-lg font-medium text-blue-700" id="grand-total-display">
                         {{ po.total_amount | usd if po else '$0.00' }}
                     </span>
                 </div>

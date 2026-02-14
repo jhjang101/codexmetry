@@ -4,6 +4,13 @@
 {% endif %}
 
 {# OOB RESPONSE: This teleports to the footer in form.html #}
-<span id="grand-total-display" hx-swap-oob="true" class="text-lg font-bold text-red-600">
+<span id="grand-total-display" 
+      hx-swap-oob="true" 
+      class="text-lg font-medium 
+        {% if mode == 'add' %}
+            text-blue-700
+        {% else %}
+            {{ 'text-red-600' if grand_total >= 0 else 'text-green-600' }}
+      {% endif %}">
     {{ grand_total | usd }}
 </span>
