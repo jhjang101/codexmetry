@@ -8,6 +8,8 @@ from ..services.attachment_service import AttachmentService
 from ..utils.money import parse_to_cents
 from ..utils.sync import sync_invoice_status
 from ..extensions import db
+from datetime import datetime
+import time
 
 bp = Blueprint('payments', __name__)
 
@@ -36,7 +38,7 @@ def index():
 def add():
     if request.method == 'POST':
         try:
-            # 1. Save Payment Header
+            # 1. Prepare Data
             payment_data = {
                 'client_id': request.form.get('client_id'),
                 'po_id': request.form.get('po_id'),
@@ -47,21 +49,23 @@ def add():
                 'payment_date': request.form.get('payment_date'),
                 'note': request.form.get('note')
             }
-            new_payment = PaymentService.create_payment(payment_data)
 
-            # 2. Sync invoice status
+            # 2. Call Atomic Service
+            new_payment = PaymentService.add_payment(payment_data)
+
+            # 3. Sync invoice status
             invoice_status_updated = False
-            if new_payment.invoice:
+            if new_payment.invoice_id:
                 invoice_status_updated = sync_invoice_status(new_payment.invoice_id)
 
-            # 3. Save Attachments
+            # 4. Save Attachments
             new_files = request.files.getlist('attachments')
             AttachmentService.commit('Payment', new_payment.id, new_files=new_files)
             
             # 4. Flash message
             if new_payment.invoice:
                 payment_number = f'invoice {new_payment.invoice.invoice_number}'
-            elif new_payment.purchase_order:
+            elif new_payment.purchase_order.po_number:
                 payment_number = f'PO {new_payment.purchase_order.po_number}'
             else:
                 payment_number = f'order {new_payment.order.order_number}'
@@ -71,6 +75,7 @@ def add():
                 flash(f"Status of invoice {new_payment.invoice.invoice_number} updated successfully!", "success")
                 
             return redirect(url_for('payments.index'))
+        
         except ValueError as e:
             db.session.rollback()
             flash(str(e), "error")
@@ -88,12 +93,18 @@ def add():
 @bp.route('/view/<int:id>')
 def view(id):
     payment = PaymentService.get_by_id(id)
+    if not payment:
+        flash("Payment not found.", "error")
+        return redirect(url_for('payments.index'))
+
+    # Identifiers for title display
     if payment.invoice:
-        payment_number = f'invoice# {payment.invoice.invoice_number}'
-    elif payment.purchase_order:
-        payment_number = f'PO# {payment.purchase_order.po_number}'
+                payment_number = f'invoice {payment.invoice.invoice_number}'
+    elif payment.purchase_order.po_number:
+        payment_number = f'PO {payment.purchase_order.po_number}'
     else:
-        payment_number = f'order# {payment.order.order_number}'
+        payment_number = f'order {payment.order.order_number}'
+
     return render_template('payments/form.html', 
                            mode='view', 
                            payment=payment,
@@ -103,22 +114,17 @@ def view(id):
 def edit(id):
     """Edit mode: handles header updates."""
     payment = PaymentService.get_by_id(id)
-    
-    # payment_number represents the initial identity for the page title/header
-    if payment.invoice:
-        payment_number = f'invoice# {payment.invoice.invoice_number}'
-    elif payment.purchase_order:
-        payment_number = f'PO# {payment.purchase_order.po_number}'
-    else:
-        payment_number = f'order# {payment.order.order_number}'
+    if not payment:
+        flash("Payment not found.", "error")
+        return redirect(url_for('payments.index'))
     
     if request.method == 'POST':
         try:
-            # 1. Capture State BEFORE update
+            # 1. Capture State before update for Sync ripples
             old_invoice_id = payment.invoice_id
             old_invoice_number = payment.invoice.invoice_number if payment.invoice else None
 
-            # 2. Update Payment Header
+            # 2. Prepare Data
             payment_data = {
                 'client_id': request.form.get('client_id'),
                 'po_id': request.form.get('po_id'),
@@ -129,39 +135,39 @@ def edit(id):
                 'payment_date': request.form.get('payment_date'),
                 'note': request.form.get('note')
             }
-            PaymentService.update_payment(id, payment_data)
+
+            # 3. Call Atomic Service (Guard handles "Snapshot Lock")
+            PaymentService.edit_payment(id, payment_data)
             
-            # 3. Capture State AFTER update
+            # 4. Capture State AFTER update
             new_invoice_id = payment.invoice_id
             
-            # 4. Sync Brain Logic
+            # 5. Sync Brain Logic
             invoice_status_updated = False
             old_invoice_status_updated = False
-
             # If the invoice link changed, sync the old one first
             if old_invoice_id != new_invoice_id:
                 if old_invoice_id:
                     old_invoice_status_updated = sync_invoice_status(old_invoice_id)
-            
             # Sync the current (new) invoice link
             if new_invoice_id:
                 invoice_status_updated = sync_invoice_status(new_invoice_id)
 
-            # 5. Update Attachments
+            # 6. Update Attachments
             new_files = request.files.getlist('attachments')
             raw_delete_ids = request.form.getlist('delete_ids[]') 
             delete_ids = [int(fid) for fid in raw_delete_ids if fid.isdigit()]
             AttachmentService.commit('Payment', id, new_files=new_files, delete_ids=delete_ids)
 
-            # 6. Flash Messages
+            # 7. Flash Messages
             flash(f"Payment updated successfully!", "success")
             
             # Flash for the current invoice
-            if payment.invoice and invoice_status_updated:
+            if invoice_status_updated:
                 flash(f"Status of invoice {payment.invoice.invoice_number} updated successfully!", "success")
             
             # Flash for the old invoice (if it was swapped)
-            if old_invoice_id and old_invoice_status_updated:
+            if old_invoice_status_updated:
                 flash(f"Status of invoice {old_invoice_number} updated successfully!", "success")
                 
             return redirect(url_for('payments.view', id=id))
@@ -176,6 +182,14 @@ def edit(id):
     pos = PurchaseOrderService.get_pos_by_client(payment.client_id)
     invoices = InvoiceService.get_invoices_by_po(payment.po_id)
     payment_types = PaymentTypeService.get_all()
+    # payment_number represents the initial identity for the page title/header
+    if payment.invoice:
+                payment_number = f'invoice {payment.invoice.invoice_number}'
+    elif payment.purchase_order.po_number:
+        payment_number = f'PO {payment.purchase_order.po_number}'
+    else:
+        payment_number = f'order {payment.order.order_number}'
+        
     return render_template('payments/form.html', 
                            mode='edit', 
                            payment=payment, 
@@ -197,29 +211,28 @@ def archive(id):
             return redirect(url_for('payments.index'))
         
         # 2. Sync invoice status (if this was a standard invoice payment)
+        invoice_id = payment.invoice_id if payment else None
         invoice_status_updated = False
-        if payment.invoice_id:
-            invoice_status_updated = sync_invoice_status(payment.invoice_id)
+        if invoice_id:
+            invoice_status_updated = sync_invoice_status(invoice_id)
 
         # 3. Success Flashes
         # Document name logic for the message
         if payment.invoice:
-            payment_number = f'invoice {payment.invoice.invoice_number}'
-        elif payment.purchase_order:
-            payment_number = f'PO {payment.purchase_order.po_number or payment.order.order_number}'
+                payment_number = f'invoice {payment.invoice.invoice_number}'
+        elif payment.purchase_order.po_number:
+            payment_number = f'PO {payment.purchase_order.po_number}'
         else:
             payment_number = f'order {payment.order.order_number}'
 
         flash(f'Payment for {payment_number} moved to archives.', 'warning')
         
-        if payment.invoice_id and invoice_status_updated:
-            flash(f"Status of invoice {payment.invoice.invoice_number} updated successfully!", "success")
+        if payment.invoice and invoice_status_updated:
+            flash(f"Status of {payment_number} updated successfully!", "success")
 
     except ValueError as e:
-        # 4. Handle "Idiotic Operation" protection
         db.session.rollback()
         flash(str(e), "error")
-        # Redirect back to the view page so they can see the conflict
         return redirect(url_for('payments.view', id=id))
 
     return redirect(url_for('payments.index'))
