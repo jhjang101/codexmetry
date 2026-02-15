@@ -143,6 +143,7 @@ class OrderRegistry(db.Model):
     purchase_order: Mapped["PurchaseOrder | None"] = relationship(back_populates="order")
     invoices: Mapped[list["Invoice"]] = relationship(back_populates="order")
     payments: Mapped[list["Payment"]] = relationship(back_populates="order")
+    expenses: Mapped[list["Expense"]] = relationship(back_populates="order")
 
 class Quote(db.Model):
     __tablename__ = 'quotes'
@@ -216,6 +217,7 @@ class Invoice(db.Model):
     order: Mapped["OrderRegistry"] = relationship(back_populates="invoices")
     purchase_order: Mapped["PurchaseOrder"] = relationship(back_populates="invoices")
     payments: Mapped[list["Payment"]] = relationship(back_populates="invoice")
+    expenses: Mapped[list["Expense"]] = relationship(back_populates="invoice")
     client: Mapped["Client"] = relationship(back_populates="invoices", foreign_keys=[client_id])
     bill_to: Mapped["Client"] = relationship(back_populates="invoice_billings", foreign_keys=[bill_to_id])
     items: Mapped[list["InvoiceItem"]] = relationship(back_populates="invoice", cascade="all, delete-orphan")
@@ -258,6 +260,8 @@ class Expense(db.Model):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     expense_number: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
     vendor_id: Mapped[int] = mapped_column(ForeignKey('vendors.id'), nullable=False)
+    order_id: Mapped[int | None] = mapped_column(ForeignKey('orders.id'))
+    invoice_id: Mapped[int | None] = mapped_column(ForeignKey('invoices.id'))
     category_id: Mapped[int | None] = mapped_column(ForeignKey('expense_categories.id'))
     description: Mapped[str] = mapped_column(String(255), nullable=False) # The short summary
     total_amount: Mapped[int] = mapped_column(Integer, default=0)
@@ -267,6 +271,8 @@ class Expense(db.Model):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
     vendor: Mapped["Vendor"] = relationship(back_populates="expenses")
+    order: Mapped["OrderRegistry"] = relationship(back_populates="expenses")
+    invoice: Mapped["Invoice | None"] = relationship(back_populates="expenses")
     category: Mapped["ExpenseCategory"] = relationship()
     items: Mapped[list["ExpenseItem"]] = relationship(back_populates="expense", cascade="all, delete-orphan")
     attachments: Mapped[list["Attachment"]] = relationship(
