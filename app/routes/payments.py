@@ -99,11 +99,11 @@ def view(id):
 
     # Identifiers for title display
     if payment.invoice:
-                payment_number = f'invoice {payment.invoice.invoice_number}'
+        payment_number = f'{payment.invoice.invoice_number}'
     elif payment.purchase_order.po_number:
-        payment_number = f'PO {payment.purchase_order.po_number}'
+        payment_number = f'{payment.purchase_order.po_number}'
     else:
-        payment_number = f'order {payment.order.order_number}'
+        payment_number = f'{payment.order.order_number}'
 
     return render_template('payments/form.html', 
                            mode='view', 
@@ -184,11 +184,11 @@ def edit(id):
     payment_types = PaymentTypeService.get_all()
     # payment_number represents the initial identity for the page title/header
     if payment.invoice:
-                payment_number = f'invoice {payment.invoice.invoice_number}'
+        payment_number = f'{payment.invoice.invoice_number}'
     elif payment.purchase_order.po_number:
-        payment_number = f'PO {payment.purchase_order.po_number}'
+        payment_number = f'{payment.purchase_order.po_number}'
     else:
-        payment_number = f'order {payment.order.order_number}'
+        payment_number = f'{payment.order.order_number}'
         
     return render_template('payments/form.html', 
                            mode='edit', 
