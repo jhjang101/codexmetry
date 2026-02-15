@@ -262,6 +262,7 @@ class Expense(db.Model):
     description: Mapped[str] = mapped_column(String(255), nullable=False) # The short summary
     total_amount: Mapped[int] = mapped_column(Integer, default=0)
     expense_date: Mapped[date] = mapped_column(Date, server_default=func.current_date())
+    status: Mapped[str] = mapped_column(String(20), default='open') # New: draft, open, completed
     note: Mapped[str | None] = mapped_column(Text)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
@@ -303,6 +304,7 @@ class QuoteItem(db.Model):
     product_id: Mapped[int] = mapped_column(ForeignKey('products.id'), nullable=False)
     quantity: Mapped[int] = mapped_column(Integer, default=1)
     quoted_unit_price: Mapped[int] = mapped_column(Integer, default=0)
+    description: Mapped[str | None] = mapped_column(Text)
 
     quote: Mapped["Quote"] = relationship(back_populates="items")
     product: Mapped["Product"] = relationship()
@@ -314,6 +316,7 @@ class PoItem(db.Model):
     product_id: Mapped[int] = mapped_column(ForeignKey('products.id'), nullable=False)
     quantity: Mapped[int] = mapped_column(Integer, default=1)
     agreed_unit_price: Mapped[int] = mapped_column(Integer, default=0)
+    description: Mapped[str | None] = mapped_column(Text)
 
     po: Mapped["PurchaseOrder"] = relationship(back_populates="items")
     product: Mapped["Product"] = relationship()
@@ -325,6 +328,7 @@ class InvoiceItem(db.Model):
     product_id: Mapped[int] = mapped_column(ForeignKey('products.id'), nullable=False)
     quantity: Mapped[int] = mapped_column(Integer, default=1)
     billed_unit_price: Mapped[int] = mapped_column(Integer, default=0)
+    description: Mapped[str | None] = mapped_column(Text)
 
     invoice: Mapped["Invoice"] = relationship(back_populates="items")
     product: Mapped["Product"] = relationship()
@@ -334,9 +338,11 @@ class ExpenseItem(db.Model):
     __tablename__ = 'expense_items'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     expense_id: Mapped[int] = mapped_column(ForeignKey('expenses.id'), nullable=False)
+    catalog_number: Mapped[str | None] = mapped_column(String(100))
     item: Mapped[str] = mapped_column(String(255), nullable=False)
     quantity: Mapped[int] = mapped_column(Integer, default=1)
     unit_price: Mapped[int] = mapped_column(Integer, default=0)
+    description: Mapped[str | None] = mapped_column(Text)
 
     expense: Mapped["Expense"] = relationship(back_populates="items")
 
