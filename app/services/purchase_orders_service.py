@@ -245,7 +245,8 @@ class PurchaseOrderService(BaseService):
                     'product_id': po_item.product_id,
                     'product': po_item.product,
                     'quantity': qty_left,
-                    'agreed_unit_price': po_item.agreed_unit_price
+                    'agreed_unit_price': po_item.agreed_unit_price,
+                    'description': po_item.description
                 })
         
         # 7. Add Applied Deposit row for Invoice automation if remaining credit exists
@@ -258,7 +259,8 @@ class PurchaseOrderService(BaseService):
                     'product_id': system_product.id,
                     'product': system_product,
                     'quantity': 1,
-                    'agreed_unit_price': -(po.remaining_credit)
+                    'agreed_unit_price': -(po.remaining_credit),
+                    'description': 'Applied Deposit from current remaining credit'
                 })
 
         po.remaining_items = remaining_items
