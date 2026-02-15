@@ -5,8 +5,14 @@
     
     <td class="py-2 pr-2">
         {% if mode == 'view' %}
-            <p class="block bg-gray-100 border rounded-lg p-2 text-sm">{{ item.product.name }}</p>
+            <div class="bg-gray-100 border rounded-lg p-2">
+                <p class="text-sm">{{ item.product.name }}</p>
+                {% if item and item.description %}
+                    <p class="text-xs mt-1 whitespace-pre-wrap border-t border-gray-200 pt-1">{{ item.description }}</p>
+                {% endif %}
+        </div>
         {% else %}
+            <!-- 1. Nested Product Dropdown -->
             <div class="relative">
                 <select name="product_ids[]" 
                         class="block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none appearance-none bg-transparent cursor-pointer pr-10"
@@ -24,6 +30,12 @@
                     <i class="fa-solid fa-chevron-down text-[10px]"></i>
                 </div>
             </div>
+
+            <!-- 2. Nested Description -->
+            <textarea name="descriptions[]" 
+                    rows="1"
+                    class="mt-1 block w-full border rounded-lg p-1 text-xs focus:ring-1 focus:ring-blue-300 outline-none overflow-hidden transition-all"
+                    placeholder="Specific item details...">{{ item.description if item else '' }}</textarea>
         {% endif %}
     </td>
     
