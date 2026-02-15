@@ -1,5 +1,5 @@
 from .base_service import BaseService
-from ..models import Expense, ExpenseItem, Vendor, ExpenseCategory
+from ..models import Expense, Invoice, OrderRegistry, ExpenseItem, Vendor, ExpenseCategory
 from ..extensions import db
 from ..utils.docs import generate_doc_number
 from ..utils.money import parse_to_cents
@@ -17,9 +17,13 @@ class ExpenseService(BaseService):
             select(cls.model)
             .join(Vendor)
             .outerjoin(ExpenseCategory)
+            .outerjoin(Invoice)
+            .outerjoin(OrderRegistry)
             .options(
                 contains_eager(cls.model.vendor),
-                contains_eager(cls.model.category)
+                contains_eager(cls.model.category),
+                contains_eager(cls.model.invoice),
+                contains_eager(cls.model.order)
             )
             .where(cls.model.is_active == True)
         )
@@ -31,6 +35,8 @@ class ExpenseService(BaseService):
                     cls.model.expense_number.icontains(search_term),
                     cls.model.description.icontains(search_term),
                     Vendor.company_name.icontains(search_term),
+                    Invoice.invoice_number.icontains(search_term),
+                    OrderRegistry.order_number.icontains(search_term),
                     ExpenseCategory.type.icontains(search_term)
                 )
             )
@@ -106,6 +112,13 @@ class ExpenseService(BaseService):
         
         if not description:
             raise ValueError("Description is required or must be provided in the first item line.")
+        
+        # 2. Expense Linkage (Invoice -> Order inheritance)
+        invoice_id = data.get('invoice_id')
+        order_id = None
+        if invoice_id:
+            invoice = db.session.get(Invoice, int(invoice_id))
+            order_id = invoice.order_id if invoice else None
 
         # 2. Transform Date
         raw_date = data.get('expense_date')
@@ -115,8 +128,11 @@ class ExpenseService(BaseService):
         clean_data ={
             'vendor_id': int(vendor_id),
             'category_id': int(category_id) if category_id else None,
+            'invoice_id': int(invoice_id) if invoice_id else None,
+            'order_id': order_id,
             'description': description,
             'expense_date': expense_date,
+            'status': data.get('status', 'open'),
             'note': data.get('note', '').strip()
         }
 
@@ -137,6 +153,8 @@ class ExpenseService(BaseService):
         for row in items_data:
             item_text = row.get('item', '').strip()
             if item_text:
+                description = row.get('description', '').strip()
+                catalog_number = row.get('catalog_number', '').strip()
                 qty = int(row.get('quantity', 1))
                 price = parse_to_cents(str(row.get('unit_price', 0)))
                 line_total = qty * price
@@ -144,9 +162,11 @@ class ExpenseService(BaseService):
 
                 item = ExpenseItem()
                 item.expense_id = expense.id
+                item.catalog_number = catalog_number
                 item.item = item_text
                 item.quantity = qty
                 item.unit_price = price
+                item.description = description
                 db.session.add(item)
             else:
                 raise ValueError("Item description is required for all rows.")

@@ -1,17 +1,42 @@
 {% set row_id = row_id if row_id else (item.id if item else timestamp) %}
-<tr class="item-row group">
+<tr class="item-row group align-top">
     <input type="hidden" name="row_ids[]" value="{{ row_id }}">
 
     <td class="py-2 pr-2">
         {% if mode == 'view' %}
-            <p class="block bg-gray-100 border rounded-lg p-2 text-sm">{{ item.item }}</p>
+            <p class="block bg-gray-100 border rounded-lg p-2 text-sm">{{ item.catalog_number }}</p>
         {% else %}
+            <input type="text" 
+                   name="catalog_numbers[]" 
+                   value="{{ item.catalog_number if item else '' }}" 
+                   required
+                   class="block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none"
+                   placeholder="Cat. Number....">
+        {% endif %}
+    </td>
+
+    <td class="py-2 pr-2">
+        {% if mode == 'view' %}
+            <div class="bg-gray-100 border rounded-lg p-2">
+                <p class="text-sm">{{ item.item }}</p>
+                {% if item and item.description %}
+                    <p class="text-xs mt-1 whitespace-pre-wrap border-t border-gray-200 pt-1">{{ item.description }}</p>
+                {% endif %}
+            </div>
+        {% else %}
+            <!-- 1. Nested Item field -->
             <input type="text" 
                    name="items[]" 
                    value="{{ item.item if item else '' }}" 
                    required
                    class="block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none"
                    placeholder="Item name...">
+
+            <!-- 2. Nested Description -->
+            <textarea name="descriptions[]" 
+                    rows="1"
+                    class="mt-1 block w-full border rounded-lg p-1 text-xs focus:ring-1 focus:ring-blue-300 outline-none overflow-hidden transition-all"
+                    placeholder="Specific item details...">{{ item.description if item else '' }}</textarea>
         {% endif %}
     </td>
 

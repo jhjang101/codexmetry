@@ -36,9 +36,11 @@ def add():
             # 1. Extract Header Data
             header_data = {
                 'vendor_id': request.form.get('vendor_id'),
+                'invoice_id': request.form.get('invoice_id'),
                 'category_id': request.form.get('category_id'),
                 'description': request.form.get('description'), # Might be empty, Brain handles fallback
                 'expense_date': request.form.get('expense_date'),
+                'status': request.form.get('status'),
                 'note': request.form.get('note')
             }
             
@@ -103,9 +105,11 @@ def edit(id):
             # 1. Prepare Header Data
             header_data = {
                 'vendor_id': request.form.get('vendor_id'),
+                'invoice_id': request.form.get('invoice_id'),
                 'category_id': request.form.get('category_id'),
                 'description': request.form.get('description'),
                 'expense_date': request.form.get('expense_date'),
+                'status': request.form.get('status'),
                 'note': request.form.get('note')
             }
 
@@ -191,13 +195,17 @@ def _parse_items_form(form_data):
     items_list = form_data.getlist('items[]') # The text description
     quantities = form_data.getlist('quantities[]')
     unit_prices = form_data.getlist('unit_prices[]')
+    catalog_numbers = form_data.getlist('catalog_numbers[]')
+    descriptions = form_data.getlist('descriptions[]')
     
     parsed = []
-    for item_text, qty, price in zip(items_list, quantities, unit_prices):
+    for item_text, qty, price, catalog_number, description in zip(items_list, quantities, unit_prices, catalog_numbers, descriptions):
         if item_text:
             parsed.append({
                 'item': item_text.strip(),
                 'quantity': int(qty) if qty else 1,
-                'unit_price': price # Service handles parse_to_cents
+                'unit_price': price, # Service handles parse_to_cents
+                'catalog_number': catalog_number.strip() if catalog_number else '',
+                'description': description.strip() if description else ''
             })
     return parsed
