@@ -271,7 +271,8 @@ def load_quote_items():
             'product_id': q_item.product_id,
             'product': q_item.product,
             'quantity': q_item.quantity,
-            'agreed_unit_price': q_item.quoted_unit_price
+            'agreed_unit_price': q_item.quoted_unit_price,
+            'description': q_item.description
         }
         
         html_rows += render_template('purchase_orders/partials/item_row.html',
@@ -292,13 +293,15 @@ def _parse_items_form(form_data):
     product_ids = form_data.getlist('product_ids[]')
     quantities = form_data.getlist('quantities[]')
     unit_prices = form_data.getlist('unit_prices[]')
+    descriptions = form_data.getlist('descriptions[]')
     
     items = []
-    for pid, q, p in zip(product_ids, quantities, unit_prices):
-        if pid:
+    for product_id, qty, price, description in zip(product_ids, quantities, unit_prices, descriptions):
+        if product_id:
             items.append({
-                'product_id': int(pid),
-                'quantity': int(q) if q else 1,
-                'unit_price': p # Service handles parse_to_cents
+                'product_id': product_id,
+                'quantity': int(qty) if qty else 1,
+                'unit_price': price, # Service handles parse_to_cents
+                'description': description.strip() if description else ''
             })
     return items
