@@ -11,8 +11,10 @@
     <select name="quote_id" 
             {{ 'disabled' if is_disabled else '' }}
             class="mt-1 block w-full border rounded-lg p-2 text-sm 
-            focus:ring-1 focus:ring-blue-300 outline-none appearance-none pr-10 
-            {{ 'bg-gray-100 text-gray-400 cursor-not-allowed' if is_disabled else 'bg-transparent cursor-pointer' }}"
+            focus:ring-1 focus:ring-blue-300 outline-none appearance-none pr-10
+            {% if is_disabled %} bg-gray-100 text-gray-400 cursor-not-allowed
+            {% else %} bg-transparent cursor-pointer
+            {% endif %}"
             hx-get="{{ url_for('purchase_orders.load_quote_items') }}"
             hx-target="#item-list"
             hx-trigger="change"
