@@ -78,7 +78,7 @@
                         <div class="relative">
                             <select name="client_id" 
                                     class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none appearance-none bg-transparent cursor-pointer pr-10" 
-                                    hx-get="{{ url_for('invoices.update_client_cascades') }}"
+                                    hx-get="{{ url_for('invoices.update_client_cascades', invoice_id=invoice.id if invoice else '') }}"
                                     hx-target="#none" {# We use OOB swaps, so the main target is ignored #}
                                     hx-trigger="change"
                                     required>

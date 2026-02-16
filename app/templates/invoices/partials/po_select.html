@@ -1,21 +1,42 @@
 <div class="relative" id="po-select-container">
-    {% set is_disabled = not pos and mode != 'view' %}
+    {% if selected_id is defined %}
+        {% set client_context = selected_id %}
+    {% else %}
+        {% set client_context = invoice.client_id if invoice else None %}
+    {% endif %}
+
+    {% if selected_id is defined %}
+        {% if invoice and selected_id == invoice.client_id %}
+            {% set selection_target = invoice.po_id %}
+        {% else %}
+            {% set selection_target = None %}
+        {% endif %}
+    {% else %}
+        {% set selection_target = invoice.po_id if invoice else None %}
+    {% endif %}
+
+    {% set show_saved_indicators = (invoice and client_context == invoice.client_id and mode != 'view') %}
+    {% set is_disabled = not client_context and mode != 'view' %}
+
     <select name="po_id" 
             {{ 'disabled' if is_disabled else '' }}
-            class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none appearance-none pr-10 {{ 'bg-gray-100 text-gray-400 cursor-not-allowed' if is_disabled else 'bg-transparent cursor-pointer' }}"
-            hx-get="{{ url_for('invoices.load_po_details') }}"
+            class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none appearance-none pr-10
+            {{ 'bg-gray-100 text-gray-400 cursor-not-allowed' if is_disabled else 'bg-transparent cursor-pointer' }}"
+            hx-get="{{ url_for('invoices.load_po_details', invoice_id=invoice.id if invoice else '') }}"
             hx-target="#item-list"
             hx-trigger="change"
             hx-confirm="This will replace all current line items with items from the selected PO. Proceed?"
             required>
-        <option value="">{{ 'Select Client first...' if is_disabled else 'Select PO' }}</option>
+        <option value="">
+            {% if is_disabled %}Select Client first...
+            {% elif not pos %}No Open POs found
+            {% else %}Select PO...{% endif %}
+        </option>
         {% for po in pos %}
-            <option value="{{ po.id }}"
-            {# Logic: Select if this is the po currently saved on the Invoice #}
-                {% if invoice and invoice.po_id == po.id %}
-                    selected
-                {% endif %}>
-            {{ po.po_number }} ({{ po.total_amount | usd }})
+            {% set is_saved_value = (invoice and invoice.po_id == po.id) %}
+            <option value="{{ po.id }}" {{ 'selected' if selection_target == po.id else '' }}>
+                {{ po.po_number }} ({{ po.total_amount | usd }})
+                {{ '*' if (show_saved_indicators and is_saved_value) else '' }}
             </option>
         {% endfor %}
     </select>

@@ -1,35 +1,7 @@
-<!-- 1. The Bill-To Swap -->
-<div id="bill-to-select-container" hx-swap-oob="true" class="relative">
-    <select name="bill_to_id" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none appearance-none bg-transparent cursor-pointer pr-10" required>
-        <option value="">Select Client...</option>
-        {% for client in clients %}
-            <option value="{{ client.id }}" {{ 'selected' if selected_id == client.id else '' }}>
-                {{ client.company_name }}
-            </option>
-        {% endfor %}
-    </select>
-    <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-400">
-        <i class="fa-solid fa-chevron-down text-[10px]"></i>
-    </div>
+<div id="bill-to-select-container" hx-swap-oob="true">
+    {% include 'invoices/partials/bill_to_select.html' %}
 </div>
 
-<!-- 2. The PO Selection Swap -->
-<div id="po-select-container" hx-swap-oob="true" class="relative">
-    <select name="po_id" 
-            class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none appearance-none bg-transparent cursor-pointer pr-10"
-            hx-get="{{ url_for('invoices.load_po_details') }}"
-            hx-target="#item-list"
-            hx-trigger="change"
-            hx-confirm="This will replace all current line items with items from the selected PO. Proceed?"
-            required>
-        <option value="">Select PO</option>
-        {% for po in pos %}
-            <option value="{{ po.id }}">
-                {{ po.po_number }} ({{ po.total_amount | usd }})
-            </option>
-        {% endfor %}
-    </select>
-    <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-400">
-        <i class="fa-solid fa-chevron-down text-[10px]"></i>
-    </div>
+<div id="po-select-container" hx-swap-oob="true">
+    {% include 'invoices/partials/po_select.html' %}
 </div>

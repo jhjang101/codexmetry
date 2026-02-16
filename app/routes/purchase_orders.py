@@ -243,7 +243,7 @@ def update_client_cascades():
 
     # 2. Get data for both dropdowns
     clients = ClientService.get_all()
-    # Use the service method to populate quotes
+    # Use the service method to populate quotes ncluding current quote
     quote_id = po.quote_id if po else None
     quotes = QuoteService.get_quotes_by_client(client_id, include_id=quote_id) if client_id else []
 

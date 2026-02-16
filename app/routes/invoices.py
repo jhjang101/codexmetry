@@ -172,7 +172,8 @@ def edit(id):
     clients = ClientService.get_all()
     products = ProductService.get_all()
     # Fetch eligible POs for this specific client so the dropdown is populated on load
-    pos = PurchaseOrderService.get_pos_by_client(invoice.client_id)
+    pos = PurchaseOrderService.get_pos_by_client(invoice.client_id, 
+                                                 include_id=invoice.po_id)
     return render_template('invoices/form.html', 
                            mode='edit', 
                            invoice=invoice, 
@@ -297,50 +298,65 @@ def calculate():
 def update_client_cascades():
     """Triggered by Client change: updates Bill-To and PO dropdowns."""
     client_id = request.args.get('client_id', type=int)
+    invoice_id = request.args.get('invoice_id', type=int)
+
+    # Fetch context for Smart Selection
+    invoice = InvoiceService.get_invoice_by_id(invoice_id) if invoice_id else None
+
     # Prefill Bill_to with this client
     clients = ClientService.get_all()
-    # Populate eligible POs for this client
-    pos = PurchaseOrderService.get_pos_by_client(client_id) if client_id else []
+    # Populate eligible POs for this client including current po
+    po_id = invoice.po_id if invoice else None
+    pos = PurchaseOrderService.get_pos_by_client(client_id, include_id=po_id) if client_id else []
     
     return render_template('invoices/partials/client_cascades.html', 
                            clients=clients, 
                            pos=pos, 
-                           selected_id=client_id)
+                           selected_id=client_id,
+                           invoice=invoice)
 
 @bp.route('/load-po-details')
 def load_po_details():
     """OOB Teleportation: Prefills Bill-To, Pool Value, and Remaining Items when PO changes."""
+    # 1. Extract IDs from the HTMX request
     po_id = request.args.get('po_id', type=int)
+    invoice_id = request.args.get('invoice_id', type=int)
+
+    # 2. Fetch context for the Brain and the Template
     po = PurchaseOrderService.get_po_by_id(po_id) if po_id else None
+    invoice = InvoiceService.get_invoice_by_id(invoice_id) if invoice_id else None
+    
     if not po: 
         return ""
 
-    # 1. Get remaining items from PO
+    # 3. Get remaining items from PO
     remaining_items = po.remaining_items # type: ignore
 
-    # Changed agreed_unit_price to billed_unit_price in the remaining_items key
     for idx, item in enumerate(remaining_items):
+        # Changed agreed_unit_price to billed_unit_price in the remaining_items key
         item['billed_unit_price'] = item.pop('agreed_unit_price')
         item['row_id'] = f"{int(time.time() * 1000)}{idx}"
 
-
-    # 2. Populate clients and products list for bill_to and item_row
+    # 4. Populate clients and products list for bill_to and item_row
     clients = ClientService.get_all()
     products = ProductService.get_all()
 
     print('po.total_prepayment:', po.total_prepayment)
     print('po.remaining_credit:', po.remaining_credit)
 
-    # 3. Return the single unified OOB template
+    # 5. Return the single unified OOB template
     resp = make_response(render_template(
         'invoices/partials/po_selection_oob.html',
         po=po,
+        invoice=invoice,           # Context for Smart Return logic
+        selected_po_id=po_id,      # Context to unlock the Bill-To field
+        mode='edit' if invoice else 'add',
         items=remaining_items,
         clients=clients,
         products=products
     ))
 
-    # 4. Trigger math recalculation
+    # 6. Trigger math recalculation
     resp.headers['HX-Trigger-After-Swap'] = 'recalculate' # Trigger grand total
     return resp
 

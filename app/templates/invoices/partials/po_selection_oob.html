@@ -1,29 +1,16 @@
-<!-- 1. Teleport the Order Registry label -->
 <span id="order-ref-label" hx-swap-oob="true" class="text-xs text-gray-500 mb-2 border-b pb-2">
     Order Ref: {{ po.order.order_number }}
 </span>
 
-<!-- 2. Teleport the Bill-To Selection -->
 <div id="bill-to-select-container" hx-swap-oob="true">
-    {% with selected_id = po.bill_to_id, oob = True %}
-        {% include 'invoices/partials/bill_to_select.html' %}
-    {% endwith %}
+    {% include 'invoices/partials/bill_to_select.html' %}
 </div>
 
-<!-- 3. Teleport the new Pool Value to the hidden input -->
-<input type="hidden" 
-       id="po_total_prepayment" 
-       name="po_total_prepayment" 
-       value="{{ po.total_prepayment if po else 0 }}" 
-       hx-swap-oob="true">
+<input type="hidden" id="po_total_prepayment" name="po_total_prepayment" 
+       value="{{ po.total_prepayment if po else 0 }}" hx-swap-oob="true">
 
-<!-- 3. Teleport the Items List -->
- <table class="hidden">
+<table class="hidden">
     <tbody id="item-list" hx-swap-oob="true">
-        {% for item in items %}
-            {# Generate a unique row_id inside the loop #}
-            {% set row_id = item.row_id %}
-            {% include 'invoices/partials/item_row.html' %}
-        {% endfor %}
+        {% for item in items %}{% set row_id = item.row_id %}{% include 'invoices/partials/item_row.html' %}{% endfor %}
     </tbody>
 </table>
