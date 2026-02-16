@@ -1,11 +1,25 @@
 <div class="relative" id="bill-to-select-container">
-    {# 1. Determine if we have a parent context 'selected_id' (user's live action) or 'po.client_id' (saved state) #}
+    {# 1. CONTEXT: Is there a client selected at all? #}
     {% if selected_id is defined %}
         {% set client_context = selected_id %}
     {% else %}
         {% set client_context = po.client_id if po else None %}
     {% endif %}
 
+    {# 2. SMART SELECTION: Restore original Bill-To if returning to original Client #}
+    {% if selected_id is defined %}
+        {% if po and selected_id == po.client_id %}
+            {% set selection_target = po.bill_to_id %}
+        {% else %}
+            {% set selection_target = selected_id %}
+        {% endif %}
+    {% else %}
+        {% set selection_target = po.bill_to_id if po else None %}
+    {% endif %}
+
+    {# 3. INDICATOR LOGIC: Only show asterisk if we are looking at the original client #}
+    {% set show_saved_indicators = (po and client_context == po.client_id and mode != 'view') %}
+    
     {% set is_disabled = not client_context and mode != 'view' %}
 
     <select name="bill_to_id" 
@@ -18,15 +32,18 @@
             required>
 
         <option value="">Select Client first...</option>
+        
         {% for client in clients %}
             <option value="{{ client.id }}" 
-                {{ 'selected' if (client_context == client.id) else '' }}>
+                {{ 'selected' if selection_target == client.id else '' }}>
                 {{ client.company_name }}
+                {# Only show the asterisk if the context matches AND this is the saved ID #}
+                {{ '*' if (show_saved_indicators and client.id == po.bill_to_id) else '' }}
             </option>
         {% endfor %}
     </select>
+    
     <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-400">
         <i class="fa-solid fa-chevron-down text-[10px]"></i>
     </div>
 </div>
-

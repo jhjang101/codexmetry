@@ -33,11 +33,13 @@
 
         {# 3. List Quotes if they exist #}
         {% for quote in quotes %}
+            {% set is_current = (po and po.quote_id == quote.id) %}
             <option value="{{ quote.id }}"
                 {# Logic: Select if this is the quote currently saved on the PO #}
-                {{ 'selected' if (po and po.quote_id == quote.id) else '' }}>
+                {{ 'selected' if is_current else '' }}>
                 {{ quote.quote_number }} ({{ quote.total_amount | usd }})
-        </option>
+                {{ '*' if is_current and mode != 'view' else '' }}
+            </option>
         {% endfor %}
     </select>
 
