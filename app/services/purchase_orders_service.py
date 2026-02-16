@@ -300,15 +300,33 @@ class PurchaseOrderService(BaseService):
         return po, has_payments
     
     @classmethod
-    def get_pos_by_client(cls, client_id: int):
+    def get_pos_by_client(cls, 
+                          client_id: int, 
+                          include_id: int | None = None, 
+                          statuses: list[str] | None = None):
         """
-        Fetcher: Returns 'open' pos for a client.
-        Used for the Invoice and Payment creation dropdown.
+        Fetcher: Returns 'open' pos for a client based on statuses.
+        If include_id is provided, that specific PO is included regardless of status.
+        Used for the Invoice, Payment, and Expense creation dropdown.
         """
+        # 1. Handle Default Statuses (Usually we only want to invoice/pay 'open' POs)
+        if statuses is None:
+            statuses = ['open']
+
+        # 2. Define the "Standard" criteria
+        standard_criteria = (
+            cls.model.status.in_(statuses),
+        )
+
+        # 3. Build statement
         stmt = select(cls.model).where(
             cls.model.client_id == client_id,
             cls.model.is_active == True,
-            cls.model.status.in_(['open', 'completed'])
+            # Use OR to allow the currently linked PO to bypass status filters
+            or_(
+                *standard_criteria,
+                cls.model.id == include_id
+            )
         ).order_by(cls.model.po_date.desc())
 
         return db.session.execute(stmt).scalars().all()

@@ -196,11 +196,35 @@ class InvoiceService(BaseService):
         return invoice, has_payments
     
     @classmethod
-    def get_invoices_by_po(cls, po_id: int):
-        """Cascades: Returns active invoices for a specific PO."""
+    def get_invoices_by_po(cls, 
+                           po_id: int, 
+                           include_id: int | None = None, 
+                           statuses: list[str] | None = None):
+        """
+        Fetcher: Returns 'open' invoices for a specific PO based on statuses.
+        If include_id is provided, that specific invoice is included regardless of status.
+        Used for the Payment, and  Expense creation dropdown.
+        """
+        # 1. Handle Default Statuses
+        if statuses is None:
+            statuses = ['open']
+
+        # 2. Define the "Standard" criteria
+        standard_criteria = (
+            cls.model.status.in_(statuses),
+        )
+
+        # 3. Build statement
         stmt = select(cls.model).where(
-            cls.model.po_id == po_id, cls.model.is_active == True
+            cls.model.po_id == po_id,
+            cls.model.is_active == True,
+            # Use OR to allow the currently linked Invoice to bypass status filters
+            or_(
+                *standard_criteria,
+                cls.model.id == include_id
+            )
         ).order_by(cls.model.invoice_date.desc())
+
         return db.session.execute(stmt).scalars().all()
     
     # --- INTERNAL HELPERS ---
