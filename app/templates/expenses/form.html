@@ -180,21 +180,28 @@
         <!-- Items Sub-form -->
         <section class="bg-white p-6 rounded-lg shadow mb-2">
             <div class="flex justify-between items-center mb-2 border-b pb-2">
-                <h2 class="text-xl font-semibold">Breakdown</h2>
+                <h2 class="text-xl font-semibold">Items</h2>
                 {% if mode != 'view' %}
-                    <button type="button" hx-get="{{ url_for('expenses.add_row') }}" hx-target="#item-list" hx-swap="beforeend"
-                            class="text-blue-600 hover:text-blue-800 text-sm font-bold">+ Add Row</button>
+                    <button type="button" 
+                            hx-get="{{ url_for('expenses.add_row') }}" 
+                            hx-target="#item-list" 
+                            hx-swap="beforeend"
+                            class="text-blue-600 hover:text-blue-800 text-sm font-bold">
+                        + Add Row
+                    </button>
                 {% endif %}
             </div>
             <table class="w-full text-left">
                 <thead>
                     <tr class="text-sm text-gray-500">
-                        <th class="pb-2 w-28 font-medium">Cat. Number</th>
-                        <th class="pb-2 font-medium">Item Description</th>
-                        <th class="pb-2 w-20 text-center font-medium">Qty</th>
-                        <th class="pb-2 w-24 text-right font-medium">Unit Price</th>
-                        <th class="pb-2 w-24 text-right font-medium">Total</th>
-                        {% if mode != 'view' %}<th class="pb-2 w-10"></th>{% endif %}
+                        <th class="w-28 pl-2 font-medium">Cat. Number</th>
+                        <th class="pl-2 font-medium">Item Description</th>
+                        <th class="w-20 text-right pr-8 font-medium">Qty</th>
+                        <th class="w-24 text-right pr-4 font-medium">Unit Price</th>
+                        <th class="w-24 text-right pr-4 font-medium">Total</th>
+                        {% if mode != 'view' %}
+                            <th class="pb-2 w-10"></th>
+                        {% endif %}
                     </tr>
                 </thead>
                 <tbody id="item-list">

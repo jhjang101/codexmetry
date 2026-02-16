@@ -4,7 +4,7 @@
 
     <td class="py-2 pr-2">
         {% if mode == 'view' %}
-            <p class="block bg-gray-100 border rounded-lg p-2 text-sm">{{ item.catalog_number }}</p>
+            <p class="block bg-gray-100 border rounded-lg p-2 text-sm">{{ item.catalog_number or '-' }}</p>
         {% else %}
             <input type="text" 
                    name="catalog_numbers[]" 

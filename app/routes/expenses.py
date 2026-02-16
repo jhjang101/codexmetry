@@ -39,6 +39,7 @@ def add():
             # 1. Extract Header Data
             header_data = {
                 'vendor_id': request.form.get('vendor_id'),
+                'po_id': request.form.get('po_id'),
                 'invoice_id': request.form.get('invoice_id'),
                 'category_id': request.form.get('category_id'),
                 'description': request.form.get('description'), # Might be empty, Brain handles fallback
@@ -110,6 +111,7 @@ def edit(id):
             # 1. Prepare Header Data
             header_data = {
                 'vendor_id': request.form.get('vendor_id'),
+                'po_id': request.form.get('po_id'),
                 'invoice_id': request.form.get('invoice_id'),
                 'category_id': request.form.get('category_id'),
                 'description': request.form.get('description'),
@@ -142,11 +144,25 @@ def edit(id):
     # GET: Populate dropdowns for the edit form
     vendors = VendorService.get_all()
     categories = ExpenseCategoryService.get_all()
+    clients = ClientService.get_all()
+    # INITIALIZE to avoid NameError
+    pos = []
+    invoices = []
+    # If it's linked to an invoice, we need the parent client's POs and that PO's invoices
+    if expense.invoice:
+        pos = PurchaseOrderService.get_pos_by_client(expense.invoice.client_id)
+        invoices = InvoiceService.get_invoices_by_po(expense.po_id)
+    # If it's only linked to a PO
+    elif expense.purchase_order:
+        pos = PurchaseOrderService.get_pos_by_client(expense.purchase_order.client_id)
     return render_template('expenses/form.html', 
                            mode='edit', 
                            expense=expense, 
                            vendors=vendors, 
-                           categories=categories)
+                           categories=categories,
+                           clients=clients,
+                           pos=pos,
+                           invoices=invoices)
 
 @bp.route('/archive/<int:id>', methods=['POST'])
 def archive(id):

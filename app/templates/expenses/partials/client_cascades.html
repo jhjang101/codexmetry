@@ -1,27 +1,11 @@
 <!-- 1. Update PO Dropdown (OOB) -->
-<div id="po-select-container" hx-swap-oob="true" class="relative">
-    <select name="po_id" 
-            class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none appearance-none bg-transparent cursor-pointer pr-10"
-            hx-get="{{ url_for('expenses.update_po_cascades') }}"
-            hx-target="#none"
-            hx-trigger="change"
-            required>
-        <option value="">Select PO...</option>
-        {% for po in pos %}
-            <option value="{{ po.id }}">{{ po.order.order_number }} ({{ po.po_number or 'No Ref' }})</option>
-        {% endfor %}
-    </select>
-    <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-400">
-        <i class="fa-solid fa-chevron-down text-[10px]"></i>
-    </div>
+<div id="po-select-container" hx-swap-oob="true">
+    {% include 'expenses/partials/po_select.html' %}
 </div>
 
-<!-- 2. Reset Invoice Dropdown (OOB - Clear because client changed) -->
-<div id="invoice-select-container" hx-swap-oob="true" class="relative">
-    <select name="invoice_id" class="mt-1 block w-full border rounded-lg p-2 text-sm bg-gray-50 text-gray-400 outline-none appearance-none cursor-not-allowed pr-10" disabled>
-        <option value="">Select PO first...</option>
-    </select>
-    <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-300">
-        <i class="fa-solid fa-chevron-down text-[10px]"></i>
-    </div>
+<!-- 2. Reset and Disable Invoice Dropdown (OOB) -->
+<div id="invoice-select-container" hx-swap-oob="true">
+    {% with invoices = [] %}
+        {% include 'expenses/partials/invoice_select.html' %}
+    {% endwith %}
 </div>

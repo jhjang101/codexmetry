@@ -1,7 +1,7 @@
 {% set row_id = row_id if row_id else (item.id if item else timestamp) %}
 {% set is_system = item.product.is_system if (item and item.product) else False %}
 
-<tr class="item-row group">
+<tr class="item-row group align-top">
     <input type="hidden" name="row_ids[]" value="{{ row_id }}">
     
     <td class="py-2 pr-2">
