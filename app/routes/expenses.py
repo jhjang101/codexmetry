@@ -3,6 +3,9 @@ from ..services.expenses_service import ExpenseService
 from ..services.vendors_service import VendorService
 from ..services.settings_service import ExpenseCategoryService
 from ..services.attachment_service import AttachmentService
+from ..services.purchase_orders_service import PurchaseOrderService
+from ..services.invoices_service import InvoiceService
+from ..services.clients_service import ClientService
 from ..utils.money import parse_to_cents
 from ..extensions import db
 from datetime import datetime
@@ -70,6 +73,7 @@ def add():
     # GET: Prepare form data for the initial render
     vendors = VendorService.get_all()
     categories = ExpenseCategoryService.get_all()
+    clients = ClientService.get_all()
     # Generate a unique timestamp for the first dynamic row
     initial_row_id = str(int(time.time() * 1000))
     
@@ -77,6 +81,7 @@ def add():
                            mode='add', 
                            expense=None, 
                            vendors=vendors, 
+                           clients=clients, 
                            categories=categories,
                            timestamp=initial_row_id)
 
@@ -187,6 +192,30 @@ def calculate():
                            row_id=row_id,
                            line_total=line_total, 
                            grand_total=grand_total)
+
+# --- HTMX CASCADE ROUTES ---
+
+@bp.route('/update-client-cascades')
+def update_client_cascades():
+    """
+    Triggered by Client select. 
+    Updates: PO List, resets Invoice.
+    """
+    client_id = request.args.get('client_id', type=int)
+    # Populate eligible POs for this client
+    pos = PurchaseOrderService.get_pos_by_client(client_id) if client_id else []
+    return render_template('expenses/partials/client_cascades.html', pos=pos)
+
+@bp.route('/update-po-cascades')
+def update_po_cascades():
+    """
+    Triggered by PO slelct.
+    Updates: Invoice List 
+    """
+    po_id = request.args.get('po_id', type=int)
+    # Populate eligible Invoices for this PO
+    invoices = InvoiceService.get_invoices_by_po(po_id) if po_id else []
+    return render_template('expenses/partials/po_cascades.html', invoices=invoices)
 
 # --- INTERNAL HELPERS ---
 

@@ -188,6 +188,7 @@ class PurchaseOrder(db.Model):
     quote: Mapped["Quote | None"] = relationship(back_populates="purchase_order")
     invoices: Mapped[list["Invoice"]] = relationship(back_populates="purchase_order")
     payments: Mapped[list["Payment"]] = relationship(back_populates="purchase_order")
+    expenses: Mapped[list["Expense"]] = relationship(back_populates="purchase_order")
     client: Mapped["Client"] = relationship(back_populates="purchase_orders", foreign_keys=[client_id])
     bill_to: Mapped["Client"] = relationship(back_populates="po_billings", foreign_keys=[bill_to_id])
     items: Mapped[list["PoItem"]] = relationship(back_populates="po", cascade="all, delete-orphan")
@@ -261,6 +262,7 @@ class Expense(db.Model):
     expense_number: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
     vendor_id: Mapped[int] = mapped_column(ForeignKey('vendors.id'), nullable=False)
     order_id: Mapped[int | None] = mapped_column(ForeignKey('orders.id'))
+    po_id: Mapped[int | None] = mapped_column(ForeignKey('purchase_orders.id'))
     invoice_id: Mapped[int | None] = mapped_column(ForeignKey('invoices.id'))
     category_id: Mapped[int | None] = mapped_column(ForeignKey('expense_categories.id'))
     description: Mapped[str] = mapped_column(String(255), nullable=False) # The short summary
@@ -272,6 +274,7 @@ class Expense(db.Model):
 
     vendor: Mapped["Vendor"] = relationship(back_populates="expenses")
     order: Mapped["OrderRegistry"] = relationship(back_populates="expenses")
+    purchase_order: Mapped["PurchaseOrder | None"] = relationship(back_populates="expenses")
     invoice: Mapped["Invoice | None"] = relationship(back_populates="expenses")
     category: Mapped["ExpenseCategory"] = relationship()
     items: Mapped[list["ExpenseItem"]] = relationship(back_populates="expense", cascade="all, delete-orphan")

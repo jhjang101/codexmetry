@@ -92,6 +92,88 @@
                                class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300">
                     {% endif %}
                 </div>
+
+                <!-- Row 2: Project Linking (The Triple Cascade) -->
+                <div class="col-span-2">
+                    <label class="block text-sm font-medium text-gray-500">Link to Client (Optional)</label>
+                    {% if mode == 'view' %}
+                        <p class="mt-1 block bg-gray-100 border rounded-lg p-2 text-sm">{{ expense.invoice.client.company_name if expense.invoice else (expense.order.purchase_order.client.company_name if (expense.order and expense.order.purchase_order) else '-') }}</p>
+                    {% else %}
+                        <div class="relative">
+                            <!-- Triggers HTMX Cascade to find POs -->
+                            <select name="client_id" 
+                                    class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none appearance-none bg-transparent cursor-pointer pr-10"
+                                    hx-get="{{ url_for('expenses.update_client_cascades') }}"
+                                    hx-target="#none"
+                                    hx-trigger="change">
+                                <option value="">Independent Expense</option>
+                                {% for client in clients %}
+                                    <option value="{{ client.id }}" 
+                                        {{ 'selected' if (expense and expense.invoice and expense.invoice.client_id == client.id) else '' }}>
+                                        {{ client.company_name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-400">
+                                <i class="fa-solid fa-chevron-down text-[10px]"></i>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="col-span-2">
+                    <label class="block text-sm font-medium text-gray-500">Project / PO</label>
+                    <div id="po-select-container">
+                        {% if mode == 'view' %}
+                            <p class="mt-1 block bg-gray-100 border rounded-lg p-2 text-sm">{{ expense.order.order_number if expense.order else '-' }}</p>
+                        {% else %}
+                            <!-- Handled by partial: expenses/partials/po_select.html -->
+                            {% include 'expenses/partials/po_select.html' with context %}
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="col-span-1">
+                    <label class="block text-sm font-medium text-gray-500">Invoice Link</label>
+                    <div id="invoice-select-container">
+                        {% if mode == 'view' %}
+                            <p class="mt-1 block bg-gray-100 border rounded-lg p-2 text-sm">{{ expense.invoice.invoice_number if expense.invoice else '-' }}</p>
+                        {% else %}
+                            <!-- Handled by partial: expenses/partials/invoice_select.html -->
+                            {% include 'expenses/partials/invoice_select.html' with context %}
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="col-span-1">
+                    <label class="block text-sm font-medium text-gray-500">Status</label>
+                    {% if mode == 'view' %}
+                        <p class="p-2">
+                            {% if expense.status == 'open' %}
+                                <span class="px-2 py-1 text-xs font-bold uppercase rounded-lg bg-blue-100 text-blue-700">Open</span>
+                            {% elif expense.status == 'completed' %}
+                                <span class="px-2 py-1 text-xs font-bold uppercase rounded-lg bg-green-100 text-green-700">Completed</span>
+                            {% elif expense.status == 'draft' %}
+                                <span class="px-2 py-1 text-xs font-bold uppercase rounded-lg bg-gray-100 text-gray-700">Draft</span>
+                            {% endif %}
+                        </p>
+                    {% else %}
+                        <div class="relative">
+                            <select name="status" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none appearance-none bg-transparent cursor-pointer pr-10">
+                                {% for s in ['draft', 'open', 'completed'] %}
+                                    <option value="{{ s }}" {{ 'selected' if (expense and expense.status == s) or (not expense and s == 'open') else '' }}>{{ s|capitalize }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-400">
+                                <i class="fa-solid fa-chevron-down text-[10px]"></i>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Hidden sink for OOB HTMX calls -->
+                <div id="none" class="hidden"></div>
+
             </div>
         </section>
 
