@@ -1,5 +1,5 @@
 from .base_service import BaseService
-from ..models import Expense, Invoice, OrderRegistry, ExpenseItem, Vendor, ExpenseCategory
+from ..models import Expense, Invoice, OrderRegistry, PurchaseOrder, ExpenseItem, Vendor, ExpenseCategory
 from ..extensions import db
 from ..utils.docs import generate_doc_number
 from ..utils.money import parse_to_cents
@@ -19,11 +19,13 @@ class ExpenseService(BaseService):
             .outerjoin(ExpenseCategory)
             .outerjoin(Invoice)
             .outerjoin(OrderRegistry)
+            .outerjoin(PurchaseOrder)
             .options(
                 contains_eager(cls.model.vendor),
                 contains_eager(cls.model.category),
                 contains_eager(cls.model.invoice),
-                contains_eager(cls.model.order)
+                contains_eager(cls.model.order),
+                contains_eager(cls.model.purchase_order)
             )
             .where(cls.model.is_active == True)
         )
@@ -37,6 +39,7 @@ class ExpenseService(BaseService):
                     Vendor.company_name.icontains(search_term),
                     Invoice.invoice_number.icontains(search_term),
                     OrderRegistry.order_number.icontains(search_term),
+                    PurchaseOrder.po_number.icontains(search_term),
                     ExpenseCategory.type.icontains(search_term)
                 )
             )
@@ -114,11 +117,17 @@ class ExpenseService(BaseService):
             raise ValueError("Description is required or must be provided in the first item line.")
         
         # 2. Expense Linkage (Invoice -> Order inheritance)
-        invoice_id = data.get('invoice_id')
         order_id = None
+        po_id = data.get('po_id')
+        invoice_id = data.get('invoice_id')
+
         if invoice_id:
             invoice = db.session.get(Invoice, int(invoice_id))
             order_id = invoice.order_id if invoice else None
+            po_id = invoice.po_id if invoice else None
+        elif po_id:
+            po = db.session.get(PurchaseOrder, int(po_id))
+            order_id = po.order_id if po else None
 
         # 2. Transform Date
         raw_date = data.get('expense_date')
@@ -128,8 +137,9 @@ class ExpenseService(BaseService):
         clean_data ={
             'vendor_id': int(vendor_id),
             'category_id': int(category_id) if category_id else None,
-            'invoice_id': int(invoice_id) if invoice_id else None,
             'order_id': order_id,
+            'po_id': int(po_id) if po_id else None,
+            'invoice_id': int(invoice_id) if invoice_id else None,
             'description': description,
             'expense_date': expense_date,
             'status': data.get('status', 'open'),
