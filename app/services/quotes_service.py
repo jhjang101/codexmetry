@@ -85,16 +85,27 @@ class QuoteService(BaseService):
         return quote
     
     @classmethod
-    def get_quotes_by_client(cls, client_id: int):
+    def get_quotes_by_client(cls, client_id: int, include_id: int | None = None):
         """
         Fetcher: Returns 'sent' quotes for a client that haven't been converted yet.
+        If include_id is provided, that specific quote is included even if it has an order_id.
         Used for the PO creation dropdown.
         """
+        # 1. Define the "Available" criteria
+        available_criteria = (
+            cls.model.order_id == None,
+            cls.model.status.in_(['sent', 'draft'])
+        )
+
+        # 2. Build the statement
         stmt = select(cls.model).where(
             cls.model.client_id == client_id,
-            cls.model.order_id == None,
             cls.model.is_active == True,
-            cls.model.status.in_(['sent', 'draft'])
+            # Use OR to include the specifically requested ID
+            or_(
+                *available_criteria,
+                cls.model.id == include_id
+            )
         ).order_by(cls.model.quote_date.desc())
 
         return db.session.execute(stmt).scalars().all()

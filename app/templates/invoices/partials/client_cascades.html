@@ -22,7 +22,7 @@
             hx-trigger="change"
             hx-confirm="This will replace all current line items with items from the selected PO. Proceed?"
             required>
-        <option value="">No PO</option>
+        <option value="">Select PO</option>
         {% for po in pos %}
             <option value="{{ po.id }}">
                 {{ po.po_number }} ({{ po.total_amount | usd }})

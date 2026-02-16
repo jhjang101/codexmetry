@@ -141,7 +141,7 @@ def edit(id):
     clients = ClientService.get_all()
     products = ProductService.get_all_products()
     po_types = PoTypeService.get_all()
-    quotes = QuoteService.get_quotes_by_client(po.client_id)
+    quotes = QuoteService.get_quotes_by_client(po.client_id, include_id=po.quote_id)
 
     return render_template('purchase_orders/form.html', 
                            mode='edit', 
@@ -236,17 +236,23 @@ def calculate():
 def update_client_cascades():
     """Unified route to Updates Bill-To and Quotes when Client changes via OOB."""
     client_id = request.args.get('client_id', type=int)
-    
-    # 1. Get data for both dropdowns
+    po_id = request.args.get('po_id', type=int)
+
+    # 1. Fetch the PO object to provide context for the 'selected' logic
+    po = PurchaseOrderService.get_po_by_id(po_id) if po_id else None
+
+    # 2. Get data for both dropdowns
     clients = ClientService.get_all()
     # Use the service method to populate quotes
-    quotes = QuoteService.get_quotes_by_client(client_id) if client_id else []
-    
-    # 2. Return a single partial containing both components
+    quote_id = po.quote_id if po else None
+    quotes = QuoteService.get_quotes_by_client(client_id, include_id=quote_id) if client_id else []
+
+    # 3. Return a single partial containing both components
     return render_template('purchase_orders/partials/client_cascades.html', 
                            clients=clients, 
                            quotes=quotes, 
-                           selected_id=client_id)
+                           selected_id=client_id,
+                           po=po)
 
 # --- HTMX Quote-Itmes Cascade Routes ---
 
