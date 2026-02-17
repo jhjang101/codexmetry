@@ -29,8 +29,14 @@
         {% set selection_target = None %}
     {% endif %}
 
-    {# 4. INDICATOR & DISABLE LOGIC #}
-    {% set show_saved_indicators = (payment and is_on_original_client and is_on_original_po and mode != 'view') %}
+    {# 4. INDICATOR LOGIC: Refined to be selection-sensitive #}
+    {% set show_saved_indicators = (
+        payment and 
+        is_on_original_po and 
+        selection_target == payment.invoice_id and 
+        mode != 'view'
+    ) %}
+
     {% set is_disabled = not po_context and mode != 'view' %}
 
     <select name="invoice_id" 
@@ -46,6 +52,8 @@
         {# DYNAMIC PLACEHOLDER #}
         <option value="" {{ 'selected' if not selection_target else '' }}>
             {{ 'Select PO first...' if is_disabled else 'No Invoice Link (Prepayment)' }}
+            {# Show * here if the original record was a Prepayment and we are home on PO #}
+            {{ '*' if (is_on_original_po and not selection_target and not payment.invoice_id) else '' }}
         </option>
         
         {% for inv in invoices %}

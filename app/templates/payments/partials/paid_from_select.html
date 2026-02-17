@@ -44,8 +44,15 @@
         {% set selection_target = None %}
     {% endif %}
 
-    {# 3. INDICATOR & DISABLE LOGIC #}
-    {% set show_saved_indicators = (payment and is_on_original_client and is_on_original_po and mode != 'view') %}
+    {# 3. INDICATOR LOGIC: Must be on original PO AND original Invoice to see the * #}
+    {% set show_saved_indicators = (
+        payment and 
+        is_on_original_po and 
+        (selected_invoice_id is not defined or selected_invoice_id == payment.invoice_id) and
+        selection_target == payment.paid_from_id and 
+        mode != 'view'
+    ) %}
+
     {% set is_disabled = not po_context and mode != 'view' %}
 
     <select name="paid_from_id" 
