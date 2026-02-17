@@ -1,30 +1,62 @@
 <div class="relative" id="invoice-select-container">
-    {% set is_disabled = not invoices and mode == 'add' %}
+    {# 1. CLIENT CONTEXT: Are we looking at the original client? #}
+    {% if selected_id is defined %}
+        {% set is_on_original_client = (payment and selected_id == payment.client_id) %}
+    {% else %}
+        {% set is_on_original_client = True %}
+    {% endif %}
+
+    {# 2. PO CONTEXT #}
+    {% if selected_po_id is defined %}
+        {% set po_context = selected_po_id %}
+        {% set is_on_original_po = (payment and selected_po_id == payment.po_id) %}
+    {% else %}
+        {# If we switched away from the original client, we MUST lose the PO context #}
+        {% set po_context = payment.po_id if (payment and is_on_original_client) else None %}
+        {% set is_on_original_po = (payment and is_on_original_client) %}
+    {% endif %}
+
+    {# 3. SMART SELECTION (The ID that should be highlighted) #}
+    {% if selected_po_id is defined %}
+        {% if is_on_original_po %}
+            {% set selection_target = payment.invoice_id %}
+        {% else %}
+            {% set selection_target = None %}
+        {% endif %}
+    {% elif is_on_original_client and po_context %}
+        {% set selection_target = payment.invoice_id %}
+    {% else %}
+        {% set selection_target = None %}
+    {% endif %}
+
+    {# 4. INDICATOR & DISABLE LOGIC #}
+    {% set show_saved_indicators = (payment and is_on_original_client and is_on_original_po and mode != 'view') %}
+    {% set is_disabled = not po_context and mode != 'view' %}
+
     <select name="invoice_id" 
-            class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none appearance-none pr-10 {{ 'bg-gray-50 text-gray-400 cursor-not-allowed' if is_disabled else 'bg-transparent cursor-pointer' }}"
-            {% if is_disabled %}disabled{% endif %}
-            hx-get="{{ url_for('payments.update_invoice_cascades') }}"
+            {{ 'disabled' if is_disabled else '' }}
+            class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none appearance-none pr-10
+            {% if is_disabled %} bg-gray-100 text-gray-400 cursor-not-allowed
+            {% else %} bg-transparent cursor-pointer
+            {% endif %}"
+            hx-get="{{ url_for('payments.update_invoice_cascades', payment_id=payment.id if payment else '') }}"
             hx-target="#none"
             hx-trigger="change">
-        <option value="">{{ 'Select PO first...' if is_disabled else 'No Invoice (Down Payment)' }}</option>
-        {# 1. Handle the Archived Invoice Case #}
-        {% if payment and payment.invoice and not payment.invoice.is_active %}
-            <option value="{{ payment.invoice_id }}" selected>
-                {{ payment.invoice.invoice_number }} (Archived)
-            </option>
-        {% endif %}
-
-        {# 2. Loop through Eligible (Active) Invoices #}
+        
+        {# DYNAMIC PLACEHOLDER #}
+        <option value="" {{ 'selected' if not selection_target else '' }}>
+            {{ 'Select PO first...' if is_disabled else 'No Invoice Link (Prepayment)' }}
+        </option>
+        
         {% for inv in invoices %}
-            {% if payment and inv.id == payment.invoice_id and not payment.invoice.is_active %}
-                {# Skip - already rendered #}
-            {% else %}
-                <option value="{{ inv.id }}" {{ 'selected' if (payment and payment.invoice_id == inv.id) else '' }}>
-                    {{ inv.invoice_number }} ({{ inv.total_amount | usd }})
-                </option>
-            {% endif %}
+            {% set is_saved_value = (payment and payment.invoice_id == inv.id) %}
+            <option value="{{ inv.id }}" {{ 'selected' if selection_target == inv.id else '' }}>
+                {{ inv.invoice_number }} ({{ inv.total_amount | usd }})
+                {{ '*' if (show_saved_indicators and is_saved_value) else '' }}
+            </option>
         {% endfor %}
     </select>
+    
     <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-400">
         <i class="fa-solid fa-chevron-down text-[10px]"></i>
     </div>

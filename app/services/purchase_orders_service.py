@@ -4,7 +4,7 @@ from ..extensions import db
 from ..utils.docs import generate_doc_number
 from ..utils.money import parse_to_cents
 from ..utils.manual_pagination import ManualPagination
-from sqlalchemy import select, or_, func
+from sqlalchemy import select, or_, func, and_, exists
 from sqlalchemy.orm import contains_eager
 from datetime import datetime
 
@@ -303,30 +303,44 @@ class PurchaseOrderService(BaseService):
     def get_pos_by_client(cls, 
                           client_id: int, 
                           include_id: int | None = None, 
-                          statuses: list[str] | None = None):
+                          statuses: list[str] | None = None, 
+                          include_unpaid: bool = False):
         """
         Fetcher: Returns 'open' pos for a client based on statuses.
         If include_id is provided, that specific PO is included regardless of status.
+        include_unpaid: If True, also includes 'completed' POs that have 'open' invoices.
         Used for the Invoice, Payment, and Expense creation dropdown.
         """
         # 1. Handle Default Statuses (Usually we only want to invoice/pay 'open' POs)
         if statuses is None:
             statuses = ['open']
 
-        # 2. Define the "Standard" criteria
-        standard_criteria = (
+        # 2. Base Criteria (OR block)
+        criteria = [
             cls.model.status.in_(statuses),
-        )
+            cls.model.id == include_id
+        ]
 
-        # 3. Build statement
+        # 3. Money-Aware Logic (for Payments)
+        if include_unpaid:
+            # Check if there exists at least one active invoice with 'open' status for this PO
+            unpaid_check = and_(
+                cls.model.status == 'completed',
+                exists().where(
+                    and_(
+                        Invoice.po_id == cls.model.id,
+                        Invoice.status == 'open',
+                        Invoice.is_active == True
+                    )
+                )
+            )
+            criteria.append(unpaid_check)
+
+        # 4. Build statement
         stmt = select(cls.model).where(
             cls.model.client_id == client_id,
             cls.model.is_active == True,
-            # Use OR to allow the currently linked PO to bypass status filters
-            or_(
-                *standard_criteria,
-                cls.model.id == include_id
-            )
+            or_(*criteria)
         ).order_by(cls.model.po_date.desc())
 
         return db.session.execute(stmt).scalars().all()

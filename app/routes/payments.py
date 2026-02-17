@@ -177,11 +177,14 @@ def edit(id):
             flash(str(e), "error")
             return redirect(url_for('payments.edit', id=id))
     
-    # GET logic remains the same...
+    # GET: Prepare Context
     clients = ClientService.get_all()
-    pos = PurchaseOrderService.get_pos_by_client(payment.client_id)
-    invoices = InvoiceService.get_invoices_by_po(payment.po_id)
     payment_types = PaymentTypeService.get_all()
+    
+    # Fetch lists using include_id to ensure saved records stay visible
+    pos = PurchaseOrderService.get_pos_by_client(payment.client_id, include_id=payment.po_id, include_unpaid=True)
+    invoices = InvoiceService.get_invoices_by_po(payment.po_id, include_id=payment.invoice_id)
+
     # payment_number represents the initial identity for the page title/header
     if payment.invoice:
         payment_number = f'{payment.invoice.invoice_number}'
@@ -246,14 +249,27 @@ def update_client_cascades():
     Updates: PO List, Paid-From (matches client), resets Invoice, resets Amount.
     """
     client_id = request.args.get('client_id', type=int)
+    payment_id = request.args.get('payment_id', type=int)
+    payment = PaymentService.get_by_id(payment_id) if payment_id else None
+
+    # 1. Fetch POs for the selected client (Standard)
+    po_id = payment.po_id if payment else None
+    pos = PurchaseOrderService.get_pos_by_client(client_id, include_id=po_id, include_unpaid=True) if client_id else []
+
+    # 2. SMART RETURN: If returning to original client, fetch original invoices
+    invoices = []
+    if payment and client_id == payment.client_id:
+        invoices = InvoiceService.get_invoices_by_po(payment.po_id, include_id=payment.invoice_id)
+
     # Populate clients for the Paid-from
     clients = ClientService.get_all() # For the Paid-From list
-    # Populate eligible POs for this client
-    pos = PurchaseOrderService.get_pos_by_client(client_id) if client_id else []
+
     return render_template('payments/partials/client_cascades.html', 
                            clients=clients, 
                            pos=pos, 
-                           payer_id=client_id)
+                           invoices=invoices, 
+                           selected_id=client_id,
+                           payment=payment)
 
 @bp.route('/update-po-cascades')
 def update_po_cascades():
@@ -262,18 +278,29 @@ def update_po_cascades():
     Updates: Invoice List, Paid-From (matches po.bill_to), Amount (matches po.balance) 
     """
     po_id = request.args.get('po_id', type=int)
-    # Populate clients for the Paid-from
-    clients = ClientService.get_all() # For the Paid-From list
+    payment_id = request.args.get('payment_id', type=int)
+    payment = PaymentService.get_by_id(payment_id) if payment_id else None
+
     # Prefill Paid_from and Amount with this po
     po = PurchaseOrderService.get_po_by_id(po_id) if po_id else None
-    payer_id = po.bill_to_id if po else None
+    
+    # Populate clients for the Paid-from
+    clients = ClientService.get_all() # For the Paid-From list
+
+    # Pass client_id from the PO
+    po_client_id = po.client_id if po else None
+
     # Populate eligible Invoices for this PO
-    invoices = InvoiceService.get_invoices_by_po(po_id) if po_id else []
+    invoice_id = payment.invoice_id if payment else None
+    invoices = InvoiceService.get_invoices_by_po(po_id, include_id=invoice_id) if po_id else []
+
     return render_template('payments/partials/po_cascades.html', 
-                           clients=clients, 
-                           po=po, 
                            invoices=invoices, 
-                           payer_id=payer_id)
+                           selected_po_id=po_id, 
+                           selected_id=po_client_id, 
+                           po=po, 
+                           payment=payment, 
+                           clients=clients)
 
 @bp.route('/update-invoice-cascades')
 def update_invoice_cascades():
@@ -282,15 +309,26 @@ def update_invoice_cascades():
     Updates: Paid-From (matches invoice.bill_to) Amount (matches invoice.balance)
     """
     invoice_id = request.args.get('invoice_id', type=int)
+    payment_id = request.args.get('payment_id', type=int)
+    payment = PaymentService.get_by_id(payment_id) if payment_id else None
+
     # Populate clients for the Paid-from
     clients = ClientService.get_all() # For the Paid-From list
+
     # Prefill Paid_from and Amount with this invoice
     invoice = InvoiceService.get_invoice_by_id(invoice_id) if invoice_id else None
-    payer_id = invoice.bill_to_id if invoice else None
+
+    # Pass po_id and client_id from the Invocie
+    invoice_po_id = invoice.po_id if invoice else None
+    invoice_client_id = invoice.client_id if invoice else None
+
     return render_template('payments/partials/invoice_cascades.html', 
                            clients=clients, 
                            invoice=invoice, 
-                           payer_id=payer_id)
+                           selected_invoice_id=invoice_id,
+                           selected_po_id=invoice_po_id,
+                           selected_id=invoice_client_id,
+                           payment=payment)
 
     
 

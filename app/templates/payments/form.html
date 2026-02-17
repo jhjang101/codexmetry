@@ -78,7 +78,7 @@
                         <div class="relative">
                             <select name="client_id" 
                                     class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none appearance-none bg-transparent cursor-pointer pr-10" 
-                                    hx-get="{{ url_for('payments.update_client_cascades') }}"
+                                    hx-get="{{ url_for('payments.update_client_cascades', payment_id=payment.id if payment else '') }}"
                                     hx-target="#none" {# We use OOB swaps, so the main target is ignored #}
                                     hx-trigger="change"
                                     required>
@@ -142,20 +142,13 @@
                 </div>
 
                 <div class="col-span-2">
-                    <label class="block text-sm font-medium text-gray-500">Amount</label>
                     {% if mode == 'view' %}
-                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm {{ 'text-green-700' if payment.amount >= 0 else 'text-red-600' }}">{{ payment.amount | usd }}</p>
+                        <label class="block text-sm font-medium text-gray-500">Amount</label>
+                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm {{ 'text-green-700' if payment.amount >= 0 else 'text-red-600' }}">
+                            {{ payment.amount | usd }}
+                        </p>
                     {% else %}
                         {% include 'payments/partials/amount_input.html' with context %}
-                    {% endif %}
-                </div>
-                
-                <div class="col-span-2">
-                    <label class="block text-sm font-medium text-gray-500">Payment Date</label>
-                    {% if mode == 'view' %}
-                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ payment.payment_date or '-' }}</p>
-                    {% else %}
-                        <input type="date" name="payment_date" value="{{ payment.payment_date if payment else now.strftime('%Y-%m-%d') }}" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">
                     {% endif %}
                 </div>
 

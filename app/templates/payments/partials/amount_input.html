@@ -1,13 +1,28 @@
 <div id="amount-input-container">
-    {% set display_val = "$0.00" %}
-    {% if payment %}
-        {% set display_val = payment.amount | usd %}
-    {% elif invoice and invoice.balance %}
-        {% set display_val = invoice.balance | usd %}
-    {% elif po and po.balance %}
-        {% set display_val = po.balance | usd %}
+    <label class="block text-sm font-medium text-gray-500">Amount</label>
+    
+    {# 1. PRE-FILL LOGIC #}
+    {% if selected_invoice_id is defined and selected_invoice_id %}
+        {% if payment and selected_invoice_id == payment.invoice_id %}
+            {% set amount_target = payment.amount %}
+        {% else %}
+            {% set amount_target = invoice.balance if invoice else 0 %}
+        {% endif %}
+    {% elif selected_po_id is defined and selected_po_id %}
+        {% if payment and selected_po_id == payment.po_id %}
+            {% set amount_target = payment.amount %}
+        {% else %}
+            {% set amount_target = po.balance if po else 0 %}
+        {% endif %}
+    {% else %}
+        {% set amount_target = payment.amount if payment else 0 %}
     {% endif %}
 
-    <input type="text" name="amount" value="{{ display_val }}"
-           class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none transition-all">
+    <div class="relative mt-1">
+        <input type="text" name="amount" 
+               value="{{ amount_target | usd if amount_target else '$0.00' }}"
+               class="block w-full border rounded-lg p-2 text-sm 
+               focus:ring-1 focus:ring-blue-300 outline-none transition-all"
+               placeholder="0.00">
+    </div>
 </div>
