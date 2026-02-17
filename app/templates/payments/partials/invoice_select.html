@@ -47,7 +47,8 @@
             {% endif %}"
             hx-get="{{ url_for('payments.update_invoice_cascades', payment_id=payment.id if payment else '') }}"
             hx-target="#none"
-            hx-trigger="change">
+            hx-trigger="change"
+            hx-include="[name='po_id']">
         
         {# DYNAMIC PLACEHOLDER #}
         <option value="" {{ 'selected' if not selection_target else '' }}>

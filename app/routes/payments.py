@@ -310,24 +310,31 @@ def update_invoice_cascades():
     """
     invoice_id = request.args.get('invoice_id', type=int)
     payment_id = request.args.get('payment_id', type=int)
-    payment = PaymentService.get_by_id(payment_id) if payment_id else None
+    po_id = request.args.get('po_id', type=int)
 
-    # Populate clients for the Paid-from
-    clients = ClientService.get_all() # For the Paid-From list
+    payment = PaymentService.get_by_id(payment_id) if payment_id else None
 
     # Prefill Paid_from and Amount with this invoice
     invoice = InvoiceService.get_invoice_by_id(invoice_id) if invoice_id else None
 
-    # Pass po_id and client_id from the Invocie
-    invoice_po_id = invoice.po_id if invoice else None
-    invoice_client_id = invoice.client_id if invoice else None
+    # If invoice is deselected, we MUST have the PO to avoid disabling fields
+    if not po_id and invoice:
+        po_id = invoice.po_id
+    po = PurchaseOrderService.get_po_by_id(po_id) if po_id else None
+
+    # Pass client_id from the PO (PO and Invoice has same client)
+    client_id = po.client_id if po else None
+
+    # Populate clients for the Paid-from
+    clients = ClientService.get_all() # For the Paid-From list
 
     return render_template('payments/partials/invoice_cascades.html', 
                            clients=clients, 
                            invoice=invoice, 
+                           po=po,                       # Pass parent PO for pre-filling
                            selected_invoice_id=invoice_id,
-                           selected_po_id=invoice_po_id,
-                           selected_id=invoice_client_id,
+                           selected_po_id=po_id,        # Context to keep fields enabled
+                           selected_id=client_id,       # Client context
                            payment=payment)
 
     
