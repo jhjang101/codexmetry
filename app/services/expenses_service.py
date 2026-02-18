@@ -1,5 +1,5 @@
 from .base_service import BaseService
-from ..models import Expense, Invoice, OrderRegistry, PurchaseOrder, ExpenseItem, Vendor, ExpenseCategory
+from ..models import Expense, ExpenseItem,  Vendor,  ExpenseCategory, Client, OrderRegistry, PurchaseOrder, Invoice
 from ..extensions import db
 from ..utils.docs import generate_doc_number
 from ..utils.money import parse_to_cents
@@ -16,16 +16,18 @@ class ExpenseService(BaseService):
         stmt = (
             select(cls.model)
             .join(Vendor)
+            .outerjoin(Client)
             .outerjoin(ExpenseCategory)
-            .outerjoin(Invoice)
             .outerjoin(OrderRegistry)
             .outerjoin(PurchaseOrder)
+            .outerjoin(Invoice)
             .options(
                 contains_eager(cls.model.vendor),
                 contains_eager(cls.model.category),
-                contains_eager(cls.model.invoice),
+                contains_eager(cls.model.client),
                 contains_eager(cls.model.order),
-                contains_eager(cls.model.purchase_order)
+                contains_eager(cls.model.purchase_order),
+                contains_eager(cls.model.invoice)
             )
             .where(cls.model.is_active == True)
         )
@@ -37,12 +39,14 @@ class ExpenseService(BaseService):
                     cls.model.expense_number.icontains(search_term),
                     cls.model.description.icontains(search_term),
                     Vendor.company_name.icontains(search_term),
-                    Invoice.invoice_number.icontains(search_term),
+                    ExpenseCategory.type.icontains(search_term),
+                    Client.company_name.icontains(search_term),
                     OrderRegistry.order_number.icontains(search_term),
                     PurchaseOrder.po_number.icontains(search_term),
-                    ExpenseCategory.type.icontains(search_term)
+                    Invoice.invoice_number.icontains(search_term)
                 )
             )
+
         # 3. Order by date (newest first)
         stmt = stmt.order_by(cls.model.expense_date.desc())
 
@@ -116,20 +120,26 @@ class ExpenseService(BaseService):
         if not description:
             raise ValueError("Description is required or must be provided in the first item line.")
         
-        # 2. Expense Linkage (Invoice -> Order inheritance)
-        order_id = None
+        # 2. Expense Linkage (Client -> PO -> Invoice -> Order inheritance)
+        client_id = data.get('client_id')
         po_id = data.get('po_id')
         invoice_id = data.get('invoice_id')
+        order_id = None
 
         if invoice_id:
             invoice = db.session.get(Invoice, int(invoice_id))
-            order_id = invoice.order_id if invoice else None
-            po_id = invoice.po_id if invoice else None
+            if invoice:
+                client_id = invoice.client_id
+                po_id = invoice.po_id
+                order_id = invoice.order_id
         elif po_id:
             po = db.session.get(PurchaseOrder, int(po_id))
-            order_id = po.order_id if po else None
+            if po:
+                client_id = po.client_id
+                order_id = po.order_id
+        # Note: If only client_id was provided, it remains as captured from data.get
 
-        # 2. Transform Date
+        # 3. Transform Date
         raw_date = data.get('expense_date')
         expense_date = datetime.strptime(raw_date, '%Y-%m-%d').date() if isinstance(raw_date, str) else datetime.now().date()
         category_id = data.get('category_id')
@@ -137,6 +147,7 @@ class ExpenseService(BaseService):
         clean_data ={
             'vendor_id': int(vendor_id),
             'category_id': int(category_id) if category_id else None,
+            'client_id': int(client_id) if client_id else None,
             'order_id': order_id,
             'po_id': int(po_id) if po_id else None,
             'invoice_id': int(invoice_id) if invoice_id else None,
