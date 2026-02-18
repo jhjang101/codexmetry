@@ -48,6 +48,9 @@ def add():
                 'status': request.form.get('status'),
                 'note': request.form.get('note')
             }
+
+            print('client_id:', header_data.get('client_id'))
+        
             
             # 2. Extract and Parse Items
             # This helper converts the parallel lists into a list of dictionaries
