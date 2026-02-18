@@ -1,17 +1,43 @@
 <div class="relative" id="po-select-container">
-    {% set is_disabled = not pos and mode != 'view' %}
+    {# 1. CONTEXT: Enables/Disables the field #}
+    {% if selected_id is defined %}
+        {% set client_context = selected_id %}
+        {% set is_on_original_client = (expense and selected_id == expense.client_id) %}
+    {% else %}
+        {% set client_context = expense.client_id if expense else None %}
+        {% set is_on_original_client = True %}
+    {% endif %}
+
+    {# 2. SMART SELECTION #}
+    {% if selected_id is defined %}
+        {% set selection_target = expense.po_id if is_on_original_client else None %}
+    {% else %}
+        {% set selection_target = expense.po_id if expense else None %}
+    {% endif %}
+
+    {# 3. INDICATOR & DISABLE LOGIC #}
+    {% set show_saved_indicators = (expense and is_on_original_client and mode != 'view') %}
+    {% set is_disabled = not client_context and mode != 'view' %}
+
     <select name="po_id" 
             {{ 'disabled' if is_disabled else '' }}
-            class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none appearance-none pr-10 {{ 'bg-gray-100 text-gray-400 cursor-not-allowed' if is_disabled else 'bg-transparent cursor-pointer' }}"
-            hx-get="{{ url_for('expenses.update_po_cascades') }}"
+            class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none appearance-none pr-10
+            {% if is_disabled %} bg-gray-100 text-gray-400 cursor-not-allowed
+            {% else %} bg-transparent cursor-pointer
+            {% endif %}"
+            hx-get="{{ url_for('expenses.update_po_cascades', expense_id=expense.id if expense else '') }}"
             hx-target="#none"
-            hx-trigger="change"
-            required>
-        <option value="">{{ 'Select Client first...' if is_disabled else 'Select PO' }}</option>
+            hx-trigger="change">
+        
+        <option value="" {{ 'selected' if not selection_target else '' }}>
+            {{ 'Select Client first...' if is_disabled else 'General Project Cost' }}
+        </option>
+        
         {% for p in pos %}
-            <option value="{{ p.id }}" 
-                {{ 'selected' if (expense and expense.po_id == p.id) else '' }}>
+            {% set is_saved_value = (expense and expense.po_id == p.id) %}
+            <option value="{{ p.id }}" {{ 'selected' if selection_target == p.id else '' }}>
                 {{ p.order.order_number }} ({{ p.po_number if p.po_number else 'No Ref' }})
+                {{ '*' if (show_saved_indicators and is_saved_value) else '' }}
             </option>
         {% endfor %}
     </select>

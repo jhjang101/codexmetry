@@ -3,9 +3,7 @@
     {% include 'expenses/partials/po_select.html' %}
 </div>
 
-<!-- 2. Reset and Disable Invoice Dropdown (OOB) -->
+<!-- 2. Update Invoice Dropdown (OOB) -->
 <div id="invoice-select-container" hx-swap-oob="true">
-    {% with invoices = [] %}
-        {% include 'expenses/partials/invoice_select.html' %}
-    {% endwith %}
+    {% include 'expenses/partials/invoice_select.html' %}
 </div>

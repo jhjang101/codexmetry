@@ -1,13 +1,42 @@
 <div class="relative" id="invoice-select-container">
-    {% set is_disabled = not invoices and mode != 'view' %}
+    {# 1. PO CONTEXT #}
+    {% if selected_po_id is defined %}
+        {% set po_context = selected_po_id %}
+        {% set is_on_original_po = (expense and selected_po_id == expense.po_id) %}
+    {% else %}
+        {% set po_context = expense.po_id if (expense and is_on_original_client) else None %}
+        {% set is_on_original_po = (expense and is_on_original_client) %}
+    {% endif %}
+
+    {# 2. SMART SELECTION #}
+    {% if selected_po_id is defined %}
+        {% set selection_target = expense.invoice_id if is_on_original_po else None %}
+    {% elif is_on_original_po and po_context %}
+        {% set selection_target = expense.invoice_id %}
+    {% else %}
+        {% set selection_target = None %}
+    {% endif %}
+
+    {# 3. INDICATOR & DISABLE LOGIC #}
+    {% set show_saved_indicators = (expense and is_on_original_po and selection_target == expense.invoice_id and mode != 'view') %}
+    {% set is_disabled = not po_context and mode != 'view' %}
+
     <select name="invoice_id" 
             {{ 'disabled' if is_disabled else '' }}
-            class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none appearance-none pr-10 {{ 'bg-gray-100 text-gray-400 cursor-not-allowed' if is_disabled else 'bg-transparent cursor-pointer' }}">
-        <option value="">{{ 'Select PO first...' if is_disabled else 'No Invoice Link' }}</option>
+            class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none appearance-none pr-10
+            {% if is_disabled %} bg-gray-100 text-gray-400 cursor-not-allowed
+            {% else %} bg-transparent cursor-pointer
+            {% endif %}">
+        
+        <option value="" {{ 'selected' if not selection_target else '' }}>
+            {{ 'Select PO first...' if is_disabled else 'Full PO / Order Cost' }}
+        </option>
+        
         {% for inv in invoices %}
-            <option value="{{ inv.id }}" 
-                {{ 'selected' if (expense and expense.invoice_id == inv.id) else '' }}>
+            {% set is_saved_value = (expense and expense.invoice_id == inv.id) %}
+            <option value="{{ inv.id }}" {{ 'selected' if selection_target == inv.id else '' }}>
                 {{ inv.invoice_number }} ({{ inv.total_amount | usd }})
+                {{ '*' if (show_saved_indicators and is_saved_value) else '' }}
             </option>
         {% endfor %}
     </select>
