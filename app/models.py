@@ -86,6 +86,7 @@ class Client(db.Model):
     invoice_billings: Mapped[list["Invoice"]] = relationship(back_populates="bill_to", foreign_keys="[Invoice.bill_to_id]")
     payments: Mapped[list["Payment"]] = relationship(back_populates="client", foreign_keys="[Payment.client_id]")
     paid_from_payments: Mapped[list["Payment"]] = relationship(back_populates="paid_from", foreign_keys="[Payment.paid_from_id]")
+    expenses: Mapped[list["Expense"]] = relationship(back_populates="client")
 
 class ClientContact(db.Model):
     __tablename__ = 'client_contacts'
@@ -261,6 +262,7 @@ class Expense(db.Model):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     expense_number: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
     vendor_id: Mapped[int] = mapped_column(ForeignKey('vendors.id'), nullable=False)
+    client_id: Mapped[int | None] = mapped_column(ForeignKey('clients.id'))
     order_id: Mapped[int | None] = mapped_column(ForeignKey('orders.id'))
     po_id: Mapped[int | None] = mapped_column(ForeignKey('purchase_orders.id'))
     invoice_id: Mapped[int | None] = mapped_column(ForeignKey('invoices.id'))
@@ -273,6 +275,7 @@ class Expense(db.Model):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
     vendor: Mapped["Vendor"] = relationship(back_populates="expenses")
+    client: Mapped["Client | None"] = relationship(back_populates="expenses")
     order: Mapped["OrderRegistry"] = relationship(back_populates="expenses")
     purchase_order: Mapped["PurchaseOrder | None"] = relationship(back_populates="expenses")
     invoice: Mapped["Invoice | None"] = relationship(back_populates="expenses")
