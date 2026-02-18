@@ -39,6 +39,7 @@ def add():
             # 1. Extract Header Data
             header_data = {
                 'vendor_id': request.form.get('vendor_id'),
+                'client_id': request.form.get('client_id'),
                 'po_id': request.form.get('po_id'),
                 'invoice_id': request.form.get('invoice_id'),
                 'category_id': request.form.get('category_id'),
@@ -111,6 +112,7 @@ def edit(id):
             # 1. Prepare Header Data
             header_data = {
                 'vendor_id': request.form.get('vendor_id'),
+                'client_id': request.form.get('client_id'),
                 'po_id': request.form.get('po_id'),
                 'invoice_id': request.form.get('invoice_id'),
                 'category_id': request.form.get('category_id'),
@@ -145,16 +147,23 @@ def edit(id):
     vendors = VendorService.get_all()
     categories = ExpenseCategoryService.get_all()
     clients = ClientService.get_all()
-    # INITIALIZE to avoid NameError
+
+    # Brain: Use include_id and allow 'completed' projects for historical job costing
     pos = []
     invoices = []
-    # If it's linked to an invoice, we need the parent client's POs and that PO's invoices
-    if expense.invoice:
-        pos = PurchaseOrderService.get_pos_by_client(expense.invoice.client_id)
-        invoices = InvoiceService.get_invoices_by_po(expense.po_id)
-    # If it's only linked to a PO
-    elif expense.purchase_order:
-        pos = PurchaseOrderService.get_pos_by_client(expense.purchase_order.client_id)
+    if expense.client_id:
+        pos = PurchaseOrderService.get_pos_by_client(
+            expense.client_id, 
+            include_id=expense.po_id, 
+            statuses=['open', 'completed']
+        )
+    if expense.po_id:
+        invoices = InvoiceService.get_invoices_by_po(
+            expense.po_id, 
+            include_id=expense.invoice_id, 
+            statuses=['open', 'completed']
+        )
+
     return render_template('expenses/form.html', 
                            mode='edit', 
                            expense=expense, 
@@ -215,12 +224,34 @@ def calculate():
 def update_client_cascades():
     """
     Triggered by Client select. 
-    Updates: PO List, resets Invoice.
+    Updates PO list and handles Invoice 'Return Home'.
     """
     client_id = request.args.get('client_id', type=int)
-    # Populate eligible POs for this client
-    pos = PurchaseOrderService.get_pos_by_client(client_id) if client_id else []
-    return render_template('expenses/partials/client_cascades.html', pos=pos)
+    expense_id = request.args.get('expense_id', type=int)
+    expense = ExpenseService.get_by_id(expense_id) if expense_id else None
+
+    # 1. Fetch POs for the selected client
+    po_id = expense.po_id if expense else None
+    pos = PurchaseOrderService.get_pos_by_client(
+        client_id, 
+        include_id=po_id,
+        statuses=['open', 'completed']
+    ) if client_id else []
+
+    # 2. SMART RETURN: If switching back to the original client, fetch original invoices
+    invoices = []
+    if expense and client_id == expense.client_id:
+        invoices = InvoiceService.get_invoices_by_po(
+            expense.po_id, 
+            include_id=expense.invoice_id,
+            statuses=['open', 'completed']
+        )
+
+    return render_template('expenses/partials/client_cascades.html', 
+                           pos=pos, 
+                           invoices=invoices,
+                           selected_id=client_id, 
+                           expense=expense)
 
 @bp.route('/update-po-cascades')
 def update_po_cascades():
@@ -229,9 +260,29 @@ def update_po_cascades():
     Updates: Invoice List 
     """
     po_id = request.args.get('po_id', type=int)
+    expense_id = request.args.get('expense_id', type=int)
+    expense = ExpenseService.get_by_id(expense_id) if expense_id else None
+
+    # We need the parent client_id to keep the PO dropdown enabled in the partial
+    # The po_id comes from the select, so we look up that PO to find its client
+    po = PurchaseOrderService.get_by_id(po_id) if po_id else None
+
     # Populate eligible Invoices for this PO
-    invoices = InvoiceService.get_invoices_by_po(po_id) if po_id else []
-    return render_template('expenses/partials/po_cascades.html', invoices=invoices)
+    invoices = InvoiceService.get_invoices_by_po(
+        po_id, 
+        include_id=expense.invoice_id if expense else None,
+        statuses=['open', 'completed']
+    ) if po_id else []
+
+    # Pass client_id from the PO
+    po_client_id = po.client_id if po else None
+
+
+    return render_template('expenses/partials/po_cascades.html', 
+                           invoices=invoices, 
+                           selected_po_id=po_id, 
+                           selected_id=po_client_id,
+                           expense=expense)
 
 # --- INTERNAL HELPERS ---
 

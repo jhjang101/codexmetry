@@ -254,12 +254,19 @@ def update_client_cascades():
 
     # 1. Fetch POs for the selected client (Standard)
     po_id = payment.po_id if payment else None
-    pos = PurchaseOrderService.get_pos_by_client(client_id, include_id=po_id, include_unpaid=True) if client_id else []
+    pos = PurchaseOrderService.get_pos_by_client(
+        client_id, 
+        include_id=po_id, 
+        include_unpaid=True
+        ) if client_id else []
 
     # 2. SMART RETURN: If returning to original client, fetch original invoices
     invoices = []
     if payment and client_id == payment.client_id:
-        invoices = InvoiceService.get_invoices_by_po(payment.po_id, include_id=payment.invoice_id)
+        invoices = InvoiceService.get_invoices_by_po(
+            payment.po_id, 
+            include_id=payment.invoice_id
+            )
 
     # Populate clients for the Paid-from
     clients = ClientService.get_all() # For the Paid-From list
