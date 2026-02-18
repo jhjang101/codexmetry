@@ -47,7 +47,7 @@
             {% endif %}">
         
         <option value="" {{ 'selected' if not selection_target else '' }}>
-            {{ 'Select PO first...' if is_disabled else 'Full PO / Order Cost' }}
+            {{ 'Select PO first...' if is_disabled else 'No Invoice Link' }}
         </option>
         
         {% for inv in invoices %}

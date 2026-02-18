@@ -31,8 +31,8 @@
 
         <section class="bg-white p-6 rounded-lg shadow mb-2">
             <h2 class="text-xl font-semibold border-b pb-2 mb-4">Expense Details</h2>
-            <div class="grid grid-cols-6 gap-4">
-                <div class="col-span-2">
+            <div class="grid grid-cols-11 gap-4">
+                <div class="col-span-3">
                     <label class="block text-sm font-medium text-gray-500">Vendor</label>
                     {% if mode == 'view' %}
                         <p class="mt-1 block bg-gray-100 border rounded-lg p-2 text-sm">{{ expense.vendor.company_name }}</p>
@@ -53,8 +53,8 @@
                     {% endif %}
                 </div>
 
-                <div class="col-span-2">
-                    <label class="block text-sm font-medium text-gray-500">Summary / Description</label>
+                <div class="col-span-4">
+                    <label class="block text-sm font-medium text-gray-500">Summary (Optional)</label>
                     {% if mode == 'view' %}
                         <p class="mt-1 block bg-gray-100 border rounded-lg p-2 text-sm">{{ expense.description }}</p>
                     {% else %}
@@ -63,7 +63,7 @@
                     {% endif %}
                 </div>
 
-                <div class="col-span-1">
+                <div class="col-span-2">
                     <label class="block text-sm font-medium text-gray-500">Category</label>
                     {% if mode == 'view' %}
                         <p class="mt-1 block bg-gray-100 border rounded-lg p-2 text-sm">{{ expense.category.type if expense.category else '-' }}</p>
@@ -83,7 +83,7 @@
                     {% endif %}
                 </div>
 
-                <div class="col-span-1">
+                <div class="col-span-2">
                     <label class="block text-sm font-medium text-gray-500">Date</label>
                     {% if mode == 'view' %}
                         <p class="mt-1 block bg-gray-100 border rounded-lg p-2 text-sm">{{ expense.expense_date }}</p>
@@ -94,7 +94,7 @@
                 </div>
 
                 <!-- Row 2: Project Linking (The Triple Cascade) -->
-                <div class="col-span-2">
+                <div class="col-span-3">
                     <label class="block text-sm font-medium text-gray-500">Link to Client (Optional)</label>
                     {% if mode == 'view' %}
                         <p class="mt-1 block bg-gray-100 border rounded-lg p-2 text-sm">{{ expense.client.company_name if (expense and expense.client) else 'Independent Expense' }}</p>
@@ -121,8 +121,8 @@
                     {% endif %}
                 </div>
 
-                <div class="col-span-2">
-                    <label class="block text-sm font-medium text-gray-500">Project / PO</label>
+                <div class="col-span-3">
+                    <label class="block text-sm font-medium text-gray-500">Link to PO (Optional)</label>
                     <div id="po-select-container">
                         {% if mode == 'view' %}
                             <p class="mt-1 block bg-gray-100 border rounded-lg p-2 text-sm">{{ expense.order.order_number if expense.order else '-' }}</p>
@@ -133,8 +133,8 @@
                     </div>
                 </div>
 
-                <div class="col-span-1">
-                    <label class="block text-sm font-medium text-gray-500">Invoice Link</label>
+                <div class="col-span-3">
+                    <label class="block text-sm font-medium text-gray-500">Link to Invoice (Optional)</label>
                     <div id="invoice-select-container">
                         {% if mode == 'view' %}
                             <p class="mt-1 block bg-gray-100 border rounded-lg p-2 text-sm">{{ expense.invoice.invoice_number if expense.invoice else '-' }}</p>
@@ -145,7 +145,7 @@
                     </div>
                 </div>
 
-                <div class="col-span-1">
+                <div class="col-span-2">
                     <label class="block text-sm font-medium text-gray-500">Status</label>
                     {% if mode == 'view' %}
                         <p class="p-2">

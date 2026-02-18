@@ -30,7 +30,7 @@
             hx-trigger="change">
         
         <option value="" {{ 'selected' if not selection_target else '' }}>
-            {{ 'Select Client first...' if is_disabled else 'General Project Cost' }}
+            {{ 'Select Client first...' if is_disabled else 'No PO Link' }}
         </option>
         
         {% for p in pos %}
