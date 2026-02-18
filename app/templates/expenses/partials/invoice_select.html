@@ -1,24 +1,42 @@
 <div class="relative" id="invoice-select-container">
-    {# 1. PO CONTEXT #}
+    {# 1. CLIENT CONTEXT: Ensure the PO/Invoice hierarchy matches the selected client #}
+    {% if selected_id is defined %}
+        {# HTMX Swap: Check if the user's current client selection matches the DB #}
+        {% set is_on_original_client = (expense and selected_id == expense.client_id) %}
+    {% else %}
+        {# Initial Page Load #}
+        {% set is_on_original_client = True %}
+    {% endif %}
+
+    {# 2. PO CONTEXT: Enable if a PO is currently active in the UI #}
     {% if selected_po_id is defined %}
+        {# A PO was just selected in the dropdown #}
         {% set po_context = selected_po_id %}
         {% set is_on_original_po = (expense and selected_po_id == expense.po_id) %}
     {% else %}
+        {# Fallback to DB state ONLY if we haven't switched away from the original client #}
         {% set po_context = expense.po_id if (expense and is_on_original_client) else None %}
-        {% set is_on_original_po = (expense and is_on_original_client) %}
+        {# We are only 'Home' on PO if we are also 'Home' on Client #}
+        {% set is_on_original_po = True if (expense and is_on_original_client) else False %}
     {% endif %}
 
-    {# 2. SMART SELECTION #}
+    {# 3. SMART SELECTION: What should be highlighted? #}
     {% if selected_po_id is defined %}
-        {% set selection_target = expense.invoice_id if is_on_original_po else None %}
+        {# If we returned to the original PO, restore the original Invoice #}
+        {% if is_on_original_po %}
+            {% set selection_target = expense.invoice_id %}
+        {% else %}
+            {% set selection_target = None %}
+        {% endif %}
     {% elif is_on_original_po and po_context %}
         {% set selection_target = expense.invoice_id %}
     {% else %}
         {% set selection_target = None %}
     {% endif %}
 
-    {# 3. INDICATOR & DISABLE LOGIC #}
-    {% set show_saved_indicators = (expense and is_on_original_po and selection_target == expense.invoice_id and mode != 'view') %}
+    {# 4. INDICATOR & DISABLE LOGIC #}
+    {# Asterisk only shows if Client AND PO AND Invoice match the database record #}
+    {% set show_saved_indicators = (expense and is_on_original_client and is_on_original_po and selection_target == expense.invoice_id and mode != 'view') %}
     {% set is_disabled = not po_context and mode != 'view' %}
 
     <select name="invoice_id" 
@@ -33,10 +51,9 @@
         </option>
         
         {% for inv in invoices %}
-            {% set is_saved_value = (expense and expense.invoice_id == inv.id) %}
             <option value="{{ inv.id }}" {{ 'selected' if selection_target == inv.id else '' }}>
                 {{ inv.invoice_number }} ({{ inv.total_amount | usd }})
-                {{ '*' if (show_saved_indicators and is_saved_value) else '' }}
+                {{ '*' if (show_saved_indicators and expense.invoice_id == inv.id) else '' }}
             </option>
         {% endfor %}
     </select>
