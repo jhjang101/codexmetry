@@ -25,12 +25,17 @@ def create_app():
     db.init_app(app)
     csrf.init_app(app)
     login_manager.init_app(app)
+
+     # Configure Login Manager
+    login_manager.login_view = 'auth.login' # type: ignore
+    login_manager.login_message_category = 'info' # type: ignore
+
     from . import models
 
     # 3. Register Blueprints
     from .routes import (dashboard, quotes, purchase_orders, invoices, 
                          payments, expenses, clients, products, vendors, 
-                         transactions, reports, settings
+                         transactions, reports, settings, auth
     )
     app.register_blueprint(dashboard.bp)
     app.register_blueprint(quotes.bp, url_prefix='/quotes')
@@ -44,6 +49,7 @@ def create_app():
     app.register_blueprint(transactions.bp, url_prefix='/transactions')
     app.register_blueprint(reports.bp, url_prefix='/reports')
     app.register_blueprint(settings.bp, url_prefix='/settings')
+    app.register_blueprint(auth.bp, url_prefix='/auth')
 
     # 4. Register Jinja Filter
     from .utils.money import format_usd
