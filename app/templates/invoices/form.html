@@ -69,8 +69,8 @@
                 {% endif %}
             </div>
             
-            <div class="grid grid-cols-9 gap-4">
-                <div class="col-span-3">
+            <div class="grid grid-cols-11 gap-4">
+                <div class="col-span-4">
                     <label class="block text-sm font-medium text-gray-500">Client</label>
                     {% if mode == 'view' %}
                         <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ invoice.client.full_display }}</p>
@@ -93,8 +93,19 @@
                         </div>
                     {% endif %}
                 </div>
-                
-                <div class="col-span-2">
+
+                <div class="col-span-3">
+                    <label class="block text-sm font-medium text-gray-500">PO Number</label>
+                    <div id="po-select-container">
+                        {% if mode == 'view' %}
+                            <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ invoice.purchase_order.po_number or '-' }}</p>
+                        {% else %}
+                            {% include 'invoices/partials/po_select.html' with context %}
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="col-span-3">
                     <label class="block text-sm font-medium text-gray-500">Invoice Number</label>
                     {% if mode == 'view' %}
                         <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm font-mono">{{ invoice.invoice_number or '-'}}</p>
@@ -104,15 +115,36 @@
                     {% endif %}
                 </div>
                 
-                <div class="col-span-2">
-                    <label class="block text-sm font-medium text-gray-500">Source PO</label>
-                    <div id="po-select-container">
+                <div class="col-span-4">
+                    <label class="block text-sm font-medium text-gray-500">Bill To</label>
+                    <div id="bill-to-select-container">
+                        {# Handled by OOB or po_view #}
                         {% if mode == 'view' %}
-                            <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ invoice.purchase_order.po_number or '-' }}</p>
+                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ invoice.bill_to.full_display }}</p>
                         {% else %}
-                            {% include 'invoices/partials/po_select.html' with context %}
+                        <!-- Initial state: use a simple placeholder or include current logic -->
+                        {% include 'invoices/partials/bill_to_select.html' with context %}
                         {% endif %}
                     </div>
+                </div>
+                
+                <div class="col-span-2">
+                    <label class="block text-sm font-medium text-gray-500">Invoice Date</label>
+                    {% if mode == 'view' %}
+                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ invoice.invoice_date or '-' }}</p>
+                    {% else %}
+                        <input type="date" name="invoice_date" value="{{ invoice.invoice_date if invoice else now.strftime('%Y-%m-%d') }}" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">
+                    {% endif %}
+                </div>
+
+                <div class="col-span-3">
+                    <label class="block text-sm font-medium text-gray-500">Tracking Number</label>
+                    {% if mode == 'view' %}
+                    <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ invoice.tracking_number or '-' }}</p>
+                    {% else %}
+                        <input type="text" name="tracking_number" value="{{ invoice.tracking_number if invoice else '' }}" 
+                               class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none transition-all">
+                    {% endif %}
                 </div>
 
                 <div class="col-span-2">
@@ -140,39 +172,6 @@
                                 <i class="fa-solid fa-chevron-down text-[10px]"></i>
                             </div>
                         </div>
-                    {% endif %}
-                </div>
-
-                
-                <div class="col-span-3">
-                    <label class="block text-sm font-medium text-gray-500">Bill To</label>
-                    <div id="bill-to-select-container">
-                        {# Handled by OOB or po_view #}
-                        {% if mode == 'view' %}
-                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ invoice.bill_to.full_display }}</p>
-                        {% else %}
-                        <!-- Initial state: use a simple placeholder or include current logic -->
-                        {% include 'invoices/partials/bill_to_select.html' with context %}
-                        {% endif %}
-                    </div>
-                </div>
-                
-                <div class="col-span-2">
-                    <label class="block text-sm font-medium text-gray-500">Invoice Date</label>
-                    {% if mode == 'view' %}
-                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ invoice.invoice_date or '-' }}</p>
-                    {% else %}
-                        <input type="date" name="invoice_date" value="{{ invoice.invoice_date if invoice else now.strftime('%Y-%m-%d') }}" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">
-                    {% endif %}
-                </div>
-
-                <div class="col-span-2">
-                    <label class="block text-sm font-medium text-gray-500">Tracking Number</label>
-                    {% if mode == 'view' %}
-                    <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ invoice.tracking_number or '-' }}</p>
-                    {% else %}
-                        <input type="text" name="tracking_number" value="{{ invoice.tracking_number if invoice else '' }}" 
-                               class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none transition-all">
                     {% endif %}
                 </div>
                 

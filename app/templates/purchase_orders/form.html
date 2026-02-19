@@ -69,8 +69,8 @@
                 {% endif %}
             </div>
             
-            <div class="grid grid-cols-9 gap-4">
-                <div class="col-span-3">
+            <div class="grid grid-cols-11 gap-4">
+                <div class="col-span-4">
                     <label class="block text-sm font-medium text-gray-500">Client</label>
                     {% if mode == 'view' %}
                         <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ po.client.full_display }}</p>
@@ -94,7 +94,7 @@
                     {% endif %}
                 </div>
                 
-                <div class="col-span-2">
+                <div class="col-span-3">
                     <label class="block text-sm font-medium text-gray-500">PO Number</label>
                     {% if mode == 'view' %}
                         <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ po.po_number or '-'}}</p>
@@ -103,16 +103,14 @@
                                class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none transition-all">
                     {% endif %}
                 </div>
-                
+
                 <div class="col-span-2">
-                    <label class="block text-sm font-medium text-gray-500">Source Quote (Optional)</label>
-                    <div id="quote-select-container">
-                        {% if mode == 'view' %}
-                            <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ po.quote.quote_number if po.quote else 'Manual PO' }}</p>
-                        {% else %}
-                            {% include 'purchase_orders/partials/quote_select.html' with context %}
-                        {% endif %}
-                    </div>
+                    <label class="block text-sm font-medium text-gray-500">PO Date</label>
+                    {% if mode == 'view' %}
+                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ po.po_date or '-' }}</p>
+                    {% else %}
+                        <input type="date" name="po_date" value="{{ po.po_date if po else now.strftime('%Y-%m-%d') }}" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">
+                    {% endif %}
                 </div>
 
                 <div class="col-span-2">
@@ -143,8 +141,7 @@
                     {% endif %}
                 </div>
 
-                
-                <div class="col-span-3">
+                <div class="col-span-4">
                     <label class="block text-sm font-medium text-gray-500">Bill To</label>
                     <div id="bill-to-select-container">
                         {# Handled by OOB or po_view #}
@@ -157,13 +154,15 @@
                     </div>
                 </div>
                 
-                <div class="col-span-2">
-                    <label class="block text-sm font-medium text-gray-500">PO Date</label>
-                    {% if mode == 'view' %}
-                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ po.po_date or '-' }}</p>
-                    {% else %}
-                        <input type="date" name="po_date" value="{{ po.po_date if po else now.strftime('%Y-%m-%d') }}" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">
-                    {% endif %}
+                <div class="col-span-3">
+                    <label class="block text-sm font-medium text-gray-500">Quote Number (Optional)</label>
+                    <div id="quote-select-container">
+                        {% if mode == 'view' %}
+                            <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ po.quote.quote_number if po.quote else 'Manual PO' }}</p>
+                        {% else %}
+                            {% include 'purchase_orders/partials/quote_select.html' with context %}
+                        {% endif %}
+                    </div>
                 </div>
 
                 <div class="col-span-2">
