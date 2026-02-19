@@ -4,7 +4,7 @@ from ..extensions import db
 from ..utils.money import parse_to_cents, format_usd
 from ..utils.manual_pagination import ManualPagination
 from sqlalchemy import select, or_, func, case
-from sqlalchemy.orm import contains_eager
+from sqlalchemy.orm import contains_eager, joinedload, selectinload
 from datetime import datetime
 
 class InvoiceService(BaseService):
@@ -145,18 +145,29 @@ class InvoiceService(BaseService):
         Returns the Invoice record augmented with .balance.
         Used for Cascades and Source-Driven logic.
         """
-        invoice = cls.get_by_id(id)
+        # 1. Eager load Client, Bill-To, PO, and Order Registry
+        stmt = (
+            select(cls.model)
+            .options(
+                joinedload(cls.model.client).selectinload(Client.contacts),
+                joinedload(cls.model.bill_to).selectinload(Client.contacts),
+                joinedload(cls.model.purchase_order),
+                joinedload(cls.model.order)
+            )
+            .where(cls.model.id == id)
+        )
+        invoice = db.session.execute(stmt).scalar_one_or_none()
         if not invoice:
             return None
         
-        # 1. Total Paid toward this specific invoice
+        # 2. Total Paid toward this specific invoice
         pay_stmt = select(func.sum(Payment.amount)).where(
             Payment.invoice_id == invoice.id, 
             Payment.is_active == True
         )
         total_paid = db.session.execute(pay_stmt).scalar() or 0
 
-        # 2. The total cash ever received for the linked PO (Initial pool)
+        # 3. The total cash ever received for the linked PO (Initial pool)
         prepay_stmt = select(func.sum(Payment.amount)).where(
             Payment.po_id == invoice.po_id, 
             Payment.invoice_id == None, 
