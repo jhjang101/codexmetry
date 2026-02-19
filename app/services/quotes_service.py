@@ -3,7 +3,7 @@ from ..models import Quote, QuoteItem, Client, OrderRegistry
 from ..extensions import db
 from ..utils.money import parse_to_cents
 from sqlalchemy import select, or_
-from sqlalchemy.orm import contains_eager
+from sqlalchemy.orm import contains_eager, joinedload, selectinload
 from datetime import datetime
 
 class QuoteService(BaseService):
@@ -67,7 +67,7 @@ class QuoteService(BaseService):
         Update Quote header and line items.
         """
         # 1. Validation
-        quote = cls.get_by_id(quote_id)
+        quote = cls.get_quote_by_id(quote_id)
         if not quote:
             raise ValueError("Quote not found.")
 
@@ -83,6 +83,24 @@ class QuoteService(BaseService):
 
         db.session.commit()
         return quote
+    
+    @classmethod
+    def get_quote_by_id(cls, id: int) -> Quote | None:
+        """
+        Fetcher: Returns Quote with eager-loaded Client (and contacts) 
+        and Order Registry for high-performance form rendering.
+        """
+        stmt = (
+            select(cls.model)
+            .options(
+                # Load the Client and their nested contacts
+                joinedload(cls.model.client).selectinload(Client.contacts),
+                # Load the Order Registry to support quote.order.order_number
+                joinedload(cls.model.order)
+            )
+            .where(cls.model.id == id)
+        )
+        return db.session.execute(stmt).scalar_one_or_none()
     
     @classmethod
     def get_quotes_by_client(cls, client_id: int, include_id: int | None = None, statuses: list[str] | None = None):

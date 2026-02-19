@@ -82,7 +82,7 @@ def add():
 @bp.route('/view/<int:id>')
 def view(id):
     try:
-        quote = QuoteService.get_by_id(id)
+        quote = QuoteService.get_quote_by_id(id)
         if not quote:
             flash("Quote not found.", "error")
             return redirect(url_for('quotes.index'))
@@ -94,7 +94,7 @@ def view(id):
 
 @bp.route('/edit/<int:id>', methods=['GET', 'POST'])
 def edit(id):
-    quote = QuoteService.get_by_id(id)
+    quote = QuoteService.get_quote_by_id(id)
     if not quote:
         flash("Quote not found.", "error")
         return redirect(url_for('quotes.index'))
