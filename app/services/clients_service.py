@@ -8,6 +8,20 @@ class ClientService(BaseService):
     model = Client
 
     @classmethod
+    def get_all(cls):
+        """
+        Override: Eager load contacts so that templates using .full_display 
+        don't trigger N+1 lazy-loading queries.
+        """
+        stmt = (
+            select(cls.model)
+            .options(db.joinedload(cls.model.contacts)) # Fetch contacts in the same query
+            .where(cls.model.is_active == True)
+            .order_by(cls.model.company_name.asc())
+        )
+        return db.session.execute(stmt).scalars().unique().all()
+
+    @classmethod
     def get_all_with_search(cls, search_term: str | None = None, page: int = 1, per_page: int = 10):
         """
         Search: Implementation of filtered search for the client list.

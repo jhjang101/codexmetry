@@ -88,6 +88,15 @@ class Client(db.Model):
     paid_from_payments: Mapped[list["Payment"]] = relationship(back_populates="paid_from", foreign_keys="[Payment.paid_from_id]")
     expenses: Mapped[list["Expense"]] = relationship(back_populates="client")
 
+    @property
+    def full_display(self):
+        """Returns 'Company Name (Contact Name)' or just 'Company Name'"""
+        if self.contacts:
+            contact = self.contacts[0]
+            name = f"{contact.first_name or ''} {contact.last_name or ''}".strip()
+            return f"{self.company_name} ({name})" if name else self.company_name
+        return self.company_name
+
 class ClientContact(db.Model):
     __tablename__ = 'client_contacts'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
