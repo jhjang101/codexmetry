@@ -260,9 +260,7 @@ def update_client_cascades():
 def load_quote_items():
     """Returns multiple item_row partials based on a selected Quote."""
     quote_id = request.args.get('quote_id', type=int)
-    if not quote_id:
-        return ""
-    quote = QuoteService.get_quote_by_id(quote_id)
+    quote = QuoteService.get_quote_by_id(quote_id) if quote_id else None
     if not quote:
         return "" # If 'No Quote' selected, do nothing or return a blank row
 

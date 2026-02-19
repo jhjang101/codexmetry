@@ -118,7 +118,7 @@ class InvoiceService(BaseService):
     @classmethod
     def edit_invoice(cls, id: int, data: dict, items_data: list[dict]) -> Invoice:
         """Atomic update of header and items with credit pool validation."""
-        invoice = cls.get_by_id(id)
+        invoice = cls.get_invoice_by_id(id)
         if not invoice:
             raise ValueError("Invoice not found.")
 
@@ -193,7 +193,7 @@ class InvoiceService(BaseService):
         Specialized archive for Invoices.
         Checks for active payments and returns (invoice, has_payments).
         """
-        invoice = cls.get_by_id(id)
+        invoice = cls.get_invoice_by_id(id)
         if not invoice:
             return None, False
 
