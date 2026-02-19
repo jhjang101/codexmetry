@@ -145,7 +145,7 @@ class PurchaseOrderService(BaseService):
         Handles Quote status reversion if the link changed.
         """
         # 1. Validation
-        po = cls.get_by_id(po_id)
+        po = cls.get_po_by_id(po_id)
         if not po:
             raise ValueError("Purchase Order not found.")
         quote_id = data.get('quote_id')
@@ -284,7 +284,7 @@ class PurchaseOrderService(BaseService):
         Specialized archive that ripples through Registry, Quotes, and Invoices.
         Returns (PO object, has_payments boolean).
         """
-        po = cls.get_by_id(id)
+        po = cls.get_po_by_id(id)
         if not po:
             return None, False
 

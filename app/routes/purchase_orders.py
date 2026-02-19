@@ -97,7 +97,7 @@ def view(id):
 
 @bp.route('/edit/<int:id>', methods=['GET', 'POST'])
 def edit(id):
-    po = PurchaseOrderService.get_by_id(id)
+    po = PurchaseOrderService.get_po_by_id(id)
     if not po:
         flash("Purchase Order not found.", "error")
         return redirect(url_for('purchase_orders.index'))
@@ -260,7 +260,9 @@ def update_client_cascades():
 def load_quote_items():
     """Returns multiple item_row partials based on a selected Quote."""
     quote_id = request.args.get('quote_id', type=int)
-    quote = QuoteService.get_by_id(quote_id)
+    if not quote_id:
+        return ""
+    quote = QuoteService.get_quote_by_id(quote_id)
     if not quote:
         return "" # If 'No Quote' selected, do nothing or return a blank row
 
