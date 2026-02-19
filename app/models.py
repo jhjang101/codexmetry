@@ -1,11 +1,33 @@
 from .extensions import db, login_manager
-from flask_login import UserMixin
+from flask_login import UserMixin, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String, Integer, Boolean, DateTime, Date, Text, ForeignKey, func
+from sqlalchemy.orm import Mapped, mapped_column, relationship, declared_attr
+from sqlalchemy import String, Integer, Boolean, DateTime, Date, Text, ForeignKey, func, event
 from datetime import datetime, date
 
 # --- 1. AUTH ---
+class AuditMixin:
+    """Mixin to automatically track creation and updates."""
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.current_timestamp())
+    updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.current_timestamp(), onupdate=func.current_timestamp())
+    
+    @declared_attr
+    def created_by_id(cls) -> Mapped[int | None]:
+        return mapped_column(ForeignKey('users.id'))
+
+    @declared_attr
+    def updated_by_id(cls) -> Mapped[int | None]:
+        return mapped_column(ForeignKey('users.id'))
+
+    # Relationships (Singular naming)
+    @declared_attr
+    def creator(cls) -> Mapped["User"]:
+        return relationship("User", foreign_keys=[cls.created_by_id]) # type: ignore
+
+    @declared_attr
+    def updater(cls) -> Mapped["User"]:
+        return relationship("User", foreign_keys=[cls.updated_by_id]) # type: ignore
+
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -71,7 +93,7 @@ class SettingsMetadata(db.Model):
     doc_padding: Mapped[int] = mapped_column(Integer, default=4)
 
 # --- 4. MASTER DATA ---
-class Client(db.Model):
+class Client(db.Model, AuditMixin):
     __tablename__ = 'clients'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     company_name: Mapped[str] = mapped_column(String(255), nullable=False)
@@ -107,7 +129,7 @@ class ClientContact(db.Model):
 
     client: Mapped["Client"] = relationship(back_populates="contacts")
 
-class Vendor(db.Model):
+class Vendor(db.Model, AuditMixin):
     __tablename__ = 'vendors'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     company_name: Mapped[str] = mapped_column(String(255), nullable=False)
@@ -128,7 +150,7 @@ class VendorContact(db.Model):
 
     vendor: Mapped["Vendor"] = relationship(back_populates="contacts")
 
-class Product(db.Model):
+class Product(db.Model, AuditMixin):
     __tablename__ = 'products'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
@@ -142,7 +164,7 @@ class Product(db.Model):
     category: Mapped["ProductCategory"] = relationship()
 
 # --- 5. REGISTRY & SALES ---
-class OrderRegistry(db.Model):
+class OrderRegistry(db.Model, AuditMixin):
     __tablename__ = 'orders'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     order_number: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
@@ -155,7 +177,7 @@ class OrderRegistry(db.Model):
     payments: Mapped[list["Payment"]] = relationship(back_populates="order")
     expenses: Mapped[list["Expense"]] = relationship(back_populates="order")
 
-class Quote(db.Model):
+class Quote(db.Model, AuditMixin):
     __tablename__ = 'quotes'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     client_id: Mapped[int] = mapped_column(ForeignKey('clients.id'), nullable=False)
@@ -179,7 +201,7 @@ class Quote(db.Model):
         order_by="Attachment.uploaded_at.asc()"
     )
 
-class PurchaseOrder(db.Model):
+class PurchaseOrder(db.Model, AuditMixin):
     __tablename__ = 'purchase_orders'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     order_id: Mapped[int] = mapped_column(ForeignKey('orders.id'), nullable=False)
@@ -210,7 +232,7 @@ class PurchaseOrder(db.Model):
         order_by="Attachment.uploaded_at.asc()"
     )
 
-class Invoice(db.Model):
+class Invoice(db.Model, AuditMixin):
     __tablename__ = 'invoices'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     order_id: Mapped[int] = mapped_column(ForeignKey('orders.id'), nullable=False)
@@ -239,7 +261,7 @@ class Invoice(db.Model):
         order_by="Attachment.uploaded_at.asc()"
     )
 
-class Payment(db.Model):
+class Payment(db.Model, AuditMixin):
     __tablename__ = 'payments'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     order_id: Mapped[int] = mapped_column(ForeignKey('orders.id'), nullable=False)
@@ -266,7 +288,7 @@ class Payment(db.Model):
         order_by="Attachment.uploaded_at.asc()"
     )
 
-class Expense(db.Model):
+class Expense(db.Model, AuditMixin):
     __tablename__ = 'expenses'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     expense_number: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
@@ -297,7 +319,7 @@ class Expense(db.Model):
         order_by="Attachment.uploaded_at.asc()"
     )
 
-class Transaction(db.Model):
+class Transaction(db.Model, AuditMixin):
     __tablename__ = 'transactions'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     transaction_number: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
@@ -368,7 +390,7 @@ class ExpenseItem(db.Model):
     expense: Mapped["Expense"] = relationship(back_populates="items")
 
 # --- 7. UTILITIES ---
-class Attachment(db.Model):
+class Attachment(db.Model, AuditMixin):
     __tablename__ = 'attachments'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     entity_type: Mapped[str] = mapped_column(String(50), nullable=False) 
@@ -376,3 +398,24 @@ class Attachment(db.Model):
     file_path: Mapped[str] = mapped_column(String(255), nullable=False)
     file_name: Mapped[str] = mapped_column(String(255), nullable=False)
     uploaded_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.current_timestamp())
+
+# --- 8. AUDIT EVENT LISTENERS ---
+
+def set_audit_fields(mapper, connection, target):
+    """Automatically set user IDs from the Flask-Login context."""
+    # current_user.get_id() returns None if not authenticated or outside request context
+    user_id = current_user.get_id()
+    if user_id:
+        if not target.created_by_id:
+            target.created_by_id = int(user_id)
+        target.updated_by_id = int(user_id)
+
+# We list all models that should use this logic
+AUDIT_MODELS = [Client, Vendor, Product, 
+                OrderRegistry, Quote, PurchaseOrder, 
+                Invoice, Payment, Expense, 
+                Transaction, Attachment]
+
+for model in AUDIT_MODELS:
+    event.listen(model, 'before_insert', set_audit_fields)
+    event.listen(model, 'before_update', set_audit_fields)
