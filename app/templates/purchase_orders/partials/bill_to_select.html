@@ -36,7 +36,7 @@
         {% for client in clients %}
             <option value="{{ client.id }}" 
                 {{ 'selected' if selection_target == client.id else '' }}>
-                {{ client.company_name }}
+                {{ client.full_display }}
                 {# Only show the asterisk if the context matches AND this is the saved ID #}
                 {{ '*' if (show_saved_indicators and client.id == po.bill_to_id) else '' }}
             </option>

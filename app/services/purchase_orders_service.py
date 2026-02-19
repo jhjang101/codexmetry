@@ -5,7 +5,7 @@ from ..utils.docs import generate_doc_number
 from ..utils.money import parse_to_cents
 from ..utils.manual_pagination import ManualPagination
 from sqlalchemy import select, or_, func, and_, exists
-from sqlalchemy.orm import contains_eager
+from sqlalchemy.orm import contains_eager, joinedload, selectinload
 from datetime import datetime
 
 class PurchaseOrderService(BaseService):
@@ -186,11 +186,23 @@ class PurchaseOrderService(BaseService):
         """
         Fetcher: Returns PO with calculated balance, prepayment, and remaining credit pools.
         """
-        po = cls.get_by_id(id)
+        # 1. Manually build the statement to include eager loading of contacts
+        stmt = (
+            select(cls.model)
+            .options(
+                # Load the primary Client and their contacts
+                db.joinedload(cls.model.client).selectinload(Client.contacts),
+                # Load the Bill-To Client and their contacts
+                db.joinedload(cls.model.bill_to).selectinload(Client.contacts)
+            )
+            .where(cls.model.id == id)
+        )
+        # Execute and get the result
+        po = db.session.execute(stmt).scalar_one_or_none()
         if not po:
             return None
         
-        # 1. Calculate Total Invoiced
+        # 2. Calculate Total Invoiced
         # We ONLY sum totals that are greater than zero. This is Total Due.
         # Negative invoices (credits) do not reduce the contract gap.
         inv_sum_stmt = select(func.sum(Invoice.total_amount)).where(
@@ -198,13 +210,13 @@ class PurchaseOrderService(BaseService):
         )
         total_invoiced = db.session.execute(inv_sum_stmt).scalar() or 0
 
-        # 2. Calculate Total Prepayment (invoiceless payments)
+        # 3. Calculate Total Prepayment (invoiceless payments)
         prepay_stmt = select(func.sum(Payment.amount)).where(
             Payment.po_id == po.id, Payment.invoice_id == None, Payment.is_active == True
         )
         total_prepayment = db.session.execute(prepay_stmt).scalar() or 0
 
-        # 3. Calculate Applied Deposit (Sum of 'Applied Deposit' line items)
+        # 4. Calculate Applied Deposit (Sum of 'Applied Deposit' line items)
         applied_stmt = (
             select(func.sum(InvoiceItem.quantity * InvoiceItem.billed_unit_price))
             .join(Invoice).join(Product)
@@ -212,21 +224,21 @@ class PurchaseOrderService(BaseService):
         )
         total_applied_deposit = db.session.execute(applied_stmt).scalar() or 0
 
-        # 4. Calculate Carry-over Credits (Negative grand totals). 
+        # 5. Calculate Carry-over Credits (Negative grand totals). 
         # This is sum of remaining credits in all linked invoices.
         neg_total_stmt = select(func.sum(Invoice.total_amount)).where(
             Invoice.po_id == po.id, Invoice.is_active == True, Invoice.total_amount < 0
         )
         total_neg_carryover = db.session.execute(neg_total_stmt).scalar() or 0
 
-        # 5. Final Financial Attributes
+        # 6. Final Financial Attributes
         po.total_prepayment = total_prepayment
         po.balance = po.total_amount - total_invoiced - total_prepayment
         
         remaining = total_prepayment + total_applied_deposit - total_neg_carryover
         po.remaining_credit = max(0, remaining)
 
-        # 6. Calculate Fulfillment (Items left to ship)
+        # 7. Calculate Fulfillment (Items left to ship)
         remaining_items = []
         for po_item in po.items:
             invoiced_qty_stmt = (
@@ -249,7 +261,7 @@ class PurchaseOrderService(BaseService):
                     'description': po_item.description
                 })
         
-        # 7. Add Applied Deposit row for Invoice automation if remaining credit exists
+        # 8. Add Applied Deposit row for Invoice automation if remaining credit exists
         if po.remaining_credit > 0:
             system_product = db.session.execute(
                 select(Product).where(Product.is_system == True, Product.name == 'Applied Deposit')
