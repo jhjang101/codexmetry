@@ -15,12 +15,12 @@ class ExpenseService(BaseService):
         # 1. Base statement with eager loading
         stmt = (
             select(cls.model)
-            .join(Vendor)
-            .outerjoin(Client)
-            .outerjoin(ExpenseCategory)
-            .outerjoin(OrderRegistry)
-            .outerjoin(PurchaseOrder)
-            .outerjoin(Invoice)
+            .join(cls.model.vendor)
+            .outerjoin(cls.model.client)
+            .outerjoin(cls.model.category)
+            .outerjoin(cls.model.order)
+            .outerjoin(cls.model.purchase_order)
+            .outerjoin(cls.model.invoice)
             .options(
                 contains_eager(cls.model.vendor),
                 contains_eager(cls.model.category),
@@ -47,7 +47,10 @@ class ExpenseService(BaseService):
                 )
             )
 
-        # 3. Order by date (newest first)
+        # 3. Add .distinct() to collapse duplicate rows caused by joins
+        stmt = stmt.distinct()
+
+        # 4. Order by date (newest first)
         stmt = stmt.order_by(cls.model.expense_date.desc())
 
         return cls.paginate(stmt, page=page, per_page=per_page)
