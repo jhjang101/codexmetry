@@ -1,4 +1,5 @@
 from .extensions import db, login_manager
+from flask import has_request_context
 from flask_login import UserMixin, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy.orm import Mapped, mapped_column, relationship, declared_attr
@@ -403,6 +404,9 @@ class Attachment(db.Model, AuditMixin):
 
 def set_audit_fields(mapper, connection, target):
     """Automatically set user IDs from the Flask-Login context."""
+    # If we are running run.py (no request context), skip auditing
+    if not has_request_context():
+        return
     # current_user.get_id() returns None if not authenticated or outside request context
     user_id = current_user.get_id()
     if user_id:
