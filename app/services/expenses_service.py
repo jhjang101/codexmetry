@@ -4,7 +4,7 @@ from ..extensions import db
 from ..utils.docs import generate_doc_number
 from ..utils.money import parse_to_cents
 from sqlalchemy import select, or_, func
-from sqlalchemy.orm import contains_eager
+from sqlalchemy.orm import contains_eager, joinedload, selectinload
 from datetime import datetime
 
 class ExpenseService(BaseService):
@@ -82,7 +82,7 @@ class ExpenseService(BaseService):
         Update Expense header and items.
         """
         # 1. Validation
-        expense = cls.get_by_id(expense_id)
+        expense = cls.get_expense_by_id(expense_id)
         if not expense:
             raise ValueError("Expense not found.")
 
@@ -98,6 +98,31 @@ class ExpenseService(BaseService):
 
         db.session.commit()
         return expense
+    
+    @classmethod
+    def get_expense_by_id(cls, id: int) -> Expense | None:
+        """
+        Fetcher: Returns Expense with eager-loaded Vendor, Client (and contacts),
+        and the full Project Registry hierarchy (Order, PO, Invoice).
+        Prevents N+1 queries when using .full_display or viewing job-costing refs.
+        """
+        stmt = (
+            select(cls.model)
+            .options(
+                # 1. Load mandatory Vendor relationship
+                joinedload(cls.model.vendor),
+                # 2. Load the optional Client and their contacts for .full_display
+                joinedload(cls.model.client).selectinload(Client.contacts),
+                # 3. Load the lookup category
+                joinedload(cls.model.category),
+                # 4. Load the Job Costing hierarchy
+                joinedload(cls.model.order),
+                joinedload(cls.model.purchase_order),
+                joinedload(cls.model.invoice)
+            )
+            .where(cls.model.id == id)
+        )
+        return db.session.execute(stmt).scalar_one_or_none()
     
     # --- INTERNAL HELPERS ---
 

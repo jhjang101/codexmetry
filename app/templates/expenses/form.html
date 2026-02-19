@@ -97,7 +97,7 @@
                 <div class="col-span-3">
                     <label class="block text-sm font-medium text-gray-500">Link to Client (Optional)</label>
                     {% if mode == 'view' %}
-                        <p class="mt-1 block bg-gray-100 border rounded-lg p-2 text-sm">{{ expense.client.company_name if (expense and expense.client) else 'Independent Expense' }}</p>
+                        <p class="mt-1 block bg-gray-100 border rounded-lg p-2 text-sm">{{ expense.client.full_display if (expense and expense.client) else 'Independent Expense' }}</p>
                     {% else %}
                         <div class="relative">
                             <!-- Triggers HTMX Cascade to find POs -->
@@ -110,7 +110,7 @@
                                 {% for client in clients %}
                                     <option value="{{ client.id }}" 
                                         {{ 'selected' if (expense and expense.client_id == client.id) else '' }}>
-                                        {{ client.company_name }}
+                                        {{ client.full_display }}
                                     </option>
                                 {% endfor %}
                             </select>

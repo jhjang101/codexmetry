@@ -93,7 +93,7 @@ def add():
 @bp.route('/view/<int:id>')
 def view(id):
     try:
-        expense = ExpenseService.get_by_id(id)
+        expense = ExpenseService.get_expense_by_id(id)
         if not expense:
             flash("Expense not found.", "error")
             return redirect(url_for('expenses.index'))
@@ -105,7 +105,7 @@ def view(id):
 
 @bp.route('/edit/<int:id>', methods=['GET', 'POST'])
 def edit(id):
-    expense = ExpenseService.get_by_id(id)
+    expense = ExpenseService.get_expense_by_id(id)
     if not expense:
         flash("Expense not found.", "error")
         return redirect(url_for('expenses.index'))
@@ -231,7 +231,7 @@ def update_client_cascades():
     """
     client_id = request.args.get('client_id', type=int)
     expense_id = request.args.get('expense_id', type=int)
-    expense = ExpenseService.get_by_id(expense_id) if expense_id else None
+    expense = ExpenseService.get_expense_by_id(expense_id) if expense_id else None
 
     # 1. Fetch POs for the selected client
     po_id = expense.po_id if expense else None
@@ -243,7 +243,7 @@ def update_client_cascades():
 
     # 2. SMART RETURN: If switching back to the original client, fetch original invoices
     invoices = []
-    if expense and client_id == expense.client_id:
+    if expense and client_id == expense.client_id and expense.po_id:
         invoices = InvoiceService.get_invoices_by_po(
             expense.po_id, 
             include_id=expense.invoice_id,
@@ -264,11 +264,11 @@ def update_po_cascades():
     """
     po_id = request.args.get('po_id', type=int)
     expense_id = request.args.get('expense_id', type=int)
-    expense = ExpenseService.get_by_id(expense_id) if expense_id else None
+    expense = ExpenseService.get_expense_by_id(expense_id) if expense_id else None
 
     # We need the parent client_id to keep the PO dropdown enabled in the partial
     # The po_id comes from the select, so we look up that PO to find its client
-    po = PurchaseOrderService.get_by_id(po_id) if po_id else None
+    po = PurchaseOrderService.get_po_by_id(po_id) if po_id else None
 
     # Populate eligible Invoices for this PO
     invoices = InvoiceService.get_invoices_by_po(
