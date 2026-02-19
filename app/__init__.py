@@ -1,5 +1,6 @@
 import os
-from flask import Flask, render_template
+import logging
+from flask import Flask, render_template, request, redirect, url_for, flash
 from sqlalchemy.exc import SQLAlchemyError
 from datetime import datetime
 from zoneinfo import ZoneInfo
@@ -51,9 +52,24 @@ def create_app():
     # 5. Error Handling
     @app.errorhandler(SQLAlchemyError)
     def handle_db_error(error):
+        # 1. Atomic Safeguard
+        # Ensure any partial changes (like a header saved without items) are reverted
         db.session.rollback()
-        # In the future, we can return an HTMX-specific error snippet
-        return render_template('error.html', error="A database error occurred."), 500
+        
+        # 2. Log the full traceback for the developer
+        logging.error(f"SQLAlchemy Error: {str(error)}", exc_info=True)
+
+        message = "A database error occurred. Your changes were not saved."
+
+        # 3. Contextual Feedback
+        if request.headers.get('HX-Request'):
+            # HTMX Response: Return an Out-of-Band (OOB) swap
+            # This injects the error at the top of the form without refreshing the page
+            return render_template('partials/error_notification.html', message=message), 200
+        else:
+            # Standard Response: Flash and redirect to a safe landing spot
+            flash(message, "error")
+            return redirect(url_for('dashboard.index'))
     
     # 6. Global Context Processors (For now, and Metadata)
     @app.context_processor

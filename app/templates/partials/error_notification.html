@@ -1,0 +1,12 @@
+<div id="global-error-target" hx-swap-oob="true">
+    <div class="bg-red-50 border-l-4 border-red-500 p-3 mb-2 rounded shadow-sm flex justify-between items-center animate-pulse">
+        <div class="flex items-center">
+            <i class="fa-solid fa-triangle-exclamation text-red-500 mr-2"></i>
+            <span class="text-xs font-bold text-red-800 uppercase tracking-wider">Database Error:</span>
+            <span class="text-xs text-red-700 ml-2">{{ message }}</span>
+        </div>
+        <button type="button" class="text-red-400 hover:text-red-600" onclick="this.parentElement.parentElement.innerHTML=''">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+    </div>
+</div>
