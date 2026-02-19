@@ -1,5 +1,7 @@
+import os
 from app import create_app, db
-from app.models import SettingsMetadata, Product
+from app.models import SettingsMetadata, Product, User
+from sqlalchemy import select
 
 app = create_app()
 
@@ -34,5 +36,21 @@ if __name__ == '__main__':
             db.session.add(system_product)
             db.session.commit()
             print("System Product 'Applied Deposit' seeded successfully.")
+
+        # 3. Seed Initial Admin User from .env
+        if db.session.execute(select(User)).first() is None:
+            admin_user = User()
+            admin_user.username = os.getenv('INITIAL_ADMIN_USERNAME', 'admin')
+            admin_user.email = os.getenv('INITIAL_ADMIN_EMAIL', 'admin@codexmetry.local')
+            admin_user.role = 'admin'
+            admin_user.is_active = True
+            
+            # Use the method in your User model to hash the password safely
+            password = os.environ.get('INITIAL_ADMIN_PASSWORD', 'admin123')
+            admin_user.set_password(password)
+            
+            db.session.add(admin_user)
+            db.session.commit()
+            print(f"Admin user '{admin_user.username}' created successfully.")
 
     app.run(host='0.0.0.0', debug=True, port=5001)
