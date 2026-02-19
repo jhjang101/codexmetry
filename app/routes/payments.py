@@ -92,7 +92,7 @@ def add():
 
 @bp.route('/view/<int:id>')
 def view(id):
-    payment = PaymentService.get_by_id(id)
+    payment = PaymentService.get_payment_by_id(id)
     if not payment:
         flash("Payment not found.", "error")
         return redirect(url_for('payments.index'))
@@ -113,7 +113,7 @@ def view(id):
 @bp.route('/edit/<int:id>', methods=['GET', 'POST'])
 def edit(id):
     """Edit mode: handles header updates."""
-    payment = PaymentService.get_by_id(id)
+    payment = PaymentService.get_payment_by_id(id)
     if not payment:
         flash("Payment not found.", "error")
         return redirect(url_for('payments.index'))
@@ -163,7 +163,7 @@ def edit(id):
             flash(f"Payment updated successfully!", "success")
             
             # Flash for the current invoice
-            if invoice_status_updated:
+            if invoice_status_updated and payment.invoice:
                 flash(f"Status of invoice {payment.invoice.invoice_number} updated successfully!", "success")
             
             # Flash for the old invoice (if it was swapped)
@@ -250,7 +250,7 @@ def update_client_cascades():
     """
     client_id = request.args.get('client_id', type=int)
     payment_id = request.args.get('payment_id', type=int)
-    payment = PaymentService.get_by_id(payment_id) if payment_id else None
+    payment = PaymentService.get_payment_by_id(payment_id) if payment_id else None
 
     # 1. Fetch POs for the selected client (Standard)
     po_id = payment.po_id if payment else None
@@ -286,7 +286,7 @@ def update_po_cascades():
     """
     po_id = request.args.get('po_id', type=int)
     payment_id = request.args.get('payment_id', type=int)
-    payment = PaymentService.get_by_id(payment_id) if payment_id else None
+    payment = PaymentService.get_payment_by_id(payment_id) if payment_id else None
 
     # Prefill Paid_from and Amount with this po
     po = PurchaseOrderService.get_po_by_id(po_id) if po_id else None
@@ -319,7 +319,7 @@ def update_invoice_cascades():
     payment_id = request.args.get('payment_id', type=int)
     po_id = request.args.get('po_id', type=int)
 
-    payment = PaymentService.get_by_id(payment_id) if payment_id else None
+    payment = PaymentService.get_payment_by_id(payment_id) if payment_id else None
 
     # Prefill Paid_from and Amount with this invoice
     invoice = InvoiceService.get_invoice_by_id(invoice_id) if invoice_id else None

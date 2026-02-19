@@ -73,7 +73,7 @@
                 <div class="col-span-3">
                     <label class="block text-sm font-medium text-gray-500">Client</label>
                     {% if mode == 'view' %}
-                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ payment.client.company_name }}</p>
+                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ payment.client.full_display }}</p>
                     {% else %}
                         <div class="relative">
                             <select name="client_id" 
@@ -84,7 +84,7 @@
                                     required>
                                 <option value="">Select Client...</option>
                                 {% for client in clients %}
-                                    <option value="{{ client.id }}" {{ 'selected' if (payment and payment.client_id == client.id) else '' }}>{{ client.company_name }}</option>
+                                    <option value="{{ client.id }}" {{ 'selected' if (payment and payment.client_id == client.id) else '' }}>{{ client.full_display }}</option>
                                 {% endfor %}
                             </select>
                             <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-400">
@@ -134,7 +134,7 @@
                     <label class="block text-sm font-medium text-gray-500">Paid From</label>
                     <div id="paid-from-select-container">
                         {% if mode == 'view' %}
-                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ payment.paid_from.company_name if payment.paid_from else '-'}}</p>
+                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ payment.paid_from.full_display if payment.paid_from else '-'}}</p>
                         {% else %}
                             {% include 'payments/partials/paid_from_select.html' with context %}
                         {% endif %}

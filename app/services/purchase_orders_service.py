@@ -193,7 +193,8 @@ class PurchaseOrderService(BaseService):
                 # Load the primary Client and their contacts
                 db.joinedload(cls.model.client).selectinload(Client.contacts),
                 # Load the Bill-To Client and their contacts
-                db.joinedload(cls.model.bill_to).selectinload(Client.contacts)
+                db.joinedload(cls.model.bill_to).selectinload(Client.contacts),
+                joinedload(cls.model.order)
             )
             .where(cls.model.id == id)
         )

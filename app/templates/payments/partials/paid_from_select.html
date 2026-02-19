@@ -69,7 +69,7 @@
         
         {% for client in clients %}
             <option value="{{ client.id }}" {{ 'selected' if selection_target == client.id else '' }}>
-                {{ client.company_name }}
+                {{ client.full_display }}
                 {{ '*' if (show_saved_indicators and payment.paid_from_id == client.id) else '' }}
             </option>
         {% endfor %}

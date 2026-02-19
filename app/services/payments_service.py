@@ -4,7 +4,7 @@ from ..models import Payment, Invoice, InvoiceItem, Product, PurchaseOrder, Orde
 from ..extensions import db
 from ..utils.money import parse_to_cents, format_usd
 from sqlalchemy import select, or_, func
-from sqlalchemy.orm import contains_eager
+from sqlalchemy.orm import contains_eager, joinedload, selectinload
 from datetime import datetime
 
 class PaymentService(BaseService):
@@ -74,7 +74,7 @@ class PaymentService(BaseService):
         the payment amount cannotbe reduced.
         """
         # 1. Validation
-        payment = cls.get_by_id(payment_id)
+        payment = cls.get_payment_by_id(payment_id)
         if not payment:
             raise ValueError("Payment not found.")
         
@@ -109,7 +109,7 @@ class PaymentService(BaseService):
         """
         Specialized archive with Credit Pool protection (Funding Deletion Guard).
         """
-        payment = cls.get_by_id(id)
+        payment = cls.get_payment_by_id(id)
         if not payment:
             return None
 
@@ -129,6 +129,30 @@ class PaymentService(BaseService):
         payment.is_active = False
         db.session.commit()
         return payment
+    
+    @classmethod
+    def get_payment_by_id(cls, id: int) -> Payment | None:
+        """
+        Fetcher: Returns Payment with eager-loaded Client (and contacts), 
+        Payer (and contacts), and all Registry links (Order, PO, Invoice).
+        Prevents N+1 queries when using .full_display or viewing hierarchy refs.
+        """
+        stmt = (
+            select(cls.model)
+            .options(
+                # 1. Load the primary Client and their contacts for display
+                joinedload(cls.model.client).selectinload(Client.contacts),
+                # 2. Load the Payer (Paid From) and their contacts
+                joinedload(cls.model.paid_from).selectinload(Client.contacts),
+                # 3. Load lookup and registry references
+                joinedload(cls.model.order),
+                joinedload(cls.model.purchase_order),
+                joinedload(cls.model.invoice),
+                joinedload(cls.model.payment_type)
+            )
+            .where(cls.model.id == id)
+        )
+        return db.session.execute(stmt).scalar_one_or_none()
     
     # --- INTERNAL HELPERS ---
     
