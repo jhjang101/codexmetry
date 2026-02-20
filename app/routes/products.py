@@ -3,6 +3,7 @@ from flask_login import login_required
 from ..services.products_service import ProductService
 from ..services.settings_service import ProductCategoryService
 from ..utils.images import save_image
+from ..utils.auth import role_required
 from ..extensions import db
 
 bp = Blueprint('products', __name__)
@@ -36,6 +37,7 @@ def index():
 # --- CRUD OPERATIONS ---
 
 @bp.route('/add', methods=['GET', 'POST'])
+@role_required(['admin', 'user'])
 def add():
     if request.method == 'POST':
         try:
@@ -84,6 +86,7 @@ def view(id):
     return render_template('products/form.html', mode='view', product=product)
 
 @bp.route('/edit/<int:id>', methods=['GET', 'POST'])
+@role_required(['admin', 'user'])
 def edit(id):
     try:
         product = ProductService.get_product_by_id(id)
@@ -131,6 +134,7 @@ def edit(id):
     return render_template('products/form.html', mode='edit', product=product, categories=categories)
 
 @bp.route('/archive/<int:id>', methods=['POST'])
+@role_required(['admin']) # Only Admin can delete
 def archive(id):
     try:
         product = ProductService.archive_product(id)

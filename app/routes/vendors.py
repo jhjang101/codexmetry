@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash
 from flask_login import login_required
 from ..services.vendors_service import VendorService
+from ..utils.auth import role_required
 from ..extensions import db
 
 bp = Blueprint('vendors', __name__)
@@ -32,6 +33,7 @@ def index():
 # --- CRUD OPERATIONS ---
 
 @bp.route('/add', methods=['GET', 'POST'])
+@role_required(['admin', 'user'])
 def add():
     if request.method == 'POST':
         try:
@@ -73,6 +75,7 @@ def view(id):
     return render_template('vendors/form.html', mode='view', vendor=vendor)
 
 @bp.route('/edit/<int:id>', methods=['GET', 'POST'])
+@role_required(['admin', 'user'])
 def edit(id):
     try:
         vendor = VendorService.get_by_id(id)
@@ -110,6 +113,7 @@ def edit(id):
     return render_template('vendors/form.html', mode='edit', vendor=vendor)
 
 @bp.route('/archive/<int:id>', methods=['POST'])
+@role_required(['admin']) # Only Admin can delete
 def archive(id):
     """Soft delete the vendor."""
     vendor = VendorService.archive(id)

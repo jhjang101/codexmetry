@@ -24,11 +24,14 @@
                    hx-push-url="true">
         </div>
 
-        <!-- Add Quote Button -->
-        <a href="{{ url_for('payments.add') }}" 
-           class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors shadow-sm">
-            <i class="fa-solid fa-plus mr-1"></i> Add New Payment
-        </a>
+        <!-- Add Payment Button -->
+        {% if current_user.role in ['admin', 'user'] %}
+            <a href="{{ url_for('payments.add') }}" 
+            class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors shadow-sm">
+                <i class="fa-solid fa-plus mr-1"></i> Add New Payment
+            </a>
+        {% endif %}
+        
     </div>
 
     <!-- Table Container (HTMX Target) -->

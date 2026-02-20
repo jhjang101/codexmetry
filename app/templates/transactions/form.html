@@ -13,11 +13,21 @@
         <a href="{{ session.get('transactions_last_url', url_for('transactions.index')) }}" class="text-blue-600 text-sm font-medium"><i class="fa-solid fa-arrow-left"></i> Back to Transactions List</a>
         <div class="flex gap-3">
             {% if mode == 'view' %}
-                <form action="{{ url_for('transactions.archive', id=trx.id) }}" method="POST" onsubmit="return confirm('Archive this transaction?')">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button type="submit" class="text-red-400 px-2 py-2 text-sm hover:bg-red-800 hover:text-white rounded-lg">Delete</button>
-                </form>
-                <a href="{{ url_for('transactions.edit', id=trx.id) }}" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm">Edit Transaction</a>
+
+                {% if current_user.role in ['admin'] %}
+                    <form action="{{ url_for('transactions.archive', id=trx.id) }}" method="POST" onsubmit="return confirm('Archive this transaction?')">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="text-red-400 px-2 py-2 text-sm hover:bg-red-800 hover:text-white rounded-lg">Delete</button>
+                    </form>
+                {% endif %}
+
+                {% if current_user.role in ['admin', 'user'] %}
+                    <a href="{{ url_for('transactions.edit', id=trx.id) }}" 
+                    class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm">
+                        <i class="fa-regular fa-pen-to-square mr-1"></i>Edit Transaction
+                    </a>
+                {% endif %}
+
             {% else %}
                 <a href="{% if mode == 'add' %}{{ url_for('transactions.index') }}{% else %}{{ url_for('transactions.view', id=trx.id) }}{% endif %}" class="text-gray-500 px-4 py-2 text-sm">Cancel</a>
                 <button type="submit" form="trx-main-form" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm">Save Transaction</button>

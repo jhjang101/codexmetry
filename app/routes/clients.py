@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash
 from flask_login import login_required
 from ..services.clients_service import ClientService
+from ..utils.auth import role_required
 from ..extensions import db
 
 bp = Blueprint('clients', __name__)
@@ -35,6 +36,7 @@ def index():
 # --- CRUD OPERATIONS ---
 
 @bp.route('/add', methods=['GET', 'POST'])
+@role_required(['admin', 'user'])
 def add():
     if request.method == 'POST':
         try:
@@ -76,6 +78,7 @@ def view(id):
     return render_template('clients/form.html', mode='view', client=client)
 
 @bp.route('/edit/<int:id>', methods=['GET', 'POST'])
+@role_required(['admin', 'user'])
 def edit(id):
     try:
         client = ClientService.get_by_id(id)
@@ -112,6 +115,7 @@ def edit(id):
     return render_template('clients/form.html', mode='edit', client=client)
 
 @bp.route('/archive/<int:id>', methods=['POST'])
+@role_required(['admin']) # Only Admin can delete
 def archive(id):
     client = ClientService.archive(id)
     if client:

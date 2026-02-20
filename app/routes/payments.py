@@ -8,6 +8,7 @@ from ..services.settings_service import PaymentTypeService
 from ..services.attachment_service import AttachmentService
 from ..utils.money import parse_to_cents
 from ..utils.sync import sync_invoice_status
+from ..utils.auth import role_required
 from ..extensions import db
 from datetime import datetime
 import time
@@ -42,6 +43,7 @@ def index():
 # --- CRUD OPERATIONS ---
 
 @bp.route('/add', methods=['GET', 'POST'])
+@role_required(['admin', 'user'])
 def add():
     if request.method == 'POST':
         try:
@@ -118,6 +120,7 @@ def view(id):
                            payment_number=payment_number)
 
 @bp.route('/edit/<int:id>', methods=['GET', 'POST'])
+@role_required(['admin', 'user'])
 def edit(id):
     """Edit mode: handles header updates."""
     payment = PaymentService.get_payment_by_id(id)
@@ -210,6 +213,7 @@ def edit(id):
                            payment_types=payment_types)
 
 @bp.route('/archive/<int:id>', methods=['POST'])
+@role_required(['admin']) # Only Admin can delete
 def archive(id):
     """Soft delete the payment with credit pool validation."""
     try:

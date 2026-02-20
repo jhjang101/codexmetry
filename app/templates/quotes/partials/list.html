@@ -51,19 +51,23 @@
                 {{ quote.quote_date.strftime('%Y-%m-%d') if quote.quote_date else '-' }}
             </td>
 
-            <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
+            <td class="pl-6 pr-8 py-4 whitespace-nowrap text-right text-sm">
                 <span class="text-gray-400 font-medium hover:text-blue-600 cursor-pointer"
                       hx-get="{{ url_for('quotes.view', id=quote.id) }}" 
                       hx-target="body" 
                       hx-push-url="true">
                     <i class="fa-regular fa-eye m-1" title="view"></i>
                 </span>
-                <span class="text-gray-400 font-medium hover:text-yellow-600 cursor-pointer"
-                      hx-get="{{ url_for('quotes.edit', id=quote.id) }}"
-                      hx-target="body"
-                      hx-push-url="true">
-                    <i class="fa-regular fa-pen-to-square m-1" title="edit"></i>
-                </span>
+
+                {% if current_user.role in ['admin', 'user'] %}
+                    <span class="text-gray-400 font-medium hover:text-yellow-600 cursor-pointer"
+                        hx-get="{{ url_for('quotes.edit', id=quote.id) }}"
+                        hx-target="body"
+                        hx-push-url="true">
+                        <i class="fa-regular fa-pen-to-square m-1" title="edit"></i>
+                    </span>
+                {% endif %}
+
             </td>
         </tr>
         {% else %}

@@ -22,10 +22,14 @@
                    hx-target="#vendor-list-container" 
                    hx-push-url="true">
         </div>
+
         <!-- Add New Button -->
-        <a href="{{ url_for('vendors.add') }}" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors">
-            <i class="fa-solid fa-plus mr-1"></i> Add New Vendor
-        </a>
+        {% if current_user.role in ['admin', 'user'] %}
+            <a href="{{ url_for('vendors.add') }}" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors">
+                <i class="fa-solid fa-plus mr-1"></i> Add New Vendor
+            </a>
+        {% endif %}
+
     </div>
 
     <!-- Table Container (HTMX Target) -->

@@ -26,20 +26,26 @@
 
         <div class="flex gap-3 items-center">
             {% if mode == 'view' %}
-            <!-- STANDALONE ARCHIVE FORM --> 
-                <form action="{{ url_for('vendors.archive', id=vendor.id) }}" method="POST" 
-                      onsubmit="return confirm('Are you sure you want to archive this vendor?')">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button type="submit" 
-                            class="text-red-400 px-2 py-2 rounded-lg text-sm font-medium hover:bg-red-800 transition-colors">
-                        Delete
-                    </button>
-                </form>
 
-                <a href="{{ url_for('vendors.edit', id=vendor.id) }}" 
-                   class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors">
-                    <i class="fa-regular fa-pen-to-square mr-1"></i>Edit Vendor
-                </a>
+            <!-- STANDALONE ARCHIVE FORM --> 
+                {% if current_user.role in ['admin'] %}
+                    <form action="{{ url_for('vendors.archive', id=vendor.id) }}" method="POST" 
+                        onsubmit="return confirm('Are you sure you want to archive this vendor?')">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" 
+                                class="text-red-400 px-2 py-2 rounded-lg text-sm font-medium hover:bg-red-800 transition-colors">
+                            Delete
+                        </button>
+                    </form>
+                {% endif %}
+
+                {% if current_user.role in ['admin', 'user'] %}
+                        <a href="{{ url_for('vendors.edit', id=vendor.id) }}" 
+                           class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors">
+                            <i class="fa-regular fa-pen-to-square mr-1"></i>Edit Vendor
+                        </a>
+                {% endif %}
+
             {% else %}
                 <a href="{% if mode == 'add' %}{{ url_for('vendors.index') }}{% else %}{{ url_for('vendors.view', id=vendor.id) }}{% endif %}" 
                    class="text-gray-500 px-4 py-2 text-sm font-medium hover:text-gray-800">

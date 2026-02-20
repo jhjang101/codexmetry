@@ -8,6 +8,7 @@ from ..services.attachment_service import AttachmentService
 from ..utils.money import parse_to_cents
 from ..utils.docs import generate_doc_number
 from ..utils.sync import sync_invoice_status, sync_po_status
+from ..utils.auth import role_required
 from ..models import Invoice
 from ..extensions import db
 from datetime import datetime
@@ -44,6 +45,7 @@ def index():
 # --- CRUD OPERATIONS ---
 
 @bp.route('/add', methods=['GET', 'POST'])
+@role_required(['admin', 'user'])
 def add():
     if request.method == 'POST':
         try:
@@ -114,6 +116,7 @@ def view(id):
     return render_template('invoices/form.html', mode='view', invoice=invoice)
 
 @bp.route('/edit/<int:id>', methods=['GET', 'POST'])
+@role_required(['admin', 'user'])
 def edit(id):
     """Edit mode: handles header updates and item list synchronization."""
     invoice = InvoiceService.get_invoice_by_id(id)
@@ -189,6 +192,7 @@ def edit(id):
                            pos=pos)
 
 @bp.route('/archive/<int:id>', methods=['POST'])
+@role_required(['admin']) # Only Admin can delete
 def archive(id):
     """Specialized archive for invoices with payment protection."""
     # 1. Perform specialized archive

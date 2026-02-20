@@ -7,6 +7,7 @@ from ..services.clients_service import ClientService
 from ..services.settings_service import PoTypeService
 from ..services.attachment_service import AttachmentService
 from ..utils.money import parse_to_cents
+from ..utils.auth import role_required
 from ..extensions import db
 from datetime import datetime
 import time 
@@ -41,6 +42,7 @@ def index():
 # --- CRUD OPERATIONS ---
 
 @bp.route('/add', methods=['GET', 'POST'])
+@role_required(['admin', 'user'])
 def add():
     if request.method == 'POST':
         try:
@@ -103,6 +105,7 @@ def view(id):
     return render_template('purchase_orders/form.html', mode='view', po=po)
 
 @bp.route('/edit/<int:id>', methods=['GET', 'POST'])
+@role_required(['admin', 'user'])
 def edit(id):
     po = PurchaseOrderService.get_po_by_id(id)
     if not po:
@@ -159,6 +162,7 @@ def edit(id):
                            quotes=quotes)
 
 @bp.route('/archive/<int:id>', methods=['POST'])
+@role_required(['admin']) # Only Admin can delete
 def archive(id):
     """Specialized archive for PO with dependency ripples."""
     po, has_payments = PurchaseOrderService.archive_po(id)

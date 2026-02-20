@@ -8,6 +8,7 @@ from ..services.purchase_orders_service import PurchaseOrderService
 from ..services.invoices_service import InvoiceService
 from ..services.clients_service import ClientService
 from ..utils.money import parse_to_cents
+from ..utils.auth import role_required
 from ..extensions import db
 from datetime import datetime
 import time
@@ -40,6 +41,7 @@ def index():
 # --- CRUD OPERATIONS ---
 
 @bp.route('/add', methods=['GET', 'POST'])
+@role_required(['admin', 'user'])
 def add():
     if request.method == 'POST':
         try:
@@ -111,6 +113,7 @@ def view(id):
     return render_template('expenses/form.html', mode='view', expense=expense)
 
 @bp.route('/edit/<int:id>', methods=['GET', 'POST'])
+@role_required(['admin', 'user'])
 def edit(id):
     expense = ExpenseService.get_expense_by_id(id)
     if not expense:
@@ -184,6 +187,7 @@ def edit(id):
                            invoices=invoices)
 
 @bp.route('/archive/<int:id>', methods=['POST'])
+@role_required(['admin']) # Only Admin can delete
 def archive(id):
     expense = ExpenseService.archive(id)
     if expense:

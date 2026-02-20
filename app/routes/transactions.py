@@ -3,6 +3,7 @@ from flask_login import login_required
 from ..services.transactions_service import TransactionService
 from ..services.settings_service import TransactionCategoryService
 from ..services.attachment_service import AttachmentService
+from ..utils.auth import role_required
 from ..extensions import db
 from datetime import datetime
 
@@ -34,6 +35,7 @@ def index():
 # --- CRUD OPERATIONS ---
 
 @bp.route('/add', methods=['GET', 'POST'])
+@role_required(['admin', 'user'])
 def add():
     if request.method == 'POST':
         try:
@@ -79,6 +81,7 @@ def view(id):
     return render_template('transactions/form.html', mode='view', trx=trx)
 
 @bp.route('/edit/<int:id>', methods=['GET', 'POST'])
+@role_required(['admin', 'user'])
 def edit(id):
     trx = TransactionService.get_by_id(id)
     if not trx:
@@ -119,6 +122,7 @@ def edit(id):
     return render_template('transactions/form.html', mode='edit', trx=trx, categories=categories)
 
 @bp.route('/archive/<int:id>', methods=['POST'])
+@role_required(['admin']) # Only Admin can delete
 def archive(id):
     trx = TransactionService.archive(id)
     if trx:
