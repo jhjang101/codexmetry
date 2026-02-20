@@ -11,7 +11,7 @@
 
     <div class="w-full max-w-sm">
         <!-- Branding -->
-        <div class="text-center mb-8">
+        <div class="text-center mb-4">
             <h1 class="text-3xl font-bold text-slate-900 tracking-tight">Codexmetry</h1>
             <p class="text-sm text-slate-500 mt-1 italic">Enterprise Resource Planning</p>
         </div>
@@ -33,7 +33,7 @@
               {% endif %}
             {% endwith %}
 
-            <form action="{{ url_for('auth.login') }}" method="POST">
+            <form action="{{ request.full_path }}" method="POST">
                 <!-- CSRF Protection -->
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
@@ -41,14 +41,23 @@
                     <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Username</label>
                     <input type="text" name="username" required autofocus
                            class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                           placeholder="Enter your username">
+                           placeholder="username">
                 </div>
 
                 <div class="mb-6">
                     <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Password</label>
-                    <input type="password" name="password" required
-                           class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                           placeholder="••••••••">
+                    <div class="relative">
+                        <input type="password" name="password" id="password-input" required
+                            class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all pr-10"
+                            placeholder="••••••••">
+                        
+                        <!-- Toggle Button -->
+                        <button type="button" 
+                                onclick="const p = document.getElementById('password-input'); p.type = p.type === 'password' ? 'text' : 'password'; this.querySelector('i').classList.toggle('fa-eye'); this.querySelector('i').classList.toggle('fa-eye-slash');"
+                                class="absolute inset-y-0 right-0 px-2 flex items-center text-slate-300 hover:text-slate-400 transition-colors">
+                            <i class="fa-regular fa-eye"></i>
+                        </button>
+                    </div>
                 </div>
 
                 <div class="flex items-center justify-between mb-6">
@@ -60,13 +69,13 @@
 
                 <button type="submit" 
                         class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg text-sm shadow-md transition-all active:scale-[0.98]">
-                    Access System
+                    Sign In
                 </button>
             </form>
         </div>
 
-        <p class="text-center mt-8 text-[10px] text-slate-400 uppercase tracking-widest">
-            &copy; {{ now.strftime('%Y') }} Codexmetry Corp &bull; High Integrity ERP
+        <p class="text-center mt-4 text-[10px] text-slate-400 uppercase tracking-widest">
+            &copy; {{ now.strftime('%Y') }} Codexmetry. All rights reserved.
         </p>
     </div>
 

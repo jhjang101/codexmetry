@@ -42,8 +42,16 @@ def create_app():
             return response
         
         # Otherwise, perform standard redirect
+        # 1. Define your "Front Door" paths
+        landing_paths = ['/', '/dashboard', '/dashboard/']
+
+        # 2. Clean Redirect for the front door
+        if request.path in landing_paths:
+            return redirect(url_for('auth.login'))
+        
+        # 3. Contextual Redirect for everything else
         flash("Please log in to access this page.", "info")
-        return redirect(url_for('auth.login', next=request.url))
+        return redirect(url_for('auth.login', next=request.full_path))
 
     from . import models
 
