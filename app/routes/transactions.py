@@ -8,6 +8,7 @@ from datetime import datetime
 
 bp = Blueprint('transactions', __name__)
 
+@bp.before_request
 @login_required
 def before_request():
     """Protect all routes within this blueprint."""

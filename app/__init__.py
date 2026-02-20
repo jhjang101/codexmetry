@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 import logging
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, make_response
 from sqlalchemy.exc import SQLAlchemyError
 from datetime import datetime
 from zoneinfo import ZoneInfo
@@ -29,6 +29,21 @@ def create_app():
      # Configure Login Manager
     login_manager.login_view = 'auth.login' # type: ignore
     login_manager.login_message_category = 'info' # type: ignore
+
+    # The HTMX Login Redirect Fix
+    @login_manager.unauthorized_handler
+    def unauthorized():
+        """Messenger: Catch unauthorized access and handle HTMX vs Standard redirects."""
+        if request.headers.get('HX-Request'):
+            # If HTMX, send the 'HX-Redirect' header. 
+            # This tells HTMX to refresh the whole window to the login page.
+            response = make_response("", 200)
+            response.headers['HX-Redirect'] = url_for('auth.login')
+            return response
+        
+        # Otherwise, perform standard redirect
+        flash("Please log in to access this page.", "info")
+        return redirect(url_for('auth.login', next=request.url))
 
     from . import models
 

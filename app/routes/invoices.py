@@ -15,6 +15,7 @@ import time
 
 bp = Blueprint('invoices', __name__)
 
+@bp.before_request
 @login_required
 def before_request():
     """Protect all routes within this blueprint."""
