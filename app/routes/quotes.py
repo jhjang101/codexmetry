@@ -6,6 +6,7 @@ from ..services.products_service import ProductService
 from ..services.attachment_service import AttachmentService
 from ..utils.money import parse_to_cents
 from ..utils.docs import generate_doc_number
+from ..utils.auth import role_required
 from ..models import Quote
 from ..extensions import db
 from datetime import datetime
@@ -41,6 +42,7 @@ def index():
 # --- CRUD OPERATIONS ---
 
 @bp.route('/add', methods=['GET', 'POST'])
+@role_required(['admin', 'user'])
 def add():
     if request.method == 'POST':
         try:
@@ -100,6 +102,7 @@ def view(id):
     return render_template('quotes/form.html', mode='view', quote=quote)
 
 @bp.route('/edit/<int:id>', methods=['GET', 'POST'])
+@role_required(['admin', 'user'])
 def edit(id):
     quote = QuoteService.get_quote_by_id(id)
     if not quote:
@@ -148,6 +151,7 @@ def edit(id):
                            products=products)
 
 @bp.route('/archive/<int:id>', methods=['POST'])
+@role_required(['admin']) # Only Admin can delete
 def archive(id):
     """Soft delete the quote."""
     quote = QuoteService.archive(id)

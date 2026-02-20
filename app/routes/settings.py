@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required
+from ..utils.auth import role_required
 from ..services.settings_service import (
     MetadataService,
     PoTypeService,
@@ -24,6 +25,7 @@ bp = Blueprint('settings', __name__)
 
 @bp.before_request
 @login_required
+@role_required(['admin']) # Only admins can enter any route in this file
 def before_request():
     """Protect all routes within this blueprint."""
     pass
