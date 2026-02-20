@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash
+from flask_login import login_required
 from ..services.transactions_service import TransactionService
 from ..services.settings_service import TransactionCategoryService
 from ..services.attachment_service import AttachmentService
@@ -6,6 +7,11 @@ from ..extensions import db
 from datetime import datetime
 
 bp = Blueprint('transactions', __name__)
+
+@login_required
+def before_request():
+    """Protect all routes within this blueprint."""
+    pass
 
 # --- LIST & SEARCH ---
 

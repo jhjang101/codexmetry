@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash, make_response
+from flask_login import login_required
 from ..services.payments_service import PaymentService
 from ..services.invoices_service import InvoiceService
 from ..services.purchase_orders_service import PurchaseOrderService
@@ -12,6 +13,11 @@ from datetime import datetime
 import time
 
 bp = Blueprint('payments', __name__)
+
+@login_required
+def before_request():
+    """Protect all routes within this blueprint."""
+    pass
 
 # --- LIST & SEARCH ---
 

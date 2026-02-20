@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask_login import login_required
 from ..services.settings_service import (
     MetadataService,
     PoTypeService,
@@ -20,6 +21,11 @@ LOOKUPS = {
 }
 
 bp = Blueprint('settings', __name__)
+
+@login_required
+def before_request():
+    """Protect all routes within this blueprint."""
+    pass
 
 @bp.route('/')
 def index():

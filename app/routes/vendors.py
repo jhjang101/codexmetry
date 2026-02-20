@@ -1,8 +1,14 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash
+from flask_login import login_required
 from ..services.vendors_service import VendorService
 from ..extensions import db
 
 bp = Blueprint('vendors', __name__)
+
+@login_required
+def before_request():
+    """Protect all routes within this blueprint."""
+    pass
 
 # --- LIST & SEARCH ---
 
