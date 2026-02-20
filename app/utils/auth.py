@@ -23,9 +23,15 @@ def role_required(allowed_roles: list[str]):
                     # This allows HTMX to read the response and perform the OOB swap
                     return render_template('partials/error_notification.html', message=message), 200
                 
-                # Standard Case: Flash error and send to dashboard
+                # Standard Case: Flash error and send to referrer page
                 flash(message, "error")
-                return redirect(url_for('dashboard.index'))
+                # 1. Check if there is a 'referrer' (the page they were just on)
+                # 2. Safety: ensure the referrer is not the same as the current unauthorized URL 
+                #    to prevent a redirect loop.
+                target = request.referrer
+                if not target or target == request.url:
+                    target = url_for('dashboard.index')
+                return redirect(target)
             
             # 3. Success: Proceed to the original route function
             return f(*args, **kwargs)
