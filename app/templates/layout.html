@@ -43,17 +43,27 @@
                 ] %}
                 
                 {% for label, endpoint, icon in nav_items %}
-                    {# Only show 'Settings' if the user is an admin #}
-                    {% if label != 'Settings' or current_user.role == 'admin' %}
-                        <li>
-                            {% set is_active = request.endpoint and endpoint.split('.')[0] in request.endpoint %}
-                            <a href="{{ url_for(endpoint) }}" 
-                            class="flex items-center gap-3 px-6 py-3 transition-colors hover:bg-slate-800 {{ 'bg-blue-600 font-bold' if is_active else 'text-slate-400' }}">
-                                <i class="fa-solid {{ icon }} w-5"></i>
-                                {{ label }}
-                            </a>
-                        </li>
-                    {% endif %}
+                    <li>
+                        {% set is_active = request.endpoint and endpoint.split('.')[0] in request.endpoint %}
+                        
+                        {# Determine color based on active state and role restriction #}
+                        {% if is_active %}
+                            {% set text_color = 'text-white bg-blue-600 font-bold' %}
+                        {% elif label == 'Settings' and current_user.role != 'admin' %}
+                            {% set text_color = 'text-slate-600 cursor-not-allowed' %}
+                        {% else %}
+                            {% set text_color = 'text-slate-300 hover:bg-slate-800' %}
+                        {% endif %}
+
+                        <a href="{{ url_for(endpoint) }}" 
+                        class="flex items-center gap-3 px-6 py-3 transition-colors {{ text_color }}">
+                            <i class="fa-solid {{ icon }} w-5"></i>
+                            {{ label }}
+                            {% if label == 'Settings' and current_user.role != 'admin' %}
+                                <i class="fa-solid fa-lock text-[10px] ml-auto"></i>
+                            {% endif %}
+                        </a>
+                    </li>
                 {% endfor %}
             </ul>
         </nav>
