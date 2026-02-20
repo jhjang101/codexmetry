@@ -19,8 +19,9 @@ def role_required(allowed_roles: list[str]):
                 # 2. Contextual HTMX Response
                 if request.headers.get('HX-Request'):
                     # HTMX Case: Return the OOB error partial we created for the Global Error Handler
-                    # We return 403 (Forbidden) to be semantically correct
-                    return render_template('partials/error_notification.html', message=message), 403
+                    # We Return 200 instead of 403 for HTMX requests
+                    # This allows HTMX to read the response and perform the OOB swap
+                    return render_template('partials/error_notification.html', message=message), 200
                 
                 # Standard Case: Flash error and send to dashboard
                 flash(message, "error")

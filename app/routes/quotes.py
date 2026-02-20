@@ -164,6 +164,7 @@ def archive(id):
 # --- HTMX PARTIALS & LIVE MATH ---
 
 @bp.route('/add-row')
+@role_required(['admin', 'user'])
 def add_row():
     """Returns a blank product row for the dynamic sub-form."""
     products = ProductService.get_all_products()
