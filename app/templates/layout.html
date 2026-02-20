@@ -43,14 +43,17 @@
                 ] %}
                 
                 {% for label, endpoint, icon in nav_items %}
-                <li>
-                    {% set is_active = request.endpoint and endpoint.split('.')[0] in request.endpoint %}
-                    <a href="{{ url_for(endpoint) }}" 
-                       class="flex items-center gap-3 px-6 py-3 transition-colors hover:bg-slate-800 {{ 'bg-blue-600 font-bold' if is_active else 'text-slate-400' }}">
-                        <i class="fa-solid {{ icon }} w-5"></i>
-                        {{ label }}
-                    </a>
-                </li>
+                    {# Only show 'Settings' if the user is an admin #}
+                    {% if label != 'Settings' or current_user.role == 'admin' %}
+                        <li>
+                            {% set is_active = request.endpoint and endpoint.split('.')[0] in request.endpoint %}
+                            <a href="{{ url_for(endpoint) }}" 
+                            class="flex items-center gap-3 px-6 py-3 transition-colors hover:bg-slate-800 {{ 'bg-blue-600 font-bold' if is_active else 'text-slate-400' }}">
+                                <i class="fa-solid {{ icon }} w-5"></i>
+                                {{ label }}
+                            </a>
+                        </li>
+                    {% endif %}
                 {% endfor %}
             </ul>
         </nav>
