@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Codexmetry</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body class="bg-slate-50 h-screen flex items-center justify-center p-4">
+
+    <div class="w-full max-w-sm">
+        <!-- Branding -->
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-slate-900 tracking-tight">Codexmetry</h1>
+            <p class="text-sm text-slate-500 mt-1 italic">Enterprise Resource Planning</p>
+        </div>
+
+        <!-- Login Card -->
+        <div class="bg-white p-8 rounded-xl shadow-xl border border-slate-200">
+            <h2 class="text-xl font-semibold text-slate-800 mb-6">Sign In</h2>
+
+            <!-- Flash Messages (Specifically for Auth Errors) -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+              {% if messages %}
+                {% for category, message in messages %}
+                  <div class="mb-4 p-3 rounded-lg text-xs font-medium flex items-center gap-2
+                    {{ 'bg-red-50 text-red-700 border border-red-200' if category == 'error' else 'bg-blue-50 text-blue-700 border border-blue-200' }}">
+                    <i class="fa-solid {{ 'fa-circle-exclamation' if category == 'error' else 'fa-circle-info' }}"></i>
+                    {{ message }}
+                  </div>
+                {% endfor %}
+              {% endif %}
+            {% endwith %}
+
+            <form action="{{ url_for('auth.login') }}" method="POST">
+                <!-- CSRF Protection -->
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <div class="mb-4">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Username</label>
+                    <input type="text" name="username" required autofocus
+                           class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                           placeholder="Enter your username">
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Password</label>
+                    <input type="password" name="password" required
+                           class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                           placeholder="••••••••">
+                </div>
+
+                <div class="flex items-center justify-between mb-6">
+                    <label class="flex items-center gap-2 cursor-pointer group">
+                        <input type="checkbox" name="remember" class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+                        <span class="text-xs text-slate-600 group-hover:text-slate-900 transition-colors">Remember me</span>
+                    </label>
+                </div>
+
+                <button type="submit" 
+                        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg text-sm shadow-md transition-all active:scale-[0.98]">
+                    Access System
+                </button>
+            </form>
+        </div>
+
+        <p class="text-center mt-8 text-[10px] text-slate-400 uppercase tracking-widest">
+            &copy; {{ now.strftime('%Y') }} Codexmetry Corp &bull; High Integrity ERP
+        </p>
+    </div>
+
+</body>
+</html>
