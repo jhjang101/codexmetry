@@ -1,5 +1,6 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, make_response
 from flask_login import login_required
+from ..extensions import db
 from ..services.users_service import UserService
 from ..utils.auth import role_required
 from ..services.settings_service import (
@@ -83,8 +84,13 @@ def add_user():
         return render_template('settings/partials/user_table.html', users=users)
     
     except ValueError as e:
-        # Return our pulse-red error banner via OOB swap
-        return render_template('partials/error_notification.html', message=str(e)), 200
+        db.session.rollback()
+        # 1. Prepare the error fragment
+        resp = make_response(render_template('partials/error_notification.html', message=str(e)), 200)
+        # 2. BRAIN: Tell HTMX NOT to swap the primary target (the table)
+        # This preserves the data already typed into the form rows
+        resp.headers['HX-Reswap'] = 'none'
+        return resp
 
 @bp.route('/users/edit/<int:id>', methods=['GET'])
 def edit_user_row(id):
@@ -104,7 +110,10 @@ def update_user(id):
         return render_template('settings/partials/user_row_view.html', user=user)
     
     except ValueError as e:
-        return render_template('partials/error_notification.html', message=str(e)), 200
+        db.session.rollback()
+        resp = make_response(render_template('partials/error_notification.html', message=str(e)), 200)
+        resp.headers['HX-Reswap'] = 'none'
+        return resp
 
 @bp.route('/users/toggle/<int:id>', methods=['POST'])
 def toggle_user_status(id):
@@ -113,7 +122,10 @@ def toggle_user_status(id):
         user = UserService.toggle_status(id)
         return render_template('settings/partials/user_row_view.html', user=user)
     except ValueError as e:
-        return render_template('partials/error_notification.html', message=str(e)), 200
+        db.session.rollback()
+        resp = make_response(render_template('partials/error_notification.html', message=str(e)), 200)
+        resp.headers['HX-Reswap'] = 'none'
+        return resp
     
 @bp.route('/users/row/<int:id>', methods=['GET'])
 def view_user_row(id):

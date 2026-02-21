@@ -37,47 +37,20 @@ if __name__ == '__main__':
             db.session.commit()
             print("System Product 'Applied Deposit' seeded successfully.")
 
-        # 3. Seed Initial Users (Admin, User, Viewer)
-        # Define the users we want to ensure exist in the system
-        seed_users = [
-            {
-                'username': os.getenv('INITIAL_ADMIN_USERNAME', 'admin'),
-                'email': os.getenv('INITIAL_ADMIN_EMAIL', 'admin@codexmetry.local'),
-                'password': os.getenv('INITIAL_ADMIN_PASSWORD', 'admin123'),
-                'role': 'admin'
-            },
-            {
-                'username': 'staff',
-                'email': 'staff@codexmetry.local',
-                'password': 'user123',
-                'role': 'user'
-            },
-            {
-                'username': 'guest',
-                'email': 'guest@codexmetry.local',
-                'password': 'viewer123',
-                'role': 'viewer'
-            }
-        ]
-
-        for u_data in seed_users:
-            # Check if this specific username already exists
-            exists = db.session.execute(
-                select(User).where(User.username == u_data['username'])
-            ).scalar_one_or_none()
-
-            if not exists:
-                new_user = User(
-                    username=u_data['username'],
-                    email=u_data['email'],
-                    role=u_data['role'],
-                    is_active=True
-                )
-                # Use the model method to hash the password
-                new_user.set_password(u_data['password'])
-                
-                db.session.add(new_user)
-                db.session.commit()
-                print(f"User '{u_data['username']}' ({u_data['role']}) seeded successfully.")
+        # 3. Seed Initial Admin User from .env
+        if db.session.execute(select(User)).first() is None:
+            admin_user = User()
+            admin_user.username = os.getenv('INITIAL_ADMIN_USERNAME', 'admin')
+            admin_user.email = os.getenv('INITIAL_ADMIN_EMAIL', 'admin@codexmetry.local')
+            admin_user.role = 'admin'
+            admin_user.is_active = True
+            
+            # Use the method in your User model to hash the password safely
+            password = os.environ.get('INITIAL_ADMIN_PASSWORD', 'admin123')
+            admin_user.set_password(password)
+            
+            db.session.add(admin_user)
+            db.session.commit()
+            print(f"Admin user '{admin_user.username}' created successfully.")
 
     app.run(host='0.0.0.0', debug=True, port=5001)
