@@ -67,7 +67,18 @@
 
         <!-- Company Information Section -->
         <section class="bg-white p-6 rounded-lg shadow mb-2">
-            <h2 class="text-xl font-semibold mb-2 border-b pb-2">Company Information</h2>
+            <div class="flex justify-between items-end border-b pb-2 mb-2">
+                <h2 class="text-xl font-semibold">Company Information</h2>
+
+                {# Include the audit info, passing the current object as 'record' #}
+                    {% if mode == 'view' %} 
+                        {% with record = client %}
+                            {% include 'partials/audit_info.html' %}
+                        {% endwith %}
+                    {% endif %}
+
+            </div>
+
             <div class="grid grid-cols-2 gap-4">
                 <div class="col-span-2">
                     <label class="block text-sm font-medium text-gray-600">Company Name</label>

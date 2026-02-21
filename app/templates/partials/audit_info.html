@@ -1,0 +1,15 @@
+{% if record and record.created_at %}
+<div class="flex flex-col items-end text-[10px] text-gray-400 italic leading-tight select-none">
+    <div>
+        Created by <span class="font-medium text-gray-500">{{ record.creator.username if record.creator else 'System' }}</span> 
+        on {{ record.created_at.strftime('%Y-%m-%d %H:%M') }}
+    </div>
+    {# Only show modified info if the record has actually been changed #}
+    {% if record.updated_at and record.updated_at.strftime('%Y%m%d%H%M%S') != record.created_at.strftime('%Y%m%d%H%M%S') %}
+    <div class="mt-0.5">
+        Modified by <span class="font-medium text-gray-500">{{ record.updater.username if record.updater else 'System' }}</span> 
+        on {{ record.updated_at.strftime('%Y-%m-%d %H:%M') }}
+    </div>
+    {% endif %}
+</div>
+{% endif %}

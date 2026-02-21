@@ -64,7 +64,17 @@
         <input type="hidden" name="old_image" value="{{ product.image_url if product else '' }}">
 
         <section class="bg-white p-6 rounded-lg shadow mb-2">
-            <h2 class="text-xl font-semibold mb-2 border-b pb-2">Catalog Information</h2>
+            <div class="flex justify-between items-end border-b pb-2 mb-2">
+                <h2 class="text-xl font-semibold">Catalog Information</h2>
+
+                {# Include the audit info, passing the current object as 'record' #}
+                {% if mode == 'view' %} 
+                    {% with record = product %}
+                        {% include 'partials/audit_info.html' %}
+                    {% endwith %}
+                {% endif %}
+
+            </div>
             
             <div class="grid grid-cols-2 gap-4">
                 <!-- Image Section -->
