@@ -114,6 +114,12 @@ def toggle_user_status(id):
         return render_template('settings/partials/user_row_view.html', user=user)
     except ValueError as e:
         return render_template('partials/error_notification.html', message=str(e)), 200
+    
+@bp.route('/users/row/<int:id>', methods=['GET'])
+def view_user_row(id):
+    """Messenger: Returns a read-only 'View' row for the user table (used for Cancel)."""
+    user = UserService.get_by_id(id)
+    return render_template('settings/partials/user_row_view.html', user=user)
 
 # --- HTMX Route to add a lookup item ---
 @bp.route('/lookup/add', methods=['POST'])

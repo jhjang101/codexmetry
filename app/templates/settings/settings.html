@@ -75,7 +75,13 @@
         </form>
     </section>
 
-    <!-- 2. Lookup Tables Grid (HTMX) -->
+    <!-- 2. User Management (HTMX) -->
+    <section class="bg-white p-6 rounded-lg shadow mb-2">
+        <h2 class="text-xl font-semibold mb-2 border-b pb-2">User Management</h2>
+        {% include 'settings/partials/user_table.html' %}
+    </section>
+
+    <!-- 3. Lookup Tables Grid (HTMX) -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4">
         {% for table_name, items in lookups.items() %}
             <!-- This replaces the whole repeating block -->
