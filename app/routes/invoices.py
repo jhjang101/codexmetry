@@ -67,7 +67,10 @@ def add():
             # 3. Save Invoice and Line Items
             new_invoice = InvoiceService.add_invoice(header_data, items)
 
-            # 4. Sync po status
+            # 4. Sync invoice and po status
+            # This handles the case where the invoice is fully covered by a deposit
+            sync_invoice_status(new_invoice.id)
+            
             po_status_updated = sync_po_status(new_invoice.po_id)
 
             # 5. Save Attachments
