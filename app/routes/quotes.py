@@ -71,8 +71,11 @@ def add():
 
         except ValueError as e:
             db.session.rollback()
-            flash(str(e), "error")
-            return redirect(url_for('quotes.add'))
+            # Return the OOB Error partial
+            resp = make_response(render_template('partials/error_notification.html', message=str(e)), 200)
+            # Tell HTMX NOT to swap the form, preserving all user input
+            resp.headers['HX-Reswap'] = 'none'
+            return resp
 
     # GET: Prepare form data
     clients = ClientService.get_all()
@@ -138,8 +141,9 @@ def edit(id):
         
         except ValueError as e:
             db.session.rollback()
-            flash(str(e), "error")
-            return redirect(url_for('quotes.edit', id=id))
+            resp = make_response(render_template('partials/error_notification.html', message=str(e)), 200)
+            resp.headers['HX-Reswap'] = 'none'
+            return resp
         
     # GET: Prepare form data
     clients = ClientService.get_all()
