@@ -1,11 +1,12 @@
 from .base_service import BaseService
-from ..models import Invoice, InvoiceItem, PurchaseOrder, OrderRegistry, Client, Payment, Product
+from ..models import Invoice, InvoiceItem, PurchaseOrder, OrderRegistry, Client, Payment, Product, SettingsMetadata
 from ..extensions import db
 from ..utils.money import parse_to_cents, format_usd
 from ..utils.manual_pagination import ManualPagination
 from sqlalchemy import select, or_, func, case
 from sqlalchemy.orm import contains_eager, joinedload, selectinload
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 class InvoiceService(BaseService):
     model = Invoice
@@ -251,9 +252,18 @@ class InvoiceService(BaseService):
         if not po:
             raise ValueError("The selected Purchase Order does not exist.")
 
+        # Parse dates
         raw_date = data.get('invoice_date')
-        invoice_date = datetime.strptime(raw_date, '%Y-%m-%d').date() if raw_date else datetime.now().date()
+        # Get TimeZone from metadata
+        metadata = db.session.get(SettingsMetadata, 1)
+        tz_name = metadata.timezone if metadata else 'America/Chicago'
 
+        if raw_date:
+            invoice_date = datetime.strptime(raw_date, '%Y-%m-%d').date()
+        else: 
+            invoice_date = datetime.now(ZoneInfo(tz_name)).date()
+
+        # Transform data
         clean_data = {
             'order_id': po.order_id,
             'po_id': po.id,

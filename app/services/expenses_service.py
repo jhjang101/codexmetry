@@ -1,11 +1,14 @@
 from .base_service import BaseService
-from ..models import Expense, ExpenseItem,  Vendor,  ExpenseCategory, Client, OrderRegistry, PurchaseOrder, Invoice
+from ..models import (Expense, ExpenseItem,  Vendor,  
+                      ExpenseCategory, Client, OrderRegistry, 
+                      PurchaseOrder, Invoice, SettingsMetadata)
 from ..extensions import db
 from ..utils.docs import generate_doc_number
 from ..utils.money import parse_to_cents
 from sqlalchemy import select, or_, func
 from sqlalchemy.orm import contains_eager, joinedload, selectinload
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 class ExpenseService(BaseService):
     model = Expense
@@ -167,11 +170,22 @@ class ExpenseService(BaseService):
                 order_id = po.order_id
         # Note: If only client_id was provided, it remains as captured from data.get
 
-        # 3. Transform Date
+        # Parse dates
         raw_date = data.get('expense_date')
-        expense_date = datetime.strptime(raw_date, '%Y-%m-%d').date() if isinstance(raw_date, str) else datetime.now().date()
+        # Get TimeZone from metadata
+        metadata = db.session.get(SettingsMetadata, 1)
+        tz_name = metadata.timezone if metadata else 'America/Chicago'
+
+        if raw_date:
+            expense_date = datetime.strptime(raw_date, '%Y-%m-%d').date() 
+        else:
+            expense_date = datetime.now(ZoneInfo(tz_name)).date()
+
+
+
         category_id = data.get('category_id')
 
+        # 3. Transform Data
         clean_data ={
             'vendor_id': int(vendor_id),
             'category_id': int(category_id) if category_id else None,

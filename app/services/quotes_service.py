@@ -1,10 +1,11 @@
 from .base_service import BaseService
-from ..models import Quote, QuoteItem, Client, OrderRegistry
+from ..models import Quote, QuoteItem, Client, OrderRegistry, SettingsMetadata
 from ..extensions import db
 from ..utils.money import parse_to_cents
 from sqlalchemy import select, or_
 from sqlalchemy.orm import contains_eager, joinedload, selectinload
-from datetime import datetime
+from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 
 class QuoteService(BaseService):
     model = Quote
@@ -149,9 +150,22 @@ class QuoteService(BaseService):
         # Parse dates
         raw_date = data.get('quote_date')
         raw_expiry = data.get('expiration_date')
+
+        # Get TimeZone from metadata
+        metadata = db.session.get(SettingsMetadata, 1)
+        tz_name = metadata.timezone if metadata else 'America/Chicago'
         
-        quote_date = datetime.strptime(raw_date, '%Y-%m-%d').date() if raw_date else datetime.now().date()
-        expiration_date = datetime.strptime(raw_expiry, '%Y-%m-%d').date() if raw_expiry else None
+        if raw_date:
+            quote_date = datetime.strptime(raw_date, '%Y-%m-%d').date() 
+        else:
+            quote_date = datetime.now(ZoneInfo(tz_name)).date()
+        if raw_expiry:
+            expiration_date = datetime.strptime(raw_expiry, '%Y-%m-%d').date() 
+        else:
+            expiration_date = quote_date + timedelta(days=30)
+
+        if quote_date > expiration_date:
+            raise ValueError("Expiration date cannot be before quote date.")
 
         # Transform data
         clean_data ={

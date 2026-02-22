@@ -1,11 +1,12 @@
 from .base_service import BaseService
-from ..models import Transaction, TransactionCategory
+from ..models import Transaction, TransactionCategory, SettingsMetadata
 from ..extensions import db
 from ..utils.docs import generate_doc_number
 from ..utils.money import parse_to_cents
 from sqlalchemy import select, or_
 from sqlalchemy.orm import contains_eager
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 class TransactionService(BaseService):
     model = Transaction
@@ -92,7 +93,15 @@ class TransactionService(BaseService):
 
         # Parse Date
         raw_date = data.get('transaction_date')
-        trx_date = datetime.strptime(raw_date, '%Y-%m-%d').date() if isinstance(raw_date, str) else datetime.now().date()
+        # Get TimeZone from metadata
+        metadata = db.session.get(SettingsMetadata, 1)
+        tz_name = metadata.timezone if metadata else 'America/Chicago'
+
+        if raw_date:
+            trx_date = datetime.strptime(raw_date, '%Y-%m-%d').date()
+        else:
+            trx_date = datetime.now(ZoneInfo(tz_name)).date()
+
         category_id = data.get('category_id')
 
         clean_data = {

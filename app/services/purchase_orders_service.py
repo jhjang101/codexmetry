@@ -1,5 +1,5 @@
 from .base_service import BaseService
-from ..models import PurchaseOrder, PoItem, OrderRegistry, Client, Quote, Invoice, InvoiceItem, Payment, Product
+from ..models import PurchaseOrder, PoItem, OrderRegistry, Client, Quote, Invoice, InvoiceItem, Payment, Product, SettingsMetadata
 from ..extensions import db
 from ..utils.docs import generate_doc_number
 from ..utils.money import parse_to_cents
@@ -7,6 +7,7 @@ from ..utils.manual_pagination import ManualPagination
 from sqlalchemy import select, or_, func, and_, exists
 from sqlalchemy.orm import contains_eager, joinedload, selectinload
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 class PurchaseOrderService(BaseService):
     model = PurchaseOrder
@@ -366,9 +367,17 @@ class PurchaseOrderService(BaseService):
         client_id = data.get('client_id')
         if not client_id:
             raise ValueError("Client is required.")
-
+        
+        # Parse dates
         raw_date = data.get('po_date')
-        po_date = datetime.strptime(raw_date, '%Y-%m-%d').date() if isinstance(raw_date, str) else datetime.now().date()
+        # Get TimeZone from metadata
+        metadata = db.session.get(SettingsMetadata, 1)
+        tz_name = metadata.timezone if metadata else 'America/Chicago'
+        if raw_date:
+            po_date = datetime.strptime(raw_date, '%Y-%m-%d').date() 
+        else:
+            po_date = datetime.now(ZoneInfo(tz_name)).date()
+        
         po_type_id = data.get('po_type_id')
         quote_id = data.get('quote_id')
 

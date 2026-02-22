@@ -1,11 +1,12 @@
 from .base_service import BaseService
 from .purchase_orders_service import PurchaseOrderService
-from ..models import Payment, Invoice, InvoiceItem, Product, PurchaseOrder, OrderRegistry, Client
+from ..models import Payment, Invoice, InvoiceItem, Product, PurchaseOrder, OrderRegistry, Client, SettingsMetadata
 from ..extensions import db
 from ..utils.money import parse_to_cents, format_usd
 from sqlalchemy import select, or_, func
 from sqlalchemy.orm import contains_eager, joinedload, selectinload
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 class PaymentService(BaseService):
     model = Payment
@@ -173,12 +174,21 @@ class PaymentService(BaseService):
         if not po:
             raise ValueError("The selected Purchase Order does not exist.")
 
-        # 3. Transform data
+        # Parse dates
         raw_date = data.get('payment_date')
-        payment_date = datetime.strptime(raw_date, '%Y-%m-%d').date() if raw_date else datetime.now().date()
+        # Get TimeZone from metadata
+        metadata = db.session.get(SettingsMetadata, 1)
+        tz_name = metadata.timezone if metadata else 'America/Chicago'
+
+        if raw_date:
+            payment_date = datetime.strptime(raw_date, '%Y-%m-%d').date()
+        else: 
+            payment_date = datetime.now(ZoneInfo(tz_name)).date()
+
         invoice_id = data.get('invoice_id')
         payment_type_id = data.get('payment_type_id')
 
+        # 3. Transform data
         clean_data = {
             'order_id': po.order_id, # Inherit from PO Registry
             'po_id': po.id,
