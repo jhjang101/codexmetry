@@ -87,7 +87,7 @@ def view(id):
         
     except ValueError as e:
         db.session.rollback()
-        flash(str(e), 'error')
+        flash(f"Error loading product: {str(e)}", 'error')
         return redirect(url_for('products.index'))
 
     return render_template('products/form.html', mode='view', product=product)

@@ -124,7 +124,7 @@ def view(id):
             payment_number = f'{payment.order.order_number}'
 
     except Exception as e:
-        flash(f"Error loading quote: {str(e)}", "error")
+        flash(f"Error loading payment: {str(e)}", "error")
         return redirect(url_for('payments.index'))
 
     return render_template('payments/form.html', 

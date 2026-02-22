@@ -79,7 +79,7 @@ def view(id):
         
     except ValueError as e:
         db.session.rollback()
-        flash(str(e), 'error')
+        flash(f"Error loading client: {str(e)}", 'error')
         return redirect(url_for('clients.index'))
 
     return render_template('clients/form.html', mode='view', client=client)

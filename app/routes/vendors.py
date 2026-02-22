@@ -76,7 +76,7 @@ def view(id):
         
     except ValueError as e:
         db.session.rollback()
-        flash(str(e), 'error')
+        flash(f"Error loading vendor: {str(e)}", 'error')
         return redirect(url_for('vendors.index'))
     
     return render_template('vendors/form.html', mode='view', vendor=vendor)

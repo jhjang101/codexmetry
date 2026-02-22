@@ -114,7 +114,7 @@ def view(id):
 
     except Exception as e:
         db.session.rollback()
-        flash(f"Error loading quote: {str(e)}", "error")
+        flash(f"Error loading purchase order: {str(e)}", "error")
         return redirect(url_for('purchase_orders.index'))
 
     return render_template('purchase_orders/form.html', mode='view', po=po)

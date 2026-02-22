@@ -120,7 +120,7 @@ def view(id):
         print('invoice.po_total_deposit:', invoice.po_total_prepayment)
 
     except Exception as e:
-        flash(f"Error loading quote: {str(e)}", "error")
+        flash(f"Error loading invoice: {str(e)}", "error")
         return redirect(url_for('invoices.index'))
 
     return render_template('invoices/form.html', mode='view', invoice=invoice)
