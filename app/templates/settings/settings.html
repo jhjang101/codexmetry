@@ -8,8 +8,10 @@
     <!-- 1. Company Metadata Form (Standard POST) -->
     <section class="bg-white p-6 rounded-lg shadow mb-2">
         <h2 class="text-xl font-semibold mb-2 border-b pb-2">Company Information</h2>
-        <form action="{{ url_for('settings.update_metadata') }}" method="POST" enctype="multipart/form-data" 
-            class="grid grid-cols-2 gap-4">
+
+        <form id="metadata-form" 
+              hx-encoding="multipart/form-data"
+              class="grid grid-cols-2 gap-4">
             <!-- CSRF Token handled by Flask-WTF -->
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
@@ -34,19 +36,24 @@
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-600">Company Name</label>
-                <input type="text" name="company_name" value="{{ metadata.company_name }}" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">
+                <input type="text" name="company_name" value="{{ metadata.company_name }}" 
+                       class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none"
+                       required>
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-600">Timezone</label>
-                <input type="text" name="timezone" value="{{ metadata.timezone }}" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">
+                <input type="text" name="timezone" value="{{ metadata.timezone }}" 
+                       class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">
             </div>
             <div class="col-span-2">
                 <label class="block text-sm font-medium text-gray-600">Address</label>
-                <textarea name="address" rows="3" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">{{ metadata.address }}</textarea>
+                <textarea name="address" rows="3" 
+                          class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">{{ metadata.address }}</textarea>
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-600">Invoice Threshold (USD)</label>
-                <input type="text" name="threshold" value="{{ metadata.invoice_threshold | usd }}" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">
+                <input type="text" name="threshold" value="{{ metadata.invoice_threshold | usd }}" 
+                       class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">
             </div>
             <!-- Document Number Padding -->
             <div class="relative">
@@ -68,7 +75,11 @@
 
             
             <div class="col-span-2 text-right">
-                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors">
+                <button type="button" 
+                        class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors"
+                        hx-post="{{ url_for('settings.update_metadata') }}"
+                        hx-include="#metadata-form"
+                        hx-swap="none">
                     <i class="fa-regular fa-floppy-disk mr-1"></i>Save Metadata
                 </button>
             </div>

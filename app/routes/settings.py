@@ -46,29 +46,48 @@ def index():
 # Route to update metadata
 @bp.route('/metadata/update', methods=['POST'])
 def update_metadata():
-    metadata = {
-        'company_name': request.form.get('company_name'),
-        'address': request.form.get('address'),
-        'timezone': request.form.get('timezone'),
-        'invoice_threshold': parse_to_cents(request.form.get('threshold', '$100.00')),
-        'doc_padding': int(request.form.get('doc_padding', 4))
-    }
-    
-    # Image Logic Implementation
-    new_logo = request.files.get('logo')
-    if new_logo:
-        new_filename = save_image(
-            file=new_logo, 
-            subfolder='logos', 
-            old_filename=request.form.get('old_image')
-        )
-        if new_filename:
-            metadata['company_logo'] = new_filename
+    """
+    Messenger: Orchestrates the global settings update.
+    Handles image persistence and delegates logic to MetadataService.
+    """
+    try:
+        # 1. Prepare raw data dictionary from form
+        data = {
+            'company_name': request.form.get('company_name'),
+            'address': request.form.get('address'),
+            'timezone': request.form.get('timezone'),
+            'invoice_threshold': request.form.get('threshold'), # Raw string, Service handles parsing
+            'doc_padding': request.form.get('doc_padding')
+        }
+        
+        # 2. Specialized Image Handling (The Messenger manages files)
+        new_logo = request.files.get('logo')
+        if new_logo and new_logo.filename != '':
+            new_filename = save_image(
+                file=new_logo, 
+                subfolder='logos', 
+                old_filename=request.form.get('old_image')
+            )
+            if new_filename:
+                data['company_logo'] = new_filename
 
-    MetadataService.update(1, **metadata)
-    flash('Metadata updated successfully!', 'success')
+        # 3. Brain Call: Validation and Database Commit
+        MetadataService.update_metadata(data)
+        
+        flash('Metadata updated successfully!', 'success')
 
-    return redirect(url_for('settings.index'))
+        # 4. Standardize for HTMX redirects
+        response = make_response("", 200)
+        response.headers['HX-Redirect'] = url_for('settings.index')
+        return response
+
+    except ValueError as e:
+        # 5. Logic Failure Flow: Rollback and OOB Error
+        db.session.rollback()
+        # We return the error partial (OOB) and tell HTMX NOT to swap the form
+        resp = make_response(render_template('partials/error_notification.html', message=str(e)), 200)
+        resp.headers['HX-Reswap'] = 'none'
+        return resp
 
 # --- USER MANAGEMENT HTMX ROUTES ---
 
