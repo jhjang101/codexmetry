@@ -51,6 +51,7 @@
                    hx-vals='{"row_id": "{{ row_id }}"}' 
                    hx-trigger="change delay:300ms"
                    hx-target="#line-total-{{ row_id }}" 
+                   hx-swap="innerHTML"
                    hx-include="#expense-main-form">
         {% endif %}
     </td>
@@ -67,6 +68,7 @@
                    hx-vals='{"row_id": "{{ row_id }}"}' 
                    hx-trigger="input changed delay:300ms"
                    hx-target="#line-total-{{ row_id }}" 
+                   hx-swap="innerHTML"
                    hx-include="#expense-main-form">
         {% endif %}
     </td>

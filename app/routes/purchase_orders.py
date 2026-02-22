@@ -21,7 +21,6 @@ def before_request():
     pass
 
 # --- LIST & SEARCH ---
-# add and edit route is now htmx
 
 @bp.route('/')
 def index():
@@ -41,6 +40,7 @@ def index():
     return render_template('purchase_orders/purchase_orders.html', pagination=pagination, search=search_term)
 
 # --- CRUD OPERATIONS ---
+# view, add, and edit route is now htmx
 
 @bp.route('/add', methods=['GET', 'POST'])
 @role_required(['admin', 'user'])

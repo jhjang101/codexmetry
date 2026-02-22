@@ -32,7 +32,8 @@
                         onsubmit="return confirm('CRITICAL WARNING: This is a cascading action!\n\n- ALL linked Invoices will be archived.\n- The Order Registry ID will be deactivated.\n- The associated Quote will be reverted to lead status.\n\nAre you sure you want to proceed?')">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <button type="submit" 
-                                class="text-red-400 px-2 py-2 rounded-lg text-sm font-medium hover:bg-red-800 transition-colors">
+                                class="text-red-400 px-2 py-2 rounded-lg text-sm font-medium 
+                                hover:bg-red-800 transition-colors">
                             Delete
                         </button>
                     </form>
@@ -40,7 +41,8 @@
 
                 {% if current_user.role in ['admin', 'user'] %}
                     <a href="{{ url_for('purchase_orders.edit', id=po.id) }}" 
-                    class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors shadow-sm">
+                    class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold 
+                    hover:bg-blue-700 transition-colors shadow-sm">
                         <i class="fa-regular fa-pen-to-square mr-1"></i>Edit PO
                     </a>
                 {% endif %}
@@ -52,7 +54,8 @@
                 </a>
                 <button type="submit" 
                         form="po-main-form" 
-                        class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors shadow-sm">
+                        class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold 
+                        hover:bg-blue-700 transition-colors shadow-sm">
                         <i class="fa-regular fa-floppy-disk mr-1"></i>Save PO
                 </button>
             {% endif %}

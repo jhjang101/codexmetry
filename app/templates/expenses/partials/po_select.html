@@ -27,7 +27,8 @@
             {% endif %}"
             hx-get="{{ url_for('expenses.update_po_cascades', expense_id=expense.id if expense else '') }}"
             hx-swap="none"
-            hx-trigger="change">
+            hx-trigger="change"
+            hx-swap="innerHTML">
         
         <option value="" {{ 'selected' if not selection_target else '' }}>
             {{ 'Select Client first...' if is_disabled else 'No PO Link' }}

@@ -39,6 +39,7 @@ def index():
     return render_template('expenses/expenses.html', pagination=pagination, search=search_term)
 
 # --- CRUD OPERATIONS ---
+# view, add, and edit route is now htmx
 
 @bp.route('/add', methods=['GET', 'POST'])
 @role_required(['admin', 'user'])
@@ -76,13 +77,19 @@ def add():
             
             # 5. Success Feedback
             flash(f"Expense {new_expense.expense_number} recorded successfully!", "success")
-            return redirect(url_for('expenses.index'))
+            # The Safe Save Redirect: Forces a clean page load to 'View' mode
+            response = make_response("", 200)
+            response.headers['HX-Redirect'] = url_for('expenses.view', id=new_expense.id)
+            return response
             
         except ValueError as e:
             # Rollback any partial database state (like the CDX registry increment)
             db.session.rollback()
-            flash(str(e), "error")
-            return redirect(url_for('expenses.add'))
+            # Return the OOB Error partial
+            resp = make_response(render_template('partials/error_notification.html', message=str(e)), 200)
+            # Tell HTMX NOT to swap the form, preserving all user input
+            resp.headers['HX-Reswap'] = 'none'
+            return resp
         
     # GET: Prepare form data for the initial render
     vendors = VendorService.get_all()
@@ -148,13 +155,16 @@ def edit(id):
             AttachmentService.commit('Expense', id, new_files=new_files, delete_ids=delete_ids)
 
             flash(f"Expense {expense.expense_number} updated successfully!", "success")
-            return redirect(url_for('expenses.view', id=id))
+            response = make_response("", 200)
+            response.headers['HX-Redirect'] = url_for('expenses.view', id=id)
+            return response
             
         except ValueError as e:
             # Rollback to prevent partial updates
             db.session.rollback()
-            flash(str(e), "error")
-            return redirect(url_for('expenses.edit', id=id))
+            resp = make_response(render_template('partials/error_notification.html', message=str(e)), 200)
+            resp.headers['HX-Reswap'] = 'none'
+            return resp
 
     # GET: Populate dropdowns for the edit form
     vendors = VendorService.get_all()

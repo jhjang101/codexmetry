@@ -43,7 +43,7 @@ def index():
     return render_template('invoices/invoices.html', pagination=pagination, search=search_term)
 
 # --- CRUD OPERATIONS ---
-# add and edit route is now htmx
+# view, add, and edit route is now htmx
 
 @bp.route('/add', methods=['GET', 'POST'])
 @role_required(['admin', 'user'])
@@ -106,18 +106,22 @@ def add():
 
 @bp.route('/view/<int:id>')
 def view(id):
-    invoice = InvoiceService.get_invoice_by_id(id)
-    if not invoice:
-        flash("Invoice not found.", "error")
+    try:
+        invoice = InvoiceService.get_invoice_by_id(id)
+        if not invoice:
+            flash("Invoice not found.", "error")
+            return redirect(url_for('invoices.index'))
+
+
+        print('invoice.total_amount:', invoice.total_amount)
+        print('invoice.total_due:', invoice.total_due)
+        print('invoice.remaining_credit:', invoice.remaining_credit)
+        print('invoice.balance:', invoice.balance)
+        print('invoice.po_total_deposit:', invoice.po_total_prepayment)
+
+    except Exception as e:
+        flash(f"Error loading quote: {str(e)}", "error")
         return redirect(url_for('invoices.index'))
-
-
-    print('invoice.total_amount:', invoice.total_amount)
-    print('invoice.total_due:', invoice.total_due)
-    print('invoice.remaining_credit:', invoice.remaining_credit)
-    print('invoice.balance:', invoice.balance)
-    print('invoice.po_total_deposit:', invoice.po_total_prepayment)
-
 
     return render_template('invoices/form.html', mode='view', invoice=invoice)
 

@@ -18,7 +18,8 @@
                     <form action="{{ url_for('expenses.archive', id=expense.id) }}" method="POST" onsubmit="return confirm('Archive this expense?')">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <button type="submit" 
-                                class="text-red-400 px-2 py-2 rounded-lg text-sm font-medium hover:bg-red-800 transition-colors">
+                                class="text-red-400 px-2 py-2 rounded-lg text-sm font-medium 
+                                hover:bg-red-800 transition-colors">
                             Delete
                         </button>
                     </form>
@@ -26,23 +27,32 @@
 
                 {% if current_user.role in ['admin', 'user'] %}
                     <a href="{{ url_for('expenses.edit', id=expense.id) }}" 
-                    class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors shadow-sm">
+                    class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold 
+                    hover:bg-blue-700 transition-colors shadow-sm">
                         <i class="fa-regular fa-pen-to-square mr-1"></i>Edit Expense
                     </a>
                 {% endif %}
 
             {% else %}
-                <a href="{% if mode == 'add' %}{{ url_for('expenses.index') }}{% else %}{{ url_for('expenses.view', id=expense.id) }}{% endif %}" class="text-gray-500 px-4 py-2 text-sm">Cancel</a>
-                <button type="submit" form="expense-main-form" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm">Save Expense</button>
+                <a href="{% if mode == 'add' %}{{ url_for('expenses.index') }}{% else %}{{ url_for('expenses.view', id=expense.id) }}{% endif %}" 
+                   class="text-gray-500 px-4 py-2 text-sm font-medium hover:text-gray-800">
+                   Cancel
+                </a>
+                <button type="submit" 
+                        form="expense-main-form" 
+                        class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold 
+                        hover:bg-blue-700 transition-colors shadow-sm">
+                        <i class="fa-regular fa-floppy-disk mr-1"></i>Save Expense
+                </button>
             {% endif %}
         </div>
     </div>
 
     <!-- Main Form -->
     <form id="expense-main-form" 
-          method="POST" 
-          enctype="multipart/form-data"
-          action="{% if mode == 'add' %}{{ url_for('expenses.add') }}{% else %}{{ url_for('expenses.edit', id=expense.id) }}{% endif %}">
+          hx-post="{{ url_for('expenses.add') if mode == 'add' else url_for('expenses.edit', id=expense.id) }}" 
+          hx-encoding="multipart/form-data"
+          hx-swap = "none">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
         <!-- Header Information -->

@@ -22,6 +22,7 @@ def before_request():
     pass
 
 # --- LIST & SEARCH ---
+# view, add, and edit route is now htmx
 
 @bp.route('/')
 def index():
@@ -83,12 +84,19 @@ def add():
             if new_payment.invoice and invoice_status_updated:
                 flash(f"Status of invoice {new_payment.invoice.invoice_number} updated successfully!", "success")
                 
-            return redirect(url_for('payments.index'))
+            # The Safe Save Redirect: Forces a clean page load to 'View' mode
+            response = make_response("", 200)
+            response.headers['HX-Redirect'] = url_for('payments.view', id=new_payment.id)
+            return response
+        
         
         except ValueError as e:
             db.session.rollback()
-            flash(str(e), "error")
-            return redirect(url_for('payments.add'))
+            # Return the OOB Error partial
+            resp = make_response(render_template('partials/error_notification.html', message=str(e)), 200)
+            # Tell HTMX NOT to swap the form, preserving all user input
+            resp.headers['HX-Reswap'] = 'none'
+            return resp
         
     # GET: Prepare form data    
     clients=ClientService.get_all()
@@ -101,18 +109,23 @@ def add():
 
 @bp.route('/view/<int:id>')
 def view(id):
-    payment = PaymentService.get_payment_by_id(id)
-    if not payment:
-        flash("Payment not found.", "error")
-        return redirect(url_for('payments.index'))
+    try:
+        payment = PaymentService.get_payment_by_id(id)
+        if not payment:
+            flash("Payment not found.", "error")
+            return redirect(url_for('payments.index'))
 
-    # Identifiers for title display
-    if payment.invoice:
-        payment_number = f'{payment.invoice.invoice_number}'
-    elif payment.purchase_order.po_number:
-        payment_number = f'{payment.purchase_order.po_number}'
-    else:
-        payment_number = f'{payment.order.order_number}'
+        # Identifiers for title display
+        if payment.invoice:
+            payment_number = f'{payment.invoice.invoice_number}'
+        elif payment.purchase_order.po_number:
+            payment_number = f'{payment.purchase_order.po_number}'
+        else:
+            payment_number = f'{payment.order.order_number}'
+
+    except Exception as e:
+        flash(f"Error loading quote: {str(e)}", "error")
+        return redirect(url_for('payments.index'))
 
     return render_template('payments/form.html', 
                            mode='view', 
@@ -180,12 +193,15 @@ def edit(id):
             if old_invoice_status_updated:
                 flash(f"Status of invoice {old_invoice_number} updated successfully!", "success")
                 
-            return redirect(url_for('payments.view', id=id))
+            response = make_response("", 200)
+            response.headers['HX-Redirect'] = url_for('payments.view', id=id)
+            return response
         
         except ValueError as e:
             db.session.rollback()
-            flash(str(e), "error")
-            return redirect(url_for('payments.edit', id=id))
+            resp = make_response(render_template('partials/error_notification.html', message=str(e)), 200)
+            resp.headers['HX-Reswap'] = 'none'
+            return resp
     
     # GET: Prepare Context
     clients = ClientService.get_all()

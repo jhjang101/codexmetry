@@ -40,7 +40,7 @@ def index():
     return render_template('quotes/quotes.html', pagination=pagination, search=search_term)
 
 # --- CRUD OPERATIONS ---
-# add and edit route is now htmx
+# view, add, and edit route is now htmx
 
 @bp.route('/add', methods=['GET', 'POST'])
 @role_required(['admin', 'user'])
