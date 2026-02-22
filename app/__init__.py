@@ -79,6 +79,19 @@ def create_app():
     @app.template_filter('usd')
     def usd_filter(cents):
         return format_usd(cents)
+    
+    @app.template_filter('localize')
+    def localize_filter(dt):
+        """Converts UTC database datetime to Business Timezone."""
+        if not dt:
+            return None
+        
+        from .services.settings_service import MetadataService
+        metadata = MetadataService.get_by_id(1)
+        tz_name = metadata.timezone if metadata else 'America/Chicago'
+        
+        # Ensure the naive datetime from DB is treated as UTC, then convert
+        return dt.replace(tzinfo=ZoneInfo('UTC')).astimezone(ZoneInfo(tz_name))
 
     # 5. Error Handling
     @app.errorhandler(SQLAlchemyError)
