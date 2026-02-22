@@ -97,7 +97,7 @@
                             <select name="client_id" 
                                     class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none appearance-none bg-transparent cursor-pointer pr-10" 
                                     hx-get="{{ url_for('payments.update_client_cascades', payment_id=payment.id if payment else '') }}"
-                                    hx-target="#none" {# We use OOB swaps, so the main target is ignored #}
+                                    hx-swap="none" {# We use OOB swaps, so the main target is ignored #}
                                     hx-trigger="change"
                                     required>
                                 <option value="">Select Client...</option>
@@ -202,8 +202,6 @@
                     {% endif %}
                 </div>
                 
-                <!-- A hidden target for the client-cascades request since it's all OOB -->
-                <div id="none" class="hidden"></div>
             </div>
         </section>
 

@@ -208,10 +208,9 @@
             <!-- Grand Total Area (Moved here directly) -->
             <div class="mt-6 pt-4 border-t border-gray-100 flex justify-end">
                 <div class="text-right" 
-                     id="grand-total-container"
                      hx-post="{{ url_for('quotes.calculate') }}"
                      hx-trigger="recalculate from:body"
-                     hx-target="#calculation-sink"
+                     hx-swap="none" {# Catch nothing, just process OOB swaps #}
                      hx-include="#quote-main-form">
                     <span class="text-lg text-gray-700 font-medium mr-4">Grand Total:</span>
                     <span class="text-lg font-medium text-blue-700" id="grand-total-display">
@@ -219,8 +218,6 @@
                     </span>
                 </div>
             </div>
-            <!-- This hidden div catches the main response of the "recalculate" call -->
-            <div id="calculation-sink" class="hidden"></div>
 
         </section>
 

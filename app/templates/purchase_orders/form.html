@@ -97,7 +97,7 @@
                             <select name="client_id" 
                                     class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none appearance-none bg-transparent cursor-pointer pr-10" 
                                     hx-get="{{ url_for('purchase_orders.update_client_cascades', po_id=po.id if po else '') }}"
-                                    hx-target="#none" {# We use OOB swaps, so the main target is ignored #}
+                                    hx-swap="none" {# We use OOB swaps, so the main target is ignored #}
                                     hx-trigger="change"
                                     required>
                                 <option value="">Select Client...</option>
@@ -202,8 +202,6 @@
                     {% endif %}
                 </div>
                 
-                <!-- A hidden target for the client-cascades request since it's all OOB -->
-                <div id="none" class="hidden"></div>
             </div>
         </section>
 
@@ -247,10 +245,9 @@
             <!-- Grand Total Area (Moved here directly) -->
             <div class="mt-6 pt-4 border-t border-gray-100 flex justify-end">
                 <div class="text-right" 
-                     id="grand-total-container"
                      hx-post="{{ url_for('purchase_orders.calculate') }}"
                      hx-trigger="recalculate from:body"
-                     hx-target="#calculation-sink"
+                     hx-swap="none"
                      hx-include="#po-main-form">
                     <span class="text-lg text-gray-700 font-medium mr-4">Grand Total:</span>
                     <span class="text-lg font-medium text-blue-700" id="grand-total-display">
@@ -258,8 +255,6 @@
                     </span>
                 </div>
             </div>
-            <!-- This hidden div catches the main response of the "recalculate" call -->
-            <div id="calculation-sink" class="hidden"></div>
 
         </section>
 

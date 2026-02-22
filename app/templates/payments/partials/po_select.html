@@ -30,7 +30,7 @@
             {% else %} bg-transparent cursor-pointer
             {% endif %}"
             hx-get="{{ url_for('payments.update_po_cascades', payment_id=payment.id if payment else '') }}"
-            hx-target="#none"
+            hx-swap="none"
             hx-trigger="change"
             required>
         

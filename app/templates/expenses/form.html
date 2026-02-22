@@ -139,7 +139,7 @@
                             <select name="client_id" 
                                     class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none appearance-none bg-transparent cursor-pointer pr-10"
                                     hx-get="{{ url_for('expenses.update_client_cascades', expense_id=expense.id if expense else '') }}"
-                                    hx-target="#none"
+                                    hx-swap="none"
                                     hx-trigger="change">
                                 <option value="">Independent Expense</option>
                                 {% for client in clients %}
@@ -205,9 +205,6 @@
                         </div>
                     {% endif %}
                 </div>
-                
-                <!-- Hidden sink for OOB HTMX calls -->
-                <div id="none" class="hidden"></div>
 
             </div>
         </section>
@@ -247,8 +244,14 @@
                     {% endif %}
                 </tbody>
             </table>
+
+            <!-- Grand Total Area -->
             <div class="mt-6 pt-4 border-t border-gray-100 flex justify-end">
-                <div id="grand-total-container" hx-post="{{ url_for('expenses.calculate') }}" hx-trigger="recalculate from:body" hx-target="#calculation-sink" hx-include="#expense-main-form">
+                <div class="text-right" 
+                     hx-post="{{ url_for('expenses.calculate') }}" 
+                     hx-trigger="recalculate from:body" 
+                     hx-swap="none" {# Catch nothing, just process OOB swaps #}
+                     hx-include="#expense-main-form">
                     <span class="text-lg text-gray-700 font-medium mr-4">Total Amount:</span>
                     <span id="grand-total-display" 
                           class="text-lg font-medium 
@@ -258,10 +261,9 @@
                                 {{ 'text-red-600' if (expense.total_amount if expense else 0) >= 0 else 'text-green-600' }} 
                             {% endif %}">
                           {{ expense.total_amount | usd if expense else '$0.00' }}
-                        </span>
+                    </span>
                 </div>
             </div>
-            <div id="calculation-sink" class="hidden"></div>
         </section>
 
         <section class="bg-white p-6 rounded-lg shadow mb-2">
