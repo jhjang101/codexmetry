@@ -21,6 +21,7 @@ def before_request():
     pass
 
 # --- LIST & SEARCH ---
+# add and edit route is now htmx
 
 @bp.route('/')
 def index():
@@ -67,13 +68,21 @@ def add():
             new_files = request.files.getlist('attachments')
             AttachmentService.commit('PurchaseOrder', new_po.id, new_files=new_files)
 
+            # 5. Success Flow
             flash(f'PO {new_po.order.order_number} created successfully!', 'success')
-            return redirect(url_for('purchase_orders.index'))
+
+            # The Safe Save Redirect: Forces a clean page load to 'View' mode
+            response = make_response("", 200)
+            response.headers['HX-Redirect'] = url_for('purchase_orders.view', id=new_po.id)
+            return response
         
         except ValueError as e:
             db.session.rollback()
-            flash(str(e), 'error')
-            return redirect(url_for('purchase_orders.add'))
+            # Return the OOB Error partial
+            resp = make_response(render_template('partials/error_notification.html', message=str(e)), 200)
+            # Tell HTMX NOT to swap the form, preserving all user input
+            resp.headers['HX-Reswap'] = 'none'
+            return resp
 
 
     # GET: Prepare form data
@@ -140,12 +149,15 @@ def edit(id):
             AttachmentService.commit('PurchaseOrder', id, new_files=new_files, delete_ids=delete_ids)
 
             flash(f'PO {po.order.order_number} updated successfully!', 'success')
-            return redirect(url_for('purchase_orders.view', id=id))
+            response = make_response("", 200)
+            response.headers['HX-Redirect'] = url_for('purchase_orders.view', id=id)
+            return response
         
         except ValueError as e:
             db.session.rollback()
-            flash(str(e), 'error')
-            return redirect(url_for('purchase_orders.edit', id=id))
+            resp = make_response(render_template('partials/error_notification.html', message=str(e)), 200)
+            resp.headers['HX-Reswap'] = 'none'
+            return resp
 
     # GET: Prepare form data
     clients = ClientService.get_all()

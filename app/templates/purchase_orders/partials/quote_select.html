@@ -17,6 +17,7 @@
             {% endif %}"
             hx-get="{{ url_for('purchase_orders.load_quote_items') }}"
             hx-target="#item-list"
+            hx-swap="innerHTML"
             hx-trigger="change"
             hx-confirm="This will replace all current line items with items from the selected quote. Proceed?">
 

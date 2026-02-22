@@ -20,6 +20,7 @@
                         hx-vals='{"row_id": "{{ row_id }}"}'
                         hx-trigger="change"
                         hx-target="#unit-price-cell-{{ row_id }}"
+                        hx-swap="innerHTML"
                         hx-include="closest tr">
                     <option value="">Select Product...</option>
                     {% for product in products %}
@@ -50,6 +51,7 @@
                     hx-vals='{"row_id": "{{ row_id }}"}'
                     hx-trigger="change delay:300ms"
                     hx-target="#line-total-{{ row_id }}"
+                    hx-swap="innerHTML"
                     hx-include="#po-main-form">
         {% endif %}
     </td>
