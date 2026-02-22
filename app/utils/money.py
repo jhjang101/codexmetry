@@ -18,4 +18,4 @@ def parse_to_cents(usd_string: str) -> int:
         cents = int(round(dollars * 100))
         return cents
     except (ValueError, TypeError):
-        return 0
+        raise ValueError(f"Invalid number format in one of the items.")

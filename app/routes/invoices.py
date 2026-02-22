@@ -256,52 +256,61 @@ def calculate():
     Dynamically calculates Line Total, Grand Total, Total Due and Remaining Credit logic.
     Returns targeted swaps for the row and OOB swaps for the footer.
     """
-    row_id = request.form.get('row_id')
-    row_ids = request.form.getlist('row_ids[]')
-    quantities = request.form.getlist('quantities[]')
-    unit_prices = request.form.getlist('unit_prices[]')
-
-    # Extract the hidden deposit pool value (it is stored in cents)
     try:
-        po_total_prepayment = int(request.form.get('po_total_prepayment', 0))
-    except (ValueError, TypeError):
-        po_total_prepayment = 0
+        row_id = request.form.get('row_id')
+        row_ids = request.form.getlist('row_ids[]')
+        quantities = request.form.getlist('quantities[]')
+        unit_prices = request.form.getlist('unit_prices[]')
 
-    # Initialize variables
-    line_total = 0
-    grand_total = 0
+        # Extract the hidden deposit pool value (it is stored in cents)
+        try:
+            po_total_prepayment = int(request.form.get('po_total_prepayment', 0))
+        except (ValueError, TypeError):
+            po_total_prepayment = 0
 
-    # 1. Iterate through all rows to calculate the Grand Total
-    for r_id, qty, price_str in zip(row_ids, quantities, unit_prices):
-        q = int(qty) if qty else 0
-        # parse_to_cents handles the negative sign from the Applied Deposit row
-        p = parse_to_cents(price_str)
-        
-        total = q * p
-        grand_total += total
+        # Initialize variables
+        line_total = 0
+        grand_total = 0
 
-        # 2. Capture the Line Total for the specific row being edited
-        if r_id == row_id:
-            line_total = total
+        # 1. Iterate through all rows to calculate the Grand Total
+        for r_id, qty, price_str in zip(row_ids, quantities, unit_prices):
+            q = int(qty) if qty else 0
+            # parse_to_cents handles the negative sign from the Applied Deposit row
+            p = parse_to_cents(price_str)
+            
+            total = q * p
+            grand_total += total
 
-    # 3. Derive UI-only properties
-    # Total Due is the amount the client must pay (never less than 0)
-    total_due = max(0, grand_total)
-    # Remaining Deposit is the excess deposit (absolute value of negative total)
-    remaining_credit = abs(min(0, grand_total))
+            # 2. Capture the Line Total for the specific row being edited
+            if r_id == row_id:
+                line_total = total
 
-    print('po_total_prepayment:', po_total_prepayment)
-    print('total_due:', total_due)
+        # 3. Derive UI-only properties
+        # Total Due is the amount the client must pay (never less than 0)
+        total_due = max(0, grand_total)
+        # Remaining Deposit is the excess deposit (absolute value of negative total)
+        remaining_credit = abs(min(0, grand_total))
 
-    return render_template(
-        'invoices/partials/calculation_result.html',
-        row_id=row_id,
-        line_total=line_total,
-        grand_total=grand_total,
-        total_due=total_due,
-        remaining_credit=remaining_credit,
-        po_total_prepayment=po_total_prepayment
-    )
+        print('po_total_prepayment:', po_total_prepayment)
+        print('total_due:', total_due)
+
+        return render_template(
+            'invoices/partials/calculation_result.html',
+            row_id=row_id,
+            line_total=line_total,
+            grand_total=grand_total,
+            total_due=total_due,
+            remaining_credit=remaining_credit,
+            po_total_prepayment=po_total_prepayment
+        )
+    
+    except ValueError as e:
+        # Failure: Rollback (Safety first) and OOB Error
+        db.session.rollback()
+        resp = make_response(render_template('partials/error_notification.html', message=str(e)), 200)
+        # Tell HTMX not to clear the total or the input that caused the error
+        resp.headers['HX-Reswap'] = 'none'
+        return resp
 
 # --- HTMX CASCADE ROUTES ---
 

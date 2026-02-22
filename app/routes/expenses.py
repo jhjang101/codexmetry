@@ -210,27 +210,36 @@ def add_row():
 @bp.route('/calculate', methods=['POST'])
 def calculate():
     """Calculates specific Line Total and Grand Total."""
-    row_id = request.form.get('row_id')
-    row_ids = request.form.getlist('row_ids[]')
-    quantities = request.form.getlist('quantities[]')
-    unit_prices = request.form.getlist('unit_prices[]')
+    try:
+        row_id = request.form.get('row_id')
+        row_ids = request.form.getlist('row_ids[]')
+        quantities = request.form.getlist('quantities[]')
+        unit_prices = request.form.getlist('unit_prices[]')
 
-    line_total = 0
-    grand_total = 0
+        line_total = 0
+        grand_total = 0
 
-    for r_id, qty, price in zip(row_ids, quantities, unit_prices):
-        q = int(qty) if qty else 0
-        p = parse_to_cents(price)
-        row_total = q * p
-        grand_total += row_total
-        
-        if r_id == row_id:
-            line_total = row_total
+        for r_id, qty, price in zip(row_ids, quantities, unit_prices):
+            q = int(qty) if qty else 0
+            p = parse_to_cents(price)
+            row_total = q * p
+            grand_total += row_total
+            
+            if r_id == row_id:
+                line_total = row_total
 
-    return render_template('expenses/partials/calculation_result.html', 
-                           row_id=row_id,
-                           line_total=line_total, 
-                           grand_total=grand_total)
+        return render_template('expenses/partials/calculation_result.html', 
+                            row_id=row_id,
+                            line_total=line_total, 
+                            grand_total=grand_total)
+    
+    except ValueError as e:
+        # Failure: Rollback (Safety first) and OOB Error
+        db.session.rollback()
+        resp = make_response(render_template('partials/error_notification.html', message=str(e)), 200)
+        # Tell HTMX not to clear the total or the input that caused the error
+        resp.headers['HX-Reswap'] = 'none'
+        return resp
 
 # --- HTMX CASCADE ROUTES ---
 

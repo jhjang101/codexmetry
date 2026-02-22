@@ -65,7 +65,7 @@
                    class="block w-full border rounded-lg p-2 text-sm text-right focus:ring-1 focus:ring-blue-300 outline-none"
                    hx-post="{{ url_for('expenses.calculate') }}" 
                    hx-vals='{"row_id": "{{ row_id }}"}' 
-                   hx-trigger="keyup changed delay:300ms"
+                   hx-trigger="input changed delay:300ms"
                    hx-target="#line-total-{{ row_id }}" 
                    hx-include="#expense-main-form">
         {% endif %}
