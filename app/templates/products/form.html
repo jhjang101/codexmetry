@@ -42,7 +42,7 @@
                 {% if current_user.role in ['admin', 'user'] %}
                     <a href="{{ url_for('products.edit', id=product.id) }}" 
                     class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold 
-                    hover:bg-blue-700 transition-colors">
+                    hover:bg-blue-700 transition-colors shadow-sm">
                         <i class="fa-regular fa-pen-to-square mr-1"></i>Edit Product
                     </a>
                 {% endif %}
@@ -55,7 +55,7 @@
                 <button type="submit" 
                         form="product-main-form" 
                         class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold 
-                        hover:bg-blue-700 transition-colors">
+                        hover:bg-blue-700 transition-colors shadow-sm">
                     <i class="fa-regular fa-floppy-disk mr-1"></i>Save Product
                 </button>
             {% endif %}

@@ -18,7 +18,7 @@
                     <form action="{{ url_for('transactions.archive', id=trx.id) }}" method="POST" onsubmit="return confirm('Archive this transaction?')">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <button type="submit" class="text-red-400 px-2 py-2 text-sm 
-                        hover:bg-red-800 hover:text-white rounded-lg">Delete</button>
+                        hover:bg-red-800 rounded-lg">Delete</button>
                     </form>
                 {% endif %}
 
