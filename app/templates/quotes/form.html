@@ -63,7 +63,7 @@
     <form id="quote-main-form"
           hx-post="{{ url_for('quotes.add') if mode == 'add' else url_for('quotes.edit', id=quote.id) }}"
           hx-encoding="multipart/form-data" 
-          hx-swap = "none">
+          hx-swap = "innerHTML">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
         <!-- Header Information -->

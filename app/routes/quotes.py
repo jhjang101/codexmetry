@@ -66,8 +66,13 @@ def add():
             new_files = request.files.getlist('attachments')
             AttachmentService.commit('Quote', new_quote.id, new_files=new_files)
             
+            # 5. Success Flow
             flash(f"Quote {new_quote.quote_number} added successfully!", "success")
-            return redirect(url_for('quotes.index'))
+            
+            # The Safe Save Redirect: Forces a clean page load to 'View' mode
+            response = make_response("", 200)
+            response.headers['HX-Redirect'] = url_for('quotes.view', id=new_quote.id)
+            return response
 
         except ValueError as e:
             db.session.rollback()
@@ -137,7 +142,9 @@ def edit(id):
             AttachmentService.commit('Quote', id, new_files=new_files, delete_ids=delete_ids)
 
             flash(f"Quote {quote.quote_number} updated successfully!", "success")
-            return redirect(url_for('quotes.view', id=id))
+            response = make_response("", 200)
+            response.headers['HX-Redirect'] = url_for('quotes.view', id=id)
+            return response
         
         except ValueError as e:
             db.session.rollback()
