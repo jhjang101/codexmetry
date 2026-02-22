@@ -155,25 +155,56 @@ def view_user_row(id):
 # --- HTMX Route to add a lookup item ---
 @bp.route('/lookup/add', methods=['POST'])
 def add_lookup():
-    table_name = request.form.get('table_name')
-    value = request.form.get('value')
-    if table_name:
+    """Adds a lookup value and returns the updated card."""
+    try:
+        table_name = request.form.get('table_name')
+        value = request.form.get('value', '').strip()
+        
+        if not table_name:
+            raise ValueError("Target table not specified.")
+        
         table = LOOKUPS.get(table_name)
+        if not table:
+            raise ValueError("Invalid lookup table.")
 
-    if table and value:
+        if not value:
+            raise ValueError("Value cannot be empty.")
+
+        # Brain Call: Add to database
         table.add(type=value)
+        
+        # Success: Return the updated card partial
         items = table.get_all()
+        return render_template('settings/partials/lookup_card.html', 
+                               table_name=table_name, 
+                               items=items)
 
-    return render_template('settings/partials/lookup_card.html', 
-                           table_name=table_name, 
-                           items = items)
+    except ValueError as e:
+        db.session.rollback()
+        # Failure: Return OOB Error and keep the "Add" input intact
+        resp = make_response(render_template('partials/error_notification.html', message=str(e)), 200)
+        resp.headers['HX-Reswap'] = 'none'
+        return resp
 
 # --- HTMX Route to archive a lookup item ---
 @bp.route('/lookup/archive/<table_name>/<int:id>', methods=['POST'])
 def archive_lookup(table_name, id):
-    table = LOOKUPS.get(table_name)
-    if table:
+    """Archives a lookup value."""
+    try:
+        table = LOOKUPS.get(table_name)
+        if not table:
+            raise ValueError("Invalid lookup table.")
+
+        # Archive record
         table.archive(id)
 
-    return "" # HTMX will remove the row if we handle it, or we can just 
+        # Success: HTMX will remove the row on the frontend because we return empty
+        return "" 
+
+    except ValueError as e:
+        db.session.rollback()
+        # Failure: Return OOB Error and prevent the row from disappearing
+        resp = make_response(render_template('partials/error_notification.html', message=str(e)), 200)
+        resp.headers['HX-Reswap'] = 'none'
+        return resp
 
