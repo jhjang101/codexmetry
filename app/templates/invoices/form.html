@@ -50,7 +50,8 @@
                    class="text-gray-500 px-4 py-2 text-sm font-medium hover:text-gray-800">
                     Cancel
                 </a>
-                <button type="submit" form="invoice-main-form" 
+                <button type="submit" 
+                        form="invoice-main-form" 
                         class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors shadow-sm">
                         <i class="fa-regular fa-floppy-disk mr-1"></i>Save Invoice
                 </button>
@@ -60,9 +61,9 @@
 
     <!-- 2. MAIN DATA FORM -->
     <form id="invoice-main-form" 
-          action="{% if mode == 'add' %}{{ url_for('invoices.add') }}{% else %}{{ url_for('invoices.edit', id=invoice.id) }}{% endif %}" 
-          method="POST"
-          enctype="multipart/form-data">
+          hx-post="{{ url_for('invoices.add') if mode == 'add' else url_for('invoices.edit', id=invoice.id) }}" 
+          hx-encoding="multipart/form-data"
+          hx-swap = "none">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
         <!-- Header Information -->

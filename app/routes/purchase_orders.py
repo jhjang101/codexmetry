@@ -101,15 +101,20 @@ def add():
 @bp.route('/view/<int:id>')
 def view(id):
     # Use augmented fetcher to get calculated financial attributes
-    po = PurchaseOrderService.get_po_by_id(id)
-    if not po:
-        flash("Purchase Order not found.", "error")
-        return redirect(url_for('purchase_orders.index'))
+    try:
+        po = PurchaseOrderService.get_po_by_id(id)
+        if not po:
+            flash("Purchase Order not found.", "error")
+            return redirect(url_for('purchase_orders.index'))
 
-    print('po.total_amount:', po.total_amount)
-    print('po.balance:', po.balance)
-    print('po.po_total_deposit:', po.total_prepayment)
-    print('po.remaining_deposit:', po.remaining_credit)
+        print('po.total_amount:', po.total_amount)
+        print('po.balance:', po.balance)
+        print('po.po_total_deposit:', po.total_prepayment)
+        print('po.remaining_deposit:', po.remaining_credit)
+
+    except Exception as e:
+        flash(f"Error loading quote: {str(e)}", "error")
+        return redirect(url_for('purchase_orders.index'))
 
     return render_template('purchase_orders/form.html', mode='view', po=po)
 

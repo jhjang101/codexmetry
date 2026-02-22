@@ -43,6 +43,7 @@ def index():
     return render_template('invoices/invoices.html', pagination=pagination, search=search_term)
 
 # --- CRUD OPERATIONS ---
+# add and edit route is now htmx
 
 @bp.route('/add', methods=['GET', 'POST'])
 @role_required(['admin', 'user'])
@@ -78,12 +79,17 @@ def add():
                 po_name = new_invoice.purchase_order.po_number or new_invoice.order.order_number
                 flash(f"Status of PO {po_name} updated successfully!", "success")
 
-            return redirect(url_for('invoices.index'))
+            # The Safe Save Redirect: Forces a clean page load to 'View' mode
+            response = make_response("", 200)
+            response.headers['HX-Redirect'] = url_for('invoices.view', id=new_invoice.id)
+            return response
         
         except ValueError as e:
             db.session.rollback()
-            flash(str(e), "error")
-            return redirect(url_for('invoices.add'))
+            resp = make_response(render_template('partials/error_notification.html', message=str(e)), 200)
+            # Tell HTMX NOT to swap the form, preserving all user input
+            resp.headers['HX-Reswap'] = 'none'
+            return resp
         
     # GET: Prepare form data    
     clients=ClientService.get_all()
@@ -171,12 +177,16 @@ def edit(id):
             if old_po_id and old_po_status_updated:
                 flash(f"Status of PO {old_po_name} updated successfully!", "success")
 
-            return redirect(url_for('invoices.view', id=id))
+            # The Safe Save Redirect: Forces a clean page load to 'View' mode
+            response = make_response("", 200)
+            response.headers['HX-Redirect'] = url_for('invoices.view', id=id)
+            return response
             
         except ValueError as e:
             db.session.rollback()
-            flash(str(e), "error")
-            return redirect(url_for('invoices.edit', id=id))
+            resp = make_response(render_template('partials/error_notification.html', message=str(e)), 200)
+            resp.headers['HX-Reswap'] = 'none'
+            return resp
 
     # GET: Populate dropdowns for the edit form
     clients = ClientService.get_all()

@@ -61,7 +61,7 @@
 
     <!-- 2. MAIN DATA FORM -->
     <form id="po-main-form" 
-          hx-post="{{ url_for('purchase_orders.add') if mode == 'add' else url_for('purchase_orders.edit', id=purchase_orders.id) }}" 
+          hx-post="{{ url_for('purchase_orders.add') if mode == 'add' else url_for('purchase_orders.edit', id=po.id) }}" 
           hx-encoding="multipart/form-data"
           hx-swap = "none">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
