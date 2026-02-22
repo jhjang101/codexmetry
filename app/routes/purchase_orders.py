@@ -113,6 +113,7 @@ def view(id):
         print('po.remaining_deposit:', po.remaining_credit)
 
     except Exception as e:
+        db.session.rollback()
         flash(f"Error loading quote: {str(e)}", "error")
         return redirect(url_for('purchase_orders.index'))
 

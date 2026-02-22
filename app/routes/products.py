@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, session, flash
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash, make_response
 from flask_login import login_required
 from ..services.products_service import ProductService
 from ..services.settings_service import ProductCategoryService
@@ -35,6 +35,7 @@ def index():
     return render_template('products/products.html', pagination=pagination, search=search_term)
 
 # --- CRUD OPERATIONS ---
+# view, add, and edit route is now htmx
 
 @bp.route('/add', methods=['GET', 'POST'])
 @role_required(['admin', 'user'])
@@ -56,15 +57,21 @@ def add():
             }
 
             # 3. Call Service
-            ProductService.add_product(product_data)
+            new_product = ProductService.add_product(product_data)
 
             flash('Product added successfully!', 'success')
-            return redirect(url_for('products.index'))
+            # The Safe Save Redirect: Forces a clean page load to 'View' mode
+            response = make_response("", 200)
+            response.headers['HX-Redirect'] = url_for('products.view', id=new_product.id)
+            return response
         
         except ValueError as e:
             db.session.rollback()
-            flash(str(e), 'error')
-            return redirect(url_for('products.add'))
+            # Return the OOB Error partial
+            resp = make_response(render_template('partials/error_notification.html', message=str(e)), 200)
+            # Tell HTMX NOT to swap the form, preserving all user input
+            resp.headers['HX-Reswap'] = 'none'
+            return resp
 
     # GET: Load categories for the dropdown
     categories = ProductCategoryService.get_all()
@@ -88,14 +95,9 @@ def view(id):
 @bp.route('/edit/<int:id>', methods=['GET', 'POST'])
 @role_required(['admin', 'user'])
 def edit(id):
-    try:
-        product = ProductService.get_product_by_id(id)
-        if not product:
-            flash("Product not found.", "error")
-            return redirect(url_for('products.index'))
-    except ValueError as e:
-        db.session.rollback()
-        flash(str(e), 'error')
+    product = ProductService.get_product_by_id(id)
+    if not product:
+        flash("Product not found.", "error")
         return redirect(url_for('products.index'))
     
     if request.method == 'POST':
@@ -122,12 +124,15 @@ def edit(id):
 
             # 4. Flash
             flash(f'Product {product.name} updated successfully!', 'success')
-            return redirect(url_for('products.view', id=id))
+            response = make_response("", 200)
+            response.headers['HX-Redirect'] = url_for('products.view', id=id)
+            return response
         
         except ValueError as e:
             db.session.rollback()
-            flash(str(e), 'error')
-            return redirect(url_for('products.edit', id=id))
+            resp = make_response(render_template('partials/error_notification.html', message=str(e)), 200)
+            resp.headers['HX-Reswap'] = 'none'
+            return resp
 
     # GET: Load categories for the dropdown
     categories = ProductCategoryService.get_all()

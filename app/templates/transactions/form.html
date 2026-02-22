@@ -17,7 +17,8 @@
                 {% if current_user.role in ['admin'] %}
                     <form action="{{ url_for('transactions.archive', id=trx.id) }}" method="POST" onsubmit="return confirm('Archive this transaction?')">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <button type="submit" class="text-red-400 px-2 py-2 text-sm hover:bg-red-800 hover:text-white rounded-lg">Delete</button>
+                        <button type="submit" class="text-red-400 px-2 py-2 text-sm 
+                        hover:bg-red-800 hover:text-white rounded-lg">Delete</button>
                     </form>
                 {% endif %}
 
@@ -29,14 +30,24 @@
                 {% endif %}
 
             {% else %}
-                <a href="{% if mode == 'add' %}{{ url_for('transactions.index') }}{% else %}{{ url_for('transactions.view', id=trx.id) }}{% endif %}" class="text-gray-500 px-4 py-2 text-sm">Cancel</a>
-                <button type="submit" form="trx-main-form" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm">Save Transaction</button>
+                <a href="{% if mode == 'add' %}{{ url_for('transactions.index') }}{% else %}{{ url_for('transactions.view', id=trx.id) }}{% endif %}" 
+                   class="text-gray-500 px-4 py-2 text-sm">
+                    Cancel
+                </a>
+                <button type="submit" 
+                        form="trx-main-form" 
+                        class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold 
+                        hover:bg-blue-700 transition-colors shadow-sm">
+                    <i class="fa-regular fa-floppy-disk mr-1"></i>Save Transaction
+                </button>
             {% endif %}
         </div>
     </div>
 
-    <form id="trx-main-form" method="POST" enctype="multipart/form-data"
-          action="{% if mode == 'add' %}{{ url_for('transactions.add') }}{% else %}{{ url_for('transactions.edit', id=trx.id) }}{% endif %}">
+    <form id="trx-main-form" 
+          hx-post="{{ url_for('transactions.add') if mode == 'add' else url_for('transactions.edit', id=trx.id) }}" 
+          hx-encoding="multipart/form-data"
+          hx-swap = "none">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
         <section class="bg-white p-6 rounded-lg shadow mb-2">
@@ -58,8 +69,12 @@
                     {% if mode == 'view' %}
                         <p class="mt-1 block bg-gray-100 border rounded-lg p-2 text-sm">{{ trx.description }}</p>
                     {% else %}
-                        <input type="text" name="description" value="{{ trx.description if trx else '' }}" required
-                               placeholder="e.g. Bank Interest, Annual Fee" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300">
+                        <input type="text" 
+                               name="description" 
+                               value="{{ trx.description if trx else '' }}" 
+                               required
+                               placeholder="e.g. Bank Interest, Annual Fee" 
+                               class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300">
                     {% endif %}
                 </div>
 

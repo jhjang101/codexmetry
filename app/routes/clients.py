@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, session, flash
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash, make_response
 from flask_login import login_required
 from ..services.clients_service import ClientService
 from ..utils.auth import role_required
@@ -34,6 +34,7 @@ def index():
     return render_template('clients/clients.html', pagination=pagination, search=search_term)
 
 # --- CRUD OPERATIONS ---
+# view, add, and edit route is now htmx
 
 @bp.route('/add', methods=['GET', 'POST'])
 @role_required(['admin', 'user'])
@@ -53,12 +54,18 @@ def add():
             # 3. Flash message
             flash(f'Client {new_client.company_name} added successfully!', 'success')
 
+            # The Safe Save Redirect: Forces a clean page load to 'View' mode
+            response = make_response("", 200)
+            response.headers['HX-Redirect'] = url_for('clients.view', id=new_client.id)
+            return response
+
         except ValueError as e:
             db.session.rollback()
-            flash(str(e), 'error')
-            return redirect(url_for('clients.add'))
-
-        return redirect(url_for('clients.index'))
+            # Return the OOB Error partial
+            resp = make_response(render_template('partials/error_notification.html', message=str(e)), 200)
+            # Tell HTMX NOT to swap the form, preserving all user input
+            resp.headers['HX-Reswap'] = 'none'
+            return resp
 
     return render_template('clients/form.html', mode='add', client=None)
 
@@ -105,12 +112,15 @@ def edit(id):
 
             # 3. Flash
             flash(f'Client {client.company_name} updated successfully!', 'success')
-            return redirect(url_for('clients.view', id=id))
+            response = make_response("", 200)
+            response.headers['HX-Redirect'] = url_for('clients.view', id=id)
+            return response
         
         except ValueError as e:
             db.session.rollback()
-            flash(str(e), 'error')
-            return redirect(url_for('clients.edit', id=id))
+            resp = make_response(render_template('partials/error_notification.html', message=str(e)), 200)
+            resp.headers['HX-Reswap'] = 'none'
+            return resp
 
     return render_template('clients/form.html', mode='edit', client=client)
 

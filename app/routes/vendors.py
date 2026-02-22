@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, session, flash
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash, make_response
 from flask_login import login_required
 from ..services.vendors_service import VendorService
 from ..utils.auth import role_required
@@ -31,6 +31,7 @@ def index():
     return render_template('vendors/vendors.html', pagination=pagination, search=search_term)
 
 # --- CRUD OPERATIONS ---
+# view, add, and edit route is now htmx
 
 @bp.route('/add', methods=['GET', 'POST'])
 @role_required(['admin', 'user'])
@@ -50,12 +51,18 @@ def add():
 
             # 3. Success Feedback
             flash(f'Vendor {new_vendor.company_name} added successfully!', 'success')
-            return redirect(url_for('vendors.index'))
+            # The Safe Save Redirect: Forces a clean page load to 'View' mode
+            response = make_response("", 200)
+            response.headers['HX-Redirect'] = url_for('vendors.view', id=new_vendor.id)
+            return response
 
         except ValueError as e:
             db.session.rollback()
-            flash(str(e), 'error')
-            return redirect(url_for('vendors.add'))
+            # Return the OOB Error partial
+            resp = make_response(render_template('partials/error_notification.html', message=str(e)), 200)
+            # Tell HTMX NOT to swap the form, preserving all user input
+            resp.headers['HX-Reswap'] = 'none'
+            return resp
 
     return render_template('vendors/form.html', mode='add', vendor=None)
 
@@ -77,15 +84,9 @@ def view(id):
 @bp.route('/edit/<int:id>', methods=['GET', 'POST'])
 @role_required(['admin', 'user'])
 def edit(id):
-    try:
-        vendor = VendorService.get_by_id(id)
-        if not vendor:
-            flash("Vendor not found.", "error")
-            return redirect(url_for('vendors.index'))
-        
-    except ValueError as e:
-        db.session.rollback()
-        flash(str(e), 'error')
+    vendor = VendorService.get_by_id(id)
+    if not vendor:
+        flash("Vendor not found.", "error")
         return redirect(url_for('vendors.index'))
 
     if request.method == 'POST':
@@ -103,12 +104,15 @@ def edit(id):
 
             # 3. Success Feedback
             flash(f'Vendor {vendor.company_name} updated successfully!', 'success')
-            return redirect(url_for('vendors.view', id=id))
+            response = make_response("", 200)
+            response.headers['HX-Redirect'] = url_for('vendors.view', id=id)
+            return response
         
         except ValueError as e:
             db.session.rollback()
-            flash(str(e), 'error')
-            return redirect(url_for('vendors.edit', id=id))
+            resp = make_response(render_template('partials/error_notification.html', message=str(e)), 200)
+            resp.headers['HX-Reswap'] = 'none'
+            return resp
 
     return render_template('vendors/form.html', mode='edit', vendor=vendor)
 
