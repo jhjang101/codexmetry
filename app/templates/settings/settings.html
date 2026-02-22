@@ -10,6 +10,8 @@
         <h2 class="text-xl font-semibold mb-2 border-b pb-2">Company Information</h2>
 
         <form id="metadata-form" 
+              hx-post="{{ url_for('settings.update_metadata') }}"
+              hx-swap="none"
               hx-encoding="multipart/form-data"
               class="grid grid-cols-2 gap-4">
             <!-- CSRF Token handled by Flask-WTF -->
@@ -75,11 +77,8 @@
 
             
             <div class="col-span-2 text-right">
-                <button type="button" 
-                        class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors"
-                        hx-post="{{ url_for('settings.update_metadata') }}"
-                        hx-include="#metadata-form"
-                        hx-swap="none">
+                <button type="submit" 
+                        class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors">
                     <i class="fa-regular fa-floppy-disk mr-1"></i>Save Metadata
                 </button>
             </div>
