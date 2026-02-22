@@ -63,6 +63,34 @@ class UserService(BaseService):
         user.is_active = not user.is_active
         db.session.commit()
         return user
+    
+    @classmethod
+    def change_password(cls, user_id: int, current_pw: str, new_pw: str, confirm_pw: str):
+        """
+        Brain: Verifies the old password and updates to a new one.
+        Raises ValueError for any security or matching failures.
+        """
+        # 1. Verification: Mandatory fields
+        if not current_pw or not new_pw or not confirm_pw:
+            raise ValueError("All password fields are required.")
+
+        # 2. Verification: New passwords must match
+        if new_pw != confirm_pw:
+            raise ValueError("New password and confirmation do not match.")
+        
+        # 3. Identity Check: Fetch the user
+        user = cls.get_by_id(user_id)
+
+        # 4. Security Guard: Verify the existing password
+        # This prevents someone from changing a password on a left-open session
+        if not user.check_password(current_pw):
+            raise ValueError("Current password is incorrect.")
+
+        # 5. Update: Hash and save the new password
+        user.set_password(new_pw)
+        db.session.commit()
+        
+        return user
 
     # --- INTERNAL HELPERS ---
 

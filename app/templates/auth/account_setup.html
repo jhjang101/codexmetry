@@ -1,0 +1,92 @@
+{% extends 'layout.html' %}
+{% block title %}Account - Codexmetry{% endblock %}
+{% block header %}Account Settings{% endblock %}
+
+{% block content %}
+    
+    <div class="max-w-md mx-auto mt-8">
+        <div class="bg-white p-8 rounded-xl shadow-md border border-slate-200">
+            <div class="mb-6">
+                <h2 class="text-xl font-semibold">Change Password</h2>
+                <p class="text-sm text-gray-500">Update your account password</p>
+            </div>
+
+            <form id="password-change-form">
+                <!-- Current Password -->
+                <div class="mb-4">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Current Password</label>
+                    <div class="relative">
+                        <input type="password" 
+                               name="current_password" 
+                               id="pw-current" 
+                               required
+                               class="w-full border border-slate-300 rounded-lg p-2.5 text-sm 
+                               focus:ring-1 focus:ring-blue-500 outline-none transition-all pr-10">
+                        <button type="button" 
+                                onclick="const p = document.getElementById('pw-current'); p.type = p.type === 'password' ? 'text' : 'password'; 
+                                this.querySelector('i').classList.toggle('fa-eye-slash'); this.querySelector('i').classList.toggle('fa-eye');"
+                                class="absolute inset-y-0 right-0 px-3 flex items-center text-slate-400 hover:text-slate-600">
+                            <i class="fa-regular fa-eye-slash text-xs"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- New Password -->
+                <div class="mb-4 border-t border-slate-100 pt-4">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">New Password</label>
+                    <div class="relative">
+                        <input type="password" 
+                               name="new_password" 
+                               id="pw-new" 
+                               required
+                               class="w-full border border-slate-300 rounded-lg p-2.5 text-sm 
+                               focus:ring-1 focus:ring-blue-500 outline-none transition-all pr-10">
+                        <button type="button" 
+                                onclick="const p = document.getElementById('pw-new'); p.type = p.type === 'password' ? 'text' : 'password'; 
+                                this.querySelector('i').classList.toggle('fa-eye-slash'); this.querySelector('i').classList.toggle('fa-eye');"
+                                class="absolute inset-y-0 right-0 px-3 flex items-center text-slate-400 hover:text-slate-600">
+                            <i class="fa-regular fa-eye-slash text-xs"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Confirm New Password -->
+                <div class="mb-8">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Confirm New Password</label>
+                    <div class="relative">
+                        <input type="password" 
+                               name="confirm_password" 
+                               id="pw-confirm" 
+                               required
+                               class="w-full border border-slate-300 rounded-lg p-2.5 text-sm 
+                               focus:ring-1 focus:ring-blue-500 outline-none transition-all pr-10">
+                        <button type="button" 
+                                onclick="const p = document.getElementById('pw-confirm'); p.type = p.type === 'password' ? 'text' : 'password'; 
+                                this.querySelector('i').classList.toggle('fa-eye-slash'); this.querySelector('i').classList.toggle('fa-eye');"
+                                class="absolute inset-y-0 right-0 px-3 flex items-center text-slate-400 hover:text-slate-600">
+                            <i class="fa-regular fa-eye-slash text-xs"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between gap-4">
+                    <a href="{{ url_for('dashboard.index') }}" 
+                    class="text-sm text-slate-500 hover:text-slate-800 font-medium">
+                    Cancel
+                    </a>
+                    <button type="button"
+                            hx-post="{{ url_for('auth.change_password') }}"
+                            hx-include="#password-change-form"
+                            hx-target="#none"
+                            class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2.5 
+                            rounded-lg text-sm shadow-md transition-all active:scale-[0.98]">
+                        Update Password
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="none" class="hidden"></div>
+
+{% endblock %}
