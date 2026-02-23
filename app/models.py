@@ -178,6 +178,53 @@ class OrderRegistry(db.Model, AuditMixin):
     payments: Mapped[list["Payment"]] = relationship(back_populates="order")
     expenses: Mapped[list["Expense"]] = relationship(back_populates="order")
 
+    @property
+    def total_paid(self):
+        """Sum of all active payments in this deal."""
+        if 'payments' in self.__dict__:
+            return sum(pay.amount for pay in self.payments if pay.is_active)
+        return 0
+
+    @property
+    def total_expenses(self):
+        """Sum of all active expenses in this order."""
+        if 'expenses' in self.__dict__:
+            return sum(exp.total_amount for exp in self.expenses if exp.is_active)
+        return 0
+
+    @property
+    def remaining_to_collect(self):
+        """How much has been billed but not yet paid."""
+        # Total Due (Positive Invoices) - Total Paid (including prepayment)
+        total_due = sum(max(0, inv.total_amount) for inv in self.invoices if inv.is_active)
+        return total_due - self.total_paid
+    
+    @property
+    def total_contextual_balance(self):
+        """
+        Sum of unpaid balances across all invoices. 
+        Formula: (Total Billed) - (Payments already applied to Invoices)
+        Shortcut: remaining_to_collect + total_prepayments
+        """
+        # Total Due is all positive billing
+        # remaining_to_collect is (Total Due - Total Paid)
+        # We add back the prepayments to show only the gap on issued invoices
+        return self.remaining_to_collect + self.total_prepayments
+    
+    @property
+    def total_invoiced_due(self):
+        """Sum of all total_due values (positive billing) in this order."""
+        if 'invoices' in self.__dict__:
+            return sum(inv.total_due for inv in self.invoices if inv.is_active)
+        return 0
+
+    @property
+    def total_prepayments(self):
+        """Sum of all payments not yet linked to an invoice."""
+        if 'payments' in self.__dict__:
+            return sum(p.amount for p in self.payments if p.is_active and p.invoice_id is None)
+        return 0
+
 class Quote(db.Model, AuditMixin):
     __tablename__ = 'quotes'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -233,6 +280,27 @@ class PurchaseOrder(db.Model, AuditMixin):
         order_by="Attachment.uploaded_at.asc()"
     )
 
+    @property
+    def invoiced_total(self):
+        """Sum of non-system invoices (total due) linked to this PO."""
+        if self.order and 'invoices' in self.order.__dict__:
+            return sum(inv.total_amount for inv in self.order.invoices 
+                    if inv.po_id == self.id and inv.is_active)
+        return 0
+
+    @property
+    def balance_tobe_invoiced(self):
+        """Formula: po_total - sum(invoice_total_due) - sum(prepayments)"""
+        if self.order and 'invoices' in self.order.__dict__ and 'payments' in self.order.__dict__:
+            # Sum only positive billed amounts
+            billed = sum(inv.total_due for inv in self.order.invoices 
+                        if inv.po_id == self.id and inv.is_active)
+            # Sum payments applied to PO but not yet to an invoice
+            prepaid = sum(p.amount for p in self.order.payments 
+                        if p.po_id == self.id and p.invoice_id is None and p.is_active)
+            return self.total_amount - billed - prepaid
+        return self.total_amount
+
 class Invoice(db.Model, AuditMixin):
     __tablename__ = 'invoices'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -261,6 +329,21 @@ class Invoice(db.Model, AuditMixin):
         viewonly=True,
         order_by="Attachment.uploaded_at.asc()"
     )
+
+    @property
+    def total_due(self):
+        """The actual billable amount (clamped to 0 for credits)."""
+        return max(0, self.total_amount)
+
+    @property
+    def contextual_balance(self):
+        """Calculates balance using payments already in the parent order's memory."""
+        # Logic: Look at parent order's payments to find matches for THIS invoice
+        if self.order and 'payments' in self.order.__dict__:
+            applied_payments = sum(p.amount for p in self.order.payments 
+                                if p.invoice_id == self.id and p.is_active)
+            return self.total_due - applied_payments
+        return self.total_due
 
 class Payment(db.Model, AuditMixin):
     __tablename__ = 'payments'

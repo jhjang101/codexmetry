@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash, make_response
 from flask_login import login_required
+from ..services.orders_service import OrderService
 from ..services.invoices_service import InvoiceService
 from ..services.purchase_orders_service import PurchaseOrderService
 from ..services.products_service import ProductService
@@ -110,6 +111,7 @@ def add():
 @bp.route('/view/<int:id>')
 def view(id):
     try:
+        # 1. Fetch the primary Invoice record (Calculates specific balance/pool)
         invoice = InvoiceService.get_invoice_by_id(id)
         if not invoice:
             flash("Invoice not found.", "error")
@@ -122,11 +124,18 @@ def view(id):
         print('invoice.balance:', invoice.balance)
         print('invoice.po_total_deposit:', invoice.po_total_prepayment)
 
+        # 2. Fetch the Order History (The Tree)
+        # We only fetch this in 'view' mode to keep 'edit' and 'add' modes fast.
+        tree = OrderService.get_deal_tree(invoice.order_id)
+
+        return render_template('invoices/form.html', 
+                               mode='view', 
+                               invoice=invoice, 
+                               tree=tree)
+
     except Exception as e:
         flash(f"Error loading invoice: {str(e)}", "error")
         return redirect(url_for('invoices.index'))
-
-    return render_template('invoices/form.html', mode='view', invoice=invoice)
 
 @bp.route('/edit/<int:id>', methods=['GET', 'POST'])
 @role_required(['admin', 'user'])

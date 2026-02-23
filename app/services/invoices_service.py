@@ -86,7 +86,8 @@ class InvoiceService(BaseService):
         for row in rows:
             invoice = row[0]              # The Invoice model
             invoice.balance = row[1]      # The calculated_balance
-            invoice.total_due = max(0, invoice.total_amount) # The calculated_total_due
+            # invoice.total_due is calculated in model @property
+            # invoice.total_due = max(0, invoice.total_amount) # The calculated_total_due
             items.append(invoice)
 
         # 6.4. Create the Pagination Object Manually
@@ -178,7 +179,9 @@ class InvoiceService(BaseService):
         
         # Attach dynamic UI attributes
         # Total Due: What they owe now (never negative)
-        invoice.total_due = max(0, invoice.total_amount)
+        # invoice.total_due is calculated in model @property
+        # invoice.total_due = max(0, invoice.total_amount) # The calculated_total_due
+
         # Remaining Credit: The remaining credit snapshot for this document (abs of negative total)
         invoice.remaining_credit = abs(min(0, invoice.total_amount))
         # Balance: Based on what is actually due after payments

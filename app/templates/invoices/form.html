@@ -287,6 +287,12 @@
                value="{{ invoice.po_total_prepayment if invoice else 0 }}">
 
     </form>
+
+    <!-- 3. PROJECT CONTEXTUAL HISTORY -->
+    {% if mode == 'view' and tree %}
+        {% include 'partials/order_tree.html' %}
+    {% endif %}
+
 </div>
 
 {% endblock %}
