@@ -98,13 +98,23 @@
                     {% endif %}
                 </div>
 
-                <div class="col-span-4">
-                    <label class="block text-sm font-medium text-gray-500">Summary (Optional)</label>
+                <div class="col-span-3">
+                    <label class="block text-sm font-medium text-gray-500">Expense Number</label>
                     {% if mode == 'view' %}
-                        <p class="mt-1 block bg-gray-100 border rounded-lg p-2 text-sm">{{ expense.description }}</p>
+                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ expense.expense_number }}</p>
                     {% else %}
-                        <input type="text" name="description" value="{{ expense.description if expense else '' }}" 
-                               placeholder="e.g. Flight to Chicago" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300">
+                        <input type="text" name="expense_number" value="{{ expense.expense_number if expense else suggested_number }}" 
+                               class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none transition-all" required>
+                    {% endif %}
+                </div>
+
+                <div class="col-span-3">
+                    <label class="block text-sm font-medium text-gray-500">Date</label>
+                    {% if mode == 'view' %}
+                        <p class="mt-1 block bg-gray-100 border rounded-lg p-2 text-sm">{{ expense.expense_date }}</p>
+                    {% else %}
+                        <input type="date" name="expense_date" value="{{ expense.expense_date if expense else now.strftime('%Y-%m-%d') }}" 
+                               class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300">
                     {% endif %}
                 </div>
 
@@ -125,16 +135,6 @@
                                 <i class="fa-solid fa-chevron-down text-[10px]"></i>
                             </div>
                         </div>
-                    {% endif %}
-                </div>
-
-                <div class="col-span-2">
-                    <label class="block text-sm font-medium text-gray-500">Date</label>
-                    {% if mode == 'view' %}
-                        <p class="mt-1 block bg-gray-100 border rounded-lg p-2 text-sm">{{ expense.expense_date }}</p>
-                    {% else %}
-                        <input type="date" name="expense_date" value="{{ expense.expense_date if expense else now.strftime('%Y-%m-%d') }}" 
-                               class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300">
                     {% endif %}
                 </div>
 
@@ -213,6 +213,16 @@
                                 <i class="fa-solid fa-chevron-down text-[10px]"></i>
                             </div>
                         </div>
+                    {% endif %}
+                </div>
+
+                <div class="col-span-11">
+                    <label class="block text-sm font-medium text-gray-500">Summary (Optional)</label>
+                    {% if mode == 'view' %}
+                        <p class="mt-1 block bg-gray-100 border rounded-lg p-2 text-sm">{{ expense.description }}</p>
+                    {% else %}
+                        <input type="text" name="description" value="{{ expense.description if expense else '' }}" 
+                               placeholder="e.g. Flight to Chicago" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300">
                     {% endif %}
                 </div>
 

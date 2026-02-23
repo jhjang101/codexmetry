@@ -51,6 +51,7 @@ def add():
             # 1. Extract Header Data
             header_data = {
                 'vendor_id': request.form.get('vendor_id'),
+                'expense_number': request.form.get('expense_number'),
                 'po_id': request.form.get('po_id'),
                 'client_id': request.form.get('client_id'),
                 'po_id': request.form.get('po_id'),

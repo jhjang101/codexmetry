@@ -88,8 +88,8 @@
 
             </div>
             
-            <div class="grid grid-cols-9 gap-4">
-                <div class="col-span-3">
+            <div class="grid grid-cols-12 gap-4">
+                <div class="col-span-4">
                     <label class="block text-sm font-medium text-gray-500">Client</label>
                     {% if mode == 'view' %}
                         <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ payment.client.full_display }}</p>
@@ -110,6 +110,16 @@
                                 <i class="fa-solid fa-chevron-down text-[10px]"></i>
                             </div>
                         </div>
+                    {% endif %}
+                </div>
+
+                <div class="col-span-2">
+                    <label class="block text-sm font-medium text-gray-500">Payment Number</label>
+                    {% if mode == 'view' %}
+                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ payment.payment_number }}</p>
+                    {% else %}
+                        <input type="text" name="payment_number" value="{{ payment.payment_number if payment else suggested_number }}" 
+                               class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none transition-all" required>
                     {% endif %}
                 </div>
 
@@ -149,7 +159,7 @@
                     </div>
                 </div>
                 
-                <div class="col-span-3">
+                <div class="col-span-4">
                     <label class="block text-sm font-medium text-gray-500">Paid From</label>
                     <div id="paid-from-select-container">
                         {% if mode == 'view' %}
@@ -171,7 +181,7 @@
                     {% endif %}
                 </div>
 
-                <div class="col-span-2">
+                <div class="col-span-3">
                     <label class="block text-sm font-medium text-gray-500">Date</label>
                     {% if mode == 'view' %}
                         <p class="mt-1 block bg-gray-100 border rounded-lg p-2 text-sm">
@@ -182,7 +192,7 @@
                     {% endif %}
                 </div>
 
-                <div class="col-span-2">
+                <div class="col-span-3">
                     <label class="block text-sm font-medium text-gray-500">Payment Type</label>
                     {% if mode == 'view' %}
                     <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ payment.payment_type.type if payment.payment_type else '-' }}</p>
