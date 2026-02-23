@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash, make_response
 from flask_login import login_required
+from ..models import Payment
 from ..services.payments_service import PaymentService
 from ..services.invoices_service import InvoiceService
 from ..services.purchase_orders_service import PurchaseOrderService
@@ -7,6 +8,7 @@ from ..services.clients_service import ClientService
 from ..services.settings_service import PaymentTypeService
 from ..services.attachment_service import AttachmentService
 from ..utils.money import parse_to_cents
+from ..utils.docs import generate_doc_number
 from ..utils.sync import sync_invoice_status
 from ..utils.auth import role_required
 from ..extensions import db
@@ -51,6 +53,7 @@ def add():
             # 1. Prepare Data
             payment_data = {
                 'client_id': request.form.get('client_id'),
+                'payment_number': request.form.get('payment_number'),
                 'po_id': request.form.get('po_id'),
                 'invoice_id': request.form.get('invoice_id'),
                 'paid_from_id': request.form.get('paid_from_id'),
@@ -100,11 +103,13 @@ def add():
         
     # GET: Prepare form data    
     clients=ClientService.get_all()
+    suggested_number = generate_doc_number(prefix='PMT', model=Payment, column_name='payment_number')
     payment_types = PaymentTypeService.get_all()
     return render_template('payments/form.html', 
                            mode='add', 
                            invoice=None, 
                            clients=clients,
+                           suggested_number=suggested_number,
                            payment_types=payment_types)
 
 @bp.route('/view/<int:id>')
@@ -150,6 +155,7 @@ def edit(id):
             # 2. Prepare Data
             payment_data = {
                 'client_id': request.form.get('client_id'),
+                'payment_number': request.form.get('payment_number'),
                 'po_id': request.form.get('po_id'),
                 'invoice_id': request.form.get('invoice_id'),
                 'paid_from_id': request.form.get('paid_from_id'),

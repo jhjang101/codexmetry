@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash, make_response
 from flask_login import login_required
+from ..models import Expense
 from ..services.expenses_service import ExpenseService
 from ..services.vendors_service import VendorService
 from ..services.settings_service import ExpenseCategoryService
@@ -9,6 +10,7 @@ from ..services.invoices_service import InvoiceService
 from ..services.clients_service import ClientService
 from ..utils.money import parse_to_cents
 from ..utils.auth import role_required
+from ..utils.docs import generate_doc_number
 from ..extensions import db
 from datetime import datetime
 import time
@@ -49,6 +51,7 @@ def add():
             # 1. Extract Header Data
             header_data = {
                 'vendor_id': request.form.get('vendor_id'),
+                'po_id': request.form.get('po_id'),
                 'client_id': request.form.get('client_id'),
                 'po_id': request.form.get('po_id'),
                 'invoice_id': request.form.get('invoice_id'),
@@ -93,6 +96,7 @@ def add():
         
     # GET: Prepare form data for the initial render
     vendors = VendorService.get_all()
+    suggested_number = generate_doc_number(prefix='EPS', model=Expense, column_name='expense_number')
     categories = ExpenseCategoryService.get_all()
     clients = ClientService.get_all()
     # Generate a unique timestamp for the first dynamic row
@@ -102,6 +106,7 @@ def add():
                            mode='add', 
                            expense=None, 
                            vendors=vendors, 
+                           suggested_number=suggested_number,
                            clients=clients, 
                            categories=categories,
                            timestamp=initial_row_id)
@@ -132,6 +137,7 @@ def edit(id):
             # 1. Prepare Header Data
             header_data = {
                 'vendor_id': request.form.get('vendor_id'),
+                'expense_number': request.form.get('expense_number'),
                 'client_id': request.form.get('client_id'),
                 'po_id': request.form.get('po_id'),
                 'invoice_id': request.form.get('invoice_id'),
