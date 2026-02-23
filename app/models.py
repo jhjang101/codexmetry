@@ -348,6 +348,7 @@ class Invoice(db.Model, AuditMixin):
 class Payment(db.Model, AuditMixin):
     __tablename__ = 'payments'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    payment_number: Mapped[str] = mapped_column(String(100), nullable=False) # Not unique
     order_id: Mapped[int] = mapped_column(ForeignKey('orders.id'), nullable=False)
     po_id: Mapped[int] = mapped_column(ForeignKey('purchase_orders.id'), nullable=False)
     invoice_id: Mapped[int | None] = mapped_column(ForeignKey('invoices.id'))
@@ -375,7 +376,7 @@ class Payment(db.Model, AuditMixin):
 class Expense(db.Model, AuditMixin):
     __tablename__ = 'expenses'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    expense_number: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
+    expense_number: Mapped[str] = mapped_column(String(100), nullable=False) # Not unique
     vendor_id: Mapped[int] = mapped_column(ForeignKey('vendors.id'), nullable=False)
     client_id: Mapped[int | None] = mapped_column(ForeignKey('clients.id'))
     order_id: Mapped[int | None] = mapped_column(ForeignKey('orders.id'))
