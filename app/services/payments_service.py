@@ -162,12 +162,18 @@ class PaymentService(BaseService):
         """Handles document linking and money parsing."""
         # 1. Validation
         client_id = data.get('client_id')
+        payment_number = data.get('payment_number', '').strip()
         po_id = data.get('po_id')
         paid_from_id = data.get('paid_from_id')
         
-        if not client_id: raise ValueError("Client is required.")
-        if not po_id: raise ValueError("Purchase Order is required.")
-        if not paid_from_id: raise ValueError("Payer (Paid From) is required.")
+        if not client_id: 
+            raise ValueError("Client is required.")
+        if not payment_number:
+            raise ValueError("Payment Number is required.")
+        if not po_id: 
+            raise ValueError("Purchase Order is required.")
+        if not paid_from_id: 
+            raise ValueError("Payer (Paid From) is required.")
 
         # 2. Look up the Purchase Order to get the order_id (Registry Link)
         po = db.session.get(PurchaseOrder, int(po_id))
@@ -190,10 +196,11 @@ class PaymentService(BaseService):
 
         # 3. Transform data
         clean_data = {
+            'client_id': int(client_id),
+            'payment_number': payment_number,
             'order_id': po.order_id, # Inherit from PO Registry
             'po_id': po.id,
             'invoice_id': int(invoice_id) if invoice_id else None,
-            'client_id': int(client_id),
             'paid_from_id': int(paid_from_id),
             'payment_type_id': int(payment_type_id) if payment_type_id else None,
             'amount': parse_to_cents(str(data.get('amount', 0))),

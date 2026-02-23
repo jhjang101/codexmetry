@@ -67,16 +67,12 @@ class ExpenseService(BaseService):
         # 1. Validate & transform (includes description fallback)
         clean_data = cls._validate_and_transform(data, items_data)
 
-        # 2. Generate Number
-        expense_number = generate_doc_number(prefix='EP', model=cls.model, column_name='expense_number')
-
-        # 3. Create header
+        # 2. Create header
         expense = cls.model(**clean_data)
-        expense.expense_number = expense_number
         db.session.add(expense)
         db.session.flush() # Get ID for items
 
-        # 4. Save items and update total
+        # 3. Save items and update total
         cls._save_items(expense, items_data)
 
         db.session.commit()
@@ -136,8 +132,12 @@ class ExpenseService(BaseService):
     def _validate_and_transform(cls, data: dict, items_data: list[dict]) -> dict:
         """Handles header validation and description fallback."""
         vendor_id = data.get('vendor_id')
+        expense_number = data.get('expense_number', '').strip()
+
         if not vendor_id:
             raise ValueError("Vendor is required.")
+        if not expense_number:
+            raise ValueError("Expense Number is required.")
         
         if not items_data:
             raise ValueError("At least one expense item is required.")
@@ -188,6 +188,7 @@ class ExpenseService(BaseService):
         # 3. Transform Data
         clean_data ={
             'vendor_id': int(vendor_id),
+            'expense_number': expense_number,
             'category_id': int(category_id) if category_id else None,
             'client_id': int(client_id) if client_id else None,
             'order_id': order_id,
