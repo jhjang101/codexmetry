@@ -97,7 +97,7 @@ def add():
         
     # GET: Prepare form data for the initial render
     vendors = VendorService.get_all()
-    suggested_number = generate_doc_number(prefix='EPS', model=Expense, column_name='expense_number')
+    suggested_number = generate_doc_number(prefix='EPX', model=Expense, column_name='expense_number')
     categories = ExpenseCategoryService.get_all()
     clients = ClientService.get_all()
     # Generate a unique timestamp for the first dynamic row

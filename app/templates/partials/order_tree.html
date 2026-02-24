@@ -1,13 +1,26 @@
 {% if tree %}
 <section class="bg-white border border-gray-200 rounded-lg p-6 mt-4 shadow-sm">
     <!-- 1. HEADER -->
-    <div class="flex justify-between items-center mb-6 border-b border-gray-100 pb-3">
-        <div>
-            <h3 class="text-lg font-semibold text-gray-800">Order History</h3>
-            <p class="text-xs text-gray-400">Registry Ref: <span class="font-mono font-bold text-blue-700">{{ tree.order_number }}</span></p>
+    <div class="flex justify-between items-start mb-6 border-b pb-2">
+
+        <div class="flex flex-col">
+            <h3 class="text-lg font-semibold">Order History</h3>
+            <span class="text-xs text-gray-500">Registry Ref: {{ tree.order_number }}</span>
         </div>
-        <div class="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">
-            Order Date: {{ (tree.created_at | localize).strftime('%Y-%m-%d') }}
+
+        <div class="flex flex-col items-end text-xs">
+            <div>
+                <span class="tracking-widest font-semibold text-sm">Client: </span> 
+                <span class="tracking-widest font-semibold text-sm">{{ tree.purchase_order.client.full_display }}</span>
+            </div>
+            <div>
+                <span class="tracking-widest">PO Number: </span> 
+                <span class="tracking-widest">{{ tree.purchase_order.po_number }}</span>
+            </div> 
+            <div>
+                <span class="tracking-widest">Order Date: </span> 
+                <span class="tracking-widest">{{ (tree.created_at | localize).strftime('%Y-%m-%d') }}</span>
+            </div> 
         </div>
     </div>
 
@@ -18,18 +31,18 @@
             <p class="text-sm font-bold text-gray-700">{{ tree.purchase_order.total_amount | usd if tree.purchase_order else '$0.00' }}</p>
         </div>
         <div class="bg-gray-50 p-3 rounded-lg border border-gray-100">
-            <p class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-1">Total Received</p>
-            <p class="text-sm font-bold text-green-700">{{ tree.total_paid | usd }}</p>
+            <p class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-1">To Be Invoiced</p>
+            <p class="text-sm font-bold text-amber-600">
+                {{ tree.purchase_order.balance_tobe_invoiced | usd if tree.purchase_order else '$0.00' }}
+            </p>
         </div>
         <div class="bg-gray-50 p-3 rounded-lg border border-gray-100">
             <p class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-1">Total Invoiced (Balance)</p>
             <p class="text-sm font-bold text-blue-700">{{ tree.total_invoiced_due | usd }} ({{ tree.total_contextual_balance | usd }})</p>
         </div>
         <div class="bg-gray-50 p-3 rounded-lg border border-gray-100">
-            <p class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-1">To Be Invoiced</p>
-            <p class="text-sm font-bold text-amber-600">
-                {{ tree.purchase_order.balance_tobe_invoiced | usd if tree.purchase_order else '$0.00' }}
-            </p>
+            <p class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-1">Total Received</p>
+            <p class="text-sm font-bold text-green-700">{{ tree.total_paid | usd }}</p>
         </div>
         <div class="bg-gray-50 p-3 rounded-lg border border-gray-100">
             <p class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-1">Linked Expenses</p>
@@ -48,20 +61,20 @@
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr class="text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
-                            <th class="px-6 py-3 w-32 text-left">Quote #</th>
-                            <th class="px-6 py-3 text-left">Client</th>
-                            <th class="px-6 py-3 text-left">Date</th>
+                            <th class="px-6 py-3 w-[25ch] text-left">Quote #</th>
+                            <th class="px-6 py-3 w-[25ch] text-left">Date</th>
                             <th class="px-6 py-3 text-right">Amount</th>
-                            <th class="px-6 py-3 text-center">Status</th>
-                            <th class="px-6 py-3 w-16 text-right">Actions</th>
+                            <th class="px-6 py-3 w-[28ch] text-right"></th>
+                            <th class="px-6 py-3 w-[24ch] text-center">Status</th>
+                            <th class="px-6 py-3 w-[16ch] text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-100">
                         <tr class="hover:bg-blue-50/40 transition-colors text-xs">
                             <td class="px-6 py-2 font-bold text-blue-700">{{ tree.quote.quote_number }}</td>
-                            <td class="px-6 py-2 text-gray-700">{{ tree.quote.client.company_name }}</td>
                             <td class="px-6 py-2 text-gray-700">{{ tree.quote.quote_date }}</td>
-                            <td class="px-6 py-2 text-right text-gray-700">{{ tree.quote.total_amount | usd }}</td>
+                            <td class="px-6 py-2 font-bold text-right text-gray-700">{{ tree.quote.total_amount | usd }}</td>
+                            <td class="px-6 py-2 text-right text-gray-700"></td>
                             <td class="px-6 py-2 text-center">
                                 <span class="px-2 py-0.5 rounded text-[9px] font-bold uppercase bg-green-100 text-green-700">{{ tree.quote.status }}</span>
                             </td>
@@ -88,22 +101,20 @@
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr class="text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
-                            <th class="px-6 py-3 w-32 text-left">PO #</th>
-                            <th class="px-6 py-3 text-left">Client</th>
+                            <th class="px-6 py-3 w-[25ch] text-left">PO #</th>
                             <th class="px-6 py-3 text-left">Date</th>
                             <th class="px-6 py-3 text-right">Amount</th>
-                            <th class="px-6 py-3 text-right">To Be Invoiced</th>
-                            <th class="px-6 py-3 text-center">Status</th>
-                            <th class="px-6 py-3 w-16 text-right">Actions</th>
+                            <th class="px-6 py-3 w-[28ch] text-right">To Be Invoiced</th>
+                            <th class="px-6 py-3 w-[24ch] text-center">Status</th>
+                            <th class="px-6 py-3 w-[16ch] text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-100">
                         <tr class="hover:bg-blue-50/40 transition-colors text-xs">
                             <td class="px-6 py-2 font-bold text-blue-700">{{ tree.purchase_order.po_number or '-' }}</td>
-                            <td class="px-6 py-2 text-gray-700">{{ tree.purchase_order.client.company_name }}</td>
                             <td class="px-6 py-2 text-gray-700">{{ tree.purchase_order.po_date }}</td>
-                            <td class="px-6 py-2 text-right text-gray-700">{{ tree.purchase_order.total_amount | usd }}</td>
-                            <td class="px-6 py-2 text-right text-gray-700">{{ tree.purchase_order.balance_tobe_invoiced | usd }}</td>
+                            <td class="px-6 py-2 font-bold text-right text-gray-700">{{ tree.purchase_order.total_amount | usd }}</td>
+                            <td class="px-6 py-2 font-bold text-right text-amber-600">{{ tree.purchase_order.balance_tobe_invoiced | usd }}</td>
                             <td class="px-6 py-2 text-center">
                                 <span class="px-2 py-0.5 rounded text-[9px] font-bold uppercase {{ 'bg-green-100 text-green-700' if tree.purchase_order.status == 'completed' else 'bg-red-100 text-red-700' }}">
                                     {{ tree.purchase_order.status }}
@@ -132,12 +143,12 @@
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr class="text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
-                            <th class="px-6 py-3 w-32 text-left">Invoice #</th>
-                            <th class="px-6 py-3 text-left">Date</th>
+                            <th class="px-6 py-3 w-[25ch] text-left">Invoice #</th>
+                            <th class="px-6 py-3 w-[25ch] text-left">Date</th>
                             <th class="px-6 py-3 text-right">Total Due</th>
-                            <th class="px-6 py-3 text-right">Balance</th>
-                            <th class="px-6 py-3 text-center">Status</th>
-                            <th class="px-6 py-3 w-16 text-right">Actions</th>
+                            <th class="px-6 py-3 w-[28ch] text-right">Balance</th>
+                            <th class="px-6 py-3 w-[24ch] text-center">Status</th>
+                            <th class="px-6 py-3 w-[16ch] text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-100">
@@ -145,7 +156,7 @@
                         <tr class="hover:bg-blue-50/40 transition-colors text-xs">
                             <td class="px-6 py-2 font-bold text-blue-700">{{ inv.invoice_number }}</td>
                             <td class="px-6 py-2 text-gray-700">{{ inv.invoice_date }}</td>
-                            <td class="px-6 py-2 text-right text-gray-700">{{ inv.total_due | usd }}</td>
+                            <td class="px-6 py-2 text-right font-bold text-blue-700">{{ inv.total_due | usd }}</td>
                             <td class="px-6 py-2 text-right font-bold text-blue-700">{{ inv.contextual_balance | usd }}</td>
                             <td class="px-6 py-2 text-center">
                                 <span class="px-2 py-0.5 rounded text-[9px] font-bold uppercase {{ 'bg-green-100 text-green-700' if inv.status == 'completed' else 'bg-red-100 text-red-700' }}">
@@ -176,22 +187,24 @@
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr class="text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
-                            <th class="px-6 py-3 text-left">Date</th>
+                            <th class="px-6 py-3 w-[25ch] text-left">Payment #</th>
+                            <th class="px-6 py-3 w-[25ch] text-left">Date</th>
                             <th class="px-6 py-3 text-left">Payer</th>
-                            <th class="px-6 py-3 text-left">Invoice #</th>
-                            <th class="px-6 py-3 text-left">Type</th>
                             <th class="px-6 py-3 text-right">Amount</th>
-                            <th class="px-6 py-3 w-16 text-right">Actions</th>
+                            <th class="px-6 py-3 w-[28ch] text-right"></th>
+                            <th class="px-6 py-3 w-[24ch] text-left">Invoice #</th>
+                            <th class="px-6 py-3 w-[16ch] text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-100">
                         {% for pay in tree.payments %}
                         <tr class="hover:bg-blue-50/40 transition-colors text-xs">
+                            <td class="px-6 py-2 font-bold text-blue-700">{{ pay.payment_number }}</td>
                             <td class="px-6 py-2 text-gray-700">{{ pay.payment_date }}</td>
-                            <td class="px-6 py-2 font-bold text-blue-700">{{ pay.paid_from.company_name }}</td>
-                            <td class="px-6 py-2 text-gray-700">{{ pay.invoice.invoice_number if pay.invoice else 'Prepayment'}}</td>
-                            <td class="px-6 py-2 text-gray-700">{{ pay.payment_type.type if pay.payment_type else 'N/A' }}</td>
+                            <td class="px-6 py-2 text-gray-700">{{ pay.paid_from.full_display }}</td>
                             <td class="px-6 py-2 text-right font-bold text-green-700">{{ pay.amount | usd }}</td>
+                            <td class="px-6 py-2 text-right"></td>
+                            <td class="px-6 py-2 text-gray-700">{{ pay.invoice.invoice_number if pay.invoice else 'Prepayment'}}</td>
                             <td class="px-6 py-2 text-right">
                                 <span class="text-gray-400 hover:text-blue-600 cursor-pointer" 
                                       hx-get="{{ url_for('payments.view', id=pay.id) }}" hx-target="body" hx-push-url="true">
@@ -216,12 +229,12 @@
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr class="text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
-                            <th class="px-6 py-3 w-32 text-left">Expense #</th>
-                            <th class="px-6 py-3 text-left">Date</th>
+                            <th class="px-6 py-3 w-[25ch] text-left">Expense #</th>
+                            <th class="px-6 py-3 w-[25ch] text-left">Date</th>
                             <th class="px-6 py-3 text-left">Vendor</th>
-                            <th class="px-6 py-3 text-left">Summary</th>
                             <th class="px-6 py-3 text-right">Amount</th>
-                            <th class="px-6 py-3 w-16 text-right">Actions</th>
+                            <th class="px-6 py-3 w-[52ch] text-left">Summary</th>
+                            <th class="px-6 py-3 w-[16ch] text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-100">
@@ -229,9 +242,9 @@
                         <tr class="hover:bg-blue-50/40 transition-colors text-xs">
                             <td class="px-6 py-2 font-bold text-blue-700">{{ exp.expense_number }}</td>
                             <td class="px-6 py-2 text-gray-700">{{ exp.expense_date }}</td>
-                            <td class="px-6 py-2 font-bold text-gray-700">{{ exp.vendor.company_name }}</td>
-                            <td class="px-6 py-2 text-gray-500 truncate max-w-[250px]">{{ exp.description }}</td>
+                            <td class="px-6 py-2 text-gray-700">{{ exp.vendor.company_name }}</td>
                             <td class="px-6 py-2 text-right font-bold text-red-600">{{ exp.total_amount | usd }}</td>
+                            <td class="px-6 py-2 text-gray-700 truncate max-w-[250px]">{{ exp.description }}</td>
                             <td class="px-6 py-2 text-right">
                                 <span class="text-gray-400 hover:text-blue-600 cursor-pointer" 
                                       hx-get="{{ url_for('expenses.view', id=exp.id) }}" hx-target="body" hx-push-url="true">
