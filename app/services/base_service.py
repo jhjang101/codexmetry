@@ -43,15 +43,19 @@ class BaseService:
         return row
     
     @classmethod
-    def paginate(cls, stmt, page: int = 1, per_page: int = 10):
+    def paginate(cls, stmt, page: int = 1, per_page: int = 10, sort_by: str | None = None, direction: str | None = None):
         """
         Generic pagination helper.
         stmt: The SQLAlchemy Select statement
         page: Current page number
         per_page: Number of items per page
+        Updated to attach sorting state to the pagination object.
         """
-        # db.paginate is a Flask-SQLAlchemy helper that handles the math
-        return db.paginate(stmt, page=page, per_page=per_page, error_out=False)
+        pagination = db.paginate(stmt, page=page, per_page=per_page, error_out=False)
+        # Attach the state so the macro can see it
+        pagination.sort_by = sort_by # type: ignore
+        pagination.direction = direction # type: ignore
+        return pagination
     
     @classmethod
     def apply_sorting(cls, stmt, sort_by: str | None, direction: str | None, whitelist: dict, default_col):

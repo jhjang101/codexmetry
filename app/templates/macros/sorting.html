@@ -1,0 +1,29 @@
+{% macro sort_header(label, key, pagination, endpoint) %}
+    {# 1. Calculate State #}
+    {% set is_active = pagination.sort_by == key %}
+    {% set current_dir = pagination.direction or 'desc' %}
+    {% set next_dir = 'asc' if (is_active and current_dir == 'desc') else 'desc' %}
+    
+    {# 2. Header Element #}
+    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors group"
+        hx-get="{{ url_for(endpoint, sort=key, dir=next_dir, search=request.args.get('search', '')) }}"
+        hx-target="#{{ endpoint.split('.')[0] }}-list-container"
+        hx-push-url="true">
+        
+        <div class="flex items-center gap-1">
+            {{ label }}
+            <span class="text-[10px]">
+                {% if is_active %}
+                    {% if current_dir == 'asc' %}
+                        <i class="fa-solid fa-sort-up text-blue-600"></i>
+                    {% else %}
+                        <i class="fa-solid fa-sort-down text-blue-600"></i>
+                    {% endif %}
+                {% else %}
+                    {# Ghost icon: only visible on hover to keep the UI 'Compact' and clean #}
+                    <i class="fa-solid fa-sort text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                {% endif %}
+            </span>
+        </div>
+    </th>
+{% endmacro %}

@@ -10,10 +10,27 @@ from zoneinfo import ZoneInfo
 class QuoteService(BaseService):
     model = Quote
 
+    # Define the Whitelist Mapping
+    SORT_MAP = {
+        'status': Quote.status,
+        'number': Quote.quote_number,
+        'cdx': OrderRegistry.order_number, # Joined via order_id
+        'client': Client.company_name,     # Joined via client_id
+        'amount': Quote.total_amount,
+        'date': Quote.quote_date
+    }
+
     @classmethod
-    def get_all_with_search(cls, search_term: str | None = None, page: int = 1, per_page: int = 10):
+    def get_all_with_search(cls, 
+                            search_term: str | None = None, 
+                            page: int = 1, per_page: 
+                            int = 10,
+                            sort_by: str = 'date', 
+                            direction: str = 'desc'):
         """
-        Search: Fetches active quotes with eager loading of Client and OrderRegistry.
+        Search: Fetches active quotes
+        Includes eager loading of Client and OrderRegistry
+        Includes dtnamic sorting and pagination.
         """
         # 1. Base statement
         stmt = (
@@ -38,10 +55,16 @@ class QuoteService(BaseService):
                 )
             )
 
-        # 3. Order by date (newest first)
-        stmt = stmt.order_by(cls.model.quote_date.desc())
+        # 4. Apply Sorting logic before pagination
+        stmt = cls.apply_sorting(
+            stmt=stmt,
+            sort_by=sort_by,
+            direction=direction,
+            whitelist=cls.SORT_MAP,
+            default_col=cls.model.quote_date # Default: newest first
+        )
 
-        return cls.paginate(stmt, page=page, per_page=per_page)
+        return cls.paginate(stmt, page=page, per_page=per_page, sort_by=sort_by, direction=direction)
     
     @classmethod
     def add_quote(cls, data: dict, items_data: list[dict]) -> Quote:
