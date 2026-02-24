@@ -20,7 +20,7 @@
                    class="mt-1 block text-sm w-full border rounded-lg pl-10 p-2 focus:ring-1 focus:ring-blue-300 outline-none transition-all"
                    hx-get="{{ url_for('purchase_orders.index') }}" 
                    hx-trigger="keyup changed delay:300ms, search" 
-                   hx-target="#po-list-container"
+                   hx-target="#purchase_orders-list-container"
                    hx-push-url="true">
         </div>
 
@@ -35,7 +35,7 @@
     </div>
 
     <!-- Table Container (HTMX Target) -->
-    <div id="po-list-container" class="bg-white rounded-lg shadow border border-gray-200 overflow-hidden">
+    <div id="purchase_orders-list-container" class="bg-white rounded-lg shadow border border-gray-200 overflow-hidden">
         {% include 'purchase_orders/partials/list.html' %}
     </div>
 

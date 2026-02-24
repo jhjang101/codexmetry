@@ -12,8 +12,25 @@ from zoneinfo import ZoneInfo
 class PurchaseOrderService(BaseService):
     model = PurchaseOrder
 
+    # Define the Whitelist Mapping
+    SORT_MAP = {
+        'status': model.status,
+        'number': model.po_number,
+        'cdx': OrderRegistry.order_number, # Joined via order_id
+        'client': Client.company_name,     # Joined via client_id
+        'amount': model.total_amount,
+        'balance': 'calculated_balance', # SQLAlchemy can sort by the label string
+        'date': model.po_date
+    }
+
     @classmethod
-    def get_all_with_search(cls, search_term: str | None = None, page: int = 1, per_page: int = 10):
+    def get_all_with_search(cls, 
+                            search_term: str | None = None, 
+                            page: int = 1, 
+                            per_page: 
+                            int = 10,
+                            sort_by: str = 'date', 
+                            direction: str = 'desc'):
         """
         Fetches active POs with search and pagination.
         Joins with OrderRegistry (CDX#) and Client (Name).
@@ -77,8 +94,14 @@ class PurchaseOrderService(BaseService):
                 )
             )
 
-        # 5. Order by date (Newest first)
-        stmt = stmt.order_by(cls.model.po_date.desc())
+        # 5. Apply Sorting using the BaseService helper
+        stmt = cls.apply_sorting(
+            stmt=stmt,
+            sort_by=sort_by,
+            direction=direction,
+            whitelist=cls.SORT_MAP,
+            default_col=cls.model.po_date # Default: newest first
+        )
 
         # 6. Calculate Total Items (for the pagination numbers)
         # 6.1. We create a count query derived from your main statement
@@ -101,7 +124,12 @@ class PurchaseOrderService(BaseService):
             items.append(po)
 
         # 8. Create the Pagination Object Manually
-        return ManualPagination(items=items, page=page, per_page=per_page, total=total)
+        return ManualPagination(items=items, 
+                                page=page, 
+                                per_page=per_page, 
+                                total=total,
+                                sort_by=sort_by, 
+                                direction=direction)
 
     @classmethod
     def add_po(cls, data: dict, items_data: list[dict]) -> PurchaseOrder:

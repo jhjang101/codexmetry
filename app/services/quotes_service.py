@@ -12,12 +12,12 @@ class QuoteService(BaseService):
 
     # Define the Whitelist Mapping
     SORT_MAP = {
-        'status': Quote.status,
-        'number': Quote.quote_number,
+        'status': model.status,
+        'number': model.quote_number,
         'cdx': OrderRegistry.order_number, # Joined via order_id
         'client': Client.company_name,     # Joined via client_id
-        'amount': Quote.total_amount,
-        'date': Quote.quote_date
+        'amount': model.total_amount,
+        'date': model.quote_date
     }
 
     @classmethod
@@ -30,7 +30,7 @@ class QuoteService(BaseService):
         """
         Search: Fetches active quotes
         Includes eager loading of Client and OrderRegistry
-        Includes dtnamic sorting and pagination.
+        Includes dynamic sorting and pagination.
         """
         # 1. Base statement
         stmt = (
@@ -64,7 +64,11 @@ class QuoteService(BaseService):
             default_col=cls.model.quote_date # Default: newest first
         )
 
-        return cls.paginate(stmt, page=page, per_page=per_page, sort_by=sort_by, direction=direction)
+        return cls.paginate(stmt, 
+                            page=page, 
+                            per_page=per_page, 
+                            sort_by=sort_by, 
+                            direction=direction)
     
     @classmethod
     def add_quote(cls, data: dict, items_data: list[dict]) -> Quote:
