@@ -1,8 +1,9 @@
 <table class="min-w-full divide-y divide-gray-200">
     <thead class="bg-gray-50">
         <tr>
+            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Payment #</th>
+            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Order Reference</th>
             <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Client</th>
-            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">PO #</th>
             <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Invoice #</th>
             <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Paid From</th>
             <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Amount</th>
@@ -14,15 +15,19 @@
         {% for payment in pagination.items %}
         <tr class="hover:bg-blue-50/40 transition-colors">
 
-            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-blue-700">
-                {{ payment.client.company_name }}
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                {{ payment.payment_number }}
             </td>
 
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
             <span class="{{ 'text-gray-500' if not payment.purchase_order.is_active else '' }}">
-                {{ payment.purchase_order.po_number or payment.order.order_number }}
+                {{ payment.order.order_number or payment.purchase_order.po_number }}
                 {% if not payment.purchase_order.is_active %}(Archived){% endif %}
             </span>
+            </td>
+
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-blue-700">
+                {{ payment.client.company_name }}
             </td>
 
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
@@ -32,11 +37,11 @@
                         {% if not payment.invoice.is_active %}(Archived){% endif %}
                     </span>
                 {% else %}
-                    -
+                    Prepayment
                 {% endif %}
             </td>
 
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                 {{ payment.paid_from.company_name if payment.paid_from else '-'}}
             </td>
 

@@ -1,3 +1,4 @@
+from sqlalchemy import desc, asc, select
 from ..extensions import db
 
 class BaseService:
@@ -51,3 +52,29 @@ class BaseService:
         """
         # db.paginate is a Flask-SQLAlchemy helper that handles the math
         return db.paginate(stmt, page=page, per_page=per_page, error_out=False)
+    
+    @classmethod
+    def apply_sorting(cls, stmt, sort_by: str | None, direction: str | None, whitelist: dict, default_col):
+        """
+        Securely applies ORDER BY to an SQLAlchemy statement.
+        - whitelist: Dictionary mapping URL keys to Model attributes.
+          e.g., {'client': Client.company_name, 'total': Invoice.total_amount}
+        - default_col: The attribute to sort by if sort_by is invalid/missing.
+        """
+        # 1. Standardize Direction
+        # Default to 'desc' (newest/highest first) if not specified or invalid
+        sort_dir = desc if direction == 'desc' else asc
+
+        # 2. Lookup the actual column from the whitelist
+        # This acts as our security gate against SQL injection
+        target_col = whitelist.get(sort_by)
+
+        # 3. Apply sorting logic
+        if target_col is not None:
+            # Sort by requested column
+            stmt = stmt.order_by(sort_dir(target_col))
+        else:
+            # Fallback to default (usually Date or ID descending)
+            stmt = stmt.order_by(desc(default_col))
+
+        return stmt

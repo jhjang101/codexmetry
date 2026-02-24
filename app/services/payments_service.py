@@ -31,8 +31,10 @@ class PaymentService(BaseService):
         stmt = stmt.options(
             contains_eager(cls.model.order),
             contains_eager(cls.model.client),
+            contains_eager(cls.model.paid_from),
             contains_eager(cls.model.purchase_order),
-            contains_eager(cls.model.invoice) # Even the outer join can be eagerly loaded
+            contains_eager(cls.model.invoice), # Even the outer join can be eagerly loaded
+            contains_eager(cls.model.payment_type)
         )
 
         # 2. Apply filters

@@ -2,9 +2,9 @@
     <thead class="bg-gray-50">
         <tr>
             <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Client</th>
             <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Quote #</th>
             <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Order Reference</th>
+            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Client</th>
             <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Amount</th>
             <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Date</th>
             <th class="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
@@ -27,10 +27,6 @@
                 {% endif %}
             </td>
 
-            <td class="px-6 py-4 whitespace-nowrap">
-                <span class="text-sm font-bold text-blue-700">{{ quote.client.company_name }}</span>
-            </td>
-
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                 {{ quote.quote_number }}
             </td>
@@ -41,6 +37,10 @@
                 {% else %}
                     <span>-</span>
                 {% endif %}
+            </td>
+
+            <td class="px-6 py-4 whitespace-nowrap">
+                <span class="text-sm font-bold text-blue-700">{{ quote.client.company_name }}</span>
             </td>
 
             <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-700">
