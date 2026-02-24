@@ -11,8 +11,27 @@ from zoneinfo import ZoneInfo
 class InvoiceService(BaseService):
     model = Invoice
 
+    # Define the Whitelist (Maps UI strings to Database Columns)
+    SORT_MAP = {
+        'status': Invoice.status,
+        'number': Invoice.invoice_number,
+        'po': PurchaseOrder.po_number,
+        'client': Client.company_name,
+        'amount': Invoice.total_amount,
+        'date': Invoice.invoice_date,
+        'balance': 'calculated_balance', # SQLAlchemy can sort by the label string
+        # Special Case: Sorting by 'calculated_balance' (row[1] in your subquery)
+        # We'll handle this manually in the service if needed, 
+        # but usually, sorting by 'amount' or 'date' is enough for AR.
+    }
+
     @classmethod
-    def get_all_with_search(cls, search_term: str | None = None, page: int = 1, per_page: int = 10):
+    def get_all_with_search(cls, 
+                            search_term: str | None = None, 
+                            page: int = 1, 
+                            per_page: int = 10, 
+                            sort_by: str = 'date', 
+                            direction: str = 'desc'):
         """
         Fetches active Invoices with search and pagination.
         Joins with OrderRegistry (CDX#) and Client (Name)
@@ -64,11 +83,17 @@ class InvoiceService(BaseService):
                     cls.model.status.icontains(search_term)
                 )
             )
+        
+        # 4. Apply Sorting using the BaseService helper
+        stmt = cls.apply_sorting(
+            stmt=stmt,
+            sort_by=sort_by,
+            direction=direction,
+            whitelist=cls.SORT_MAP,
+            default_col=cls.model.invoice_date # Default: newest first
+        )
 
-        # 4. Order by Registry creation (Newest first)
-        stmt = stmt.order_by(OrderRegistry.created_at.desc())
-
-        # 6. Calculate Total Items (for the pagination numbers)
+        # 5. Calculate Total Items (for the pagination numbers)
         # 5.1. We create a count query derived from your main statement
         count_stmt = select(func.count()).select_from(stmt.subquery())
         total = db.session.execute(count_stmt).scalar()
@@ -91,7 +116,12 @@ class InvoiceService(BaseService):
             items.append(invoice)
 
         # 6.4. Create the Pagination Object Manually
-        return ManualPagination(items=items, page=page, per_page=per_page, total=total)
+        return ManualPagination(items=items, 
+                                page=page, 
+                                per_page=per_page, 
+                                total=total,
+                                sort_by=sort_by,
+                                direction=direction)
     
     @classmethod
     def add_invoice(cls, data: dict, items_data: list[dict]) -> Invoice:

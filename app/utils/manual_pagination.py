@@ -4,11 +4,13 @@ class ManualPagination:
     """
     Helper to mimic Flask-SQLAlchemy Pagination for manual queries.
     """
-    def __init__(self, items, page, per_page, total):
+    def __init__(self, items, page, per_page, total, sort_by=None, direction=None):
         self.items = items
         self.page = page
         self.per_page = per_page
         self.total = total
+        self.sort_by = sort_by
+        self.direction = direction
 
     @property
     def pages(self):
