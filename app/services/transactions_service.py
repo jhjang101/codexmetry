@@ -47,12 +47,8 @@ class TransactionService(BaseService):
         # 1. Validate & transform
         clean_data = cls._validate_and_transform(data)
 
-        # 2. Generate Number
-        trx_number = generate_doc_number(prefix='TRX', model=cls.model, column_name='transaction_number')
-
-        # 3. Create header
+        # 2. Create header
         trx = cls.model(**clean_data)
-        trx.transaction_number = trx_number
         db.session.add(trx)
         
         db.session.commit()
@@ -84,10 +80,13 @@ class TransactionService(BaseService):
     def _validate_and_transform(cls, data: dict) -> dict:
         """Handles validation and type conversion."""
         description = data.get('description', '').strip()
+        transaction_number = data.get('transaction_number', '').strip()
         amount_raw = data.get('amount', '0')
         
         if not description:
             raise ValueError("Transaction Description is required.")
+        if not transaction_number:
+            raise ValueError("Transaction Number is required.")
         if not amount_raw:
             raise ValueError("Amount is required.")
 
@@ -106,6 +105,7 @@ class TransactionService(BaseService):
 
         clean_data = {
             'description': description,
+            'transaction_number': transaction_number,
             'amount': parse_to_cents(str(amount_raw)),
             'transaction_date': trx_date,
             'category_id': int(category_id) if category_id else None,

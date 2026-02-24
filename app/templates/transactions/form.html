@@ -79,6 +79,16 @@
                 </div>
 
                 <div class="col-span-1">
+                    <label class="block text-sm font-medium text-gray-500">Transaction Number</label>
+                    {% if mode == 'view' %}
+                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ trx.transaction_number }}</p>
+                    {% else %}
+                        <input type="text" name="transaction_number" value="{{ trx.transaction_number if trx else suggested_number }}" 
+                               class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none transition-all" required>
+                    {% endif %}
+                </div>
+
+                <div class="col-span-1">
                     <label class="block text-sm font-medium text-gray-500">Amount</label>
                     {% if mode == 'view' %}
                         <p class="mt-1 block bg-gray-100 border rounded-lg p-2 text-sm {{ 'text-green-700' if trx.amount >= 0 else 'text-red-600' }}">
@@ -89,16 +99,6 @@
                                name="amount" 
                                value="{{ trx.amount | usd if trx else '$0.00' }}" 
                                required
-                               class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300">
-                    {% endif %}
-                </div>
-
-                <div class="col-span-1">
-                    <label class="block text-sm font-medium text-gray-500">Date</label>
-                    {% if mode == 'view' %}
-                        <p class="mt-1 block bg-gray-100 border rounded-lg p-2 text-sm">{{ trx.transaction_date }}</p>
-                    {% else %}
-                        <input type="date" name="transaction_date" value="{{ trx.transaction_date if trx else now.strftime('%Y-%m-%d') }}" 
                                class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300">
                     {% endif %}
                 </div>
@@ -122,6 +122,17 @@
                         </div>
                     {% endif %}
                 </div>
+
+                <div class="col-span-1">
+                    <label class="block text-sm font-medium text-gray-500">Date</label>
+                    {% if mode == 'view' %}
+                        <p class="mt-1 block bg-gray-100 border rounded-lg p-2 text-sm">{{ trx.transaction_date }}</p>
+                    {% else %}
+                        <input type="date" name="transaction_date" value="{{ trx.transaction_date if trx else now.strftime('%Y-%m-%d') }}" 
+                               class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300">
+                    {% endif %}
+                </div>
+
             </div>
         </section>
 

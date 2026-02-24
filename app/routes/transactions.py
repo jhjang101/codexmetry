@@ -1,9 +1,11 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash, make_response
 from flask_login import login_required
+from ..models import Transaction
 from ..services.transactions_service import TransactionService
 from ..services.settings_service import TransactionCategoryService
 from ..services.attachment_service import AttachmentService
 from ..utils.auth import role_required
+from ..utils.docs import generate_doc_number
 from ..extensions import db
 from datetime import datetime
 
@@ -43,6 +45,7 @@ def add():
             # 1. Prepare Data
             data = {
                 'description': request.form.get('description'),
+                'transaction_number': request.form.get('transaction_number'),
                 'amount': request.form.get('amount'),
                 'transaction_date': request.form.get('transaction_date'),
                 'category_id': request.form.get('category_id'),
@@ -72,7 +75,12 @@ def add():
         
     # GET: Prepare form data
     categories = TransactionCategoryService.get_all()
-    return render_template('transactions/form.html', mode='add', trx=None, categories=categories)
+    suggested_number = generate_doc_number(prefix='TRX', model=Transaction, column_name='transaction_number')
+    return render_template('transactions/form.html', 
+                           mode='add', 
+                           trx=None, 
+                           categories=categories,
+                           suggested_number=suggested_number)
 
 @bp.route('/view/<int:id>')
 def view(id):
@@ -100,6 +108,7 @@ def edit(id):
             # 1. Prepare Update Data
             update_data = {
                 'description': request.form.get('description'),
+                'transaction_number': request.form.get('transaction_number'),
                 'amount': request.form.get('amount'),
                 'transaction_date': request.form.get('transaction_date'),
                 'category_id': request.form.get('category_id'),

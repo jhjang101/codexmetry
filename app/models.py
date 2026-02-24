@@ -407,7 +407,7 @@ class Expense(db.Model, AuditMixin):
 class Transaction(db.Model, AuditMixin):
     __tablename__ = 'transactions'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    transaction_number: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
+    transaction_number: Mapped[str] = mapped_column(String(100), nullable=False) # Not unique
     description: Mapped[str] = mapped_column(String(255), nullable=False)
     amount: Mapped[int] = mapped_column(Integer, nullable=False)
     transaction_date: Mapped[date] = mapped_column(Date, server_default=func.current_date())
