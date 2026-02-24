@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash, make_response
 from flask_login import login_required
+from ..services.orders_service import OrderService
 from ..services.quotes_service import QuoteService
 from ..services.clients_service import ClientService
 from ..services.products_service import ProductService
@@ -104,11 +105,15 @@ def view(id):
         if not quote:
             flash("Quote not found.", "error")
             return redirect(url_for('quotes.index'))
+        
+        tree = OrderService.get_deal_tree(quote.order_id)
+
+        return render_template('quotes/form.html', mode='view', quote=quote, tree=tree)
+
     except Exception as e:
         flash(f"Error loading quote: {str(e)}", "error")
         return redirect(url_for('quotes.index'))
 
-    return render_template('quotes/form.html', mode='view', quote=quote)
 
 @bp.route('/edit/<int:id>', methods=['GET', 'POST'])
 @role_required(['admin', 'user'])

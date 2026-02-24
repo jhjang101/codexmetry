@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash, make_response
 from flask_login import login_required
 from ..models import Payment
+from ..services.orders_service import OrderService
 from ..services.payments_service import PaymentService
 from ..services.invoices_service import InvoiceService
 from ..services.purchase_orders_service import PurchaseOrderService
@@ -128,14 +129,18 @@ def view(id):
         else:
             payment_number = f'{payment.order.order_number}'
 
+        tree = OrderService.get_deal_tree(payment.order_id)
+
+        return render_template('payments/form.html', 
+                            mode='view', 
+                            payment=payment,
+                            payment_number=payment_number,
+                            tree=tree)
+
     except Exception as e:
         flash(f"Error loading payment: {str(e)}", "error")
         return redirect(url_for('payments.index'))
 
-    return render_template('payments/form.html', 
-                           mode='view', 
-                           payment=payment,
-                           payment_number=payment_number)
 
 @bp.route('/edit/<int:id>', methods=['GET', 'POST'])
 @role_required(['admin', 'user'])

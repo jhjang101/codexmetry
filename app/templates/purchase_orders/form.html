@@ -267,6 +267,12 @@
         </section>
 
     </form>
+
+    <!-- PROJECT CONTEXTUAL HISTORY -->
+    {% if mode == 'view' and tree %}
+        {% include 'partials/order_tree.html' %}
+    {% endif %}
+
 </div>
 
 {% endblock %}

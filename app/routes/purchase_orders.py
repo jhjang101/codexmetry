@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash, make_response
 from flask_login import login_required
+from ..services.orders_service import OrderService
 from ..services.purchase_orders_service import PurchaseOrderService
 from ..services.quotes_service import QuoteService
 from ..services.products_service import ProductService
@@ -112,12 +113,15 @@ def view(id):
         print('po.po_total_deposit:', po.total_prepayment)
         print('po.remaining_deposit:', po.remaining_credit)
 
+        tree = OrderService.get_deal_tree(po.order_id)
+
+        return render_template('purchase_orders/form.html', mode='view', po=po, tree=tree)
+
     except Exception as e:
         db.session.rollback()
         flash(f"Error loading purchase order: {str(e)}", "error")
         return redirect(url_for('purchase_orders.index'))
 
-    return render_template('purchase_orders/form.html', mode='view', po=po)
 
 @bp.route('/edit/<int:id>', methods=['GET', 'POST'])
 @role_required(['admin', 'user'])
