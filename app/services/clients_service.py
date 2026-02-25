@@ -9,12 +9,12 @@ class ClientService(BaseService):
 
     # Define the Whitelist for sorting
     SORT_MAP = {
-    'name': Client.company_name,
-    # Combine names in SQL so the sort order matches the UI display
-    'contact': func.coalesce(ClientContact.first_name, '') + func.coalesce(ClientContact.last_name, ''),
-    'email': ClientContact.email,
-    'address': Client.address,
-}
+        'name': Client.company_name,
+        # Combine names in SQL so the sort order matches the UI display
+        'contact': func.coalesce(ClientContact.first_name, '') + func.coalesce(ClientContact.last_name, ''),
+        'email': ClientContact.email,
+        'address': Client.address,
+    }
 
     @classmethod
     def get_all(cls):
