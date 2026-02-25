@@ -15,7 +15,7 @@
                    class="mt-1 block text-sm w-full border rounded-lg pl-10 p-2 focus:ring-1 focus:ring-blue-300 outline-none"
                    hx-get="{{ url_for('transactions.index') }}" 
                    hx-trigger="keyup changed delay:300ms, search" 
-                   hx-target="#trx-list-container"
+                   hx-target="#transactions-list-container"
                    hx-push-url="true">
         </div>
 
@@ -29,7 +29,7 @@
 
     </div>
 
-    <div id="trx-list-container" class="bg-white rounded-lg shadow border border-gray-200 overflow-hidden">
+    <div id="transactions-list-container" class="bg-white rounded-lg shadow border border-gray-200 overflow-hidden">
         {% include 'transactions/partials/list.html' %}
     </div>
 </div>

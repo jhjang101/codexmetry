@@ -11,8 +11,23 @@ from zoneinfo import ZoneInfo
 class TransactionService(BaseService):
     model = Transaction
 
+    # Define the Whitelist for sorting
+    SORT_MAP = {
+        'number': model.transaction_number,
+        'description': model.description,
+        'category': model.category,
+        'amount': model.amount,
+        'date': model.transaction_date,
+    }
+
+
     @classmethod
-    def get_all_with_search(cls, search_term: str | None = None, page: int = 1, per_page: int = 10):
+    def get_all_with_search(cls, 
+                            search_term: str | None = None, 
+                            page: int = 1, 
+                            per_page: int = 10,
+                            sort_by: str = 'date', 
+                            direction: str = 'desc'):
         """
         Fetches active transactions with eager category loading.
         """
@@ -34,10 +49,20 @@ class TransactionService(BaseService):
                 )
             )
 
-        # 3. Order by date (newest first)
-        stmt = stmt.order_by(cls.model.transaction_date.desc())
+        # 3. Apply Sorting
+        stmt = cls.apply_sorting(
+            stmt=stmt,
+            sort_by=sort_by,
+            direction=direction,
+            whitelist=cls.SORT_MAP,
+            default_col=cls.model.transaction_date
+        )
 
-        return cls.paginate(stmt, page=page, per_page=per_page)
+        return cls.paginate(stmt, 
+                            page=page, 
+                            per_page=per_page,
+                            sort_by=sort_by, 
+                            direction=direction)
 
     @classmethod
     def add_transaction(cls, data: dict) -> Transaction:

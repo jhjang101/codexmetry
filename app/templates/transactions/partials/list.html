@@ -1,11 +1,13 @@
+{% from "macros/sorting.html" import sort_header %}
+
 <table class="min-w-full divide-y divide-gray-200">
     <thead class="bg-gray-50">
         <tr>
-            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Transaction Number</th>
-            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Description</th>
-            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Category</th>
-            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Amount</th>
-            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Date</th>
+            {{ sort_header('Transaction #', 'number', pagination, 'transactions.index')}}
+            {{ sort_header('Description', 'description', pagination, 'transactions.index') }}
+            {{ sort_header('Amount', 'amount', pagination, 'transactions.index', align='right') }}
+            {{ sort_header('Category', 'category', pagination, 'transactions.index') }}
+            {{ sort_header('Date', 'date', pagination, 'transactions.index') }}
             <th class="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase">Actions</th>
         </tr>
     </thead>
@@ -14,10 +16,10 @@
         <tr class="hover:bg-blue-50/40 transition-colors">
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ trx.transaction_number }}</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 truncate max-w-xs">{{ trx.description }}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ trx.category.type if trx.category else '-' }}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm {{ 'text-green-700' if trx.amount >= 0 else 'text-red-600' }}">
+            <td class="pl-6 pr-10 py-4 text-right whitespace-nowrap text-sm {{ 'text-green-700' if trx.amount >= 0 else 'text-red-600' }}">
                 {{ trx.amount | usd }}
             </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ trx.category.type if trx.category else '-' }}</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                 {{ trx.transaction_date.strftime('%Y-%m-%d') }}
             </td>
@@ -55,8 +57,11 @@
     
     <div class="flex gap-2">
         {% if pagination.has_prev %}
-        <button hx-get="{{ url_for('transactions.index', page=pagination.prev_num) }}"
-                hx-target="#trx-list-container"
+        <button hx-get="{{ url_for('transactions.index', 
+                                   page=pagination.prev_num, 
+                                   sort=pagination.sort_by, 
+                                   dir=pagination.direction) }}"
+                hx-target="#transactions-list-container"
                 hx-include="[name='search']"
                 hx-push-url="true"
                 class="px-3 py-1 bg-white border rounded text-xs text-gray-500 font-semibold hover:bg-gray-100 transition-colors">
@@ -65,8 +70,11 @@
         {% endif %}
 
         {% if pagination.has_next %}
-        <button hx-get="{{ url_for('transactions.index', page=pagination.next_num) }}"
-                hx-target="#trx-list-container"
+        <button hx-get="{{ url_for('transactions.index', 
+                                   page=pagination.next_num, 
+                                   sort=pagination.sort_by, 
+                                   dir=pagination.direction) }}"
+                hx-target="#transactions-list-container"
                 hx-include="[name='search']"
                 hx-push-url="true"
                 class="px-3 py-1 bg-white border rounded text-xs text-gray-500 font-semibold hover:bg-gray-100 transition-colors">
