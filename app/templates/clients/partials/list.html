@@ -1,11 +1,13 @@
+{% from "macros/sorting.html" import sort_header %}
+
 <table class="min-w-full divide-y divide-gray-200">
     <thead class="bg-gray-50">
         <tr>
-            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Company Name</th>
-            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Primary Contact</th>
-            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Email</th>
-            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Address</th>
-            <th class="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+            {{ sort_header('Company Name', 'name', pagination, 'clients.index') }}
+            {{ sort_header('Contact', 'contact', pagination, 'clients.index') }}
+            {{ sort_header('Email', 'email', pagination, 'clients.index') }}
+            {{ sort_header('Address', 'address', pagination, 'clients.index') }}
+            <th class="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider w-20">Actions</th>
         </tr>
     </thead>
     <tbody class="divide-y divide-gray-100 bg-white">
@@ -73,8 +75,11 @@
     
     <div class="flex gap-2">
         {% if pagination.has_prev %}
-        <button hx-get="{{ url_for('clients.index', page=pagination.prev_num) }}"
-                hx-target="#client-list-container"
+        <button hx-get="{{ url_for('clients.index', 
+                                   page=pagination.prev_num, 
+                                   sort=pagination.sort_by, 
+                                   dir=pagination.direction) }}"
+                hx-target="#clients-list-container"
                 hx-include="[name='search']"
                 hx-push-url="true"
                 class="px-3 py-1 bg-white border rounded text-xs text-gray-500 font-semibold hover:bg-gray-100 transition-colors">
@@ -83,8 +88,11 @@
         {% endif %}
 
         {% if pagination.has_next %}
-        <button hx-get="{{ url_for('clients.index', page=pagination.next_num) }}"
-                hx-target="#client-list-container"
+        <button hx-get="{{ url_for('clients.index', 
+                                   page=pagination.next_num, 
+                                   sort=pagination.sort_by, 
+                                   dir=pagination.direction) }}"
+                hx-target="#clients-list-container"
                 hx-include="[name='search']"
                 hx-push-url="true"
                 class="px-3 py-1 bg-white border rounded text-xs text-gray-500 font-semibold hover:bg-gray-100 transition-colors">

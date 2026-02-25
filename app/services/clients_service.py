@@ -1,11 +1,20 @@
 from .base_service import BaseService
 from ..models import Client, ClientContact
 from ..extensions import db
-from sqlalchemy import select, or_
+from sqlalchemy import select, or_, func
 from sqlalchemy.orm import contains_eager
 
 class ClientService(BaseService):
     model = Client
+
+    # Define the Whitelist for sorting
+    SORT_MAP = {
+    'name': Client.company_name,
+    # Combine names in SQL so the sort order matches the UI display
+    'contact': func.coalesce(ClientContact.first_name, '') + func.coalesce(ClientContact.last_name, ''),
+    'email': ClientContact.email,
+    'address': Client.address,
+}
 
     @classmethod
     def get_all(cls):
@@ -22,7 +31,12 @@ class ClientService(BaseService):
         return db.session.execute(stmt).scalars().unique().all()
 
     @classmethod
-    def get_all_with_search(cls, search_term: str | None = None, page: int = 1, per_page: int = 10):
+    def get_all_with_search(cls, 
+                            search_term: str | None = None, 
+                            page: int = 1, 
+                            per_page: int = 10,
+                            sort_by: str = 'name', 
+                            direction: str = 'asc'):
         """
         Search: Implementation of filtered search for the client list.
         Searches across Company Name, Address, Contact names, and Contact Emails.
@@ -45,12 +59,25 @@ class ClientService(BaseService):
                     ClientContact.first_name.icontains(search_term),
                     ClientContact.last_name.icontains(search_term) 
                 )
-            ).distinct() # Prevent duplicate clients if multiple contacts match
+            )
+        
+        # 3. Group by ID to prevent duplicates when sorting by relationships
+        stmt = stmt.group_by(cls.model.id)
 
-        # 3. Order by name
-        stmt = stmt.order_by(cls.model.company_name.asc())
+        # 4. Apply Sorting
+        stmt = cls.apply_sorting(
+            stmt=stmt,
+            sort_by=sort_by,
+            direction=direction,
+            whitelist=cls.SORT_MAP,
+            default_col=cls.model.company_name
+        )
 
-        return cls.paginate(stmt, page=page, per_page=per_page)
+        return cls.paginate(stmt, 
+                            page=page, 
+                            per_page=per_page, 
+                            sort_by=sort_by, 
+                            direction=direction)
 
     @classmethod
     def add_client(cls, data, contacts_data) -> Client:
