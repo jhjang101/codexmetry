@@ -12,9 +12,27 @@ from zoneinfo import ZoneInfo
 
 class ExpenseService(BaseService):
     model = Expense
+
+    # Define the Whitelist for sorting
+    SORT_MAP = {
+        'status': model.status,
+        'number': model.expense_number,
+        'vendor': Vendor.company_name,    # Joined via vendor_id
+        'description': model.description,
+        'category': ExpenseCategory.type, # Joined via category_id
+        'amount': model.total_amount,
+        'date': model.expense_date
+    }
     
+
     @classmethod
-    def get_all_with_search(cls, search_term: str | None = None, page: int = 1, per_page: int = 10):
+    def get_all_with_search(cls, 
+                            search_term: str | None = None, 
+                            page: int = 1, 
+                            per_page: int = 10,
+                            sort_by: str = 'date', 
+                            direction: str = 'desc'):
+        
         # 1. Base statement with eager loading
         stmt = (
             select(cls.model)
@@ -53,10 +71,20 @@ class ExpenseService(BaseService):
         # 3. Add .distinct() to collapse duplicate rows caused by joins
         stmt = stmt.distinct()
 
-        # 4. Order by date (newest first)
-        stmt = stmt.order_by(cls.model.expense_date.desc())
+        # 4. Apply Sorting
+        stmt = cls.apply_sorting(
+            stmt=stmt,
+            sort_by=sort_by,
+            direction=direction,
+            whitelist=cls.SORT_MAP,
+            default_col=cls.model.expense_date # Default: newest first
+        )
 
-        return cls.paginate(stmt, page=page, per_page=per_page)
+        return cls.paginate(stmt, 
+                            page=page, 
+                            per_page=per_page,
+                            sort_by=sort_by, 
+                            direction=direction)
     
     @classmethod
     def add_expense(cls, data: dict, items_data: list[dict]) -> Expense:

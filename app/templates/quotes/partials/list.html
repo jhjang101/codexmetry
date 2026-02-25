@@ -93,9 +93,9 @@
         <button hx-get="{{ url_for('quotes.index', 
                                    page=pagination.prev_num, 
                                    sort=pagination.sort_by, 
-                                   dir=pagination.direction, 
-                                   search=request.args.get('search', '')) }}"
+                                   dir=pagination.direction) }}"
                 hx-target="#quotes-list-container"
+                hx-include="[name='search']"
                 hx-push-url="true"
                 class="px-3 py-1 bg-white border rounded text-xs text-gray-500 font-semibold hover:bg-gray-100 transition-colors">
             <i class="fa-solid fa-chevron-left mr-1"></i> Previous
@@ -106,9 +106,9 @@
         <button hx-get="{{ url_for('quotes.index', 
                                    page=pagination.next_num, 
                                    sort=pagination.sort_by, 
-                                   dir=pagination.direction, 
-                                   search=request.args.get('search', '')) }}"
+                                   dir=pagination.direction) }}"
                 hx-target="#quotes-list-container"
+                hx-include="[name='search']"
                 hx-push-url="true"
                 class="px-3 py-1 bg-white border rounded text-xs text-gray-500 font-semibold hover:bg-gray-100 transition-colors">
             Next <i class="fa-solid fa-chevron-right ml-1"></i>
