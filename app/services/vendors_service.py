@@ -1,7 +1,7 @@
 from .base_service import BaseService
 from ..models import Vendor, VendorContact
 from ..extensions import db
-from sqlalchemy import select, or_
+from sqlalchemy import select, or_, func
 from sqlalchemy.orm import contains_eager, selectinload
 
 class VendorService(BaseService):
@@ -10,6 +10,10 @@ class VendorService(BaseService):
     # Define the Whitelist for sorting
     SORT_MAP = {
         'name': model.company_name,
+        'url': model.url,
+        'contact': 'primary_name_label',  # Matches the label in the query
+        'email': 'primary_email_label',    # Matches the label in the query
+        'address': model.address
     }
 
     @classmethod
@@ -23,15 +27,40 @@ class VendorService(BaseService):
         Search: Implementation of filtered search for the vendor list.
         Searches across Company Name, URL, Address, and Contact details.
         """
-        # 1. Base statement with eager loading
+        # 1. Define the "Primary Contact Name" Subquery
+        # This specifically targets the contact with the lowest ID
+        primary_name_sq = (
+            select(func.coalesce(VendorContact.first_name, '') + ' ' + func.coalesce(VendorContact.last_name, ''))
+            .where(VendorContact.vendor_id == cls.model.id)
+            .order_by(VendorContact.id.asc())
+            .limit(1)
+            .correlate(cls.model)
+            .scalar_subquery()
+        )
+
+        # 2. Define the "Primary Contact Email" Subquery
+        primary_email_sq = (
+            select(VendorContact.email)
+            .where(VendorContact.vendor_id == cls.model.id)
+            .order_by(VendorContact.id.asc())
+            .limit(1)
+            .correlate(cls.model)
+            .scalar_subquery()
+        )
+
+        # 3. Base statement: Select the model AND the labels
         stmt = (
-            select(cls.model)
-            .outerjoin(VendorContact)
-            .options(selectinload(cls.model.contacts))
+            select(
+                cls.model,
+                primary_name_sq.label('primary_name_label'),
+                primary_email_sq.label('primary_email_label')
+            )
+            .outerjoin(VendorContact) # Keep for searching
+            .options(selectinload(cls.model.contacts)) # Keep for display
             .where(cls.model.is_active == True)
         )
 
-        # 2. Apply filters
+        # 4. Apply filters
         if search_term:
             stmt = stmt.where(
                 or_(
@@ -44,7 +73,8 @@ class VendorService(BaseService):
                 )
             ).distinct()
 
-        # 3. Apply Sorting
+        # 5. Group by ID and Apply Sorting
+        stmt = stmt.group_by(cls.model.id)
         stmt = cls.apply_sorting(
             stmt=stmt,
             sort_by=sort_by,
@@ -52,9 +82,6 @@ class VendorService(BaseService):
             whitelist=cls.SORT_MAP,
             default_col=cls.model.company_name
         )
-
-        # 4. Use distinct() just to ensure no duplicates from the search join
-        stmt = stmt.distinct()
 
         return cls.paginate(stmt, 
                             page=page, 

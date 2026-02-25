@@ -11,6 +11,9 @@ class ClientService(BaseService):
     # Define the Whitelist for sorting
     SORT_MAP = {
         'name': model.company_name,
+        'contact': 'primary_name_label',  # Matches the label in the query
+        'email': 'primary_email_label',    # Matches the label in the query
+        'address': model.address,
     }
 
     @classmethod
@@ -38,15 +41,40 @@ class ClientService(BaseService):
         Search: Implementation of filtered search for the client list.
         Searches across Company Name, Address, Contact names, and Contact Emails.
         """
-        # 1. Base statement (Active only)
+        # 1. Define the "Primary Contact Name" Subquery
+        # This specifically targets the contact with the lowest ID
+        primary_name_sq = (
+            select(func.coalesce(ClientContact.first_name, '') + ' ' + func.coalesce(ClientContact.last_name, ''))
+            .where(ClientContact.client_id == cls.model.id)
+            .order_by(ClientContact.id.asc())
+            .limit(1)
+            .correlate(cls.model) # Critical: links this subquery to the outer Client
+            .scalar_subquery()
+        )
+        
+        # 2. Define the "Primary Contact Email" Subquery
+        primary_email_sq = (
+            select(ClientContact.email)
+            .where(ClientContact.client_id == cls.model.id)
+            .order_by(ClientContact.id.asc())
+            .limit(1)
+            .correlate(cls.model)
+            .scalar_subquery()
+        )
+
+        # 3. Base statement: Select the model AND the labels
         stmt = (
-            select(cls.model)
-            .outerjoin(ClientContact)
-            .options(selectinload(cls.model.contacts))
+            select(
+                cls.model,
+                primary_name_sq.label('primary_name_label'),
+                primary_email_sq.label('primary_email_label')
+            )
+            .outerjoin(ClientContact) # Keep for searching
+            .options(selectinload(cls.model.contacts)) # Keep for display
             .where(cls.model.is_active == True)
         )
 
-        # 2. Apply filters if search_term exists
+        # 4. Apply filters if search_term exists
         if search_term:
             stmt = stmt.where(
                 or_(
@@ -58,7 +86,8 @@ class ClientService(BaseService):
                 )
             )
         
-        # 3. Apply Sorting
+        # 5. Group by ID and Apply Sorting
+        stmt = stmt.group_by(cls.model.id)
         stmt = cls.apply_sorting(
             stmt=stmt,
             sort_by=sort_by,
@@ -66,9 +95,6 @@ class ClientService(BaseService):
             whitelist=cls.SORT_MAP,
             default_col=cls.model.company_name
         )
-
-        # 4. Use distinct() just to ensure no duplicates from the search join
-        stmt = stmt.distinct()
 
         return cls.paginate(stmt, 
                             page=page, 
