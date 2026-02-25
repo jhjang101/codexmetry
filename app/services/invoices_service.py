@@ -13,12 +13,12 @@ class InvoiceService(BaseService):
 
     # Define the Whitelist (Maps UI strings to Database Columns)
     SORT_MAP = {
-        'status': Invoice.status,
-        'number': Invoice.invoice_number,
+        'status': model.status,
+        'number': model.invoice_number,
         'po': PurchaseOrder.po_number,
         'client': Client.company_name,
-        'amount': Invoice.total_amount,
-        'date': Invoice.invoice_date,
+        'amount': model.total_amount,
+        'date': model.invoice_date,
         'balance': 'calculated_balance', # SQLAlchemy can sort by the label string
         # Special Case: Sorting by 'calculated_balance' (row[1] in your subquery)
         # We'll handle this manually in the service if needed, 

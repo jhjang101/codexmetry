@@ -4,15 +4,37 @@ from ..models import Payment, Invoice, InvoiceItem, Product, PurchaseOrder, Orde
 from ..extensions import db
 from ..utils.money import parse_to_cents, format_usd
 from sqlalchemy import select, or_, func
-from sqlalchemy.orm import contains_eager, joinedload, selectinload
+from sqlalchemy.orm import contains_eager, joinedload, selectinload, aliased
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
 class PaymentService(BaseService):
     model = Payment
 
+    # 1. Define Aliases for the two different Client joins
+    client_alias = aliased(Client, name="client_alias")
+    payer_alias = aliased(Client, name="payer_alias")
+
+    # Define the Whitelist for sorting
+    SORT_MAP = {
+        'number': model.payment_number,
+        'cdx': OrderRegistry.order_number,   # Joined via order_id
+        'client': client_alias.company_name, # Sorts by the Account Owner
+        'invoice': Invoice.invoice_number,   # Joined via invoice_id
+        'payer': payer_alias.company_name,   # Sorts by the person on the check
+        'amount': model.amount,
+        'date': model.payment_date
+    }
+
+
+
     @classmethod
-    def get_all_with_search(cls, search_term: str | None = None, page: int = 1, per_page: int = 10):
+    def get_all_with_search(cls, 
+                            search_term: str | None = None, 
+                            page: int = 1, 
+                            per_page: int = 10,
+                            sort_by: str = 'date', 
+                            direction: str = 'desc'):
         """
         Fetches active Payments with search and pagination.
         Joins with OrderRegistry (CDX#), PO, Invoice, and Client (Name)
@@ -21,19 +43,21 @@ class PaymentService(BaseService):
         stmt = (
             select(cls.model)
             .join(cls.model.order)
-            .join(cls.model.client)
             .join(cls.model.purchase_order)
+            .join(cls.client_alias, cls.model.client_id == cls.client_alias.id)     # Join 1
+            .join(cls.payer_alias, cls.model.paid_from_id == cls.payer_alias.id)    # Join 2
             .outerjoin(cls.model.invoice) # Outer join because invoice is optional
+            .outerjoin(cls.model.payment_type)
             .where(cls.model.is_active == True)
         )
 
         # Eager load relationships for the list view
         stmt = stmt.options(
             contains_eager(cls.model.order),
-            contains_eager(cls.model.client),
-            contains_eager(cls.model.paid_from),
             contains_eager(cls.model.purchase_order),
-            contains_eager(cls.model.invoice), # Even the outer join can be eagerly loaded
+            contains_eager(cls.model.client, alias=cls.client_alias),
+            contains_eager(cls.model.paid_from, alias=cls.payer_alias),
+            contains_eager(cls.model.invoice),
             contains_eager(cls.model.payment_type)
         )
 
@@ -42,16 +66,28 @@ class PaymentService(BaseService):
             stmt = stmt.where(
                 or_(
                     OrderRegistry.order_number.icontains(search_term), # CDX-YY0000
-                    Client.company_name.icontains(search_term),
+                    cls.model.payment_number.icontains(search_term),
+                    cls.client_alias.company_name.icontains(search_term),
+                    cls.payer_alias.company_name.icontains(search_term),
                     PurchaseOrder.po_number.icontains(search_term),   # Client's Ref PO #
                     Invoice.invoice_number.icontains(search_term),  # INV-YY0000
                 )
             )
 
-        # 3. Order by Registry creation (Newest first)
-        stmt = stmt.order_by(OrderRegistry.created_at.desc())
+        # 3. Apply Sorting using the BaseService helper
+        stmt = cls.apply_sorting(
+            stmt=stmt,
+            sort_by=sort_by,
+            direction=direction,
+            whitelist=cls.SORT_MAP,
+            default_col=cls.model.payment_date # Default: newest first
+        )
 
-        return cls.paginate(stmt, page=page, per_page=per_page)
+        return cls.paginate(stmt, 
+                            page=page, 
+                            per_page=per_page,
+                            sort_by=sort_by, 
+                            direction=direction)
     
     @classmethod
     def add_payment(cls, data: dict) -> Payment:

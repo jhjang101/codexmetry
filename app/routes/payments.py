@@ -36,8 +36,16 @@ def index():
     # request.full_path includes the ?search=...&page=...
     session['payments_last_url'] = request.full_path
 
-    # pagination is an object containing .items, .has_next, .has_prev, etc.
-    pagination = PaymentService.get_all_with_search(search_term, page=page, per_page=10)
+    # 1. Extract Sorting Parameters (with defaults)
+    sort_by = request.args.get('sort', 'date')
+    direction = request.args.get('dir', 'desc')
+
+    # 2. pagination is an object containing .items, .has_next, .has_prev, etc.
+    pagination = PaymentService.get_all_with_search(search_term=search_term, 
+                                                    page=page, 
+                                                    per_page=10, 
+                                                    sort_by=sort_by, 
+                                                    direction=direction)
     
     if request.headers.get('HX-Request'):
         return render_template('payments/partials/list.html', pagination=pagination)
