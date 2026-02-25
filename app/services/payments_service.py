@@ -11,7 +11,7 @@ from zoneinfo import ZoneInfo
 class PaymentService(BaseService):
     model = Payment
 
-    # 1. Define Aliases for the two different Client joins
+    # Define Aliases for the two different Client joins
     client_alias = aliased(Client, name="client_alias")
     payer_alias = aliased(Client, name="payer_alias")
 

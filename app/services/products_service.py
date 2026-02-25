@@ -8,8 +8,22 @@ from sqlalchemy.orm import contains_eager
 class ProductService(BaseService):
     model = Product
 
+    # Define the Whitelist for sorting
+    SORT_MAP = {
+        'name': Product.name,
+        'catalog': Product.catalog_number,
+        'category': ProductCategory.type,  # Joined via category_id
+        'price': Product.default_unit_price
+    }
+
+
     @classmethod
-    def get_all_with_search(cls, search_term: str | None = None, page: int = 1, per_page: int = 10):
+    def get_all_with_search(cls, 
+                            search_term: str | None = None, 
+                            page: int = 1, 
+                            per_page: int = 10,
+                            sort_by: str = 'name', 
+                            direction: str = 'asc'):
         """
         Search: Fetches all active products.
         Joins with ProductCategory and hides system products.
@@ -32,11 +46,20 @@ class ProductService(BaseService):
                 )
             )
 
-        # 3. Order alphabetically
-        stmt = stmt.order_by(cls.model.name.asc())
+        # 3. Apply Sorting using the BaseService helper
+        stmt = cls.apply_sorting(
+            stmt=stmt,
+            sort_by=sort_by,
+            direction=direction,
+            whitelist=cls.SORT_MAP,
+            default_col=cls.model.name
+        )
 
-        return cls.paginate(stmt, page=page, per_page=per_page)
-
+        return cls.paginate(stmt, 
+                            page=page, 
+                            per_page=per_page,
+                            sort_by=sort_by, 
+                            direction=direction)
 
     @classmethod
     def get_all_products(cls):
