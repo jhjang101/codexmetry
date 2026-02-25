@@ -1,6 +1,6 @@
 {% extends 'layout.html' %}
-{% block title %}Transactions - Codexmetry{% endblock %}
-{% block header %}Transactions{% endblock %}
+{% block title %}Adjustments - Codexmetry{% endblock %}
+{% block header %}Adjustments{% endblock %}
 
 {% block content %}
 <div class="max-w-6xl mx-auto">
@@ -13,24 +13,24 @@
             <input type="text" name="search" value="{{ search or '' }}"
                    placeholder="Search ID, description, or category..." 
                    class="mt-1 block text-sm w-full border rounded-lg pl-10 p-2 focus:ring-1 focus:ring-blue-300 outline-none"
-                   hx-get="{{ url_for('transactions.index') }}" 
+                   hx-get="{{ url_for('adjustments.index') }}" 
                    hx-trigger="keyup changed delay:300ms, search" 
-                   hx-target="#transactions-list-container"
+                   hx-target="#adjustments-list-container"
                    hx-push-url="true">
         </div>
 
-        <!-- Add Transaction Button -->
+        <!-- Add Adjustment Button -->
         {% if current_user.role in ['admin', 'user'] %}
-            <a href="{{ url_for('transactions.add') }}" 
+            <a href="{{ url_for('adjustments.add') }}" 
             class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 shadow-sm">
-                <i class="fa-solid fa-plus mr-1"></i> Add New Transaction
+                <i class="fa-solid fa-plus mr-1"></i> Add New Adjustment
             </a>
         {% endif %}
 
     </div>
 
-    <div id="transactions-list-container" class="bg-white rounded-lg shadow border border-gray-200 overflow-hidden">
-        {% include 'transactions/partials/list.html' %}
+    <div id="adjustments-list-container" class="bg-white rounded-lg shadow border border-gray-200 overflow-hidden">
+        {% include 'adjustments/partials/list.html' %}
     </div>
 </div>
 {% endblock %}

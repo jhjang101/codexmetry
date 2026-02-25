@@ -1,5 +1,5 @@
 from .base_service import BaseService
-from ..models import Transaction, TransactionCategory, SettingsMetadata
+from ..models import Adjustment, AdjustmentCategory, SettingsMetadata
 from ..extensions import db
 from ..utils.docs import generate_doc_number
 from ..utils.money import parse_to_cents
@@ -8,16 +8,16 @@ from sqlalchemy.orm import contains_eager
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-class TransactionService(BaseService):
-    model = Transaction
+class AdjustmentService(BaseService):
+    model = Adjustment
 
     # Define the Whitelist for sorting
     SORT_MAP = {
-        'number': model.transaction_number,
+        'number': model.adjustment_number,
         'description': model.description,
         'category': model.category,
         'amount': model.amount,
-        'date': model.transaction_date,
+        'date': model.adjustment_date,
     }
 
 
@@ -29,12 +29,12 @@ class TransactionService(BaseService):
                             sort_by: str = 'date', 
                             direction: str = 'desc'):
         """
-        Fetches active transactions with eager category loading.
+        Fetches active adjustments with eager category loading.
         """
         # 1. Base statement with eager category loading
         stmt = (
             select(cls.model)
-            .outerjoin(TransactionCategory)
+            .outerjoin(AdjustmentCategory)
             .options(contains_eager(cls.model.category))
             .where(cls.model.is_active == True)
         )
@@ -43,9 +43,9 @@ class TransactionService(BaseService):
         if search_term:
             stmt = stmt.where(
                 or_(
-                    cls.model.transaction_number.icontains(search_term),
+                    cls.model.adjustment_number.icontains(search_term),
                     cls.model.description.icontains(search_term),
-                    TransactionCategory.type.icontains(search_term)
+                    AdjustmentCategory.type.icontains(search_term)
                 )
             )
 
@@ -55,7 +55,7 @@ class TransactionService(BaseService):
             sort_by=sort_by,
             direction=direction,
             whitelist=cls.SORT_MAP,
-            default_col=cls.model.transaction_date
+            default_col=cls.model.adjustment_date
         )
 
         return cls.paginate(stmt, 
@@ -65,39 +65,39 @@ class TransactionService(BaseService):
                             direction=direction)
 
     @classmethod
-    def add_transaction(cls, data: dict) -> Transaction:
+    def add_adjustment(cls, data: dict) -> Adjustment:
         """
-        Atomic creation of a non-operational transaction.
+        Atomic creation of a non-operational adjustment.
         """
         # 1. Validate & transform
         clean_data = cls._validate_and_transform(data)
 
         # 2. Create header
-        trx = cls.model(**clean_data)
-        db.session.add(trx)
+        adjustment = cls.model(**clean_data)
+        db.session.add(adjustment)
         
         db.session.commit()
-        return trx
+        return adjustment
 
     @classmethod
-    def edit_transaction(cls, trx_id: int, data: dict) -> Transaction:
+    def edit_adjustment(cls, adjustment_id: int, data: dict) -> Adjustment:
         """
-        Update an existing transaction.
+        Update an existing adjustment.
         """
         # 1. Validation
-        trx = cls.get_by_id(trx_id)
-        if not trx:
-            raise ValueError("Transaction not found.")
+        adjustment = cls.get_by_id(adjustment_id)
+        if not adjustment:
+            raise ValueError("Adjustment not found.")
 
         # 2. Validate & transform
         clean_data = cls._validate_and_transform(data)
 
         # 3. Update attributes
         for key, value in clean_data.items():
-            setattr(trx, key, value)
+            setattr(adjustment, key, value)
 
         db.session.commit()
-        return trx
+        return adjustment
 
     # --- INTERNAL HELPERS ---
 
@@ -105,34 +105,34 @@ class TransactionService(BaseService):
     def _validate_and_transform(cls, data: dict) -> dict:
         """Handles validation and type conversion."""
         description = data.get('description', '').strip()
-        transaction_number = data.get('transaction_number', '').strip()
+        adjustment_number = data.get('adjustment_number', '').strip()
         amount_raw = data.get('amount', '0')
         
         if not description:
-            raise ValueError("Transaction Description is required.")
-        if not transaction_number:
-            raise ValueError("Transaction Number is required.")
+            raise ValueError("Adjustment Description is required.")
+        if not adjustment_number:
+            raise ValueError("Adjustment Number is required.")
         if not amount_raw:
             raise ValueError("Amount is required.")
 
         # Parse Date
-        raw_date = data.get('transaction_date')
+        raw_date = data.get('adjustment_date')
         # Get TimeZone from metadata
         metadata = db.session.get(SettingsMetadata, 1)
         tz_name = metadata.timezone if metadata else 'America/Chicago'
 
         if raw_date:
-            trx_date = datetime.strptime(raw_date, '%Y-%m-%d').date()
+            adjustment_date = datetime.strptime(raw_date, '%Y-%m-%d').date()
         else:
-            trx_date = datetime.now(ZoneInfo(tz_name)).date()
+            adjustment_date = datetime.now(ZoneInfo(tz_name)).date()
 
         category_id = data.get('category_id')
 
         clean_data = {
             'description': description,
-            'transaction_number': transaction_number,
+            'adjustment_number': adjustment_number,
             'amount': parse_to_cents(str(amount_raw)),
-            'transaction_date': trx_date,
+            'adjustment_date': adjustment_date,
             'category_id': int(category_id) if category_id else None,
             'note': data.get('note', '').strip()
         }

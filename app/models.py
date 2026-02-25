@@ -76,8 +76,8 @@ class PaymentType(db.Model):
     type: Mapped[str] = mapped_column(String(50), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
-class TransactionCategory(db.Model):
-    __tablename__ = 'transaction_categories'
+class AdjustmentCategory(db.Model):
+    __tablename__ = 'adjustment_categories'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     type: Mapped[str] = mapped_column(String(50), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
@@ -448,20 +448,20 @@ class Expense(db.Model, AuditMixin):
         order_by="Attachment.uploaded_at.asc()"
     )
 
-class Transaction(db.Model, AuditMixin):
-    __tablename__ = 'transactions'
+class Adjustment(db.Model, AuditMixin):
+    __tablename__ = 'adjustments'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    transaction_number: Mapped[str] = mapped_column(String(100), nullable=False) # Not unique
+    adjustment_number: Mapped[str] = mapped_column(String(100), nullable=False) # Not unique
     description: Mapped[str] = mapped_column(String(255), nullable=False)
     amount: Mapped[int] = mapped_column(Integer, nullable=False)
-    transaction_date: Mapped[date] = mapped_column(Date, server_default=func.current_date())
-    category_id: Mapped[int | None] = mapped_column(ForeignKey('transaction_categories.id'))
+    adjustment_date: Mapped[date] = mapped_column(Date, server_default=func.current_date())
+    category_id: Mapped[int | None] = mapped_column(ForeignKey('adjustment_categories.id'))
     note: Mapped[str | None] = mapped_column(Text)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
-    category: Mapped["TransactionCategory"] = relationship()
+    category: Mapped["AdjustmentCategory"] = relationship()
     attachments: Mapped[list["Attachment"]] = relationship(
-        primaryjoin="and_(Transaction.id==Attachment.entity_id, Attachment.entity_type=='Transaction')",
+        primaryjoin="and_(Adjustment.id==Attachment.entity_id, Attachment.entity_type=='Adjustment')",
         foreign_keys="[Attachment.entity_id]",
         viewonly=True,
         order_by="Attachment.uploaded_at.asc()"
@@ -546,7 +546,7 @@ def set_audit_fields(mapper, connection, target):
 AUDIT_MODELS = [Client, Vendor, Product, 
                 OrderRegistry, Quote, PurchaseOrder, 
                 Invoice, Payment, Expense, 
-                Transaction, Attachment]
+                Adjustment, Attachment]
 
 for model in AUDIT_MODELS:
     event.listen(model, 'before_insert', set_audit_fields)

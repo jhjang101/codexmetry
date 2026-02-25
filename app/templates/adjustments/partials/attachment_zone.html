@@ -3,9 +3,9 @@
     <div class="col-span-4">
         <label class="block text-sm font-medium text-gray-500 mb-1">Internal Notes</label>
         {% if mode == 'view' %}
-            <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 whitespace-pre-wrap min-h-[120px] text-sm">{{ trx.note or '-' }}</p>
+            <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 whitespace-pre-wrap min-h-[120px] text-sm">{{ adjustment.note or '-' }}</p>
         {% else %}
-            <textarea name="note" rows="5" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">{{ trx.note if trx else '' }}</textarea>
+            <textarea name="note" rows="5" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">{{ adjustment.note if adjustment else '' }}</textarea>
         {% endif %}
     </div>
 
@@ -42,10 +42,10 @@
         <div id="file-staging-list" class="mt-1 space-y-1 max-h-[120px] overflow-y-auto pr-2">
             
             <!-- Existing Files (From Database) -->
-            {% if trx and trx.attachments %}
-                {% for file in trx.attachments %}
+            {% if adjustment and adjustment.attachments %}
+                {% for file in adjustment.attachments %}
                 <div class="flex justify-between items-center bg-gray-100 p-1 rounded-lg border text-[11px] group" id="existing-file-{{ file.id }}">
-                    <a href="{{ url_for('static', filename='uploads/transactions/' + file.file_path) }}" target="_blank" class="truncate font-medium text-blue-600 hover:underline">
+                    <a href="{{ url_for('static', filename='uploads/adjustments/' + file.file_path) }}" target="_blank" class="truncate font-medium text-blue-600 hover:underline">
                         <i class="fa-solid fa-file-lines mr-1"></i>{{ file.file_name }}
                     </a>
                     {% if mode != 'view' %}

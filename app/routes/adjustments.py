@@ -1,15 +1,15 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash, make_response
 from flask_login import login_required
-from ..models import Transaction
-from ..services.transactions_service import TransactionService
-from ..services.settings_service import TransactionCategoryService
+from ..models import Adjustment
+from ..services.adjustments_service import AdjustmentService
+from ..services.settings_service import AdjustmentCategoryService
 from ..services.attachment_service import AttachmentService
 from ..utils.auth import role_required
 from ..utils.docs import generate_doc_number
 from ..extensions import db
 from datetime import datetime
 
-bp = Blueprint('transactions', __name__)
+bp = Blueprint('adjustments', __name__)
 
 @bp.before_request
 @login_required
@@ -25,23 +25,23 @@ def index():
     page = request.args.get('page', 1, type=int)
 
     # Record state for the "Back" button
-    session['transactions_last_url'] = request.full_path
+    session['adjustments_last_url'] = request.full_path
 
     # 1. Extract Sorting Parameters (with defaults)
-    sort_by = request.args.get('sort', 'name')
-    direction = request.args.get('dir', 'asc')
+    sort_by = request.args.get('sort', 'date')
+    direction = request.args.get('dir', 'desc')
 
     # 2. pagination is an object containing .items, .has_next, .has_prev, etc.
-    pagination = TransactionService.get_all_with_search(search_term=search_term, 
+    pagination = AdjustmentService.get_all_with_search(search_term=search_term, 
                                                         page=page, 
                                                         per_page=10, 
                                                         sort_by=sort_by, 
                                                         direction=direction)
     
     if request.headers.get('HX-Request'):
-        return render_template('transactions/partials/list.html', pagination=pagination)
+        return render_template('adjustments/partials/list.html', pagination=pagination)
     
-    return render_template('transactions/transactions.html', pagination=pagination, search=search_term)
+    return render_template('adjustments/adjustments.html', pagination=pagination, search=search_term)
 
 # --- CRUD OPERATIONS ---
 # view, add, and edit route is now htmx
@@ -54,24 +54,24 @@ def add():
             # 1. Prepare Data
             data = {
                 'description': request.form.get('description'),
-                'transaction_number': request.form.get('transaction_number'),
+                'adjustment_number': request.form.get('adjustment_number'),
                 'amount': request.form.get('amount'),
-                'transaction_date': request.form.get('transaction_date'),
+                'adjustment_date': request.form.get('adjustment_date'),
                 'category_id': request.form.get('category_id'),
                 'note': request.form.get('note')
             }
             
             # 2. Call Service (handles numbering/parsing)
-            new_trx = TransactionService.add_transaction(data)
+            new_adjustment = AdjustmentService.add_adjustment(data)
 
             # 3. Handle Attachments
             new_files = request.files.getlist('attachments')
-            AttachmentService.commit('Transaction', new_trx.id, new_files=new_files)
+            AttachmentService.commit('Adjustment', new_adjustment.id, new_files=new_files)
             
-            flash(f"Transaction {new_trx.transaction_number} recorded!", "success")
+            flash(f"Adjustment {new_adjustment.adjustment_number} recorded!", "success")
             # The Safe Save Redirect: Forces a clean page load to 'View' mode
             response = make_response("", 200)
-            response.headers['HX-Redirect'] = url_for('transactions.view', id=new_trx.id)
+            response.headers['HX-Redirect'] = url_for('adjustments.view', id=new_adjustment.id)
             return response
             
         except ValueError as e:
@@ -83,60 +83,60 @@ def add():
             return resp
         
     # GET: Prepare form data
-    categories = TransactionCategoryService.get_all()
-    suggested_number = generate_doc_number(prefix='TRX', model=Transaction, column_name='transaction_number')
-    return render_template('transactions/form.html', 
+    categories = AdjustmentCategoryService.get_all()
+    suggested_number = generate_doc_number(prefix='ADJ', model=Adjustment, column_name='adjustment_number')
+    return render_template('adjustments/form.html', 
                            mode='add', 
-                           trx=None, 
+                           adjustment=None, 
                            categories=categories,
                            suggested_number=suggested_number)
 
 @bp.route('/view/<int:id>')
 def view(id):
     try:
-        trx = TransactionService.get_by_id(id)
-        if not trx:
-            flash("Transaction not found.", "error")
-            return redirect(url_for('transactions.index'))
+        adjustment = AdjustmentService.get_by_id(id)
+        if not adjustment:
+            flash("Adjustment not found.", "error")
+            return redirect(url_for('adjustments.index'))
     except Exception as e:
-        flash(f"Error loading transaction: {str(e)}", "error")
-        return redirect(url_for('transactions.index'))
+        flash(f"Error loading adjustment: {str(e)}", "error")
+        return redirect(url_for('adjustments.index'))
 
-    return render_template('transactions/form.html', mode='view', trx=trx)
+    return render_template('adjustments/form.html', mode='view', adjustment=adjustment)
 
 @bp.route('/edit/<int:id>', methods=['GET', 'POST'])
 @role_required(['admin', 'user'])
 def edit(id):
-    trx = TransactionService.get_by_id(id)
-    if not trx:
-        flash("Transaction not found.", "error")
-        return redirect(url_for('transactions.index'))
+    adjustment = AdjustmentService.get_by_id(id)
+    if not adjustment:
+        flash("Adjustment not found.", "error")
+        return redirect(url_for('adjustments.index'))
     
     if request.method == 'POST':
         try:
             # 1. Prepare Update Data
             update_data = {
                 'description': request.form.get('description'),
-                'transaction_number': request.form.get('transaction_number'),
+                'adjustment_number': request.form.get('adjustment_number'),
                 'amount': request.form.get('amount'),
-                'transaction_date': request.form.get('transaction_date'),
+                'adjustment_date': request.form.get('adjustment_date'),
                 'category_id': request.form.get('category_id'),
                 'note': request.form.get('note')
             }
             
             # 2. Call Atomic Service
-            TransactionService.edit_transaction(id, update_data)
+            AdjustmentService.edit_adjustment(id, update_data)
 
             # 3. Update Attachments
             new_files = request.files.getlist('attachments')
             raw_delete_ids = request.form.getlist('delete_ids[]') 
             delete_ids = [int(fid) for fid in raw_delete_ids if fid.isdigit()]
-            AttachmentService.commit('Transaction', id, new_files=new_files, delete_ids=delete_ids)
+            AttachmentService.commit('Adjustment', id, new_files=new_files, delete_ids=delete_ids)
 
             # 4. Success Feedback
-            flash(f"Transaction {trx.transaction_number} updated successfully!", "success")
+            flash(f"Adjustment {adjustment.adjustment_number} updated successfully!", "success")
             response = make_response("", 200)
-            response.headers['HX-Redirect'] = url_for('transactions.view', id=id)
+            response.headers['HX-Redirect'] = url_for('adjustments.view', id=id)
             return response
         
         except ValueError as e:
@@ -146,15 +146,15 @@ def edit(id):
             return resp
 
     # GET: Populate dropdowns
-    categories = TransactionCategoryService.get_all()
-    return render_template('transactions/form.html', mode='edit', trx=trx, categories=categories)
+    categories = AdjustmentCategoryService.get_all()
+    return render_template('adjustments/form.html', mode='edit', adjustment=adjustment, categories=categories)
 
 @bp.route('/archive/<int:id>', methods=['POST'])
 @role_required(['admin']) # Only Admin can delete
 def archive(id):
-    trx = TransactionService.archive(id)
-    if trx:
-        flash(f'Transaction {trx.transaction_number} moved to archives.', 'warning')
+    adjustment = AdjustmentService.archive(id)
+    if adjustment:
+        flash(f'Adjustment {adjustment.adjustment_number} moved to archives.', 'warning')
     else:
-        flash('Transaction not found.', 'error')
-    return redirect(url_for('transactions.index'))
+        flash('Adjustment not found.', 'error')
+    return redirect(url_for('adjustments.index'))

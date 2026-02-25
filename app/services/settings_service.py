@@ -1,7 +1,7 @@
 from .base_service import BaseService
 from ..models import (
     SettingsMetadata, PoType, ProductCategory, 
-    ExpenseCategory, PaymentType, TransactionCategory
+    ExpenseCategory, PaymentType, AdjustmentCategory
 )
 from ..extensions import db
 from ..utils.money import parse_to_cents
@@ -18,8 +18,8 @@ class ExpenseCategoryService(BaseService):
 class PaymentTypeService(BaseService):
     model = PaymentType
 
-class TransactionCategoryService(BaseService):
-    model = TransactionCategory
+class AdjustmentCategoryService(BaseService):
+    model = AdjustmentCategory
 
 class MetadataService(BaseService):
     model = SettingsMetadata

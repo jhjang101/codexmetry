@@ -58,7 +58,7 @@ def create_app():
     # 3. Register Blueprints
     from .routes import (dashboard, quotes, purchase_orders, invoices, 
                          payments, expenses, clients, products, vendors, 
-                         transactions, reports, settings, auth
+                         adjustments, reports, settings, auth
     )
     app.register_blueprint(dashboard.bp)
     app.register_blueprint(quotes.bp, url_prefix='/quotes')
@@ -69,7 +69,7 @@ def create_app():
     app.register_blueprint(clients.bp, url_prefix='/clients')
     app.register_blueprint(products.bp, url_prefix='/products')
     app.register_blueprint(vendors.bp, url_prefix='/vendors')
-    app.register_blueprint(transactions.bp, url_prefix='/transactions')
+    app.register_blueprint(adjustments.bp, url_prefix='/adjustments')
     app.register_blueprint(reports.bp, url_prefix='/reports')
     app.register_blueprint(settings.bp, url_prefix='/settings')
     app.register_blueprint(auth.bp, url_prefix='/auth')

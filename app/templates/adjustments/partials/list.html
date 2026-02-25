@@ -3,30 +3,30 @@
 <table class="min-w-full divide-y divide-gray-200">
     <thead class="bg-gray-50">
         <tr>
-            {{ sort_header('Transaction #', 'number', pagination, 'transactions.index')}}
-            {{ sort_header('Description', 'description', pagination, 'transactions.index') }}
-            {{ sort_header('Amount', 'amount', pagination, 'transactions.index', align='right') }}
-            {{ sort_header('Category', 'category', pagination, 'transactions.index') }}
-            {{ sort_header('Date', 'date', pagination, 'transactions.index') }}
+            {{ sort_header('Adjustment #', 'number', pagination, 'adjustments.index')}}
+            {{ sort_header('Description', 'description', pagination, 'adjustments.index') }}
+            {{ sort_header('Amount', 'amount', pagination, 'adjustments.index', align='right') }}
+            {{ sort_header('Category', 'category', pagination, 'adjustments.index') }}
+            {{ sort_header('Date', 'date', pagination, 'adjustments.index') }}
             <th class="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase">Actions</th>
         </tr>
     </thead>
     <tbody class="divide-y divide-gray-100 bg-white">
-        {% for trx in pagination.items %}
+        {% for adjustment in pagination.items %}
         <tr class="hover:bg-blue-50/40 transition-colors">
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ trx.transaction_number }}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 truncate max-w-xs">{{ trx.description }}</td>
-            <td class="pl-6 pr-10 py-4 text-right whitespace-nowrap text-sm {{ 'text-green-700' if trx.amount >= 0 else 'text-red-600' }}">
-                {{ trx.amount | usd }}
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ adjustment.adjustment_number }}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 truncate max-w-xs">{{ adjustment.description }}</td>
+            <td class="pl-6 pr-10 py-4 text-right whitespace-nowrap text-sm {{ 'text-green-700' if adjustment.amount >= 0 else 'text-red-600' }}">
+                {{ adjustment.amount | usd }}
             </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ trx.category.type if trx.category else '-' }}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ adjustment.category.type if adjustment.category else '-' }}</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                {{ trx.transaction_date.strftime('%Y-%m-%d') }}
+                {{ adjustment.adjustment_date.strftime('%Y-%m-%d') }}
             </td>
 
             <td class="pl-6 pr-8 py-4 whitespace-nowrap text-right text-sm">
                 <span class="text-gray-400 hover:text-blue-600 cursor-pointer" 
-                      hx-get="{{ url_for('transactions.view', id=trx.id) }}" 
+                      hx-get="{{ url_for('adjustments.view', id=adjustment.id) }}" 
                       hx-target="body" 
                       hx-push-url="true">
                     <i class="fa-regular fa-eye m-1"></i>
@@ -34,7 +34,7 @@
 
                 {% if current_user.role in ['admin', 'user'] %}
                     <span class="text-gray-400 hover:text-yellow-600 cursor-pointer" 
-                        hx-get="{{ url_for('transactions.edit', id=trx.id) }}" 
+                        hx-get="{{ url_for('adjustments.edit', id=adjustment.id) }}" 
                         hx-target="body" 
                         hx-push-url="true">
                         <i class="fa-regular fa-pen-to-square m-1"></i>
@@ -44,7 +44,7 @@
             </td>
         </tr>
         {% else %}
-        <tr><td colspan="6" class="py-12 text-center text-gray-400 italic text-sm">No transactions found.</td></tr>
+        <tr><td colspan="6" class="py-12 text-center text-gray-400 italic text-sm">No adjustments found.</td></tr>
         {% endfor %}
     </tbody>
 </table>
@@ -57,11 +57,11 @@
     
     <div class="flex gap-2">
         {% if pagination.has_prev %}
-        <button hx-get="{{ url_for('transactions.index', 
+        <button hx-get="{{ url_for('adjustments.index', 
                                    page=pagination.prev_num, 
                                    sort=pagination.sort_by, 
                                    dir=pagination.direction) }}"
-                hx-target="#transactions-list-container"
+                hx-target="#adjustments-list-container"
                 hx-include="[name='search']"
                 hx-push-url="true"
                 class="px-3 py-1 bg-white border rounded text-xs text-gray-500 font-semibold hover:bg-gray-100 transition-colors">
@@ -70,11 +70,11 @@
         {% endif %}
 
         {% if pagination.has_next %}
-        <button hx-get="{{ url_for('transactions.index', 
+        <button hx-get="{{ url_for('adjustments.index', 
                                    page=pagination.next_num, 
                                    sort=pagination.sort_by, 
                                    dir=pagination.direction) }}"
-                hx-target="#transactions-list-container"
+                hx-target="#adjustments-list-container"
                 hx-include="[name='search']"
                 hx-push-url="true"
                 class="px-3 py-1 bg-white border rounded text-xs text-gray-500 font-semibold hover:bg-gray-100 transition-colors">

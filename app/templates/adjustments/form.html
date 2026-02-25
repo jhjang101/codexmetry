@@ -1,21 +1,21 @@
 {% extends 'layout.html' %}
-{% block title %}{{ 'New Transaction' if mode == 'add' else 'Transaction ' + trx.transaction_number }}{% endblock %}
+{% block title %}{{ 'New Adjustment' if mode == 'add' else 'Adjustment ' + adjustment.adjustment_number }}{% endblock %}
 
 {% block header %}
-    {% if mode == 'add' %}New Transaction
-    {% else %}<span class="text-gray-400">{{ 'Edit' if mode == 'edit' else 'View' }} Transaction - </span>{{ trx.transaction_number }}
+    {% if mode == 'add' %}New Adjustment
+    {% else %}<span class="text-gray-400">{{ 'Edit' if mode == 'edit' else 'View' }} Adjustment - </span>{{ adjustment.adjustment_number }}
     {% endif %}
 {% endblock %}
 
 {% block content %}
 <div class="max-w-4xl mx-auto">
     <div class="flex justify-between items-center mb-2">
-        <a href="{{ session.get('transactions_last_url', url_for('transactions.index')) }}" class="text-blue-600 text-sm font-medium"><i class="fa-solid fa-arrow-left"></i> Back to Transactions List</a>
+        <a href="{{ session.get('adjustments_last_url', url_for('adjustments.index')) }}" class="text-blue-600 text-sm font-medium"><i class="fa-solid fa-arrow-left"></i> Back to Adjustments List</a>
         <div class="flex gap-3">
             {% if mode == 'view' %}
 
                 {% if current_user.role in ['admin'] %}
-                    <form action="{{ url_for('transactions.archive', id=trx.id) }}" method="POST" onsubmit="return confirm('Archive this transaction?')">
+                    <form action="{{ url_for('adjustments.archive', id=adjustment.id) }}" method="POST" onsubmit="return confirm('Archive this adjustment?')">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <button type="submit" class="text-red-400 px-2 py-2 text-sm 
                         hover:bg-red-800 rounded-lg">Delete</button>
@@ -23,29 +23,29 @@
                 {% endif %}
 
                 {% if current_user.role in ['admin', 'user'] %}
-                    <a href="{{ url_for('transactions.edit', id=trx.id) }}" 
+                    <a href="{{ url_for('adjustments.edit', id=adjustment.id) }}" 
                     class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm">
-                        <i class="fa-regular fa-pen-to-square mr-1"></i>Edit Transaction
+                        <i class="fa-regular fa-pen-to-square mr-1"></i>Edit Adjustment
                     </a>
                 {% endif %}
 
             {% else %}
-                <a href="{% if mode == 'add' %}{{ url_for('transactions.index') }}{% else %}{{ url_for('transactions.view', id=trx.id) }}{% endif %}" 
+                <a href="{% if mode == 'add' %}{{ url_for('adjustments.index') }}{% else %}{{ url_for('adjustments.view', id=adjustment.id) }}{% endif %}" 
                    class="text-gray-500 px-4 py-2 text-sm">
                     Cancel
                 </a>
                 <button type="submit" 
-                        form="trx-main-form" 
+                        form="adjustment-main-form" 
                         class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold 
                         hover:bg-blue-700 transition-colors shadow-sm">
-                    <i class="fa-regular fa-floppy-disk mr-1"></i>Save Transaction
+                    <i class="fa-regular fa-floppy-disk mr-1"></i>Save Adjustment
                 </button>
             {% endif %}
         </div>
     </div>
 
-    <form id="trx-main-form" 
-          hx-post="{{ url_for('transactions.add') if mode == 'add' else url_for('transactions.edit', id=trx.id) }}" 
+    <form id="adjustment-main-form" 
+          hx-post="{{ url_for('adjustments.add') if mode == 'add' else url_for('adjustments.edit', id=adjustment.id) }}" 
           hx-encoding="multipart/form-data"
           hx-swap = "none">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -56,7 +56,7 @@
 
                 {# Include the audit info, passing the current object as 'record' #}
                 {% if mode == 'view' %} 
-                    {% with record = trx %}
+                    {% with record = adjustment %}
                         {% include 'partials/audit_info.html' %}
                     {% endwith %}
                 {% endif %}
@@ -67,11 +67,11 @@
                 <div class="col-span-2">
                     <label class="block text-sm font-medium text-gray-500">Description</label>
                     {% if mode == 'view' %}
-                        <p class="mt-1 block bg-gray-100 border rounded-lg p-2 text-sm">{{ trx.description }}</p>
+                        <p class="mt-1 block bg-gray-100 border rounded-lg p-2 text-sm">{{ adjustment.description }}</p>
                     {% else %}
                         <input type="text" 
                                name="description" 
-                               value="{{ trx.description if trx else '' }}" 
+                               value="{{ adjustment.description if adjustment else '' }}" 
                                required
                                placeholder="e.g. Bank Interest, Annual Fee" 
                                class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300">
@@ -79,11 +79,11 @@
                 </div>
 
                 <div class="col-span-1">
-                    <label class="block text-sm font-medium text-gray-500">Transaction Number</label>
+                    <label class="block text-sm font-medium text-gray-500">Adjustment Number</label>
                     {% if mode == 'view' %}
-                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ trx.transaction_number }}</p>
+                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ adjustment.adjustment_number }}</p>
                     {% else %}
-                        <input type="text" name="transaction_number" value="{{ trx.transaction_number if trx else suggested_number }}" 
+                        <input type="text" name="adjustment_number" value="{{ adjustment.adjustment_number if adjustment else suggested_number }}" 
                                class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none transition-all" required>
                     {% endif %}
                 </div>
@@ -91,13 +91,13 @@
                 <div class="col-span-1">
                     <label class="block text-sm font-medium text-gray-500">Amount</label>
                     {% if mode == 'view' %}
-                        <p class="mt-1 block bg-gray-100 border rounded-lg p-2 text-sm {{ 'text-green-700' if trx.amount >= 0 else 'text-red-600' }}">
-                            {{ trx.amount | usd }}
+                        <p class="mt-1 block bg-gray-100 border rounded-lg p-2 text-sm {{ 'text-green-700' if adjustment.amount >= 0 else 'text-red-600' }}">
+                            {{ adjustment.amount | usd }}
                         </p>
                     {% else %}
                         <input type="text" 
                                name="amount" 
-                               value="{{ trx.amount | usd if trx else '$0.00' }}" 
+                               value="{{ adjustment.amount | usd if adjustment else '$0.00' }}" 
                                required
                                class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300">
                     {% endif %}
@@ -106,14 +106,14 @@
                 <div class="col-span-2">
                     <label class="block text-sm font-medium text-gray-500">Category</label>
                     {% if mode == 'view' %}
-                        <p class="mt-1 block bg-gray-100 border rounded-lg p-2 text-sm">{{ trx.category.type if trx.category else '-' }}</p>
+                        <p class="mt-1 block bg-gray-100 border rounded-lg p-2 text-sm">{{ adjustment.category.type if adjustment.category else '-' }}</p>
                     {% else %}
                         <div class="relative">
                             <select name="category_id" 
                                     class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none appearance-none bg-transparent cursor-pointer pr-10">
                                 <option value="">Select Category...</option>
                                 {% for c in categories %}
-                                    <option value="{{ c.id }}" {{ 'selected' if (trx and trx.category_id == c.id) else '' }}>{{ c.type }}</option>
+                                    <option value="{{ c.id }}" {{ 'selected' if (adjustment and adjustment.category_id == c.id) else '' }}>{{ c.type }}</option>
                                 {% endfor %}
                             </select>
                             <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-400">
@@ -126,9 +126,9 @@
                 <div class="col-span-1">
                     <label class="block text-sm font-medium text-gray-500">Date</label>
                     {% if mode == 'view' %}
-                        <p class="mt-1 block bg-gray-100 border rounded-lg p-2 text-sm">{{ trx.transaction_date }}</p>
+                        <p class="mt-1 block bg-gray-100 border rounded-lg p-2 text-sm">{{ adjustment.adjustment_date }}</p>
                     {% else %}
-                        <input type="date" name="transaction_date" value="{{ trx.transaction_date if trx else now.strftime('%Y-%m-%d') }}" 
+                        <input type="date" name="adjustment_date" value="{{ adjustment.adjustment_date if adjustment else now.strftime('%Y-%m-%d') }}" 
                                class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300">
                     {% endif %}
                 </div>
@@ -137,7 +137,7 @@
         </section>
 
         <section class="bg-white p-6 rounded-lg shadow mb-2">
-            {% include 'transactions/partials/attachment_zone.html' %}
+            {% include 'adjustments/partials/attachment_zone.html' %}
         </section>
     </form>
 </div>

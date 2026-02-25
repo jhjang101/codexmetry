@@ -9,7 +9,7 @@ from ..services.settings_service import (
     ProductCategoryService, 
     ExpenseCategoryService, 
     PaymentTypeService, 
-    TransactionCategoryService
+    AdjustmentCategoryService
 )
 from ..utils.images import save_image
 from ..utils.money import parse_to_cents
@@ -20,7 +20,7 @@ LOOKUPS = {
     'product_categories': ProductCategoryService,
     'expense_categories': ExpenseCategoryService,
     'payment_types': PaymentTypeService,
-    'transaction_categories': TransactionCategoryService
+    'adjustment_categories': AdjustmentCategoryService
 }
 
 bp = Blueprint('settings', __name__)
