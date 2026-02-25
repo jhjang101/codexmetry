@@ -2,13 +2,23 @@ from .base_service import BaseService
 from ..models import Vendor, VendorContact
 from ..extensions import db
 from sqlalchemy import select, or_
-from sqlalchemy.orm import contains_eager
+from sqlalchemy.orm import contains_eager, selectinload
 
 class VendorService(BaseService):
     model = Vendor
 
+    # Define the Whitelist for sorting
+    SORT_MAP = {
+        'name': model.company_name,
+    }
+
     @classmethod
-    def get_all_with_search(cls, search_term: str | None = None, page: int = 1, per_page: int = 10):
+    def get_all_with_search(cls, 
+                            search_term: str | None = None, 
+                            page: int = 1, 
+                            per_page: int = 10,
+                            sort_by: str = 'name', 
+                            direction: str = 'asc'):
         """
         Search: Implementation of filtered search for the vendor list.
         Searches across Company Name, URL, Address, and Contact details.
@@ -17,7 +27,7 @@ class VendorService(BaseService):
         stmt = (
             select(cls.model)
             .outerjoin(VendorContact)
-            .options(contains_eager(cls.model.contacts))
+            .options(selectinload(cls.model.contacts))
             .where(cls.model.is_active == True)
         )
 
@@ -34,10 +44,23 @@ class VendorService(BaseService):
                 )
             ).distinct()
 
-        # 3. Order by name
-        stmt = stmt.order_by(cls.model.company_name.asc())
+        # 3. Apply Sorting
+        stmt = cls.apply_sorting(
+            stmt=stmt,
+            sort_by=sort_by,
+            direction=direction,
+            whitelist=cls.SORT_MAP,
+            default_col=cls.model.company_name
+        )
 
-        return cls.paginate(stmt, page=page, per_page=per_page)
+        # 4. Use distinct() just to ensure no duplicates from the search join
+        stmt = stmt.distinct()
+
+        return cls.paginate(stmt, 
+                            page=page, 
+                            per_page=per_page, 
+                            sort_by=sort_by, 
+                            direction=direction)
 
     @classmethod
     def add_vendor(cls, data: dict, contacts_data: list[dict]) -> Vendor:
@@ -94,8 +117,8 @@ class VendorService(BaseService):
         # 2. Transform data
         clean_data ={
             'company_name': company_name,
-            'url': data.get('url', '').strip() if data.get('url') else None,
-            'address': data.get('address', '').strip() if data.get('address') else None
+            'url': data.get('url', '').strip(),
+            'address': data.get('address', '').strip()
         }
 
         return clean_data

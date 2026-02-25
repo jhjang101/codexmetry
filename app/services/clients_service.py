@@ -10,7 +10,7 @@ class ClientService(BaseService):
 
     # Define the Whitelist for sorting
     SORT_MAP = {
-        'name': Client.company_name,
+        'name': model.company_name,
     }
 
     @classmethod

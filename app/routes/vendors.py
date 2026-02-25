@@ -23,7 +23,17 @@ def index():
     # RECORD THE STATE
     session['vendors_last_url'] = request.full_path
 
-    pagination = VendorService.get_all_with_search(search_term, page=page, per_page=10)
+    # 1. Extract Sorting Parameters (with defaults)
+    sort_by = request.args.get('sort', 'name')
+    direction = request.args.get('dir', 'asc')
+
+    # 2. pagination is an object containing .items, .has_next, .has_prev, etc.
+    pagination = VendorService.get_all_with_search(search_term=search_term, 
+                                                    page=page, 
+                                                    per_page=10, 
+                                                    sort_by=sort_by, 
+                                                    direction=direction)
+
 
     if request.headers.get('HX-Request'):
         return render_template('vendors/partials/list.html', pagination=pagination)
