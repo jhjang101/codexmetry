@@ -2,7 +2,8 @@ from .base_service import BaseService
 from ..models import Client, ClientContact
 from ..extensions import db
 from sqlalchemy import select, or_, func
-from sqlalchemy.orm import contains_eager
+from sqlalchemy.orm import contains_eager, selectinload
+
 
 class ClientService(BaseService):
     model = Client
@@ -10,10 +11,6 @@ class ClientService(BaseService):
     # Define the Whitelist for sorting
     SORT_MAP = {
         'name': Client.company_name,
-        # Combine names in SQL so the sort order matches the UI display
-        'contact': func.coalesce(ClientContact.first_name, '') + func.coalesce(ClientContact.last_name, ''),
-        'email': ClientContact.email,
-        'address': Client.address,
     }
 
     @classmethod
@@ -45,7 +42,7 @@ class ClientService(BaseService):
         stmt = (
             select(cls.model)
             .outerjoin(ClientContact)
-            .options(contains_eager(cls.model.contacts))
+            .options(selectinload(cls.model.contacts))
             .where(cls.model.is_active == True)
         )
 
@@ -61,10 +58,7 @@ class ClientService(BaseService):
                 )
             )
         
-        # 3. Group by ID to prevent duplicates when sorting by relationships
-        stmt = stmt.group_by(cls.model.id)
-
-        # 4. Apply Sorting
+        # 3. Apply Sorting
         stmt = cls.apply_sorting(
             stmt=stmt,
             sort_by=sort_by,
@@ -72,6 +66,9 @@ class ClientService(BaseService):
             whitelist=cls.SORT_MAP,
             default_col=cls.model.company_name
         )
+
+        # 4. Use distinct() just to ensure no duplicates from the search join
+        stmt = stmt.distinct()
 
         return cls.paginate(stmt, 
                             page=page, 

@@ -112,6 +112,28 @@ class Client(db.Model, AuditMixin):
     expenses: Mapped[list["Expense"]] = relationship(back_populates="client")
 
     @property
+    def primary_contact(self):
+        # Standardize the 'Primary' definition: lowest ID
+        if self.contacts:
+            return sorted(self.contacts, key=lambda c: c.id)[0]
+        return None
+
+    @property
+    def primary_contact_name(self):
+        """Returns 'First Last' or '-'."""
+        c = self.primary_contact
+        if c:
+            name = f"{c.first_name or ''} {c.last_name or ''}".strip()
+            return name if name else "-"
+        return "-"
+
+    @property
+    def primary_contact_email(self):
+        """Returns email or '-'."""
+        c = self.primary_contact
+        return c.email if (c and c.email) else "-"
+    
+    @property
     def full_display(self):
         """Returns 'Company Name (Contact Name)' or just 'Company Name'"""
         if self.contacts:
