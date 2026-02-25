@@ -1,11 +1,14 @@
-{% macro sort_header(label, key, pagination, endpoint) %}
-    {# 1. Calculate State #}
+{% macro sort_header(label, key, pagination, endpoint, align='left') %}
+    {# 1. Calculate Next State #}
     {% set is_active = pagination.sort_by == key %}
     {% set current_dir = pagination.direction or 'desc' %}
     {% set next_dir = 'asc' if (is_active and current_dir == 'desc') else 'desc' %}
     
     {# 2. Header Element #}
-    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 
+    {% set alignment_class = 'text-right' if align == 'right' else 'text-left' %}
+    {% set justify_class = 'justify-end' if align == 'right' else 'justify-start' %}
+    <th class="px-6 py-4 {{ alignment_class }} 
+               text-xs font-semibold text-gray-500 
                uppercase tracking-wider cursor-pointer 
                hover:bg-gray-100 transition-colors group"
         hx-get="{{ url_for(endpoint, 
@@ -15,8 +18,9 @@
         hx-target="#{{ endpoint.split('.')[0] }}-list-container"
         hx-push-url="true">
         
-        <div class="flex items-center gap-1">
+        <div class="flex items-center gap-1 {{ justify_class }}">
             {{ label }}
+
             <span class="text-xs">
                 {% if is_active %}
                     {% if current_dir == 'asc' %}
@@ -25,7 +29,6 @@
                         <i class="fa-solid fa-sort-down text-blue-600"></i>
                     {% endif %}
                 {% else %}
-                    {# Ghost icon: only visible on hover to keep the UI 'Compact' and clean #}
                     <i class="fa-solid fa-sort text-gray-300"></i>
                 {% endif %}
             </span>
