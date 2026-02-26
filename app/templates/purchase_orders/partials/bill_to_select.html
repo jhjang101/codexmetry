@@ -1,44 +1,27 @@
 <div class="relative" id="bill-to-select-container">
-    {# 1. CONTEXT: Is there a client selected at all? #}
-    {% if selected_id is defined %}
-        {% set client_context = selected_id %}
-    {% else %}
-        {% set client_context = po.client_id if po else None %}
-    {% endif %}
+    {# Simple Context #}
+    {% set client_context = selected_id or (po.client_id if po else None) %}
+    {% set is_disabled = not client_context and mode != 'view' %}
 
-    {# 2. SMART SELECTION: Restore original Bill-To if returning to original Client #}
+    {# If we are in an HTMX swap, use the current selection. Else, use the DB record #}
     {% if selected_id is defined %}
-        {% if po and selected_id == po.client_id %}
-            {% set selection_target = po.bill_to_id %}
-        {% else %}
-            {% set selection_target = selected_id %}
-        {% endif %}
+        {% set selection_target = selected_id %}
     {% else %}
         {% set selection_target = po.bill_to_id if po else None %}
     {% endif %}
-
-    {# 3. INDICATOR LOGIC: Only show asterisk if we are looking at the original client #}
-    {% set show_saved_indicators = (po and client_context == po.client_id and mode != 'view') %}
-    
-    {% set is_disabled = not client_context and mode != 'view' %}
 
     <select name="bill_to_id" 
             {{ 'disabled' if is_disabled else '' }}
             class="mt-1 block w-full border rounded-lg p-2 text-sm 
             focus:ring-1 focus:ring-blue-300 outline-none appearance-none pr-10
-            {% if is_disabled %} bg-gray-100 text-gray-400 cursor-not-allowed
-            {% else %} bg-transparent cursor-pointer
-            {% endif %}"
+            {{ 'bg-gray-100 text-gray-400 cursor-not-allowed' if is_disabled else 'bg-transparent cursor-pointer' }}"
             required>
 
         <option value="">Select Client first...</option>
         
         {% for client in clients %}
-            <option value="{{ client.id }}" 
-                {{ 'selected' if selection_target == client.id else '' }}>
+            <option value="{{ client.id }}" {{ 'selected' if selection_target == client.id else '' }}>
                 {{ client.full_display }}
-                {# Only show the asterisk if the context matches AND this is the saved ID #}
-                {{ '*' if (show_saved_indicators and client.id == po.bill_to_id) else '' }}
             </option>
         {% endfor %}
     </select>

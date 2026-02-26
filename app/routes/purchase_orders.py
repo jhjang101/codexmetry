@@ -291,7 +291,7 @@ def update_client_cascades():
     po_id = request.args.get('po_id', type=int)
 
     # 1. Fetch the PO object to provide context for the 'selected' logic
-    po = PurchaseOrderService.get_po_by_id(po_id) if po_id else None
+    po = PurchaseOrderService.get_by_id(po_id) if po_id else None
 
     # 2. Get data for both dropdowns
     clients = ClientService.get_all()
@@ -303,8 +303,7 @@ def update_client_cascades():
     return render_template('purchase_orders/partials/client_cascades.html', 
                            clients=clients, 
                            quotes=quotes, 
-                           selected_id=client_id,
-                           po=po)
+                           selected_id=client_id)
 
 # --- HTMX Quote-Itmes Cascade Routes ---
 

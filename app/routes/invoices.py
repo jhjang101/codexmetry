@@ -355,19 +355,20 @@ def update_client_cascades():
     invoice_id = request.args.get('invoice_id', type=int)
 
     # Fetch context for Smart Selection
-    invoice = InvoiceService.get_invoice_by_id(invoice_id) if invoice_id else None
+    invoice = InvoiceService.get_by_id(invoice_id) if invoice_id else None
 
-    # Prefill Bill_to with this client
-    clients = ClientService.get_all()
     # Populate eligible POs for this client including current po
     po_id = invoice.po_id if invoice else None
     pos = PurchaseOrderService.get_pos_by_client(client_id, include_id=po_id) if client_id else []
+
+    # Prefill Bill_to with this client
+    clients = ClientService.get_all()
     
     return render_template('invoices/partials/client_cascades.html', 
                            clients=clients, 
                            pos=pos, 
                            selected_id=client_id,
-                           invoice=invoice)
+                           invoice_id=invoice_id)
 
 @bp.route('/load-po-details')
 def load_po_details():
@@ -376,36 +377,49 @@ def load_po_details():
     po_id = request.args.get('po_id', type=int)
     invoice_id = request.args.get('invoice_id', type=int)
 
-    # 2. Fetch context for the Brain and the Template
-    po = PurchaseOrderService.get_po_by_id(po_id) if po_id else None
+    print('po_id:', po_id)
+    print('invoice_id:', invoice_id)
+
+
+    # 2. Fetch the PO to get its Bill-To and Items
+    po = PurchaseOrderService.get_po_by_id(po_id) if po_id else None    
     invoice = InvoiceService.get_invoice_by_id(invoice_id) if invoice_id else None
-    
-    if not po: 
-        return ""
 
     # 3. Get remaining items from PO
-    remaining_items = po.remaining_items # type: ignore
+    items = []
+    if invoice and po_id == invoice.po_id:
+        # Restore the items ALREADY saved on this invoice
+        for idx, inv_item in enumerate(invoice.items):
+            items.append({
+                'product_id': inv_item.product_id,
+                'product': inv_item.product,
+                'quantity': inv_item.quantity,
+                'billed_unit_price': inv_item.billed_unit_price,
+                'description': inv_item.description,
+                'row_id': f"{int(time.time() * 1000)}{idx}"
+            })
+    elif po:
+        # Standard Flow: Use the PO's remaining items for a new link
+        remaining = po.remaining_items # type: ignore
+        for idx, item in enumerate(remaining):
+            item['billed_unit_price'] = item.pop('agreed_unit_price')
+            item['row_id'] = f"{int(time.time() * 1000)}{idx}"
+        items = remaining
 
-    for idx, item in enumerate(remaining_items):
-        # Changed agreed_unit_price to billed_unit_price in the remaining_items key
-        item['billed_unit_price'] = item.pop('agreed_unit_price')
-        item['row_id'] = f"{int(time.time() * 1000)}{idx}"
+        print('po.total_prepayment:', po.total_prepayment)
+        print('po.remaining_credit:', po.remaining_credit)
 
     # 4. Populate clients and products list for bill_to and item_row
     clients = ClientService.get_all()
     products = ProductService.get_all()
 
-    print('po.total_prepayment:', po.total_prepayment)
-    print('po.remaining_credit:', po.remaining_credit)
-
     # 5. Return the single unified OOB template
     resp = make_response(render_template(
         'invoices/partials/po_selection_oob.html',
         po=po,
-        invoice=invoice,           # Context for Smart Return logic
+        invoice=invoice,
         selected_po_id=po_id,      # Context to unlock the Bill-To field
-        mode='edit' if invoice else 'add',
-        items=remaining_items,
+        items=items,
         clients=clients,
         products=products
     ))

@@ -1,7 +1,3 @@
-<span id="order-ref-label" hx-swap-oob="true" class="text-xs text-gray-500 mb-2 border-b pb-2">
-    Order Ref: {{ po.order.order_number }}
-</span>
-
 <div id="bill-to-select-container" hx-swap-oob="true">
     {% include 'invoices/partials/bill_to_select.html' %}
 </div>
@@ -11,6 +7,9 @@
 
 <table class="hidden">
     <tbody id="item-list" hx-swap-oob="true">
-        {% for item in items %}{% set row_id = item.row_id %}{% include 'invoices/partials/item_row.html' %}{% endfor %}
+        {% for item in items %}
+            {% set row_id = item.row_id %}
+            {% include 'invoices/partials/item_row.html' %}
+        {% endfor %}
     </tbody>
 </table>
