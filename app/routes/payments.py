@@ -116,7 +116,6 @@ def add():
     payment_types = PaymentTypeService.get_all()
     return render_template('payments/form.html', 
                            mode='add', 
-                           invoice=None, 
                            clients=clients,
                            suggested_number=suggested_number,
                            payment_types=payment_types)
@@ -244,6 +243,7 @@ def edit(id):
                            clients=clients,
                            pos=pos,
                            invoices=invoices,
+                           payers=clients,
                            payment_number=payment_number,
                            payment_types=payment_types)
 
@@ -294,35 +294,29 @@ def update_client_cascades():
     Triggered by Client select. 
     Updates: PO List, Paid-From (matches client), resets Invoice, resets Amount.
     """
+    # Read data
+    payment_id = request.args.get('payment_id', type=int) # None if add 
     client_id = request.args.get('client_id', type=int)
-    payment_id = request.args.get('payment_id', type=int)
-    payment = PaymentService.get_payment_by_id(payment_id) if payment_id else None
 
-    # 1. Fetch POs for the selected client (Standard)
-    po_id = payment.po_id if payment else None
+    po_id = None # add
+    if payment_id: # edit
+        payment = PaymentService.get_payment_by_id(payment_id)
+        po_id = payment.po_id if payment else None
+
+    # Fetch POs for the selected client (Standard)
     pos = PurchaseOrderService.get_pos_by_client(
         client_id, 
-        include_id=po_id, 
-        include_unpaid=True
+        include_id=po_id,   # includes current po in edit
+        include_unpaid=True # includes 'completed' POs that have 'open' invoices.
         ) if client_id else []
 
-    # 2. SMART RETURN: If returning to original client, fetch original invoices
-    invoices = []
-    if payment and client_id == payment.client_id:
-        invoices = InvoiceService.get_invoices_by_po(
-            payment.po_id, 
-            include_id=payment.invoice_id
-            )
-
-    # Populate clients for the Paid-from
-    clients = ClientService.get_all() # For the Paid-From list
+    # Populate payers from Clients for the Paid-from
+    # payers = ClientService.get_all() # For the Paid-From list
 
     return render_template('payments/partials/client_cascades.html', 
-                           clients=clients, 
-                           pos=pos, 
-                           invoices=invoices, 
-                           selected_id=client_id,
-                           payment=payment)
+                           payment_id=payment_id,   # Add if none else Edit
+                           client_id=client_id,     # need for enable/disable dropdown
+                           pos=pos)
 
 @bp.route('/update-po-cascades')
 def update_po_cascades():
@@ -330,30 +324,36 @@ def update_po_cascades():
     Triggered by PO slelct.
     Updates: Invoice List, Paid-From (matches po.bill_to), Amount (matches po.balance) 
     """
-    po_id = request.args.get('po_id', type=int)
+    # Read data
     payment_id = request.args.get('payment_id', type=int)
-    payment = PaymentService.get_payment_by_id(payment_id) if payment_id else None
-
-    # Prefill Paid_from and Amount with this po
-    po = PurchaseOrderService.get_po_by_id(po_id) if po_id else None
+    po_id = request.args.get('po_id', type=int)
     
-    # Populate clients for the Paid-from
-    clients = ClientService.get_all() # For the Paid-From list
-
-    # Pass client_id from the PO
-    po_client_id = po.client_id if po else None
+    # Get current invoice_id and payer_id
+    invoice_id = None # add
+    payer_id = None # add
+    if payment_id: # edit
+        payment = PaymentService.get_by_id(payment_id)
+        invoice_id = payment.invoice_id if payment.invoice else None
+        payer_id = payment.paid_from_id if payment.paid_from else None
 
     # Populate eligible Invoices for this PO
-    invoice_id = payment.invoice_id if payment else None
     invoices = InvoiceService.get_invoices_by_po(po_id, include_id=invoice_id) if po_id else []
 
+    # Prefill payer from selected PO
+    payer_prefill_id = None
+    if po_id:
+        po = PurchaseOrderService.get_po_by_id(po_id)
+        payer_prefill_id = po.bill_to.id if po else None
+
+    # Populate payers from Clients for the Paid-from
+    payers = ClientService.get_all()
+
     return render_template('payments/partials/po_cascades.html', 
-                           invoices=invoices, 
-                           selected_po_id=po_id, 
-                           selected_id=po_client_id, 
-                           po=po, 
-                           payment=payment, 
-                           clients=clients)
+                           payment_id=payment_id,   # Add if none else Edit
+                           po_id=po_id,             # need for enable/disable dropdown
+                           invoices=invoices,
+                           payers=payers,
+                           payer_prefill_id=payer_prefill_id)
 
 @bp.route('/update-invoice-cascades')
 def update_invoice_cascades():
@@ -361,34 +361,51 @@ def update_invoice_cascades():
     Triggered by Invoice select.
     Updates: Paid-From (matches invoice.bill_to) Amount (matches invoice.balance)
     """
-    invoice_id = request.args.get('invoice_id', type=int)
+    # Read data
     payment_id = request.args.get('payment_id', type=int)
     po_id = request.args.get('po_id', type=int)
+    invoice_id = request.args.get('invoice_id', type=int)
 
-    payment = PaymentService.get_payment_by_id(payment_id) if payment_id else None
+    # Get current payer_id and amount -------------------------No need but need to decide if you want to pass payer and amount from db or selected po when switch back to original invoice in edit.
+    po = PurchaseOrderService.get_by_id(po_id) if po_id else None
+    payer_id = po.bill_to.id if po else None # add
+    amount = None # add
+    if payment_id: # edit
+        payment = PaymentService.get_by_id(payment_id)
+        payer_id = payment.paid_from_id if payment.paid_from else None
+        amount = payment.amount if payment else None
 
     # Prefill Paid_from and Amount with this invoice
-    invoice = InvoiceService.get_invoice_by_id(invoice_id) if invoice_id else None
+    payer_prefill_id = None
+    amount_prefill = None
+    if invoice_id:
+        invoice = InvoiceService.get_invoice_by_id(invoice_id)
+        payer_prefill_id = invoice.bill_to.id
+        amount_prefill = invoice.total_due
+    elif po_id:
+        po = PurchaseOrderService.get_by_id(po_id) if po_id else None
+        payer_prefill_id = po.bill_to.id if po else None 
+        amount_prefill = None
 
-    # If invoice is deselected, we MUST have the PO to avoid disabling fields
-    if not po_id and invoice:
-        po_id = invoice.po_id
-    po = PurchaseOrderService.get_po_by_id(po_id) if po_id else None
 
-    # Pass client_id from the PO (PO and Invoice has same client)
-    client_id = po.client_id if po else None
 
-    # Populate clients for the Paid-from
-    clients = ClientService.get_all() # For the Paid-From list
+    # Populate payers from Clients for the Paid-from
+    payers = ClientService.get_all()
 
-    return render_template('payments/partials/invoice_cascades.html', 
-                           clients=clients, 
-                           invoice=invoice, 
-                           po=po,                       # Pass parent PO for pre-filling
-                           selected_invoice_id=invoice_id,
-                           selected_po_id=po_id,        # Context to keep fields enabled
-                           selected_id=client_id,       # Client context
-                           payment=payment)
+    print('payment_id', payment_id)
+    print('po_id:', po_id)
+    print('invoice_id:', invoice_id)
+    # print('payer_id:', payer_id)
+    print('payer_prefill_id:', payer_prefill_id) 
+    print('amount_prefill:', amount_prefill)
+
+
+    return render_template('payments/partials/invoice_cascades.html',
+                           payment_id=payment_id,   # Add if none else Edit
+                           po_id=po_id,             # need for enable/disable dropdown
+                           payers=payers,
+                           payer_prefill_id=payer_prefill_id,
+                           amount_prefill=amount_prefill)
 
     
 

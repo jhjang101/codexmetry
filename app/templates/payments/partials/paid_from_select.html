@@ -1,80 +1,33 @@
 <div class="relative" id="paid-from-select-container">
-    {# 1. HIERARCHY CONTEXT #}
-    {% if selected_id is defined %}
-        {% set client_context = selected_id %}
-        {% set is_on_original_client = (payment and selected_id == payment.client_id) %}
-    {% else %}
-        {% set client_context = payment.client_id if payment else None %}
-        {% set is_on_original_client = True %}
-    {% endif %}
-
-    {% if selected_po_id is defined %}
-        {% set po_context = selected_po_id %}
-        {% set is_on_original_po = (payment and selected_po_id == payment.po_id) %}
-    {% else %}
-        {% set po_context = payment.po_id if (payment and is_on_original_client) else None %}
-        {% set is_on_original_po = (payment and is_on_original_client) %}
-    {% endif %}
-
-    {% if selected_invoice_id is defined %}
-        {% set is_on_original_invoice = (payment and selected_invoice_id == payment.invoice_id) %}
-    {% else %}
-        {% set is_on_original_invoice = (payment and is_on_original_po) %}
-    {% endif %}
-
-    {# 2. SMART SELECTION #}
-    {% if selected_invoice_id is defined and selected_invoice_id %}
-        {# User just picked an invoice #}
-        {% if is_on_original_invoice %}
-            {% set selection_target = payment.paid_from_id %}
-        {% else %}
-            {% set selection_target = invoice.bill_to_id if invoice else None %}
-        {% endif %}
-    {% elif selected_po_id is defined and selected_po_id %}
-        {# User just picked a PO #}
-        {% if is_on_original_po %}
-            {% set selection_target = payment.paid_from_id %}
-        {% else %}
-            {% set selection_target = po.bill_to_id if po else None %}
-        {% endif %}
-    {% elif is_on_original_po %}
-        {# Edit mode initial load / return home #}
-        {% set selection_target = payment.paid_from_id %}
-    {% else %}
-        {% set selection_target = None %}
-    {% endif %}
-
-    {# 3. INDICATOR LOGIC: Must be on original PO AND original Invoice to see the * #}
-    {% set show_saved_indicators = (
-        payment and 
-        is_on_original_po and 
-        (selected_invoice_id is not defined or selected_invoice_id == payment.invoice_id) and
-        selection_target == payment.paid_from_id and 
-        mode != 'view'
-    ) %}
-
-    {% set is_disabled = not po_context and mode != 'view' %}
-
     <select name="paid_from_id" 
-            {{ 'disabled' if is_disabled else '' }}
+            {% if not po_id and not payment %}
+            disabled
+            {% endif %}
             class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none appearance-none pr-10
-            {% if is_disabled %} bg-gray-100 text-gray-400 cursor-not-allowed
+            {% if not po_id and not payment %} bg-gray-100 text-gray-400 cursor-not-allowed
             {% else %} bg-transparent cursor-pointer
             {% endif %}" required>
         
-        <option value="" {{ 'selected' if not selection_target else '' }}>
-            {% if not po_context %}Select PO first...
-            {% else %}Select Payer...{% endif %}
+        <option value=""> 
+            {% if not po_id and not payment %}Select PO first...
+            {% elif payers %}Select Payer...
+            {% else %}No Payers found
+            {% endif %}
         </option>
         
-        {% for client in clients %}
-            <option value="{{ client.id }}" {{ 'selected' if selection_target == client.id else '' }}>
-                {{ client.full_display }}
-                {{ '*' if (show_saved_indicators and payment.paid_from_id == client.id) else '' }}
+        {% for payer in payers %}
+            <option value=""
+                          {% if payer.id == payer_prefill_id %}
+                          selected
+                          {% elif payment and payer.id == payment.paid_from_id %}
+                          selected
+                          {% endif %}>
+                {{ payer.full_display }}
             </option>
         {% endfor %}
     </select>
     <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-400">
         <i class="fa-solid fa-chevron-down text-[10px]"></i>
     </div>
+
 </div>

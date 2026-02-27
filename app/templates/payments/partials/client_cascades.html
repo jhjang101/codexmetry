@@ -1,16 +1,19 @@
+<!-- Changing Client enables PO select box-->
 <div id="po-select-container" hx-swap-oob="true">
     {% include 'payments/partials/po_select.html' %}
 </div>
 
-<!-- REMOVED 'with invoices = []' -->
+<!-- Changing Client disables Invoice select box -->
 <div id="invoice-select-container" hx-swap-oob="true">
     {% include 'payments/partials/invoice_select.html' %}
 </div>
 
+<!-- Changing Client disables Paid From select box -->
 <div id="paid-from-select-container" hx-swap-oob="true">
     {% include 'payments/partials/paid_from_select.html' %}
 </div>
 
+<!-- Changing Client sets Amount input to 0.00 -->
 <div id="amount-input-container" hx-swap-oob="true">
     {% include 'payments/partials/amount_input.html' %}
 </div>

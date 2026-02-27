@@ -1,32 +1,11 @@
 <div class="relative" id="po-select-container">
-    {# 1. CLIENT CONTEXT: Are we on the original client? #}
-    {% if selected_id is defined %}
-        {% set client_context = selected_id %}
-        {% set is_on_original_client = (payment and selected_id == payment.client_id) %}
-    {% else %}
-        {% set client_context = payment.client_id if payment else None %}
-        {% set is_on_original_client = True %}
-    {% endif %}
 
-    {# 2. SMART SELECTION: Restore original PO if returning to original Client #}
-    {% if selected_id is defined %}
-        {% if is_on_original_client %}
-            {% set selection_target = payment.po_id %}
-        {% else %}
-            {% set selection_target = None %}
-        {% endif %}
-    {% else %}
-        {% set selection_target = payment.po_id if payment else None %}
-    {% endif %}
-
-    {# 3. INDICATOR & DISABLE LOGIC #}
-    {% set show_saved_indicators = (payment and is_on_original_client and mode != 'view') %}
-    {% set is_disabled = not client_context and mode != 'view' %}
-
-    <select name="po_id" 
-            {{ 'disabled' if is_disabled else '' }}
+    <select name="po_id"
+            {% if not client_id and not payment %}
+            disabled
+            {% endif %}
             class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none appearance-none pr-10
-            {% if is_disabled %} bg-gray-100 text-gray-400 cursor-not-allowed
+            {% if not client_id and not payment %} bg-gray-100 text-gray-400 cursor-not-allowed
             {% else %} bg-transparent cursor-pointer
             {% endif %}"
             hx-get="{{ url_for('payments.update_po_cascades', payment_id=payment.id if payment else '') }}"
@@ -34,20 +13,27 @@
             hx-trigger="change"
             required>
         
-        <option value="" {{ 'selected' if not selection_target else '' }}>
-            {{ 'Select Client first...' if is_disabled else 'Select PO...' }}
+        <option value="">
+            {% if not client_id and not payment %}Select Client first...
+            {% elif pos %}Select PO...
+            {% else %}No Open POs found
+            {% endif %}
         </option>
         
-        {% for p in pos %}
-            {% set is_saved_value = (payment and payment.po_id == p.id) %}
-            <option value="{{ p.id }}" {{ 'selected' if selection_target == p.id else '' }}>
-                {{ p.order.order_number }} ({{ p.po_number if p.po_number else 'No Ref' }})
-                {{ '*' if (show_saved_indicators and is_saved_value) else '' }}
+        {% for po in pos %}
+            <option value="{{ po.id }}" 
+                           {% if payment and po.id == payment.po_id %}
+                           selected
+                           {% endif %}>
+                {{ po.order.order_number }} ({{ po.po_number if po.po_number else 'No Ref' }})
             </option>
         {% endfor %}
+
     </select>
     
     <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-400">
         <i class="fa-solid fa-chevron-down text-[10px]"></i>
     </div>
-</div>
+
+</div>    
+    
