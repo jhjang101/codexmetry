@@ -16,7 +16,7 @@
         </option>
         
         {% for payer in payers %}
-            <option value=""
+            <option value="{{ payer.id }}"
                           {% if payer.id == payer_prefill_id %}
                           selected
                           {% elif payment and payer.id == payment.paid_from_id %}

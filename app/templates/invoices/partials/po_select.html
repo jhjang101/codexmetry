@@ -1,31 +1,34 @@
 <div class="relative" id="po-select-container">
-    {% set current_inv_id = invoice_id if invoice_id is defined else (invoice.id if invoice else '') %}
-
-    {# Look at HTMX param first, then DB record #}
-    {% set client_context = selected_id or (invoice.client_id if invoice else None) %}
-    {% set is_disabled = not client_context and mode != 'view' %}
 
     <select name="po_id" 
-            {{ 'disabled' if is_disabled else '' }}
+            {% if not client_id and not invoice %}
+            disabled
+            {% endif %}
             class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none appearance-none pr-10
-            {{ 'bg-gray-100 text-gray-400 cursor-not-allowed' if is_disabled else 'bg-transparent cursor-pointer' }}"
-            hx-get="{{ url_for('invoices.load_po_details', invoice_id=current_inv_id) }}"
+            {% if not client_id and not invoice %} bg-gray-100 text-gray-400 cursor-not-allowed
+            {% else %} bg-transparent cursor-pointer
+            {% endif %}"
+            hx-get="{{ url_for('invoices.load_po_details', invoice_id=invoice.id if invoice else '') }}"
             hx-swap="none"
-            hx-trigger="change">
+            hx-trigger="change"
+            required>
         
-        <option value="" {{ 'selected' if selected_id is defined else '' }}>
-            {% if is_disabled %}Select Client first...
-            {% elif not pos %}No Open POs found
-            {% else %}Select PO...
+        <option value="">
+            {% if not client_id and not invoice %}Select Client first...
+            {% elif pos %}Select PO...
+            {% else %}No Open POs found
             {% endif %}
         </option>
         
         {% for po in pos %}
             <option value="{{ po.id }}" 
-                {{ 'selected' if (selected_id is not defined and invoice and invoice.po_id == po.id) else '' }}>
-                {{ po.po_number }} ({{ po.total_amount | usd }})
+                           {% if invoice and po.id == invoice.po_id %}
+                           selected
+                           {% endif %}>
+                {{ po.order.order_number }} ({{ po.po_number if po.po_number else 'No Ref' }}) ({{ po.total_amount | usd }})
             </option>
         {% endfor %}
+        
     </select>
 
     <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-400">

@@ -38,7 +38,12 @@
                         hx-include="closest tr">
                     <option value="">Select Product...</option>
                     {% for product in products %}
-                        <option value="{{ product.id }}" {{ 'selected' if (item and item.product_id == product.id) else '' }}>{{ product.name }}</option>
+                        <option value="{{ product.id }}" 
+                                      {% if item and item.product_id == product.id %}
+                                      selected
+                                      {% endif %}>
+                            {{ product.name }}
+                        </option>
                     {% endfor %}
                 </select>
                 <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-400">
@@ -48,9 +53,11 @@
 
             <!-- 2. Nested Description -->
             <textarea name="descriptions[]" 
-                    rows="1"
-                    class="mt-1 block w-full border rounded-lg p-1 text-xs focus:ring-1 focus:ring-blue-300 outline-none overflow-hidden transition-all"
-                    placeholder="Specific item details...">{{ item.description if item else '' }}</textarea>
+                      rows="1"
+                      class="mt-1 block w-full border rounded-lg p-1 text-xs focus:ring-1 focus:ring-blue-300 outline-none overflow-hidden transition-all"
+                      placeholder="Specific item details...">
+                {{ item.description if item else '' }}
+            </textarea>
         {% endif %}
     </td>
     

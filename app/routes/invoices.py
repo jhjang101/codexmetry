@@ -222,6 +222,7 @@ def edit(id):
                            mode='edit', 
                            invoice=invoice, 
                            clients=clients, 
+                           payers=clients,
                            products=products, 
                            pos=pos)
 
@@ -351,78 +352,72 @@ def calculate():
 @bp.route('/update-client-cascades')
 def update_client_cascades():
     """Triggered by Client change: updates Bill-To and PO dropdowns."""
-    client_id = request.args.get('client_id', type=int)
+    # Read Data
     invoice_id = request.args.get('invoice_id', type=int)
+    client_id = request.args.get('client_id', type=int)
 
-    # Fetch context for Smart Selection
-    invoice = InvoiceService.get_by_id(invoice_id) if invoice_id else None
+    print('invoice_id:', invoice_id)
 
-    # Populate eligible POs for this client including current po
-    po_id = invoice.po_id if invoice else None
-    pos = PurchaseOrderService.get_pos_by_client(client_id, include_id=po_id) if client_id else []
+    po_id = None # add
+    if invoice_id: # edit
+        invoice = InvoiceService.get_by_id(invoice_id)
+        po_id = invoice.po_id if invoice else None
 
-    # Prefill Bill_to with this client
-    clients = ClientService.get_all()
+    # Fetch POs for the selected client
+    pos = PurchaseOrderService.get_pos_by_client(
+        client_id, 
+        include_id=po_id # includes current po in edit
+        ) if client_id else []
     
     return render_template('invoices/partials/client_cascades.html', 
-                           clients=clients, 
-                           pos=pos, 
-                           selected_id=client_id,
-                           invoice_id=invoice_id)
+                           invoice_id=invoice_id, # Add if none else Edit
+                           client_id=client_id,   # need for enable/disable dropdown
+                           pos=pos)
 
 @bp.route('/load-po-details')
 def load_po_details():
     """OOB Teleportation: Prefills Bill-To, Pool Value, and Remaining Items when PO changes."""
     # 1. Extract IDs from the HTMX request
-    po_id = request.args.get('po_id', type=int)
     invoice_id = request.args.get('invoice_id', type=int)
+    po_id = request.args.get('po_id', type=int)
 
     print('po_id:', po_id)
     print('invoice_id:', invoice_id)
 
-
-    # 2. Fetch the PO to get its Bill-To and Items
-    po = PurchaseOrderService.get_po_by_id(po_id) if po_id else None    
-    invoice = InvoiceService.get_invoice_by_id(invoice_id) if invoice_id else None
-
-    # 3. Get remaining items from PO
+    # 2. Prefill Bill_To and remaining items from this PO
+    payer_prefill_id = None 
     items = []
-    if invoice and po_id == invoice.po_id:
-        # Restore the items ALREADY saved on this invoice
-        for idx, inv_item in enumerate(invoice.items):
-            items.append({
-                'product_id': inv_item.product_id,
-                'product': inv_item.product,
-                'quantity': inv_item.quantity,
-                'billed_unit_price': inv_item.billed_unit_price,
-                'description': inv_item.description,
-                'row_id': f"{int(time.time() * 1000)}{idx}"
-            })
-    elif po:
-        # Standard Flow: Use the PO's remaining items for a new link
+    if po_id:
+        po = PurchaseOrderService.get_po_by_id(po_id)
+        payer_prefill_id = po.bill_to_id if po else None
         remaining = po.remaining_items # type: ignore
         for idx, item in enumerate(remaining):
             item['billed_unit_price'] = item.pop('agreed_unit_price')
             item['row_id'] = f"{int(time.time() * 1000)}{idx}"
         items = remaining
 
+
         print('po.total_prepayment:', po.total_prepayment)
         print('po.remaining_credit:', po.remaining_credit)
 
-    # 4. Populate clients and products list for bill_to and item_row
-    clients = ClientService.get_all()
+    # 3. Populate payers from Clients for the Bill_To 
+    # and products list for item_row
+    payers = ClientService.get_all()
     products = ProductService.get_all()
+
+    for item in items:
+        print('item:', item)
+
 
     # 5. Return the single unified OOB template
     resp = make_response(render_template(
         'invoices/partials/po_selection_oob.html',
-        po=po,
-        invoice=invoice,
-        selected_po_id=po_id,      # Context to unlock the Bill-To field
-        items=items,
-        clients=clients,
-        products=products
-    ))
+        invoice_id=invoice_id,
+        po_id=po_id,      # need for enable/disable dropdown
+        payers=payers,
+        products=products,
+        payer_prefill_id=payer_prefill_id,
+        items=items))
 
     # 6. Trigger math recalculation
     resp.headers['HX-Trigger-After-Swap'] = 'recalculate' # Trigger grand total
