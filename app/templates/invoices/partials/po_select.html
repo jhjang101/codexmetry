@@ -4,13 +4,15 @@
             {% if not client_id and not invoice %}
             disabled
             {% endif %}
-            class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none appearance-none pr-10
+            class="mt-1 block w-full border rounded-lg p-2 text-sm 
+            focus:ring-1 focus:ring-blue-300 outline-none appearance-none pr-10
             {% if not client_id and not invoice %} bg-gray-100 text-gray-400 cursor-not-allowed
             {% else %} bg-transparent cursor-pointer
             {% endif %}"
             hx-get="{{ url_for('invoices.load_po_details', invoice_id=invoice.id if invoice else '') }}"
             hx-swap="none"
             hx-trigger="change"
+            hx-confirm="This will replace all current line items. Proceed?">
             required>
         
         <option value="">
