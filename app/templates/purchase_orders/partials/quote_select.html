@@ -1,13 +1,14 @@
 <div class="relative" id="quote-select-container">
-    {# Is there a client selected? #}
-    {% set client_context = selected_id or (po.client_id if po else None) %}
-    {% set is_disabled = not client_context and mode != 'view' %}
 
     <select name="quote_id" 
-            {{ 'disabled' if is_disabled else '' }}
+            {% if not client_id and not po %}
+            disabled
+            {% endif %}
             class="mt-1 block w-full border rounded-lg p-2 text-sm 
             focus:ring-1 focus:ring-blue-300 outline-none appearance-none pr-10 
-            {{ 'bg-gray-100 text-gray-400 cursor-not-allowed' if is_disabled else 'bg-transparent cursor-pointer' }}"
+            {% if not client_id and not po %} bg-gray-100 text-gray-400 cursor-not-allowed
+            {% else %} bg-transparent cursor-pointer
+            {% endif %}"
             hx-get="{{ url_for('purchase_orders.load_quote_items') }}"
             hx-target="#item-list"
             hx-swap="innerHTML"
@@ -16,12 +17,19 @@
 
         {# Placeholder Logic #}
         <option value="">
-            {{ 'Select Client first...' if is_disabled else ('No available quotes' if not quotes else 'No Quote (Manual Entry)') }}
+            {% if not client_id and not po %}Select Client first...
+            {% else %}No Quote Link (Manual PO)
+            {% endif %}
         </option>
 
-        {% for q in quotes %}
-            <option value="{{ q.id }}" {{ 'selected' if (po and po.quote_id == q.id) else '' }}>
-                {{ q.quote_number }} ({{ q.total_amount | usd }})
+        {% for quote in quotes %}
+            <option value="{{ quote.id }}" 
+                          {% if quote.id == quote_prefill_id %}
+                          selected
+                          {% elif po and quote.id == po.quote_id %}
+                          selected
+                          {% endif %}>
+                {{ quote.quote_number }} ({{ quote.total_amount | usd }})
             </option>
         {% endfor %}
     </select>

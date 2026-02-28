@@ -1,27 +1,31 @@
 <div class="relative" id="bill-to-select-container">
-    {# Simple Context #}
-    {% set client_context = selected_id or (po.client_id if po else None) %}
-    {% set is_disabled = not client_context and mode != 'view' %}
-
-    {# If we are in an HTMX swap, use the current selection. Else, use the DB record #}
-    {% if selected_id is defined %}
-        {% set selection_target = selected_id %}
-    {% else %}
-        {% set selection_target = po.bill_to_id if po else None %}
-    {% endif %}
 
     <select name="bill_to_id" 
-            {{ 'disabled' if is_disabled else '' }}
+            {% if not client_id and not po %}
+            disabled
+            {% endif %}
             class="mt-1 block w-full border rounded-lg p-2 text-sm 
             focus:ring-1 focus:ring-blue-300 outline-none appearance-none pr-10
-            {{ 'bg-gray-100 text-gray-400 cursor-not-allowed' if is_disabled else 'bg-transparent cursor-pointer' }}"
+            {% if not client_id and not po %} bg-gray-100 text-gray-400 cursor-not-allowed
+            {% else %} bg-transparent cursor-pointer
+            {% endif %}" 
             required>
 
-        <option value="">Select Client first...</option>
+        <option value="">
+            {% if not po_id and not po %}Select Client first...
+            {% elif payers %}Select Payer...
+            {% else %}No Payers found
+            {% endif %}
+        </option>
         
-        {% for client in clients %}
-            <option value="{{ client.id }}" {{ 'selected' if selection_target == client.id else '' }}>
-                {{ client.full_display }}
+        {% for payer in payers %}
+            <option value="{{ payer.id }}" 
+                    {% if payer.id == payer_prefill_id %}
+                    selected
+                    {% elif po and payer.id == po.bill_to_id %}
+                    selected
+                    {% endif %}>
+                {{ payer.full_display }}
             </option>
         {% endfor %}
     </select>

@@ -189,6 +189,7 @@ def edit(id):
                            mode='edit', 
                            po=po, 
                            clients=clients, 
+                           payers=clients,
                            products=products,
                            po_types=po_types,
                            quotes=quotes)
@@ -287,23 +288,34 @@ def calculate():
 @bp.route('/update-client-cascades')
 def update_client_cascades():
     """Unified route to Updates Bill-To and Quotes when Client changes via OOB."""
-    client_id = request.args.get('client_id', type=int)
+    # Extract IDs from the HTMX request
     po_id = request.args.get('po_id', type=int)
+    client_id = request.args.get('client_id', type=int)
 
-    # 1. Fetch the PO object to provide context for the 'selected' logic
-    po = PurchaseOrderService.get_by_id(po_id) if po_id else None
+    quote_id = None # add
+    if po_id: # edit
+        po = PurchaseOrderService.get_by_id(po_id)
+        quote_id = po.quote_id if po else None
 
-    # 2. Get data for both dropdowns
-    clients = ClientService.get_all()
-    # Use the service method to populate quotes ncluding current quote
-    quote_id = po.quote_id if po else None
-    quotes = QuoteService.get_quotes_by_client(client_id, include_id=quote_id) if client_id else []
+    # Fetch Quotes for the selected client
+    quotes = QuoteService.get_quotes_by_client(
+        client_id, 
+        include_id=quote_id # includes current quote in edit
+        ) if client_id else []
+    
+    # Populate payers for Bill_To dropdown
+    payers = ClientService.get_all()
+    
+    # Prefill Bill_To from selected client
+    payer_prefill_id = client_id if client_id else None
 
     # 3. Return a single partial containing both components
     return render_template('purchase_orders/partials/client_cascades.html', 
-                           clients=clients, 
-                           quotes=quotes, 
-                           selected_id=client_id)
+                           po_id=po_id, # Add if none else Edit
+                           client_id=client_id,   # need for enable/disable dropdown
+                           quotes=quotes,
+                           payers=payers,
+                           payer_prefill_id=payer_prefill_id)
 
 # --- HTMX Quote-Itmes Cascade Routes ---
 
