@@ -388,7 +388,7 @@ def load_po_details():
     payer_prefill_id = None 
     items = []
     if po_id:
-        po = PurchaseOrderService.get_po_by_id(po_id)
+        po = PurchaseOrderService.get_po_by_id(po_id, exclude_invoice_id=invoice_id)
         payer_prefill_id = po.bill_to_id if po else None
         remaining = po.remaining_items # type: ignore
         for idx, item in enumerate(remaining):
