@@ -55,9 +55,7 @@
             <textarea name="descriptions[]" 
                       rows="1"
                       class="mt-1 block w-full border rounded-lg p-1 text-xs focus:ring-1 focus:ring-blue-300 outline-none overflow-hidden transition-all"
-                      placeholder="Specific item details...">
-                {{ item.description if item else '' }}
-            </textarea>
+                      placeholder="Specific item details...">{{ item.description if item else '' }}</textarea>
         {% endif %}
     </td>
     

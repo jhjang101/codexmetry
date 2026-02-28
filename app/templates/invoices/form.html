@@ -230,7 +230,7 @@
                         {% endfor %}
                     {% endif %}
                     {% if mode == 'add' %}
-                        {% include 'invoices/partials/item_row.html' %}
+                        
                     {% endif %}
                 </tbody>
             </table>
@@ -253,19 +253,19 @@
 
                     <!-- NEW: The Target for the Financial Summary (Due/Credit) -->
                     <div id="financial-summary-container">
-                        {% if mode == 'view' %}
+                        
                             <div class="flex items-baseline justify-end gap-4">
                                 <div class="text-lg text-gray-700 font-medium">Total Due:</div>
-                                <div class="text-lg font-medium w-20 text-blue-700">{{ invoice.total_due | usd }}</div>
+                                <div class="text-lg font-medium w-20 text-blue-700">{{ invoice.total_due | usd if invoice else '$0.00' }}</div>
                             </div>
                             
-                            {% if invoice.po_total_prepayment > 0 %}
+                            {% if invoice and invoice.po_total_prepayment > 0 %}
                             <div class="flex items-baseline justify-end gap-4">
                                 <div class="text-lg text-gray-700 font-medium">Remaining Credit:</div>
                                 <div class="text-lg font-medium w-20 text-blue-700">{{ invoice.remaining_credit | usd }}</div>
                             </div>
                             {% endif %}
-                        {% endif %}
+                        
                         <!-- In Edit/Add mode, this remains empty and waits for the HTMX OOB swap -->
                         <!-- This will be populated by calculation_result.html -->
                     </div>

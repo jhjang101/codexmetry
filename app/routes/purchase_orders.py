@@ -323,10 +323,16 @@ def update_client_cascades():
 def load_quote_items():
     """Returns multiple item_row partials based on a selected Quote."""
     quote_id = request.args.get('quote_id', type=int)
-    quote = QuoteService.get_quote_by_id(quote_id) if quote_id else None
-    if not quote:
-        return "" # If 'No Quote' selected, do nothing or return a blank row
 
+    quote = QuoteService.get_quote_by_id(quote_id) if quote_id else None
+    if not quote: # single empty itme row
+        products = ProductService.get_all()
+        initial_row_id = str(int(time.time() * 1000))
+        return render_template('purchase_orders/partials/item_row.html',
+                               item=None, 
+                               products=products, 
+                               row_id=initial_row_id)
+    
     products = ProductService.get_all()
     html_rows = ""
     
