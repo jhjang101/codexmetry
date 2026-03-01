@@ -3,10 +3,7 @@
 
     <div class="relative mt-1">
         <input type="text" name="amount" 
-               value="{% if amount_prefill %}{{ amount_prefill | usd }}
-                      {% elif payment and payment.amount%}{{ payment.amount | usd }}
-                      {% else %}$0.00
-                      {% endif %}"
+               value="{% if amount_prefill %}{{ amount_prefill | usd }}{% elif payment and payment.amount%}{{ payment.amount | usd }}{% else %}$0.00{% endif %}"
                class="block w-full border rounded-lg p-2 text-sm 
                focus:ring-1 focus:ring-blue-300 outline-none transition-all"
                placeholder="0.00">
