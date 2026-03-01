@@ -22,9 +22,9 @@
             </td>
 
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-            <span class="{{ 'text-gray-500' if not payment.purchase_order.is_active else '' }}">
+            <span class="{{ 'text-gray-500 line-through' if not payment.purchase_order.is_active else '' }}">
                 {{ payment.order.order_number or payment.purchase_order.po_number }}
-                {% if not payment.purchase_order.is_active %}(Archived){% endif %}
+                {# {% if not payment.purchase_order.is_active %}(Archived){% endif %} #}
             </span>
             </td>
 
@@ -34,16 +34,16 @@
 
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                 {% if payment.invoice %}
-                    <span class="{{ 'text-gray-500' if not payment.invoice.is_active else '' }}">
+                    <span class="{{ 'text-gray-500 line-through' if not payment.invoice.is_active else '' }}">
                         {{ payment.invoice.invoice_number }}
-                        {% if not payment.invoice.is_active %}(Archived){% endif %}
+                        {# {% if not payment.invoice.is_active %}(Archived){% endif %} #}
                     </span>
                 {% else %}
                     Prepayment
                 {% endif %}
             </td>
 
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 max-w-[220px] truncate">
                 {{ payment.paid_from.company_name if payment.paid_from else '-'}}
             </td>
 
@@ -55,7 +55,7 @@
                 {{ payment.payment_date.strftime('%Y-%m-%d') if payment.payment_date else '-' }}
             </td>
 
-            <td class="pl-6 pr-8 py-4 whitespace-nowrap text-right text-sm">
+            <td class="pl-6 pr-8 py-4 whitespace-nowrap text-right text-sm w-20">
                 <span class="text-gray-400 font-medium hover:text-blue-600 cursor-pointer"
                       hx-get="{{ url_for('payments.view', id=payment.id) }}" 
                       hx-target="body" 
