@@ -138,14 +138,20 @@ class QuoteService(BaseService):
         Defaults to ['sent', 'draft'] if no statuses are provided.
         Used for the PO creation dropdown.
         """
+
+        print('statuses:', statuses)
+        print('include_id:', include_id)
+
+
         # 1. Handle Default Statuses
         if statuses is None:
             statuses = ['sent', 'draft']
         
+        print('statuses:', statuses)
+        
         # 2. Define the "Standard" criteria based on parameters
         standard_criteria = (
-            cls.model.order_id == None,
-            cls.model.status.in_(statuses)
+            cls.model.status.in_(statuses),
         )
 
         # 3. Build the statement

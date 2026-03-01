@@ -303,6 +303,12 @@ def update_client_cascades():
         include_id=quote_id # includes current quote in edit
         ) if client_id else []
     
+    for quote in quotes:
+        print('quote.quote_number:', quote.quote_number)
+        print('quote.status:', quote.status)
+
+
+    
     # Populate payers for Bill_To dropdown
     payers = ClientService.get_all()
     
