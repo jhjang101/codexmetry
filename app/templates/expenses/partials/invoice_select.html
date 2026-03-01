@@ -1,62 +1,30 @@
 <div class="relative" id="invoice-select-container">
-    {# 1. CLIENT CONTEXT: Ensure the PO/Invoice hierarchy matches the selected client #}
-    {% if selected_id is defined %}
-        {# HTMX Swap: Check if the user's current client selection matches the DB #}
-        {% set is_on_original_client = (expense and selected_id == expense.client_id) %}
-    {% else %}
-        {# Initial Page Load #}
-        {% set is_on_original_client = True %}
-    {% endif %}
-
-    {# 2. PO CONTEXT: Enable if a PO is currently active in the UI #}
-    {% if selected_po_id is defined %}
-        {# A PO was just selected in the dropdown #}
-        {% set po_context = selected_po_id %}
-        {% set is_on_original_po = (expense and selected_po_id == expense.po_id) %}
-    {% else %}
-        {# Fallback to DB state ONLY if we haven't switched away from the original client #}
-        {% set po_context = expense.po_id if (expense and is_on_original_client) else None %}
-        {# We are only 'Home' on PO if we are also 'Home' on Client #}
-        {% set is_on_original_po = True if (expense and is_on_original_client) else False %}
-    {% endif %}
-
-    {# 3. SMART SELECTION: What should be highlighted? #}
-    {% if selected_po_id is defined %}
-        {# If we returned to the original PO, restore the original Invoice #}
-        {% if is_on_original_po %}
-            {% set selection_target = expense.invoice_id %}
-        {% else %}
-            {% set selection_target = None %}
-        {% endif %}
-    {% elif is_on_original_po and po_context %}
-        {% set selection_target = expense.invoice_id %}
-    {% else %}
-        {% set selection_target = None %}
-    {% endif %}
-
-    {# 4. INDICATOR & DISABLE LOGIC #}
-    {# Asterisk only shows if Client AND PO AND Invoice match the database record #}
-    {% set show_saved_indicators = (expense and is_on_original_client and is_on_original_po and selection_target == expense.invoice_id and mode != 'view') %}
-    {% set is_disabled = not po_context and mode != 'view' %}
 
     <select name="invoice_id" 
-            {{ 'disabled' if is_disabled else '' }}
+            {% if not po_id and not expense %}
+            disabled
+            {% endif %}
             class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none appearance-none pr-10
-            {% if is_disabled %} bg-gray-100 text-gray-400 cursor-not-allowed
+            {% if not po_id and not expense %} bg-gray-100 text-gray-400 cursor-not-allowed
             {% else %} bg-transparent cursor-pointer
             {% endif %}">
         
-        <option value="" {{ 'selected' if not selection_target else '' }}>
-            {{ 'Select PO first...' if is_disabled else 'No Invoice Link' }}
+        <option value="">
+            {% if not po_id and not expense %}Select PO first...
+            {% else %}No Invoice Link
+            {% endif %}
         </option>
         
-        {% for inv in invoices %}
-            <option value="{{ inv.id }}" {{ 'selected' if selection_target == inv.id else '' }}>
-                {{ inv.invoice_number }} ({{ inv.total_amount | usd }})
-                {{ '*' if (show_saved_indicators and expense.invoice_id == inv.id) else '' }}
+        {% for invoice in invoices %}
+            <option value="{{ invoice.id }}" 
+                           {% if expense and invoice.id == expense.invoice_id %}
+                           selected
+                           {% endif %}>
+                {{ invoice.invoice_number }} ({{ invoice.total_due | usd }})
             </option>
         {% endfor %}
     </select>
+
     <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-400">
         <i class="fa-solid fa-chevron-down text-[10px]"></i>
     </div>

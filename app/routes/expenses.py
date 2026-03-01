@@ -275,32 +275,26 @@ def update_client_cascades():
     Triggered by Client select. 
     Updates PO list and handles Invoice 'Return Home'.
     """
-    client_id = request.args.get('client_id', type=int)
+    # Read data
     expense_id = request.args.get('expense_id', type=int)
-    expense = ExpenseService.get_expense_by_id(expense_id) if expense_id else None
+    client_id = request.args.get('client_id', type=int)
 
-    # 1. Fetch POs for the selected client
-    po_id = expense.po_id if expense else None
+    po_id = None # add
+    if expense_id: # edit
+        expense = ExpenseService.get_expense_by_id(expense_id)
+        po_id = expense.po_id if expense else None
+
+    # Fetch POs for the selected client
     pos = PurchaseOrderService.get_pos_by_client(
         client_id, 
-        include_id=po_id,
-        statuses=['open', 'completed']
+        include_id=po_id,   # includes current po in edit
+        statuses=['open', 'completed']  # includes all POs.
     ) if client_id else []
 
-    # 2. SMART RETURN: If switching back to the original client, fetch original invoices
-    invoices = []
-    if expense and client_id == expense.client_id and expense.po_id:
-        invoices = InvoiceService.get_invoices_by_po(
-            expense.po_id, 
-            include_id=expense.invoice_id,
-            statuses=['open', 'completed']
-        )
-
     return render_template('expenses/partials/client_cascades.html', 
-                           pos=pos, 
-                           invoices=invoices,
-                           selected_id=client_id, 
-                           expense=expense)
+                           expense_id=expense_id,   # Add if none else Edit
+                           client_id=client_id,     # need for enable/disable dropdown
+                           pos=pos)
 
 @bp.route('/update-po-cascades')
 def update_po_cascades():
@@ -308,30 +302,28 @@ def update_po_cascades():
     Triggered by PO slelct.
     Updates: Invoice List 
     """
-    po_id = request.args.get('po_id', type=int)
+    # Read data
     expense_id = request.args.get('expense_id', type=int)
-    expense = ExpenseService.get_expense_by_id(expense_id) if expense_id else None
+    po_id = request.args.get('po_id', type=int)
 
-    # We need the parent client_id to keep the PO dropdown enabled in the partial
-    # The po_id comes from the select, so we look up that PO to find its client
-    po = PurchaseOrderService.get_po_by_id(po_id) if po_id else None
+    # Get current invoice_id
+    invoice_id = None # add
+    if expense_id: # edit
+        expense = ExpenseService.get_by_id(expense_id)
+        invoice_id = expense.invoice_id if expense.invoice_id else None
 
     # Populate eligible Invoices for this PO
     invoices = InvoiceService.get_invoices_by_po(
         po_id, 
-        include_id=expense.invoice_id if expense else None,
-        statuses=['open', 'completed']
+        include_id=invoice_id,          # includes current invoice in edit
+        statuses=['open', 'completed']  # includes all POs.
     ) if po_id else []
 
-    # Pass client_id from the PO
-    po_client_id = po.client_id if po else None
+    return render_template('expenses/partials/po_cascades.html',
+                           expense_id=expense_id,   # Add if none else Edit
+                           po_id=po_id,             # need for enable/disable dropdown
+                           invoices=invoices)
 
-
-    return render_template('expenses/partials/po_cascades.html', 
-                           invoices=invoices, 
-                           selected_po_id=po_id, 
-                           selected_id=po_client_id,
-                           expense=expense)
 
 # --- INTERNAL HELPERS ---
 
