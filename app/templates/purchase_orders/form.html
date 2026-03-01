@@ -106,7 +106,15 @@
                                     required>
                                 <option value="">Select Client...</option>
                                 {% for client in clients %}
-                                    <option value="{{ client.id }}" {{ 'selected' if (po and po.client_id == client.id) else '' }}>{{ client.full_display }}</option>
+                                    <option value="{{ client.id }}" 
+                                            {% if po and po.client_id == client.id %}
+                                            selected
+                                            {% elif not po and client.id == client_id %}
+                                            selected
+                                            {% endif %}>
+                                            {{ client.full_display }}
+                                    </option>
+                                    
                                 {% endfor %}
                             </select>
                             <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-400">
@@ -241,7 +249,14 @@
                         {% endfor %}
                     {% endif %}
                     {% if mode == 'add' %}
-                        {% include 'purchase_orders/partials/item_row.html' %}
+                        {% if quote_id and items %}
+                            {% for item in items %}
+                                {% set row_id = item.row_id if item else timestamp %}
+                                {% include 'purchase_orders/partials/item_row.html' with context %}
+                            {% endfor %}
+                        {% else %}
+                            {% include 'purchase_orders/partials/item_row.html' with context %}
+                        {% endif %}
                     {% endif %}
                 </tbody>
             </table>

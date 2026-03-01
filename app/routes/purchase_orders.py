@@ -95,18 +95,58 @@ def add():
             resp.headers['HX-Reswap'] = 'none'
             return resp
 
+    # GET: Prepare form data from Quote
+    quote_id = request.args.get('quote_id', type=int)
+    
+    client_id = None
+    payers = []
+    quotes = []
+    items = []
 
+    if quote_id:
+        quote = QuoteService.get_by_id(quote_id)
+        client_id = quote.client_id if quote else None
+        payers = ClientService.get_all()
+        quotes = QuoteService.get_quotes_by_client(client_id, include_id=quote_id) if client_id else []
+
+        # We iterate through Quote items and render them as PO rows
+        for idx, q_item in enumerate(quote.items):
+            # Generate a unique row_id for each row (timestamp + index)
+            row_id = f"{int(time.time() * 1000)}{idx}"
+            
+            # Format data to match what item_row.html expects
+            item_data = {
+                'row_id': row_id,
+                'product_id': q_item.product_id,
+                'product': q_item.product,
+                'quantity': q_item.quantity,
+                'agreed_unit_price': q_item.quoted_unit_price,
+                'description': q_item.description
+
+            }
+            items.append(item_data)
+    
     # GET: Prepare form data
     clients = ClientService.get_all()
     products = ProductService.get_all_products()
     po_types = PoTypeService.get_all()
     initial_row_id = str(int(time.time() * 1000))   
+
+    print('client_id:', client_id)
+    print('quote_id:', quote_id)
+
     return render_template('purchase_orders/form.html', 
                            mode='add', 
                            po=None, 
                            clients=clients, 
+                           payers=payers,
+                           quotes=quotes,
                            products=products,
                            po_types=po_types,
+                           client_id = client_id,
+                           quote_id = quote_id,
+                           payer_prefill_id = client_id,
+                           items=items,
                            timestamp=initial_row_id)
 
 @bp.route('/view/<int:id>')
@@ -337,7 +377,7 @@ def load_quote_items():
         return render_template('purchase_orders/partials/item_row.html',
                                item=None, 
                                products=products, 
-                               row_id=initial_row_id)
+                               timestamp=initial_row_id)
     
     products = ProductService.get_all()
     html_rows = ""

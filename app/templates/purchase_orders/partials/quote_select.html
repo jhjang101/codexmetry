@@ -28,6 +28,8 @@
                           selected
                           {% elif po and quote.id == po.quote_id %}
                           selected
+                          {% elif not po and quote.id == quote_id %}
+                          selected
                           {% endif %}>
                 {{ quote.quote_number }} ({{ quote.total_amount | usd }})
             </option>

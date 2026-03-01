@@ -12,7 +12,7 @@
             required>
 
         <option value="">
-            {% if not po_id and not po %}Select Client first...
+            {% if not client_id and not po %}Select Client first...
             {% elif payers %}Select Payer...
             {% else %}No Payers found
             {% endif %}
@@ -33,4 +33,5 @@
     <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-400">
         <i class="fa-solid fa-chevron-down text-[10px]"></i>
     </div>
+
 </div>

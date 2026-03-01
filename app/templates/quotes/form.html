@@ -44,6 +44,13 @@
                         <i class="fa-regular fa-pen-to-square mr-1"></i>Edit Quote
                     </a>
                 {% endif %}
+
+                {% if current_user.role in ['admin', 'user'] and quote.status in ['draft', 'sent'] and not quote.order_id %}
+                    <a href="{{ url_for('purchase_orders.add', quote_id=quote.id) }}" 
+                    class="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-green-700 transition-colors shadow-sm">
+                        <i class="fa-solid fa-file-export mr-1"></i>Generate PO
+                    </a>
+                {% endif %}
                 
             {% else %}
                 <a href="{% if mode == 'add' %}{{ url_for('quotes.index') }}{% else %}{{ url_for('quotes.view', id=quote.id) }}{% endif %}" 
