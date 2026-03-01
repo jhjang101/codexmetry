@@ -203,10 +203,10 @@ def archive(id):
     if po:
         # Use the CDX fallback for the flash message
         po_name = po.po_number or po.order.order_number
-        flash(f'PO {po_name}, its Order Ref, and all linked Invoices have been archived.', 'warning')
+        flash(f'PO {po_name} and all linked Invoices have been archived.', 'warning')
 
         # Free the Quote? Notify the user.
-        if po.quote_id:
+        if po.quote:
             flash(f'Quote {po.quote.quote_number} has been reverted to "Sent" status.', 'success')
 
         # MONEY SAFETY WARNING
