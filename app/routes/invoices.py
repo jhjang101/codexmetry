@@ -102,6 +102,41 @@ def add():
             # Tell HTMX NOT to swap the form, preserving all user input
             resp.headers['HX-Reswap'] = 'none'
             return resp
+    
+    # GET: Prepare form data from PO
+    po_id = request.args.get('po_id', type=int)
+
+    client_id = None
+    payer_prefill_id = None
+    po_total_prepayment = 0
+    pos = []
+    payers = []
+    items = []
+
+    if po_id:
+        po = PurchaseOrderService.get_po_by_id(po_id)
+        if not po:
+            flash("Purchase Order not found.", "error")
+            return redirect(url_for('invoices.index'))
+        elif not po.remaining_items:
+            flash(f"PO {po.po_number or po.order.order_number} has already been fully invoiced.", "warning")
+            return redirect(url_for('purchase_orders.view', id=po.id))
+        
+        client_id = po.client_id if po else None
+        payer_prefill_id = po.bill_to_id if po else None
+        po_total_prepayment = po.total_prepayment if po else 0
+        pos = PurchaseOrderService.get_pos_by_client(client_id, include_id=po_id) if client_id else []
+        payers = ClientService.get_all()
+
+        print('po.remaining_items:', po.remaining_items)
+
+        # Prefill remaining items from this PO
+        remaining = po.remaining_items # type: ignore
+        for idx, item in enumerate(remaining):
+            item['billed_unit_price'] = item.pop('agreed_unit_price')
+            item['row_id'] = f"{int(time.time() * 1000)}{idx}"
+        items = remaining
+
         
     # GET: Prepare form data    
     clients=ClientService.get_all()
@@ -112,8 +147,15 @@ def add():
                            mode='add', 
                            invoice=None, 
                            clients=clients, 
+                           pos=pos,
+                           payers=payers,
                            products=products,
                            suggested_number=suggested_number,
+                           client_id=client_id,
+                           po_id=po_id,
+                           payer_prefill_id=payer_prefill_id,
+                           po_total_prepayment=po_total_prepayment, # need to display remaining credit if po reveiced prepayment
+                           items=items,
                            timestamp=initial_row_id)
 
 @bp.route('/view/<int:id>')
@@ -150,6 +192,10 @@ def view(id):
 def edit(id):
     """Edit mode: handles header updates and item list synchronization."""
     invoice = InvoiceService.get_invoice_by_id(id)
+
+    print('invoice.po_total_prepayment:', invoice.po_total_prepayment)
+
+
     if not invoice:
         flash("Invoice not found.", "error")
         return redirect(url_for('invoices.index'))
@@ -386,6 +432,7 @@ def load_po_details():
 
     # 2. Prefill Bill_To and remaining items from this PO
     payer_prefill_id = None 
+    po_total_prepayment = 0
     items = []
     if po_id:
         po = PurchaseOrderService.get_po_by_id(po_id, exclude_invoice_id=invoice_id)
@@ -395,10 +442,12 @@ def load_po_details():
             item['billed_unit_price'] = item.pop('agreed_unit_price')
             item['row_id'] = f"{int(time.time() * 1000)}{idx}"
         items = remaining
+        po_total_prepayment = po.total_prepayment if po else 0
 
 
         print('po.total_prepayment:', po.total_prepayment)
         print('po.remaining_credit:', po.remaining_credit)
+
 
     # 3. Populate payers from Clients for the Bill_To 
     # and products list for item_row
@@ -417,6 +466,7 @@ def load_po_details():
         payers=payers,
         products=products,
         payer_prefill_id=payer_prefill_id,
+        po_total_prepayment=po_total_prepayment, # need to display remaining credit if po reveiced prepayment
         items=items))
 
     # 6. Trigger math recalculation

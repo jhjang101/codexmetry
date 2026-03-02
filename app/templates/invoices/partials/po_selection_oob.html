@@ -3,7 +3,7 @@
 </div>
 
 <input type="hidden" id="po_total_prepayment" name="po_total_prepayment" 
-       value="{{ po.total_prepayment if po else 0 }}" hx-swap-oob="true">
+       value="{{ po_total_prepayment if po_id else 0 }}" hx-swap-oob="true">
 
 <table class="hidden">
     <tbody id="item-list" hx-swap-oob="true">

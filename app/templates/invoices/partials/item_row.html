@@ -73,7 +73,7 @@
                     {% endif %}
                     hx-post="{{ url_for('invoices.calculate') }}"
                     hx-vals='{"row_id": "{{ row_id }}"}'
-                    hx-trigger="change delay:300ms"
+                    hx-trigger="input changed delay:300ms"
                     hx-target="#line-total-{{ row_id }}"
                     hx-swap="innerHTML"
                     hx-include="#invoice-main-form">
