@@ -96,6 +96,12 @@ def add():
             return resp
 
     # GET: Prepare form data from Quote
+    referrer = request.referrer
+    # Only use referrer if it's not the 'add' page itself
+    cancel_url = url_for('purchase_orders.index')
+    if referrer and url_for('purchase_orders.add') not in referrer:
+        cancel_url = referrer
+
     quote_id = request.args.get('quote_id', type=int)
     
     client_id = None
@@ -105,6 +111,10 @@ def add():
 
     if quote_id:
         quote = QuoteService.get_by_id(quote_id)
+        if not quote:
+            flash("Quote not found.", "error")
+            return redirect(url_for('purchase_orders.index'))
+
         client_id = quote.client_id if quote else None
         payers = ClientService.get_all()
         quotes = QuoteService.get_quotes_by_client(client_id, include_id=quote_id) if client_id else []
@@ -147,7 +157,8 @@ def add():
                            quote_id = quote_id,
                            payer_prefill_id = client_id,
                            items=items,
-                           timestamp=initial_row_id)
+                           timestamp=initial_row_id,
+                           cancel_url=cancel_url)
 
 @bp.route('/view/<int:id>')
 def view(id):

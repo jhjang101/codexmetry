@@ -46,7 +46,11 @@
                 {% endif %}
                 
             {% else %}
-                <a href="{% if mode == 'add' %}{{ url_for('payments.index') }}{% else %}{{ url_for('payments.view', id=payment.id) }}{% endif %}" 
+                <a href="{% if mode == 'add' %}
+                            {{ cancel_url }}
+                         {% else %}
+                            {{ url_for('payments.view', id=payment.id) }}
+                         {% endif %}" 
                    class="text-gray-500 px-4 py-2 text-sm font-medium hover:text-gray-800">
                     Cancel
                 </a>

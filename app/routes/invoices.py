@@ -104,6 +104,12 @@ def add():
             return resp
     
     # GET: Prepare form data from PO
+    referrer = request.referrer
+    # Only use referrer if it's not the 'add' page itself
+    cancel_url = url_for('invoices.index')
+    if referrer and url_for('invoices.add') not in referrer:
+        cancel_url = referrer
+
     po_id = request.args.get('po_id', type=int)
 
     client_id = None
@@ -158,7 +164,8 @@ def add():
                            payer_prefill_id=payer_prefill_id,
                            po_total_prepayment=po_total_prepayment, # need to display remaining credit if po reveiced prepayment
                            items=items,
-                           timestamp=initial_row_id)
+                           timestamp=initial_row_id,
+                           cancel_url=cancel_url)
 
 @bp.route('/view/<int:id>')
 def view(id):
