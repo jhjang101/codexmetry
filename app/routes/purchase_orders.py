@@ -159,9 +159,11 @@ def view(id):
             return redirect(url_for('purchase_orders.index'))
 
         print('po.total_amount:', po.total_amount)
-        print('po.balance:', po.balance)
+        print('po.to_be_invoiced:', po.to_be_invoiced)
         print('po.po_total_deposit:', po.total_prepayment)
         print('po.remaining_deposit:', po.remaining_credit)
+        print('po.balance_tobe_invoiced:', po.balance_tobe_invoiced)
+
 
         tree = OrderService.get_deal_tree(po.order_id)
 

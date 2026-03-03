@@ -160,6 +160,8 @@
                         <p class="p-2">
                             {% if po.status == 'open' %}
                             <span class="px-2 py-1 text-xs font-bold uppercase rounded-lg bg-red-100 text-red-700">Open</span>
+                            {% elif po.status == 'invoiced' %}
+                            <span class="px-2 py-1 text-xs font-bold uppercase rounded-lg bg-blue-100 text-blue-700">Invoiced</span>
                             {% elif po.status == 'completed' %}
                             <span class="px-2 py-1 text-xs font-bold uppercase rounded-lg bg-green-100 text-green-700">Completed</span>
                             {% endif %}
@@ -167,7 +169,7 @@
                     {% else %}
                         <div class="relative">
                             <select name="status" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none appearance-none bg-transparent cursor-pointer pr-10">
-                                {% for s in ['open', 'completed'] %}
+                                {% for s in ['open', 'invoiced', 'completed'] %}
                                     <option value="{{ s }}" {{ 'selected' if po.status == s else '' }}>{{ s|capitalize }}</option>
                                 {% endfor %}
                             </select>

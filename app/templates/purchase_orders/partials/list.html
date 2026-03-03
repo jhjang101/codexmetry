@@ -8,7 +8,7 @@
             {{ sort_header('Order Ref', 'cdx', pagination, 'purchase_orders.index') }}
             {{ sort_header('Client', 'client', pagination, 'purchase_orders.index') }}
             {{ sort_header('Total Amount', 'amount', pagination, 'purchase_orders.index', align='right') }}
-            {{ sort_header('To Be Invoiced', 'balance', pagination, 'purchase_orders.index', align='right') }}
+            {{ sort_header('To Be Invoiced', 'to_be_invoiced', pagination, 'purchase_orders.index', align='right') }}
             {{ sort_header('Date', 'date', pagination, 'purchase_orders.index') }}
            <th class="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
         </tr>
@@ -21,6 +21,8 @@
             <td class="px-6 py-4 whitespace-nowrap">
                 {% if po.status == 'open' %}
                     <span class="px-2 py-1 text-xs font-bold uppercase rounded-lg bg-red-100 text-red-700">Open</span>
+                {% elif po.status == 'invoiced' %}
+                    <span class="px-2 py-1 text-xs font-bold uppercase rounded-lg bg-blue-100 text-blue-700">Invoiced</span>
                 {% elif po.status == 'completed' %}
                     <span class="px-2 py-1 text-xs font-bold uppercase rounded-lg bg-green-100 text-green-700">Completed</span>
                 {% endif %}
@@ -43,7 +45,7 @@
             </td>
 
             <td class="pl-6 py-4 pr-10 text-right whitespace-nowrap text-sm text-blue-700">
-                {{ po.balance | usd }}
+                {{ po.to_be_invoiced | usd }}
             </td>
 
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">

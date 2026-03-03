@@ -10,7 +10,7 @@ from ..services.settings_service import PaymentTypeService
 from ..services.attachment_service import AttachmentService
 from ..utils.money import parse_to_cents
 from ..utils.docs import generate_doc_number
-from ..utils.sync import sync_invoice_status
+from ..utils.sync import sync_invoice_status, sync_po_status
 from ..utils.auth import role_required
 from ..extensions import db
 from datetime import datetime
@@ -75,10 +75,12 @@ def add():
             # 2. Call Atomic Service
             new_payment = PaymentService.add_payment(payment_data)
 
-            # 3. Sync invoice status
+            # 3. Sync status
             invoice_status_updated = False
+            po_status_updated = False
             if new_payment.invoice_id:
                 invoice_status_updated = sync_invoice_status(new_payment.invoice_id)
+                po_status_updated = sync_po_status(new_payment.po_id)
 
             # 4. Save Attachments
             new_files = request.files.getlist('attachments')
@@ -93,9 +95,13 @@ def add():
                 payment_number = f'order {new_payment.order.order_number}'
             flash(f"Payment for {payment_number} created successfully!", "success")
 
-            if new_payment.invoice and invoice_status_updated:
-                flash(f"Status of invoice {new_payment.invoice.invoice_number} updated successfully!", "success")
-                
+            if invoice_status_updated:
+                invoice_name = new_payment.invoice.invoice_number if new_payment.invoice else None
+                flash(f"Status of invoice {invoice_name} updated successfully!", "success")
+            if po_status_updated:
+                po_name = new_payment.purchase_order.po_number or new_payment.order.order_number
+                flash(f"Status of PO {po_name} updated successfully!", "success")
+
             # The Safe Save Redirect: Forces a clean page load to 'View' mode
             response = make_response("", 200)
             response.headers['HX-Redirect'] = url_for('payments.view', id=new_payment.id)
@@ -162,7 +168,13 @@ def edit(id):
         try:
             # 1. Capture State before update for Sync ripples
             old_invoice_id = payment.invoice_id
-            old_invoice_number = payment.invoice.invoice_number if payment.invoice else None
+            old_invoice_name = payment.invoice.invoice_number if payment.invoice else None
+            old_po_id = payment.po_id
+            old_po_name = payment.purchase_order.po_number or payment.order.order_number 
+            old_invoice_status_updated = False
+            old_po_status_updated = False
+            invoice_status_updated = False
+            po_status_updated = False 
 
             # 2. Prepare Data
             payment_data = {
@@ -182,17 +194,19 @@ def edit(id):
             
             # 4. Capture State AFTER update
             new_invoice_id = payment.invoice_id
+            new_po_id = payment.po_id
             
             # 5. Sync Brain Logic
-            invoice_status_updated = False
-            old_invoice_status_updated = False
-            # If the invoice link changed, sync the old one first
+            # If the invoice link changed, sync the old Invoice and PO first
             if old_invoice_id != new_invoice_id:
                 if old_invoice_id:
                     old_invoice_status_updated = sync_invoice_status(old_invoice_id)
+                    old_po_status_updated = sync_po_status(old_po_id)
+
             # Sync the current (new) invoice link
             if new_invoice_id:
                 invoice_status_updated = sync_invoice_status(new_invoice_id)
+                po_status_updated = sync_po_status(new_po_id)
 
             # 6. Update Attachments
             new_files = request.files.getlist('attachments')
@@ -203,13 +217,20 @@ def edit(id):
             # 7. Flash Messages
             flash(f"Payment updated successfully!", "success")
             
-            # Flash for the current invoice
-            if invoice_status_updated and payment.invoice:
-                flash(f"Status of invoice {payment.invoice.invoice_number} updated successfully!", "success")
+            # Flash for the current invoice and PO
+            if invoice_status_updated:
+                invoice_name = payment.invoice.invoice_number if payment.invoice else None
+                flash(f"Status of invoice {invoice_name} updated successfully!", "success")
+            if po_status_updated:
+                po_name = payment.purchase_order.po_number or payment.order.order_number
+                flash(f"Status of PO {po_name} updated successfully!", "success")
             
-            # Flash for the old invoice (if it was swapped)
+            # Flash for the old invoice and PO (if it was swapped)
             if old_invoice_status_updated:
-                flash(f"Status of invoice {old_invoice_number} updated successfully!", "success")
+                flash(f"Status of invoice {old_invoice_name} updated successfully!", "success")
+
+            if old_po_status_updated:
+                flash(f"Status of PO {old_po_name} updated successfully!", "success")
                 
             response = make_response("", 200)
             response.headers['HX-Redirect'] = url_for('payments.view', id=id)
@@ -226,7 +247,7 @@ def edit(id):
     payment_types = PaymentTypeService.get_all()
     
     # Fetch lists using include_id to ensure saved records stay visible
-    pos = PurchaseOrderService.get_pos_by_client(payment.client_id, include_id=payment.po_id, include_unpaid=True)
+    pos = PurchaseOrderService.get_pos_by_client(payment.client_id, include_id=payment.po_id, statuses=['open', 'invoiced'])
     invoices = InvoiceService.get_invoices_by_po(payment.po_id, include_id=payment.invoice_id)
 
     # payment_number represents the initial identity for the page title/header
@@ -261,9 +282,12 @@ def archive(id):
         
         # 2. Sync invoice status (if this was a standard invoice payment)
         invoice_id = payment.invoice_id if payment else None
+        po_id = payment.po_id if payment else None
         invoice_status_updated = False
+
         if invoice_id:
             invoice_status_updated = sync_invoice_status(invoice_id)
+        po_status_updated = sync_po_status(po_id)
 
         # 3. Success Flashes
         # Document name logic for the message
@@ -276,8 +300,12 @@ def archive(id):
 
         flash(f'Payment for {payment_number} moved to archives.', 'warning')
         
-        if payment.invoice and invoice_status_updated:
-            flash(f"Status of {payment_number} updated successfully!", "success")
+        if invoice_status_updated:
+            invoice_name = payment.invoice.invoice_number if payment.invoice else None
+            flash(f"Status of invoice {invoice_name} updated successfully!", "success")
+        if po_status_updated:
+            po_name = payment.purchase_order.po_number or payment.order.order_number
+            flash(f"Status of PO {po_name} updated successfully!", "success")
 
     except ValueError as e:
         db.session.rollback()
@@ -307,7 +335,7 @@ def update_client_cascades():
     pos = PurchaseOrderService.get_pos_by_client(
         client_id, 
         include_id=po_id,   # includes current po in edit
-        include_unpaid=True # includes 'completed' POs that have 'open' invoices.
+        statuses=['open', 'invoiced'],  # includes 'open' POs and POs that have 'open' invoices.
         ) if client_id else []
 
     # Populate payers from Clients for the Paid-from

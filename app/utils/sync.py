@@ -35,24 +35,34 @@ def sync_invoice_status(invoice_id: int | None):
 
 def sync_po_status(po_id: int | None):
     """
-    Updates PO status based on whether all items are fully invoiced.
-    Uses PurchaseOrderService.get_po_by_id to leverage existing aggregation.
+    Updates PO status based on the 3-Stage Lifecycle:
+    1. 'open'      -> Real items remain to be invoiced.
+    2. 'invoiced'  -> Items fully invoiced, but invoices are unpaid.
+    3. 'completed' -> Items fully invoiced AND all invoices are paid.
     """
     if not po_id:
         return False
 
-    # 1. Fetch the augmented PO (this already calculates .remaining_items)
+    # 1. Fetch the augmented PO (provides .remaining_items and .invoices)
     po = PurchaseOrderService.get_po_by_id(po_id)
     if not po or not po.is_active:
         return False
     
-    # Apply logic: Filter the list to only look at REAL products
-    # We ignore the 'Applied Deposit' line for status purposes.
+    # 2. Check Physical Fulfillment
+    # Ignore 'Applied Deposit' system product for fulfillment logic
     real_items_left = [item for item in po.remaining_items if not item['product'].is_system] # type: ignore
 
-    # 2. Apply logic: If the list of items needing invoicing is empty, it's done.
-    # We use len(po.remaining_items) == 0 as our "Fulfillment" check.
-    new_status = 'completed' if len(real_items_left) == 0 else 'open'
+    if len(real_items_left) > 0:
+        new_status = 'open'
+    else:
+        # 3. Physical fulfillment complete -> Check Invoice Payment Status
+        # Look for any active invoices that are still 'open'
+        open_invoices = [invoice for invoice in po.invoices if invoice.is_active and invoice.status == 'open']
+
+        if open_invoices:
+            new_status = 'invoiced'
+        else:
+            new_status = 'completed'
 
     # 3. Update and Commit if the status changed
     if po.status != new_status:

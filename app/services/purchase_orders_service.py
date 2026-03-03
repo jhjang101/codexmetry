@@ -19,7 +19,7 @@ class PurchaseOrderService(BaseService):
         'cdx': OrderRegistry.order_number, # Joined via order_id
         'client': Client.company_name,     # Joined via client_id
         'amount': model.total_amount,
-        'balance': 'calculated_balance', # SQLAlchemy can sort by the label string
+        'to_be_invoiced': 'to_be_invoiced', # SQLAlchemy can sort by the label string
         'date': model.po_date
     }
 
@@ -34,11 +34,11 @@ class PurchaseOrderService(BaseService):
         """
         Fetches active POs with search and pagination.
         Joins with OrderRegistry (CDX#) and Client (Name).
-        Use subquery to calculate Balance.
-        Balance = PO Total - Sum(Positive Invoices) - Prepayments.
+        Use subquery to calculate 'to_be_invoiced'.
+        'to_be_invoiced' = PO Total - Sum(Positive Invoices) - Prepayments.
         """
         # 1. Subquery for Invoiced Sum (Positive totals only). This is Total Due.
-        # Invoices with total <= 0 are covered by deposits and shouldn't reduce the balance.
+        # Invoices with total <= 0 are covered by deposits and shouldn't reduce the to_be_invoiced.
         inv_sub = (
             select(
                 Invoice.po_id, 
@@ -60,7 +60,7 @@ class PurchaseOrderService(BaseService):
             .subquery()
         )
 
-        # 3. Main Query with Calculated Balance Label
+        # 3. Main Query with 'to_be_invoiced' Label
         stmt = (
             select(
                 cls.model,
@@ -68,7 +68,7 @@ class PurchaseOrderService(BaseService):
                     cls.model.total_amount - 
                     func.coalesce(inv_sub.c.total_invoiced, 0) - 
                     func.coalesce(pay_sub.c.total_invoiceless, 0)
-                ).label('calculated_balance')
+                ).label('to_be_invoiced')
             )
             .join(cls.model.order)
             .join(cls.model.client)
@@ -113,14 +113,14 @@ class PurchaseOrderService(BaseService):
         paginated_stmt = stmt.limit(per_page).offset((page - 1) * per_page)
         
         # KEY DIFFERENCE: Use db.session.execute() instead of db.paginate()
-        # This returns 'Row' objects containing (PurchaseOrder, calculated_balance)
+        # This returns 'Row' objects containing (PurchaseOrder, to_be_invoiced)
         rows = db.session.execute(paginated_stmt).all()
 
-        # 7. Unwrap and Attach Balance
+        # 7. Unwrap and Attach 'to_be_invoiced'
         items = []
         for row in rows:
             po = row[0]              # The PurchaseOrder model
-            po.balance = row[1]      # The calculated_balance
+            po.to_be_invoiced = row[1]      # The to_be_invoiced
             items.append(po)
 
         # 8. Create the Pagination Object Manually
@@ -216,7 +216,7 @@ class PurchaseOrderService(BaseService):
                      exclude_invoice_id: int | None = None
                      ) -> PurchaseOrder | None:
         """
-        Fetcher: Returns PO with calculated balance, prepayment, and remaining credit pools.
+        Fetcher: Returns PO with calculated 'to_be_invoiced', prepayment, and remaining credit pools.
         exclude_invoice_id: If provided, this invoice's items/totals are ignored 
         in fulfillment and credit math (useful for Edit mode).
         """
@@ -228,7 +228,8 @@ class PurchaseOrderService(BaseService):
                 db.joinedload(cls.model.client).selectinload(Client.contacts),
                 # Load the Bill-To Client and their contacts
                 db.joinedload(cls.model.bill_to).selectinload(Client.contacts),
-                joinedload(cls.model.order)
+                joinedload(cls.model.order),
+                selectinload(cls.model.invoices) 
             )
             .where(cls.model.id == id)
         )
@@ -279,7 +280,7 @@ class PurchaseOrderService(BaseService):
 
         # 6. Final Financial Attributes
         po.total_prepayment = total_prepayment
-        po.balance = po.total_amount - total_invoiced - total_prepayment
+        po.to_be_invoiced = po.total_amount - total_invoiced - total_prepayment
         remaining_credit = total_prepayment + total_applied_deposit - total_neg_carryover
         po.remaining_credit = max(0, remaining_credit)
 
@@ -364,12 +365,11 @@ class PurchaseOrderService(BaseService):
     def get_pos_by_client(cls, 
                           client_id: int, 
                           include_id: int | None = None, 
-                          statuses: list[str] | None = None, 
-                          include_unpaid: bool = False):
+                          statuses: list[str] | None = None):
         """
-        Fetcher: Returns 'open' pos for a client based on statuses.
-        If include_id is provided, that specific PO is included regardless of status.
-        include_unpaid: If True, also includes 'completed' POs that have 'open' invoices.
+        Fetcher: Returns eligible pos for a client based on statuses.
+        Refactored: Uses the 3-stage lifecycle (open, invoiced, completed).
+        Defaults to ['open'] for most dropdowns.
         Used for the Invoice, Payment, and Expense creation dropdown.
         """
         # 1. Handle Default Statuses (Usually we only want to invoice/pay 'open' POs)
@@ -382,22 +382,7 @@ class PurchaseOrderService(BaseService):
             cls.model.id == include_id
         ]
 
-        # 3. Money-Aware Logic (for Payments)
-        if include_unpaid:
-            # Check if there exists at least one active invoice with 'open' status for this PO
-            unpaid_check = and_(
-                cls.model.status == 'completed',
-                exists().where(
-                    and_(
-                        Invoice.po_id == cls.model.id,
-                        Invoice.status == 'open',
-                        Invoice.is_active == True
-                    )
-                )
-            )
-            criteria.append(unpaid_check)
-
-        # 4. Build statement
+        # 3. Build statement
         stmt = select(cls.model).where(
             cls.model.client_id == client_id,
             cls.model.is_active == True,

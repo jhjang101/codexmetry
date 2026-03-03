@@ -125,7 +125,9 @@ def add():
         client_id = po.client_id if po else None
         payer_prefill_id = po.bill_to_id if po else None
         po_total_prepayment = po.total_prepayment if po else 0
-        pos = PurchaseOrderService.get_pos_by_client(client_id, include_id=po_id) if client_id else []
+        pos = PurchaseOrderService.get_pos_by_client(client_id, 
+                                                     include_id=po_id,
+                                                     statuses=['open']) if client_id else []
         payers = ClientService.get_all()
 
         print('po.remaining_items:', po.remaining_items)
@@ -263,7 +265,8 @@ def edit(id):
     products = ProductService.get_all()
     # Fetch eligible POs for this specific client so the dropdown is populated on load
     pos = PurchaseOrderService.get_pos_by_client(invoice.client_id, 
-                                                 include_id=invoice.po_id)
+                                                 include_id=invoice.po_id,
+                                                 statuses=['open'])
     return render_template('invoices/form.html', 
                            mode='edit', 
                            invoice=invoice, 

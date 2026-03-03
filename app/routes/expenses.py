@@ -194,7 +194,7 @@ def edit(id):
         pos = PurchaseOrderService.get_pos_by_client(
             expense.client_id, 
             include_id=expense.po_id, 
-            statuses=['open', 'completed']
+            statuses=['open', 'invoiced', 'completed']
         )
     if expense.po_id:
         invoices = InvoiceService.get_invoices_by_po(
@@ -288,7 +288,7 @@ def update_client_cascades():
     pos = PurchaseOrderService.get_pos_by_client(
         client_id, 
         include_id=po_id,   # includes current po in edit
-        statuses=['open', 'completed']  # includes all POs.
+        statuses=['open', 'invoiced', 'completed']  # includes all POs.
     ) if client_id else []
 
     return render_template('expenses/partials/client_cascades.html', 
