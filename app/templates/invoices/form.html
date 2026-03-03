@@ -45,6 +45,13 @@
                     </a>
                 {% endif %}
 
+                {% if current_user.role in ['admin', 'user'] and invoice.status == 'open' %}
+                    <a href="{{ url_for('payments.add', invoice_id=invoice.id) }}" 
+                    class="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-green-700 transition-colors shadow-sm">
+                        <i class="fa-solid fa-money-bill-transfer mr-1"></i>Record Payment
+                    </a>
+                {% endif %}
+
             {% else %}
                 <a href="{% if mode == 'add' %}{{ url_for('invoices.index') }}{% else %}{{ url_for('invoices.view', id=invoice.id) }}{% endif %}" 
                    class="text-gray-500 px-4 py-2 text-sm font-medium hover:text-gray-800">

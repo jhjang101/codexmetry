@@ -53,6 +53,13 @@
                         <i class="fa-solid fa-file-export mr-1"></i>Generate Invoice
                     </a>
                 {% endif %}
+
+                {% if current_user.role in ['admin', 'user'] and po.status in ['open', 'invoiced'] %}
+                    <a href="{{ url_for('payments.add', po_id=po.id) }}" 
+                    class="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-green-700 transition-colors shadow-sm">
+                        <i class="fa-solid fa-money-bill-transfer mr-1"></i>Record Payment
+                    </a>
+                {% endif %}
                 
             {% else %}
                 <a href="{% if mode == 'add' %}{{ url_for('purchase_orders.index') }}{% else %}{{ url_for('purchase_orders.view', id=po.id) }}{% endif %}" 
