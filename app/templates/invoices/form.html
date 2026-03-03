@@ -104,6 +104,24 @@
                     <label class="block text-sm font-medium text-gray-500">Client</label>
                     {% if mode == 'view' %}
                         <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ invoice.client.full_display }}</p>
+
+
+                    {% elif mode == 'edit' and invoice.has_active_payments %}
+                        {# LOCK FOR EDIT MODE #}
+                        <div class="relative group">
+                            <p class="mt-1 block bg-gray-50 w-full border rounded-lg p-2 text-sm text-gray-500 flex justify-between items-center">
+                                <span>{{ invoice.client.full_display }}</span>
+                                <i class="fa-solid fa-lock text-[10px] opacity-40"></i>
+                            </p>
+                            <input type="hidden" name="client_id" value="{{ invoice.client_id }}">
+                            <div class="invisible group-hover:visible absolute bottom-full left-0 mb-1 w-48 p-2 
+                                        bg-slate-700 text-white text-[10px] rounded shadow-xl z-10">
+                                Client locked: active payments exist.
+                            </div>
+                        </div>
+
+
+
                     {% else %}
                         <div class="relative">
                             <select name="client_id" 
@@ -136,7 +154,24 @@
                     <label class="block text-sm font-medium text-gray-500">PO Number</label>
                     <div id="po-select-container">
                         {% if mode == 'view' %}
-                            <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ invoice.purchase_order.po_number or '-' }}</p>
+                            <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">
+                                {{ invoice.purchase_order.po_number or '-' }}
+                            </p>
+
+                        {% elif mode == 'edit' and invoice.has_active_payments %}
+                            {# LOCK FOR EDIT MODE #}
+                            <div class="relative group mt-1">
+                                <p class="block bg-gray-50 w-full border rounded-lg p-2 text-sm text-gray-500 flex justify-between items-center">
+                                    <span>{{ invoice.purchase_order.po_number }}</span>
+                                    <i class="fa-solid fa-lock text-[10px] opacity-40"></i>
+                                </p>
+                                <input type="hidden" name="po_id" value="{{ invoice.po_id }}">
+                                <div class="invisible group-hover:visible absolute bottom-full left-0 mb-1 w-48 p-2 bg-slate-700 text-white text-[10px] rounded shadow-xl z-10">
+                                    PO locked: active payments exist.
+                                </div>
+                            </div>
+
+
                         {% else %}
                             {% include 'invoices/partials/po_select.html' with context %}
                         {% endif %}

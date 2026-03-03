@@ -177,6 +177,17 @@ class PurchaseOrderService(BaseService):
         po = cls.get_po_by_id(po_id)
         if not po:
             raise ValueError("Purchase Order not found.")
+        
+        # Locking guard: if PO has invoices or payments prevent switching client and quote link
+        new_client_id = data.get('client_id')
+        if new_client_id and int(new_client_id) != po.client_id:
+            if po.has_active_invoices or po.has_active_payments: # type: ignore
+                raise ValueError("Cannot change Client: active invoices or payments exist for this deal.")
+        new_quote_id = data.get('quote_id')
+        if new_quote_id and int(new_quote_id) != po.quote_id:
+            if po.has_active_invoices or po.has_active_payments: # type: ignore
+                raise ValueError("Cannot change Quote link: active invoices or payments exist for this deal.")
+        
         quote_id = data.get('quote_id')
         
         # 2. Handle Quote Link Reversion (1:1 logic)
@@ -229,7 +240,8 @@ class PurchaseOrderService(BaseService):
                 # Load the Bill-To Client and their contacts
                 db.joinedload(cls.model.bill_to).selectinload(Client.contacts),
                 joinedload(cls.model.order),
-                selectinload(cls.model.invoices) 
+                selectinload(cls.model.invoices),
+                selectinload(cls.model.payments)
             )
             .where(cls.model.id == id)
         )
@@ -326,6 +338,11 @@ class PurchaseOrderService(BaseService):
                 })
 
         po.remaining_items = remaining_items
+
+        # 9. Check is po has active invoices or payment for locking edit.
+        po.has_active_invoices = any(inv.is_active for inv in po.invoices)
+        po.has_active_invoices = any(pay.is_active for pay in po.payments)
+
         return po
     
     @classmethod

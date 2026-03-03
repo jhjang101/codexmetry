@@ -157,6 +157,16 @@ class InvoiceService(BaseService):
         # 1. Validate & Transform
         clean_data = cls._validate_and_transform(data)
 
+        # Locking guard: if invoice have payments prevent switching client and po link
+        new_client_id = data.get('client_id')
+        if new_client_id and int(new_client_id) != invoice.client_id:
+            if invoice.has_active_payments: # type: ignore
+                raise ValueError("Cannot change Client: active payments exist for this invoice.")
+        new_po_id = data.get('po_id')
+        if new_po_id and int(new_po_id) != invoice.po_id:
+            if invoice.has_active_payments: # type: ignore
+                raise ValueError("Cannot change Purchase Order link: this invoice already has active payments.")
+
         # 2. Double-Spending Guard
         cls._validate_deposit_usage(po_id=clean_data['po_id'], items_data=items_data, invoice_id=id)
 
@@ -184,7 +194,8 @@ class InvoiceService(BaseService):
                 joinedload(cls.model.client).selectinload(Client.contacts),
                 joinedload(cls.model.bill_to).selectinload(Client.contacts),
                 joinedload(cls.model.purchase_order),
-                joinedload(cls.model.order)
+                joinedload(cls.model.order),
+                selectinload(cls.model.payments)
             )
             .where(cls.model.id == id)
         )
@@ -218,6 +229,9 @@ class InvoiceService(BaseService):
         invoice.balance = invoice.total_due - total_paid
         # The total cash ever received for the linked PO (without invoices)
         invoice.po_total_prepayment = po_total_prepayment
+
+        # Check is invoice has active ayment for locking edit.
+        invoice.has_active_payments = any(payment.is_active for payment in invoice.payments)
 
         return invoice
 

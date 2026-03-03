@@ -114,7 +114,20 @@
                     <label class="block text-sm font-medium text-gray-500">Client</label>
                     {% if mode == 'view' %}
                         <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ po.client.full_display }}</p>
+                    {% elif mode == 'edit' and (po.has_active_invoices or po.has_active_payments) %}
+                        {# LOCK FOR EDIT MODE #}
+                        <div class="relative group">
+                            <p class="mt-1 block bg-gray-50 w-full border rounded-lg p-2 text-sm text-gray-500 flex justify-between items-center">
+                                <span>{{ po.client.full_display }}</span>
+                                <i class="fa-solid fa-lock text-[10px] opacity-40"></i>
+                            </p>
+                            <input type="hidden" name="client_id" value="{{ po.client_id }}">
+                            <div class="invisible group-hover:visible absolute bottom-full left-0 mb-1 w-48 p-2 bg-slate-700 text-white text-[10px] rounded shadow-xl z-10">
+                                Client locked: active invoices or payments exist.
+                            </div>
+                        </div>
                     {% else %}
+                        {# Standard Select Logic #}
                         <div class="relative">
                             <select name="client_id" 
                                     class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none appearance-none bg-transparent cursor-pointer pr-10" 
@@ -208,7 +221,23 @@
                     <label class="block text-sm font-medium text-gray-500">Quote Number (Optional)</label>
                     <div id="quote-select-container">
                         {% if mode == 'view' %}
-                            <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ po.quote.quote_number if po.quote else 'Manual PO' }}</p>
+                            <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">
+                                {{ po.quote.quote_number if po.quote else 'Manual PO' }}
+                            </p>
+                            
+                        {% elif mode == 'edit' and (po.has_active_invoices or po.has_active_payments) %}
+                            {# LOCK FOR EDIT MODE #}
+                            <div class="relative group mt-1"> 
+                                <p class="block bg-gray-50 w-full border rounded-lg p-2 text-sm text-gray-500 flex justify-between items-center">
+                                    <span>{{ po.quote.quote_number if po.quote else 'Manual PO' }}</span>
+                                    <i class="fa-solid fa-lock text-[10px] opacity-40"></i>
+                                </p>
+                                <input type="hidden" name="quote_id" value="{{ po.quote_id or '' }}">
+                                <div class="invisible group-hover:visible absolute bottom-full left-0 mb-1 w-48 p-2 bg-slate-700 text-white text-[10px] rounded shadow-xl z-10">
+                                    Quote locked: active invoices or payments exist.
+                                </div>
+                            </div>
+                        
                         {% else %}
                             {% include 'purchase_orders/partials/quote_select.html' with context %}
                         {% endif %}
