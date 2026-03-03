@@ -25,6 +25,8 @@
             <option value="{{ po.id }}" 
                            {% if payment and po.id == payment.po_id %}
                            selected
+                           {% elif not payment and po.id == po_id %}
+                           selected
                            {% endif %}>
                 {{ po.order.order_number }} ({{ po.po_number if po.po_number else 'No Ref' }})
             </option>

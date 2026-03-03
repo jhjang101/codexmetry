@@ -116,15 +116,67 @@ def add():
             resp.headers['HX-Reswap'] = 'none'
             return resp
         
-    # GET: Prepare form data    
+    # GET: Prepare form data from PO or Invoice
+    po_id = request.args.get('po_id', type=int)
+    invoice_id = request.args.get('invoice_id', type=int)
+
+    client_id = None
+    payer_prefill_id = None
+    amount_prefill = None
+    pos = []
+    invoices = []
+
+    if invoice_id:
+        # Case A: From Invoice Shortcut
+        invoice = InvoiceService.get_invoice_by_id(invoice_id)
+        if not invoice:
+            flash("Invoice not found.", "error")
+            return redirect(url_for('payments.index'))
+        
+        client_id = invoice.client_id
+        po_id = invoice.po_id
+        payer_prefill_id = invoice.bill_to_id
+        amount_prefill = invoice.balance # type: ignore Suggest full settlement 
+
+    elif po_id:
+        # Case B: From PO Shortcut (Deposit)
+        po = PurchaseOrderService.get_po_by_id(po_id)
+        if not po:
+            flash("Purchase Order not found.", "error")
+            return redirect(url_for('payments.index'))
+        
+        client_id = po.client_id
+        payer_prefill_id = po.bill_to_id
+        amount_prefill = 0 # Force manual entry for deposits
+
+    # Populate Dropdown options
+    if client_id:
+        pos = PurchaseOrderService.get_pos_by_client(client_id, 
+                                                     include_id=po_id, 
+                                                     statuses=['open', 'invoiced'])
+    if po_id:
+        invoices = InvoiceService.get_invoices_by_po(po_id, 
+                                                     include_id=invoice_id, 
+                                                     statuses=['open'])
+        
+    # GET: Standar add Prepare form data    
     clients=ClientService.get_all()
     suggested_number = generate_doc_number(prefix='PMT', model=Payment, column_name='payment_number')
     payment_types = PaymentTypeService.get_all()
     return render_template('payments/form.html', 
                            mode='add', 
+                           payment=None, 
                            clients=clients,
+                           payers=clients,
+                           pos=pos,
+                           invoices=invoices,
+                           payment_types=payment_types,
                            suggested_number=suggested_number,
-                           payment_types=payment_types)
+                           client_id=client_id,
+                           po_id=po_id,
+                           invoice_id=invoice_id,
+                           payer_prefill_id=payer_prefill_id,
+                           amount_prefill=amount_prefill)
 
 @bp.route('/view/<int:id>')
 def view(id):
@@ -344,7 +396,8 @@ def update_client_cascades():
     return render_template('payments/partials/client_cascades.html', 
                            payment_id=payment_id,   # Add if none else Edit
                            client_id=client_id,     # need for enable/disable dropdown
-                           pos=pos)
+                           pos=pos,
+                           amount_prefill=0)
 
 @bp.route('/update-po-cascades')
 def update_po_cascades():
@@ -409,11 +462,11 @@ def update_invoice_cascades():
     if invoice_id:
         invoice = InvoiceService.get_invoice_by_id(invoice_id)
         payer_prefill_id = invoice.bill_to.id
-        amount_prefill = invoice.total_due
+        amount_prefill = invoice.balance
     elif po_id:
         po = PurchaseOrderService.get_by_id(po_id) if po_id else None
         payer_prefill_id = po.bill_to.id if po else None 
-        amount_prefill = None
+        amount_prefill = 0
 
 
 

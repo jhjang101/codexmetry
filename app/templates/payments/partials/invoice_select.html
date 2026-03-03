@@ -24,6 +24,8 @@
             <option value="{{ invoice.id }}"
                            {% if payment and invoice.id == payment.invoice_id %}
                            selected
+                           {% elif not payment and invoice.id == invoice_id %}
+                           selected
                            {% endif %}>
                 {{ invoice.invoice_number }} ({{ invoice.total_amount | usd }})
             </option>
