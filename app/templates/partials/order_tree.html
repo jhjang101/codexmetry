@@ -189,10 +189,9 @@
                         <tr class="text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
                             <th class="px-6 py-3 w-[25ch] text-left">Payment #</th>
                             <th class="px-6 py-3 w-[25ch] text-left">Date</th>
-                            <th class="px-6 py-3 text-left">Payer</th>
+                            <th class="px-6 py-3 text-left">Invoice #</th>
                             <th class="px-6 py-3 text-right">Amount</th>
-                            <th class="px-6 py-3 w-[28ch] text-right"></th>
-                            <th class="px-6 py-3 w-[24ch] text-left">Invoice #</th>
+                            <th class="px-6 py-3 w-[52ch] text-left">Payer</th>
                             <th class="px-6 py-3 w-[16ch] text-right">Actions</th>
                         </tr>
                     </thead>
@@ -201,10 +200,9 @@
                         <tr class="hover:bg-blue-50/40 transition-colors text-xs">
                             <td class="px-6 py-2 font-bold text-blue-700">{{ pay.payment_number }}</td>
                             <td class="px-6 py-2 text-gray-700">{{ pay.payment_date }}</td>
-                            <td class="px-6 py-2 text-gray-700">{{ pay.paid_from.full_display }}</td>
-                            <td class="px-6 py-2 text-right font-bold text-green-700">{{ pay.amount | usd }}</td>
-                            <td class="px-6 py-2 text-right"></td>
                             <td class="px-6 py-2 text-gray-700">{{ pay.invoice.invoice_number if pay.invoice else 'Prepayment'}}</td>
+                            <td class="px-6 py-2 text-right font-bold text-green-700">{{ pay.amount | usd }}</td>
+                            <td class="px-6 py-2 text-gray-700">{{ pay.paid_from.full_display }}</td>
                             <td class="px-6 py-2 text-right">
                                 <span class="text-gray-400 hover:text-blue-600 cursor-pointer" 
                                       hx-get="{{ url_for('payments.view', id=pay.id) }}" hx-target="body" hx-push-url="true">
