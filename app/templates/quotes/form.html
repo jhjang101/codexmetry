@@ -53,7 +53,11 @@
                 {% endif %}
                 
             {% else %}
-                <a href="{% if mode == 'add' %}{{ url_for('quotes.index') }}{% else %}{{ url_for('quotes.view', id=quote.id) }}{% endif %}" 
+                <a href="{% if mode == 'add' %}
+                            {{ cancel_url }}
+                         {% else %}
+                            {{ url_for('quotes.view', id=quote.id) }}
+                         {% endif %}" 
                    class="text-gray-500 px-4 py-2 text-sm font-medium hover:text-gray-800">
                     Cancel
                 </a>
@@ -107,7 +111,12 @@
                                     required>
                                 <option value="">Select Client...</option>
                                 {% for client in clients %}
-                                    <option value="{{ client.id }}" {{ 'selected' if (quote and quote.client_id == client.id) else '' }}>
+                                    <option value="{{ client.id }}" 
+                                            {% if quote and quote.client_id == client.id %}
+                                            selected
+                                            {% elif not quote and client.id == client_id %}
+                                            selected
+                                            {% endif %}>
                                         {{ client.full_display }}
                                     </option>
                                 {% endfor %}

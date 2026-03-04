@@ -93,6 +93,21 @@ def add():
             # Tell HTMX NOT to swap the form, preserving all user input
             resp.headers['HX-Reswap'] = 'none'
             return resp
+        
+    # GET: Prepare form data from Client
+    referrer = request.referrer
+    # Only use referrer if it's not the 'add' page itself
+    cancel_url = url_for('quotes.index')
+    if referrer and url_for('quotes.add') not in referrer:
+        cancel_url = referrer
+
+    client_id = request.args.get('client_id', type=int)
+
+    if client_id: # generate PO from client
+        client = ClientService.get_by_id(client_id)
+        if not client:
+            flash("Client not found", "error")
+            return redirect(url_for('purchase_orders.index'))
 
     # GET: Prepare form data
     clients = ClientService.get_all()
@@ -106,7 +121,9 @@ def add():
                            clients=clients, 
                            products=products,
                            suggested_number=suggested_number,
-                           timestamp=initial_row_id)
+                           client_id=client_id,
+                           timestamp=initial_row_id,
+                           cancel_url=cancel_url)
 
 @bp.route('/view/<int:id>')
 def view(id):

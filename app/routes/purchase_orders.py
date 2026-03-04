@@ -95,7 +95,7 @@ def add():
             resp.headers['HX-Reswap'] = 'none'
             return resp
 
-    # GET: Prepare form data from Quote
+    # GET: Prepare form data from Quote or Client
     referrer = request.referrer
     # Only use referrer if it's not the 'add' page itself
     cancel_url = url_for('purchase_orders.index')
@@ -103,13 +103,21 @@ def add():
         cancel_url = referrer
 
     quote_id = request.args.get('quote_id', type=int)
-    
-    client_id = None
+    client_id = request.args.get('client_id', type=int)
+
     payers = []
     quotes = []
     items = []
 
-    if quote_id:
+    if client_id: # generate PO from client
+        client = ClientService.get_by_id(client_id)
+        if not client:
+            flash("Client not found", "error")
+            return redirect(url_for('purchase_orders.index'))
+        payers = ClientService.get_all()
+        quotes = QuoteService.get_quotes_by_client(client_id, include_id=quote_id) if client_id else []
+
+    if quote_id: # generate PO from quote
         quote = QuoteService.get_by_id(quote_id)
         if not quote:
             flash("Quote not found.", "error")
