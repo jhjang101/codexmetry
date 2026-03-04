@@ -202,6 +202,7 @@ class PaymentService(BaseService):
         client_id = data.get('client_id')
         payment_number = data.get('payment_number', '').strip()
         po_id = data.get('po_id')
+        invoice_id = data.get('invoice_id')
         paid_from_id = data.get('paid_from_id')
         
         if not client_id: 
@@ -212,6 +213,12 @@ class PaymentService(BaseService):
             raise ValueError("Purchase Order is required.")
         if not paid_from_id: 
             raise ValueError("Payer (Paid From) is required.")
+        
+        # If no invoice_id provided (Prepayment attempt)
+        if not invoice_id:
+            po = db.session.get(PurchaseOrder, po_id)
+            if po and po.status != 'open':
+                raise ValueError(f"Prepayments are not allowed for PO {po.po_number or po.order.order_number} because it is already fully invoiced.")
 
         # 2. Look up the Purchase Order to get the order_id (Registry Link)
         po = db.session.get(PurchaseOrder, int(po_id))

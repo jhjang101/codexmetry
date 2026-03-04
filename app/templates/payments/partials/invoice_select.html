@@ -14,8 +14,11 @@
             hx-include="[name='po_id']">
         
         {# DYNAMIC PLACEHOLDER #}
-        <option value="">
+        <option value=""
+                {% if po_id and not is_po_open %}disabled{% endif %} 
+                {% if not invoice_id %}selected{% endif %}>
             {% if not po_id and not payment %}Select PO first...
+            {% elif po_id and not is_po_open %}Select Invoice... (Required)
             {% else %}No Invoice Link (Prepayment)
             {% endif %}
         </option>

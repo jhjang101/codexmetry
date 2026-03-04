@@ -131,6 +131,8 @@ def add():
     amount_prefill = None
     pos = []
     invoices = []
+    is_po_open = True
+
 
     if invoice_id:
         # Case A: From Invoice Shortcut
@@ -141,6 +143,9 @@ def add():
         
         client_id = invoice.client_id
         po_id = invoice.po_id
+        po = PurchaseOrderService.get_by_id(po_id)
+        if po:
+            is_po_open = False if po.status != 'open' else True
         payer_prefill_id = invoice.bill_to_id
         amount_prefill = invoice.balance # type: ignore Suggest full settlement 
 
@@ -154,6 +159,8 @@ def add():
         client_id = po.client_id
         payer_prefill_id = po.bill_to_id
         amount_prefill = 0 # Force manual entry for deposits
+        is_po_open = False if po.status != 'open' else True
+
 
     # Populate Dropdown options
     if client_id:
@@ -181,6 +188,7 @@ def add():
                            client_id=client_id,
                            po_id=po_id,
                            invoice_id=invoice_id,
+                           is_po_open=is_po_open,
                            payer_prefill_id=payer_prefill_id,
                            amount_prefill=amount_prefill,
                            cancel_url=cancel_url)
@@ -429,9 +437,11 @@ def update_po_cascades():
 
     # Prefill payer from selected PO
     payer_prefill_id = None
+    is_po_open = True
     if po_id:
         po = PurchaseOrderService.get_po_by_id(po_id)
         payer_prefill_id = po.bill_to.id if po else None
+        is_po_open = False if po.status != 'open' else True
 
     # Populate payers from Clients for the Paid-from
     payers = ClientService.get_all()
@@ -440,6 +450,7 @@ def update_po_cascades():
                            payment_id=payment_id,   # Add if none else Edit
                            po_id=po_id,             # need for enable/disable dropdown
                            invoices=invoices,
+                           is_po_open=is_po_open,
                            payers=payers,
                            payer_prefill_id=payer_prefill_id)
 
