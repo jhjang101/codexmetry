@@ -104,6 +104,26 @@ def add():
             resp.headers['HX-Reswap'] = 'none'
             return resp
         
+    # GET: Prepare form data from Client
+    referrer = request.referrer
+    # Only use referrer if it's not the 'add' page itself
+    cancel_url = url_for('expenses.index')
+    if referrer and url_for('expenses.add') not in referrer:
+        cancel_url = referrer
+
+    client_id = request.args.get('client_id', type=int)
+
+    pos = []
+    invoices = []
+
+    if client_id: # record Expense from Client
+        client = ClientService.get_by_id(client_id)
+        if not client:
+            flash("Client not found", "error")
+            return redirect(url_for('expenses.index'))
+        pos = PurchaseOrderService.get_pos_by_client(client_id, 
+                                                     statuses=['open', 'invoiced', 'completed'])
+    
     # GET: Prepare form data for the initial render
     vendors = VendorService.get_all()
     suggested_number = generate_doc_number(prefix='EPX', model=Expense, column_name='expense_number')
@@ -116,10 +136,14 @@ def add():
                            mode='add', 
                            expense=None, 
                            vendors=vendors, 
-                           suggested_number=suggested_number,
                            clients=clients, 
+                           pos=pos,
+                           invoices=invoices,
+                           suggested_number=suggested_number,
+                           client_id=client_id,
                            categories=categories,
-                           timestamp=initial_row_id)
+                           timestamp=initial_row_id,
+                           cancel_url=cancel_url)
 
 @bp.route('/view/<int:id>')
 def view(id):
