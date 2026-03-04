@@ -341,7 +341,7 @@ class PurchaseOrderService(BaseService):
 
         # 9. Check is po has active invoices or payment for locking edit.
         po.has_active_invoices = any(inv.is_active for inv in po.invoices)
-        po.has_active_invoices = any(pay.is_active for pay in po.payments)
+        po.has_active_payments = any(pay.is_active for pay in po.payments)
 
         return po
     

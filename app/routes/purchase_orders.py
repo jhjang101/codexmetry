@@ -179,8 +179,13 @@ def view(id):
 
         print('po.total_amount:', po.total_amount)
         print('po.to_be_invoiced:', po.to_be_invoiced)
-        print('po.po_total_deposit:', po.total_prepayment)
-        print('po.remaining_deposit:', po.remaining_credit)
+        print('po.total_prepayment:', po.total_prepayment)
+        print('po.remaining_credit:', po.remaining_credit)
+        for item in po.items:
+            print('item.product.name:', item.product.name)
+            print('item.quantity:', item.quantity)
+            print('item.unit_price:', item.agreed_unit_price)
+
         print('po.balance_tobe_invoiced:', po.balance_tobe_invoiced)
 
 
