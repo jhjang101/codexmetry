@@ -4,7 +4,7 @@ from ..extensions import db
 from ..utils.docs import generate_doc_number
 from ..utils.money import parse_to_cents
 from ..utils.manual_pagination import ManualPagination
-from sqlalchemy import select, or_, func, and_, exists
+from sqlalchemy import select, or_, func, and_, exists, case
 from sqlalchemy.orm import contains_eager, joinedload, selectinload
 from datetime import datetime
 from zoneinfo import ZoneInfo
@@ -27,63 +27,112 @@ class PurchaseOrderService(BaseService):
     def get_all_with_search(cls, 
                             search_term: str | None = None, 
                             page: int = 1, 
-                            per_page: 
-                            int = 10,
+                            per_page: int = 10,
                             sort_by: str = 'date', 
                             direction: str = 'desc'):
         """
         Fetches active POs with search and pagination.
         Joins with OrderRegistry (CDX#) and Client (Name).
         Use subquery to calculate 'to_be_invoiced'.
-        'to_be_invoiced' = PO Total - Sum(Positive Invoices) - Prepayments.
+        'to_be_invoiced' = (Total po items - Total fulfilled po items) - (Total prepayment + Total Applied Deposits - Total Carryover Credits)
         """
-        # 1. Subquery for Invoiced Sum (Positive totals only). This is Total Due.
-        # Invoices with total <= 0 are covered by deposits and shouldn't reduce the to_be_invoiced.
-        inv_sub = (
+        # 1. Bucket: PO Commitment (Original total of PoItems)
+        po_commitment_sub = (
             select(
-                Invoice.po_id, 
-                func.sum(Invoice.total_amount).label('total_invoiced')
+                PoItem.po_id,
+                func.sum(PoItem.quantity * PoItem.agreed_unit_price).label('total_po_commitment')
             )
-            .where(Invoice.is_active == True, Invoice.total_amount > 0) # Added > 0 filter
+            .group_by(PoItem.po_id)
+            .subquery()
+        )
+
+        # 2. Bucket: Fulfilled PO Items from invoices
+        # Matches Invoice Items to original PO items to ignore extra fees/tax/shipping
+        inv_fulfilled_sub = (
+            select(
+                Invoice.po_id,
+                func.sum(InvoiceItem.quantity * InvoiceItem.billed_unit_price).label('total_fulfilled_po_items')
+            )
+            .join(InvoiceItem)
+            .join(PoItem, and_(PoItem.po_id == Invoice.po_id, PoItem.product_id == InvoiceItem.product_id))
+            .where(Invoice.is_active == True)
             .group_by(Invoice.po_id)
             .subquery()
         )
 
-        # 2. Subquery for Prepayment Sum (Invoiceless Payments)
+        # 3. Bucket: Invoiceless Payments (Cash received but not linked to an invoice)
         pay_sub = (
             select(
                 Payment.po_id, 
-                func.sum(Payment.amount).label('total_invoiceless')
+                func.sum(Payment.amount).label('total_invoiceless_payments')
             )
-            .where(Payment.invoice_id == None, Payment.is_active == True)
+            .where(Payment.is_active == True, Payment.invoice_id == None)
             .group_by(Payment.po_id)
             .subquery()
         )
 
-        # 3. Main Query with 'to_be_invoiced' Label
+        # 4. Bucket: Applied Deposits (Total of Applied Deposit line items on invoices)
+        applied_dep_sub = (
+            select(
+                Invoice.po_id,
+                func.sum(InvoiceItem.quantity * InvoiceItem.billed_unit_price).label('total_applied_deposits')
+            )
+            .join(InvoiceItem).join(Product)
+            .where(Invoice.is_active == True, Product.is_system == True)
+            .group_by(Invoice.po_id)
+            .subquery()
+        )
+
+        # 5. Bucket: Negative Invoice Credit (Carry-over from credit-memo style invoices)
+        neg_inv_sub = (
+            select(
+                Invoice.po_id,
+                func.sum(Invoice.total_amount).label('total_negative_invoice_credit')
+            )
+            .where(Invoice.is_active == True, Invoice.total_amount < 0)
+            .group_by(Invoice.po_id)
+            .subquery()
+        )
+
+        # 6. Define the intermediate logic for the Credit Pool
+        # We coalesce everything to 0 to handle POs that have no payments or no invoices yet.
+        raw_credit_pool = (
+            func.coalesce(pay_sub.c.total_invoiceless_payments, 0) + 
+            func.coalesce(applied_dep_sub.c.total_applied_deposits, 0) - 
+            func.coalesce(neg_inv_sub.c.total_negative_invoice_credit, 0)
+        )
+
+        # Clamp the credit pool at 0 (mimics po.remaining_credit = max(0, ...))
+        clamped_credit_pool = case((raw_credit_pool > 0, raw_credit_pool), else_=0)
+
+        # 7. Main Query
         stmt = (
             select(
                 cls.model,
                 (
-                    cls.model.total_amount - 
-                    func.coalesce(inv_sub.c.total_invoiced, 0) - 
-                    func.coalesce(pay_sub.c.total_invoiceless, 0)
+                    # (Commitment - Fulfillment) - (Clamped Credit Pool)
+                    (func.coalesce(po_commitment_sub.c.total_po_commitment, 0) - 
+                    func.coalesce(inv_fulfilled_sub.c.total_fulfilled_po_items, 0)) -
+                    clamped_credit_pool
                 ).label('to_be_invoiced')
             )
             .join(cls.model.order)
             .join(cls.model.client)
-            .outerjoin(inv_sub, inv_sub.c.po_id == cls.model.id)
+            .outerjoin(po_commitment_sub, po_commitment_sub.c.po_id == cls.model.id)
+            .outerjoin(inv_fulfilled_sub, inv_fulfilled_sub.c.po_id == cls.model.id)
             .outerjoin(pay_sub, pay_sub.c.po_id == cls.model.id)
+            .outerjoin(applied_dep_sub, applied_dep_sub.c.po_id == cls.model.id)
+            .outerjoin(neg_inv_sub, neg_inv_sub.c.po_id == cls.model.id)
             .where(cls.model.is_active == True)
         )
 
-        # 3.1. Eager load relationship for list view
+        # 8. Eager load relationship for list view
         stmt = stmt.options(
             contains_eager(cls.model.order),
             contains_eager(cls.model.client)
         )
 
-        # 4. Apply filters
+        # 9. Apply filters
         if search_term:
             stmt = stmt.where(
                 or_(
@@ -94,7 +143,7 @@ class PurchaseOrderService(BaseService):
                 )
             )
 
-        # 5. Apply Sorting using the BaseService helper
+        # 10. Apply Sorting using the BaseService helper
         stmt = cls.apply_sorting(
             stmt=stmt,
             sort_by=sort_by,
@@ -103,12 +152,12 @@ class PurchaseOrderService(BaseService):
             default_col=cls.model.po_date # Default: newest first
         )
 
-        # 6. Calculate Total Items (for the pagination numbers)
-        # 6.1. We create a count query derived from your main statement
+        # 11. Calculate Total Items (for the pagination numbers)
+        # We create a count query derived from your main statement
         count_stmt = select(func.count()).select_from(stmt.subquery())
         total = db.session.execute(count_stmt).scalar()
 
-        # 6.2. Fetch the Page of Items (keeping the tuples!)
+        # 12. Fetch the Page of Items (keeping the tuples!)
         # Apply limit and offset manually
         paginated_stmt = stmt.limit(per_page).offset((page - 1) * per_page)
         
@@ -116,14 +165,14 @@ class PurchaseOrderService(BaseService):
         # This returns 'Row' objects containing (PurchaseOrder, to_be_invoiced)
         rows = db.session.execute(paginated_stmt).all()
 
-        # 7. Unwrap and Attach 'to_be_invoiced'
+        # 13. Unwrap and Attach 'to_be_invoiced'
         items = []
         for row in rows:
             po = row[0]              # The PurchaseOrder model
             po.to_be_invoiced = row[1]      # The to_be_invoiced
             items.append(po)
 
-        # 8. Create the Pagination Object Manually
+        # 14. Create the Pagination Object Manually
         return ManualPagination(items=items, 
                                 page=page, 
                                 per_page=per_page, 
@@ -292,7 +341,6 @@ class PurchaseOrderService(BaseService):
 
         # 6. Final Financial Attributes
         po.total_prepayment = total_prepayment
-        po.to_be_invoiced = po.total_amount - total_invoiced - total_prepayment
         remaining_credit = total_prepayment + total_applied_deposit - total_neg_carryover
         po.remaining_credit = max(0, remaining_credit)
 
@@ -336,10 +384,19 @@ class PurchaseOrderService(BaseService):
                     'agreed_unit_price': -(po.remaining_credit),
                     'description': 'Applied Deposit from current remaining credit'
                 })
-
         po.remaining_items = remaining_items
 
-        # 9. Check is po has active invoices or payment for locking edit.
+        # 9. Calculate precise "To Be Invoiced"
+        # Formula: (Value of remaining real products) - (Clamped Credit Pool)
+        fulfillment_value = sum(
+            item['quantity'] * item['agreed_unit_price'] 
+            for item in po.remaining_items if not item['product'].is_system
+        )
+
+        # po.remaining_credit is already clamped at max(0, ...) in existing Step 6
+        po.to_be_invoiced = fulfillment_value - po.remaining_credit
+
+        # 10. Check is po has active invoices or payment for locking edit.
         po.has_active_invoices = any(inv.is_active for inv in po.invoices)
         po.has_active_payments = any(pay.is_active for pay in po.payments)
 

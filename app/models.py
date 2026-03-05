@@ -334,16 +334,47 @@ class PurchaseOrder(db.Model, AuditMixin):
 
     @property
     def balance_tobe_invoiced(self):
-        """Formula: po_total - sum(invoice_total_due) - sum(prepayments)"""
-        if self.order and 'invoices' in self.order.__dict__ and 'payments' in self.order.__dict__:
-            # Sum only positive billed amounts
-            billed = sum(inv.total_due for inv in self.order.invoices 
-                        if inv.po_id == self.id and inv.is_active)
-            # Sum payments applied to PO but not yet to an invoice
-            prepaid = sum(p.amount for p in self.order.payments 
-                        if p.po_id == self.id and p.invoice_id is None and p.is_active)
-            return self.total_amount - billed - prepaid
-        return self.total_amount
+        """
+        Logic: (Total PO Commitment - Real Goods Billed) - max(0, Unapplied Credit Pool)
+        This matches the precise backlog math used in the Service and List View.
+        """
+        # 1. Total PO Commitment
+        commitment = sum(item.quantity * item.agreed_unit_price for item in self.items)
+
+        # 2. Total Fulfilled PO Items (Goods only)
+        # We only count invoice items that exist in the PO's product list
+        po_product_ids = {item.product_id for item in self.items}
+        fulfilled = 0
+        applied_deposits = 0
+        negative_carryover = 0
+
+        for inv in self.invoices:
+            if not inv.is_active:
+                continue
+            
+            # Track negative grand totals for carry-over
+            if inv.total_amount < 0:
+                negative_carryover += inv.total_amount
+
+            for item in inv.items:
+                if item.product_id in po_product_ids:
+                    fulfilled += (item.quantity * item.billed_unit_price)
+                
+                # Track 'Applied Deposit' system items
+                if item.product.is_system:
+                    applied_deposits += (item.quantity * item.billed_unit_price)
+
+        # 3. Prepayments (Cash in at PO level)
+        prepayments = sum(p.amount for p in self.payments if p.is_active and p.invoice_id is None)
+
+        # 4. Math
+        remaining_fulfillment = commitment - fulfilled
+        
+        # Applied deposits and Negative carryover are negative in DB, so we add them
+        raw_credit_pool = prepayments + applied_deposits - negative_carryover
+        clamped_credit = max(0, raw_credit_pool)
+
+        return remaining_fulfillment - clamped_credit
 
 class Invoice(db.Model, AuditMixin):
     __tablename__ = 'invoices'
