@@ -123,19 +123,44 @@ def add():
     if referrer and url_for('payments.add') not in referrer:
         cancel_url = referrer
 
+    client_id = request.args.get('client_id', type=int)
     po_id = request.args.get('po_id', type=int)
     invoice_id = request.args.get('invoice_id', type=int)
 
-    client_id = None
     payer_prefill_id = None
     amount_prefill = None
     pos = []
     invoices = []
     is_po_open = True
 
+    # generate payment from client
+    if client_id and not po_id and not invoice_id:
+        client = ClientService.get_by_id(client_id)
+        if not client:
+            flash("Client not found", "error")
+            return redirect(url_for('payments.index'))
+        
+        # Gatekeeper: Must have an active deal context
+        if not client.has_open_pos and not client.has_open_invoices:
+            flash(f"Client {client.company_name} has outstanding open po or invoices.", "warning")
+            return redirect(url_for('clients.view', id=client_id))
+        
+        pos = PurchaseOrderService.get_pos_by_client(client_id, statuses=['open', 'invoiced'])
 
+    # generate payment from PO
+    if po_id and not invoice_id:
+        po = PurchaseOrderService.get_po_by_id(po_id)
+        if not po:
+            flash("Purchase Order not found.", "error")
+            return redirect(url_for('payments.index'))
+        
+        client_id = po.client_id
+        payer_prefill_id = po.bill_to_id
+        amount_prefill = 0 # Force manual entry for deposits
+        is_po_open = False if po.status != 'open' else True
+
+    # generate payment from Invoice
     if invoice_id:
-        # Case A: From Invoice Shortcut
         invoice = InvoiceService.get_invoice_by_id(invoice_id)
         if not invoice:
             flash("Invoice not found.", "error")
@@ -148,19 +173,6 @@ def add():
             is_po_open = False if po.status != 'open' else True
         payer_prefill_id = invoice.bill_to_id
         amount_prefill = invoice.balance # type: ignore Suggest full settlement 
-
-    elif po_id:
-        # Case B: From PO Shortcut (Deposit)
-        po = PurchaseOrderService.get_po_by_id(po_id)
-        if not po:
-            flash("Purchase Order not found.", "error")
-            return redirect(url_for('payments.index'))
-        
-        client_id = po.client_id
-        payer_prefill_id = po.bill_to_id
-        amount_prefill = 0 # Force manual entry for deposits
-        is_po_open = False if po.status != 'open' else True
-
 
     # Populate Dropdown options
     if client_id:
