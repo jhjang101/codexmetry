@@ -143,6 +143,23 @@ class ClientService(BaseService):
 
         db.session.commit()
         return client
+    
+    @classmethod
+    def get_client_by_id(cls, client_id: int) -> Client | None:
+        """
+        Hydrated Fetcher: Returns client with POs and Invoices loaded.
+        Ensures 'has_open_pos' and 'has_open_invoices' checks are instant.
+        """
+        stmt = (
+            select(cls.model)
+            .options(
+                selectinload(cls.model.contacts),
+                selectinload(cls.model.purchase_orders),
+                selectinload(cls.model.invoices)
+            )
+            .where(cls.model.id == client_id)
+        )
+        return db.session.execute(stmt).scalar_one_or_none()
 
     # --- INTERNAL HELPERS ---
     
