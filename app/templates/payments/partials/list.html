@@ -28,7 +28,7 @@
             </span>
             </td>
 
-            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-blue-700">
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-blue-700 max-w-[200px] truncate">
                 {{ payment.client.company_name }}
             </td>
 
@@ -43,7 +43,7 @@
                 {% endif %}
             </td>
 
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 max-w-[220px] truncate">
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 max-w-[200px] truncate">
                 {{ payment.paid_from.company_name if payment.paid_from else '-'}}
             </td>
 
