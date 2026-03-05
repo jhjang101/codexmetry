@@ -141,6 +141,17 @@ class Client(db.Model, AuditMixin):
             name = f"{contact.first_name or ''} {contact.last_name or ''}".strip()
             return f"{self.company_name} ({name})" if name else self.company_name
         return self.company_name
+    
+    @property
+    def has_open_pos(self) -> bool:
+        """Logic: Check for POs where items are still remaining to be fulfilled."""
+        # We use a generator expression for memory efficiency
+        return any(po.is_active and po.status == 'open' for po in self.purchase_orders)
+
+    @property
+    def has_open_invoices(self) -> bool:
+        """Logic: Check for any issued invoices that are not yet fully paid."""
+        return any(inv.is_active and inv.status == 'open' for inv in self.invoices)
 
 class ClientContact(db.Model):
     __tablename__ = 'client_contacts'
