@@ -54,7 +54,7 @@
                                 {% if invoice.status in ['open'] %}
                                 <a href="{{ url_for('payments.add', invoice_id=invoice.id) }}" 
                                 class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors">
-                                    <i class="fa-solid fa-money-bill-transfer w-2"></i>
+                                    <i class="fa-solid fa-money-check-dollar w-2"></i>
                                     Payment
                                 </a>
                                 {% endif %}
