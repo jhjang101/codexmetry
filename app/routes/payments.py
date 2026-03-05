@@ -133,46 +133,59 @@ def add():
     invoices = []
     is_po_open = True
 
-    # generate payment from client
-    if client_id and not po_id and not invoice_id:
-        client = ClientService.get_by_id(client_id)
-        if not client:
-            flash("Client not found", "error")
-            return redirect(url_for('payments.index'))
-        
-        # Gatekeeper: Must have an active deal context
-        if not client.has_open_pos and not client.has_open_invoices:
-            flash(f"Client {client.company_name} has outstanding open po or invoices.", "warning")
-            return redirect(url_for('clients.view', id=client_id))
-        
-        pos = PurchaseOrderService.get_pos_by_client(client_id, statuses=['open', 'invoiced'])
-
-    # generate payment from PO
-    if po_id and not invoice_id:
-        po = PurchaseOrderService.get_po_by_id(po_id)
-        if not po:
-            flash("Purchase Order not found.", "error")
-            return redirect(url_for('payments.index'))
-        
-        client_id = po.client_id
-        payer_prefill_id = po.bill_to_id
-        amount_prefill = 0 # Force manual entry for deposits
-        is_po_open = False if po.status != 'open' else True
-
-    # generate payment from Invoice
+    # 1. generate payment from Invoice Shortcut
     if invoice_id:
         invoice = InvoiceService.get_invoice_by_id(invoice_id)
-        if not invoice:
-            flash("Invoice not found.", "error")
+        # GUARD: Existence and Activity
+        if not invoice or not invoice.is_active:
+            flash("Invoice not found or archived.", "error")
             return redirect(url_for('payments.index'))
+        
+        # GUARD: Already Paid
+        if invoice.status == 'completed':
+            flash(f"Invoice {invoice.invoice_number} is already fully paid.", "info")
+            return redirect(url_for('invoices.view', id=invoice_id))
         
         client_id = invoice.client_id
         po_id = invoice.po_id
-        po = PurchaseOrderService.get_by_id(po_id)
-        if po:
-            is_po_open = False if po.status != 'open' else True
+        # Set is_po_open based on the parent PO status
+        is_po_open = (invoice.purchase_order.status == 'open')
         payer_prefill_id = invoice.bill_to_id
-        amount_prefill = invoice.balance # type: ignore Suggest full settlement 
+        amount_prefill = invoice.balance 
+
+    # 2. generate payment from PO Shortcut
+    elif po_id:
+        po = PurchaseOrderService.get_po_by_id(po_id)
+        # GUARD: Existence and Activity
+        if not po or not po.is_active:
+            flash("Purchase Order not found or archived.", "error")
+            return redirect(url_for('payments.index'))
+        
+        # GUARD: Fully Settled deal (Optional but recommended)
+        if po.status == 'completed':
+            flash(f"This order is already completed.", "info")
+            return redirect(url_for('purchase_orders.view', id=po_id))
+
+        client_id = po.client_id
+        payer_prefill_id = po.bill_to_id
+        amount_prefill = 0
+        is_po_open = (po.status == 'open')
+
+    # 3. generate payment from Client Shortcut
+    elif client_id:
+        client = ClientService.get_client_by_id(client_id)
+        if not client or not client.is_active:
+            flash("Client not found or archived.", "error")
+            return redirect(url_for('clients.index'))
+        
+        # Guard: Ensure there's actually something to pay (optional, but good UX)
+        if not client.has_open_pos and not client.has_open_invoices:
+            flash(f"Client {client.company_name} has no active POs or Invoices to record payments.", "info")
+            return redirect(url_for('clients.view', id=client_id))
+
+        payer_prefill_id = client_id
+        amount_prefill = 0
+        is_po_open = True # Default to True so Prepayment option is visible initially
 
     # Populate Dropdown options
     if client_id:
