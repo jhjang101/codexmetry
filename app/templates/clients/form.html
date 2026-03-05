@@ -46,41 +46,42 @@
                             </a>
                         </div>
 
-                        <div class="border-t border-gray-100 my-1"></div>
-                            <div class="py-1">
-                                {# 2. Shortcuts #}
-                                <p class="px-4 py-1 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Generate New</p>
-                                
-                                <a href="{{ url_for('quotes.add', client_id=client.id) }}" 
-                                class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors">
-                                    <i class="fa-solid fa-file-lines w-2"></i>
-                                    Quote
-                                </a>
+                        <div class="border-t border-gray-100 my-1">
+                        </div>
+                        <div class="py-1">
+                            {# 2. Shortcuts #}
+                            <p class="px-4 py-1 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Generate New</p>
+                            
+                            <a href="{{ url_for('quotes.add', client_id=client.id) }}" 
+                               class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors">
+                                <i class="fa-solid fa-file-lines w-2"></i>
+                                Quote
+                            </a>
 
-                                <a href="{{ url_for('purchase_orders.add', client_id=client.id) }}" 
-                                class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors">
-                                    <i class="fa-solid fa-file-invoice-dollar w-2"></i>
-                                    Purchase Order
-                                </a>
+                            <a href="{{ url_for('purchase_orders.add', client_id=client.id) }}" 
+                               class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors">
+                                <i class="fa-solid fa-file-invoice-dollar w-2"></i>
+                                Purchase Order
+                            </a>
 
-                                <a href="{{ url_for('invoices.add', client_id=client.id) }}" 
-                                class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors">
-                                    <i class="fa-solid fa-file-invoice w-2"></i>
-                                    Invoice
-                                </a>
+                            <a href="{{ url_for('invoices.add', client_id=client.id) }}" 
+                               class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors">
+                                <i class="fa-solid fa-file-invoice w-2"></i>
+                                Invoice
+                            </a>
 
-                                <a href="{{ url_for('payments.add', client_id=client.id) }}" 
-                                class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors">
-                                    <i class="fa-solid fa-money-check-dollar w-2"></i>
-                                    Payment
-                                </a>
+                            <a href="{{ url_for('payments.add', client_id=client.id) }}" 
+                               class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors">
+                                <i class="fa-solid fa-money-check-dollar w-2"></i>
+                                Payment
+                            </a>
 
-                                <a href="{{ url_for('expenses.add', client_id=client.id) }}" 
+                            <a href="{{ url_for('expenses.add', client_id=client.id) }}" 
                                 class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors">
-                                    <i class="fa-solid fa-credit-card w-2"></i>
-                                    Expense
-                                </a>
-                            </div>
+                                <i class="fa-solid fa-credit-card w-2"></i>
+                                Expense
+                            </a>
+                        </div>
 
                         {% if current_user.role in ['admin'] %}
                             <div class="border-t border-gray-100 my-1"></div>
