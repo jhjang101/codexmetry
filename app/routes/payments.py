@@ -333,7 +333,8 @@ def edit(id):
                            invoices=invoices,
                            payers=clients,
                            payment_number=payment_number,
-                           payment_types=payment_types)
+                           payment_types=payment_types,
+                           amount_prefill = None)
 
 @bp.route('/archive/<int:id>', methods=['POST'])
 @role_required(['admin']) # Only Admin can delete
