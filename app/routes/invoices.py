@@ -120,7 +120,7 @@ def add():
     items = []
 
     # generate invoice from client
-    if client_id: 
+    if client_id and not po_id:
         client = ClientService.get_by_id(client_id)
         if not client:
             flash("Client not found", "error")
