@@ -103,28 +103,43 @@ def add():
             resp.headers['HX-Reswap'] = 'none'
             return resp
     
-    # GET: Prepare form data from PO
+    # GET: Prepare form data from Client or PO
     referrer = request.referrer
     # Only use referrer if it's not the 'add' page itself
     cancel_url = url_for('invoices.index')
     if referrer and url_for('invoices.add') not in referrer:
         cancel_url = referrer
 
-    po_id = request.args.get('po_id', type=int)
+    client_id = request.args.get('client_id', type=int) # from Client
+    po_id = request.args.get('po_id', type=int) # from PO
 
-    client_id = None
     payer_prefill_id = None
     po_total_prepayment = 0
     pos = []
     payers = []
     items = []
 
+    # generate invoice from client
+    if client_id: 
+        client = ClientService.get_by_id(client_id)
+        if not client:
+            flash("Client not found", "error")
+            return redirect(url_for('invoices.index'))
+        
+        # Gatekeeper: Prevent landing on an invoice form with nothing to bill
+        if not client.has_open_pos:
+            flash(f"Client {client.company_name} has no open Purchase Orders to invoice.", "warning")
+            return redirect(url_for('clients.view', id=client_id))
+        pos = PurchaseOrderService.get_pos_by_client(client_id, statuses=['open'])
+
+    # generate invoice from PO
     if po_id:
         po = PurchaseOrderService.get_po_by_id(po_id)
         if not po:
             flash("Purchase Order not found.", "error")
             return redirect(url_for('invoices.index'))
-        elif not po.remaining_items:
+        
+        if po.status != 'open':
             flash(f"PO {po.po_number or po.order.order_number} has already been fully invoiced.", "warning")
             return redirect(url_for('purchase_orders.view', id=po.id))
         
