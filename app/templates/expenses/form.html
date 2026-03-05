@@ -99,7 +99,7 @@
             </div>
 
             <div class="grid grid-cols-11 gap-4">
-                <div class="col-span-3">
+                <div class="col-span-4">
                     <label class="block text-sm font-medium text-gray-500">Vendor</label>
                     {% if mode == 'view' %}
                         <p class="mt-1 block bg-gray-100 border rounded-lg p-2 text-sm">{{ expense.vendor.company_name }}</p>
@@ -110,7 +110,14 @@
                                     required>
                                 <option value="">Select Vendor...</option>
                                 {% for v in vendors %}
-                                    <option value="{{ v.id }}" {{ 'selected' if (expense and expense.vendor_id == v.id) else '' }}>{{ v.company_name }}</option>
+                                    <option value="{{ v.id }}" 
+                                            {% if expense and expense.vendor_id == v.id %}
+                                            selected
+                                            {% elif not expense and v.id == vendor_id %}
+                                            selected
+                                            {% endif %}>
+                                            {{ v.company_name }}
+                                    </option>
                                 {% endfor %}
                             </select>
                             <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-400">
@@ -130,7 +137,7 @@
                     {% endif %}
                 </div>
 
-                <div class="col-span-3">
+                <div class="col-span-2">
                     <label class="block text-sm font-medium text-gray-500">Date</label>
                     {% if mode == 'view' %}
                         <p class="mt-1 block bg-gray-100 border rounded-lg p-2 text-sm">{{ expense.expense_date }}</p>
@@ -161,7 +168,7 @@
                 </div>
 
                 <!-- Row 2: Project Linking (The Triple Cascade) -->
-                <div class="col-span-3">
+                <div class="col-span-4">
                     <label class="block text-sm font-medium text-gray-500">Link to Client (Optional)</label>
                     {% if mode == 'view' %}
                         <p class="mt-1 block bg-gray-100 border rounded-lg p-2 text-sm">{{ expense.client.full_display if (expense and expense.client) else 'Independent Expense' }}</p>
@@ -204,7 +211,7 @@
                     </div>
                 </div>
 
-                <div class="col-span-3">
+                <div class="col-span-2">
                     <label class="block text-sm font-medium text-gray-500">Link to Invoice (Optional)</label>
                     <div id="invoice-select-container">
                         {% if mode == 'view' %}

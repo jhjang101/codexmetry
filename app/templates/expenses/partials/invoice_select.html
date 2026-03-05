@@ -19,8 +19,10 @@
             <option value="{{ invoice.id }}" 
                            {% if expense and invoice.id == expense.invoice_id %}
                            selected
+                           {% elif not expense and invoice.id == invoice_id %}
+                           selected
                            {% endif %}>
-                {{ invoice.invoice_number }} ({{ invoice.total_due | usd }})
+                {{ invoice.invoice_number }}
             </option>
         {% endfor %}
     </select>

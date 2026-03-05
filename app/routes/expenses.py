@@ -104,25 +104,54 @@ def add():
             resp.headers['HX-Reswap'] = 'none'
             return resp
         
-    # GET: Prepare form data from Client
+    # GET: Prepare form data from Client, Vendor, PO, or Invoice
     referrer = request.referrer
     # Only use referrer if it's not the 'add' page itself
     cancel_url = url_for('expenses.index')
     if referrer and url_for('expenses.add') not in referrer:
         cancel_url = referrer
 
+    # Extract all possible shortcut IDs
     client_id = request.args.get('client_id', type=int)
+    po_id = request.args.get('po_id', type=int)
+    invoice_id = request.args.get('invoice_id', type=int)
+    vendor_id = request.args.get('vendor_id', type=int)
+
 
     pos = []
     invoices = []
 
-    if client_id: # record Expense from Client
+    # CASE A: From Invoice Shortcut
+    if invoice_id:
+        invoice = InvoiceService.get_invoice_by_id(invoice_id)
+        if invoice and invoice.is_active:
+            client_id = invoice.client_id
+            po_id = invoice.po_id
+            # Hydrate lists so dropdowns are ready
+            pos = PurchaseOrderService.get_pos_by_client(client_id, include_id=po_id, statuses=['open', 'invoiced', 'completed'])
+            invoices = InvoiceService.get_invoices_by_po(po_id, include_id=invoice_id, statuses=['open', 'completed'])
+
+    # CASE B: From PO Shortcut
+    elif po_id:
+        po = PurchaseOrderService.get_po_by_id(po_id)
+        if po and po.is_active:
+            client_id = po.client_id
+            pos = PurchaseOrderService.get_pos_by_client(client_id, include_id=po_id, statuses=['open', 'invoiced', 'completed'])
+            invoices = InvoiceService.get_invoices_by_po(po_id, statuses=['open', 'completed'])
+
+    # CASE C: From Client View
+    elif client_id:
         client = ClientService.get_by_id(client_id)
-        if not client:
-            flash("Client not found", "error")
+        if client and client.is_active:
+            pos = PurchaseOrderService.get_pos_by_client(client_id, statuses=['open', 'invoiced', 'completed'])
+
+    # CASE D: From Vendor View
+    elif vendor_id:
+        vendor = VendorService.get_by_id(vendor_id)
+        if not vendor or not vendor.is_active:
+            flash("Vendor not found or archived.", "error")
             return redirect(url_for('expenses.index'))
-        pos = PurchaseOrderService.get_pos_by_client(client_id, 
-                                                     statuses=['open', 'invoiced', 'completed'])
+        # client_id remains None, no deal context pre-filled
     
     # GET: Prepare form data for the initial render
     vendors = VendorService.get_all()
@@ -141,6 +170,9 @@ def add():
                            invoices=invoices,
                            suggested_number=suggested_number,
                            client_id=client_id,
+                           po_id=po_id,
+                           invoice_id=invoice_id,
+                           vendor_id=vendor_id,
                            categories=categories,
                            timestamp=initial_row_id,
                            cancel_url=cancel_url)
