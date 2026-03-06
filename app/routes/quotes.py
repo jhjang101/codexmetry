@@ -205,6 +205,26 @@ def archive(id):
         flash('Quote not found.', 'error')
     return redirect(url_for('quotes.index'))
 
+# --- PRINT ---
+
+@bp.route('/print/<int:id>')
+@login_required
+def print_view(id):
+    """
+    Messenger: Fetches hydrated Quote data for the printable layout.
+    Metadata is already injected via global context processor.
+    """
+    # 1. Fetch using your existing high-integrity service
+    # This already eager-loads Client and Contacts
+    quote = QuoteService.get_quote_by_id(id)
+    
+    if not quote or not quote.is_active:
+        flash("Quote not found.", "error")
+        return redirect(url_for('quotes.index'))
+
+    # 2. Render the dedicated print template
+    return render_template('quotes/print.html', quote=quote)
+
 # --- HTMX PARTIALS & LIVE MATH ---
 
 @bp.route('/add-row')
