@@ -5,7 +5,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash, mak
 from sqlalchemy.exc import SQLAlchemyError
 from datetime import datetime
 from zoneinfo import ZoneInfo
-from .extensions import db, csrf, login_manager
+from .extensions import db, csrf, login_manager,migrate
 
 def create_app():
     load_dotenv()
@@ -25,6 +25,7 @@ def create_app():
     db.init_app(app)
     csrf.init_app(app)
     login_manager.init_app(app)
+    migrate.init_app(app, db)
 
      # Configure Login Manager
     login_manager.login_view = 'auth.login' # type: ignore

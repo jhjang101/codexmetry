@@ -3,7 +3,7 @@ from flask import has_request_context
 from flask_login import UserMixin, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy.orm import Mapped, mapped_column, relationship, declared_attr
-from sqlalchemy import String, Integer, Boolean, DateTime, Date, Text, ForeignKey, func, event
+from sqlalchemy import String, Integer, Boolean, DateTime, Date, Text, ForeignKey, func, event, JSON
 from datetime import datetime, date
 
 # --- 1. AUTH ---
@@ -28,12 +28,28 @@ class AuditMixin:
     @declared_attr
     def updater(cls) -> Mapped["User"]:
         return relationship("User", foreign_keys=[cls.updated_by_id]) # type: ignore
+    
+class AuditLog(db.Model):
+    __tablename__ = 'audit_logs'
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    timestamp: Mapped[datetime] = mapped_column(DateTime, server_default=func.current_timestamp())
+    user_id: Mapped[int | None] = mapped_column(ForeignKey('users.id'))
+    action: Mapped[str] = mapped_column(String(20)) # CREATE, UPDATE, ARCHIVE
+    target_type: Mapped[str] = mapped_column(String(50)) # 'Invoice', 'Product', etc.
+    target_id: Mapped[int] = mapped_column(Integer)
+    
+    # Stores a dict of {'field_name': [old_value, new_value]}
+    changes: Mapped[dict | None] = mapped_column(JSON) 
+
+    user: Mapped["User"] = relationship()
 
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     username: Mapped[str] = mapped_column(String(80), unique=True, nullable=False)
     email: Mapped[str] = mapped_column(String(120), unique=True, nullable=False)
+    full_name: Mapped[str | None] = mapped_column(String(100))
+    phone_number: Mapped[str | None] = mapped_column(String(51))
     password_hash: Mapped[str | None] = mapped_column(String(256))
     role: Mapped[str] = mapped_column(String(20), default='user')
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
@@ -70,6 +86,9 @@ class ExpenseCategory(db.Model):
     type: Mapped[str] = mapped_column(String(50), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
+    # New Reporting Field
+    is_cogs: Mapped[bool] = mapped_column(Boolean, default=False, server_default='0')
+
 class PaymentType(db.Model):
     __tablename__ = 'payment_types'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -92,6 +111,25 @@ class SettingsMetadata(db.Model):
     timezone: Mapped[str] = mapped_column(String(100), default='America/Chicago')
     invoice_threshold: Mapped[int] = mapped_column(Integer, default=10000)
     doc_padding: Mapped[int] = mapped_column(Integer, default=4)
+
+    # New Identity Fields
+    company_phone: Mapped[str | None] = mapped_column(String(50))
+    company_fax: Mapped[str | None] = mapped_column(String(50))
+    payable_address: Mapped[str | None] = mapped_column(Text)
+    shipping_address: Mapped[str | None] = mapped_column(Text)
+
+    # New Banking Fields
+    bank_name: Mapped[str | None] = mapped_column(String(100))
+    bank_swift: Mapped[str | None] = mapped_column(String(50))
+    bank_routing: Mapped[str | None] = mapped_column(String(50))
+    bank_account: Mapped[str | None] = mapped_column(String(50))
+
+    # New Default Terms
+    default_net_days: Mapped[int] = mapped_column(Integer, default=30, server_default='30')
+    default_quote_expiry_days: Mapped[int] = mapped_column(Integer, default=30, server_default='30')
+    default_quote_terms: Mapped[str | None] = mapped_column(Text)
+    default_invoice_terms: Mapped[str | None] = mapped_column(Text)
+    default_po_terms: Mapped[str | None] = mapped_column(Text)
 
 # --- 4. MASTER DATA ---
 class Client(db.Model, AuditMixin):
@@ -216,6 +254,9 @@ class Product(db.Model, AuditMixin):
     default_unit_price: Mapped[int] = mapped_column(Integer, default=0)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     is_system: Mapped[bool] = mapped_column(Boolean, default=False)
+
+    # New Categorization Field
+    financial_type: Mapped[str] = mapped_column(String(20), default='revenue', server_default='revenue') # revenue, shipping, tax, adjustment
 
     category: Mapped["ProductCategory"] = relationship()
 
