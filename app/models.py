@@ -49,7 +49,7 @@ class User(UserMixin, db.Model):
     username: Mapped[str] = mapped_column(String(80), unique=True, nullable=False)
     email: Mapped[str] = mapped_column(String(120), unique=True, nullable=False)
     full_name: Mapped[str | None] = mapped_column(String(100))
-    phone_number: Mapped[str | None] = mapped_column(String(51))
+    phone_number: Mapped[str | None] = mapped_column(String(50))
     password_hash: Mapped[str | None] = mapped_column(String(256))
     role: Mapped[str] = mapped_column(String(20), default='user')
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
@@ -79,6 +79,9 @@ class ProductCategory(db.Model):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     type: Mapped[str] = mapped_column(String(50), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+
+    # New Accounting Flag
+    is_revenue: Mapped[bool] = mapped_column(Boolean, default=True, server_default='1')
 
 class ExpenseCategory(db.Model):
     __tablename__ = 'expense_categories'
@@ -255,8 +258,8 @@ class Product(db.Model, AuditMixin):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     is_system: Mapped[bool] = mapped_column(Boolean, default=False)
 
-    # New Categorization Field
-    financial_type: Mapped[str] = mapped_column(String(20), default='revenue', server_default='revenue') # revenue, shipping, tax, adjustment
+    # New Placement Field for Printable Form 
+    document_placement: Mapped[str] = mapped_column(String(20), default='lineitem', server_default='lineitem') # lineitem, shipping, tax
 
     category: Mapped["ProductCategory"] = relationship()
 
