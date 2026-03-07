@@ -60,6 +60,7 @@ def add():
                 'name': request.form.get('name'),
                 'catalog_number': request.form.get('catalog_number'),
                 'category_id': request.form.get('category_id'),
+                'document_placement': request.form.get('document_placement'),
                 'default_unit_price': request.form.get('unit_price'),
                 'image_url': saved_filename
             }
@@ -119,7 +120,8 @@ def edit(id):
             product_data = {
                 'name': request.form.get('name'),
                 'catalog_number': request.form.get('catalog_number'),
-                'category_id': request.form.get('category_id') or None,
+                'category_id': request.form.get('category_id'),
+                'document_placement': request.form.get('document_placement', 'Lineitem'),
                 'default_unit_price': request.form.get('unit_price', ''),
             }
             

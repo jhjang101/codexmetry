@@ -259,7 +259,7 @@ class Product(db.Model, AuditMixin):
     is_system: Mapped[bool] = mapped_column(Boolean, default=False)
 
     # New Placement Field for Printable Form 
-    document_placement: Mapped[str] = mapped_column(String(20), default='lineitem', server_default='lineitem') # lineitem, shipping, tax
+    document_placement: Mapped[str] = mapped_column(String(20), default='Lineitem', server_default='Lineitem') # lineitem, shipping, tax
 
     category: Mapped["ProductCategory"] = relationship()
 

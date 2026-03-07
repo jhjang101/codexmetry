@@ -166,6 +166,28 @@
                         <input type="text" name="unit_price" value="{{ product.default_unit_price | usd if product else '' }}" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">
                     {% endif %}
                 </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-600">Document Placement</label>
+                    {% if mode == 'view' %}
+                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">
+                            {{ product.document_placement }}
+                        </p>
+                    {% else %}
+                        <div class="relative">
+                            <select name="document_placement" 
+                                    class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none appearance-none bg-transparent cursor-pointer pr-10">
+                                <option value="lineitem" {{ 'selected' if product and product.document_placement == 'Lineitem' else '' }}>Standard Line Item</option>
+                                <option value="Shipping" {{ 'selected' if product and product.document_placement == 'Shipping' else '' }}>Shipping (Footer)</option>
+                                <option value="Tax" {{ 'selected' if product and product.document_placement == 'Tax' else '' }}>Sales Tax (Footer)</option>
+                            </select>
+                            <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-400">
+                                <i class="fa-solid fa-chevron-down text-[10px]"></i>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+
             </div>
         </section>
     </form>

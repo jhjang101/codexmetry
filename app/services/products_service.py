@@ -158,6 +158,7 @@ class ProductService(BaseService):
             'name': name,
             'catalog_number': data.get('catalog_number', '').strip() if data.get('catalog_number') else None,
             'category_id': int(category_id) if category_id else None,
+            'document_placement': data.get('document_placement', 'Lineitem'),
             'default_unit_price': parse_to_cents(str(data.get('default_unit_price', 0))),
             'image_url': data.get('image_url') # Handled by Route/images.py
         }
