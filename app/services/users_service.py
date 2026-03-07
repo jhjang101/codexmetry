@@ -125,7 +125,9 @@ class UserService(BaseService):
 
         # 4. Return clean dictionary
         clean = {
+            'full_name': data.get('full_name', '').strip(),
             'email': email,
+            'phone_number': data.get('phone_number', '').strip(),
             'role': role
         }
         

@@ -12,76 +12,135 @@
         <form id="metadata-form" 
               hx-post="{{ url_for('settings.update_metadata') }}"
               hx-swap="none"
-              hx-encoding="multipart/form-data"
-              class="grid grid-cols-2 gap-4">
-            <!-- CSRF Token handled by Flask-WTF -->
+              hx-encoding="multipart/form-data">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-
-            <!-- Hidden field to get old image url -->
             <input type="hidden" name="old_image" value="{{ metadata.company_logo }}">
 
-            <!-- logo and text fields -->
-            <div class="col-span-2 flex items-center gap-6 mb-2">
-                <div class="w-20 h-20 bg-gray-100 rounded-lg border flex items-center justify-center overflow-hidden">
-                    {% if metadata.company_logo %}
-                        <img src="{{ url_for('static', filename='uploads/logos/' + metadata.company_logo) }}" 
-                            class="object-contain w-full h-full">
-                    {% else %}
-                        <span class="text-gray-400 text-xs">No Logo</span>
-                    {% endif %}
-                </div>
-                <div class="flex-1">
-                    <label 
-                        class="block text-sm font-medium text-gray-600">Company Logo</label>
-                    <input type="file" accept=".png,.jpg,.jpeg,.gif" name="logo" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
-                </div>
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-600">Company Name</label>
-                <input type="text" name="company_name" value="{{ metadata.company_name }}" 
-                       class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none"
-                       required>
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-600">Timezone</label>
-                <input type="text" name="timezone" value="{{ metadata.timezone }}" 
-                       class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">
-            </div>
-            <div class="col-span-2">
-                <label class="block text-sm font-medium text-gray-600">Address</label>
-                <textarea name="address" rows="3" 
-                          class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">{{ metadata.address }}</textarea>
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-600">Invoice Threshold (USD)</label>
-                <input type="text" name="threshold" value="{{ metadata.invoice_threshold | usd }}" 
-                       class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">
-            </div>
-            <!-- Document Number Padding -->
-            <div class="relative">
-                <div class="flex items-center gap-1 mb-1 group">
-                    <label class="block text-sm font-medium text-gray-600">Document Number Padding</label>
-                    <i class="fa-solid fa-circle-info text-amber-500 text-xs cursor-help"></i>
-                    <!-- Tooltip Box (Visible on Hover) -->
-                    <div class="invisible group-hover:visible absolute bottom-full left-0 mb-1 w-64 p-2 bg-slate-700 text-white text-xs rounded-lg shadow-xl z-10 leading-relaxed">
-                         Default is 4 (e.g., CDX-260001). Affects new records only. 
-                        <br><br>
-                        <span class="text-amber-400 font-bold">Warning:</span> 
-                        Changing this mid-year disrupts chronological sorting. For consistent lists, only update on January 1st.
+            <!-- GROUP 1: Identity & Brand -->
+            <section class="bg-white p-6 rounded-lg shadow mb-2">
+                <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4 border-b pb-1">Company Identity</h2>
+                <div class="grid grid-cols-6 gap-4">
+                    <div class="col-span-1 flex flex-col items-center">
+                        <div class="w-16 h-16 bg-gray-100 rounded rounded-lg border flex items-center justify-center overflow-hidden mb-2">
+                            {% if metadata.company_logo %}
+                                <img src="{{ url_for('static', filename='uploads/logos/' + metadata.company_logo) }}" class="object-contain w-full h-full">
+                            {% else %}<span class="text-[10px] text-gray-400">LOGO</span>{% endif %}
+                        </div>
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-xs font-medium text-gray-500">Company Name</label>
+                        <input type="text" name="company_name" value="{{ metadata.company_name }}" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none" required>
+                    </div>
+                    <div class="col-span-3">
+                        <label class="block text-xs font-medium text-gray-500">Update Logo</label>
+                        <input type="file" name="logo" class="mt-1 block w-full text-xs text-gray-500 file:mr-4 file:py-3 file:px-4 file rounded-lg file:border-0 file:bg-blue-50 hover:file:bg-blue-100 file:text-blue-700">
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-xs font-medium text-gray-500">Phone</label>
+                        <input type="text" name="company_phone" value="{{ metadata.company_phone or '' }}" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-xs font-medium text-gray-500">Fax</label>
+                        <input type="text" name="company_fax" value="{{ metadata.company_fax or '' }}" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-xs font-medium text-gray-500">Timezone</label>
+                        <input type="text" name="timezone" value="{{ metadata.timezone }}" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">
                     </div>
                 </div>
+            </section>
 
-                <input type="number" name="doc_padding" value="{{ metadata.doc_padding or 4 }}" min="3" max="10" 
-                    class="block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">
+            <!-- GROUP 2: Addresses -->
+            <section class="bg-white p-6 rounded-lg shadow mb-2">
+                <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4 border-b pb-1">Addresses</h2>
+                <div class="grid grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 text-amber-600">Office Address</label>
+                        <textarea name="address" rows="3" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">{{ metadata.address }}</textarea>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500">Payable Address</label>
+                        <textarea name="payable_address" rows="3" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">{{ metadata.payable_address }}</textarea>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500">Shipping Address</label>
+                        <textarea name="shipping_address" rows="3" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">{{ metadata.shipping_address }}</textarea>
+                    </div>
+                </div>
+            </section>
+
+            <!-- GROUP 3: Banking & Documents -->
+            <div class="grid grid-cols-2 gap-2 mb-2">
+                <!-- Banking -->
+                <section class="bg-white p-6 rounded-lg shadow">
+                    <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4 border-b pb-1">Wire Transfer Details</h2>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="col-span-2">
+                            <label class="block text-xs font-medium text-gray-500">Bank Name</label>
+                            <input type="text" name="bank_name" value="{{ metadata.bank_name or '' }}" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500">SWIFT/BIC</label>
+                            <input type="text" name="bank_swift" value="{{ metadata.bank_swift or '' }}" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500">Routing #</label>
+                            <input type="text" name="bank_routing" value="{{ metadata.bank_routing or '' }}" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">
+                        </div>
+                        <div class="col-span-2">
+                            <label class="block text-xs font-medium text-gray-500">Account #</label>
+                            <input type="text" name="bank_account" value="{{ metadata.bank_account or '' }}" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Logic Defaults -->
+                <section class="bg-white p-6 rounded-lg shadow">
+                    <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4 border-b pb-1">System Defaults</h2>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500">Invoice Threshold</label>
+                            <input type="text" name="invoice_threshold" value="{{ metadata.invoice_threshold | usd }}" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500">Doc Padding</label>
+                            <input type="number" name="doc_padding" value="{{ metadata.doc_padding }}" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500">Net Days (Invoices)</label>
+                            <input type="number" name="default_net_days" value="{{ metadata.default_net_days }}" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500">Quote Expiry (Days)</label>
+                            <input type="number" name="default_quote_expiry_days" value="{{ metadata.default_quote_expiry_days }}" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">
+                        </div>
+                    </div>
+                </section>
             </div>
 
-            
-            <div class="col-span-2 text-right">
-                <button type="submit" 
-                        class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors">
-                    <i class="fa-regular fa-floppy-disk mr-1"></i>Save Metadata
-                </button>
-            </div>
+            <!-- GROUP 4: Printable Terms -->
+            <section class="bg-white p-6 rounded-lg shadow mb-4">
+                <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4 border-b pb-1">Default Document Terms</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500">Default Quote Terms</label>
+                        <textarea name="default_quote_terms" rows="3" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">{{ metadata.default_quote_terms }}</textarea>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500">Default Invoice Terms</label>
+                        <textarea name="default_invoice_terms" rows="3" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">{{ metadata.default_invoice_terms }}</textarea>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500">Default PO Terms</label>
+                        <textarea name="default_po_terms" rows="3" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">{{ metadata.default_po_terms }}</textarea>
+                    </div>
+                </div>
+                <div class="text-right mt-6">
+                    <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors">
+                        <i class="fa-regular fa-floppy-disk mr-1"></i> Save All Settings
+                    </button>
+                </div>
+            </section>
         </form>
     </section>
 

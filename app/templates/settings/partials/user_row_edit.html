@@ -1,15 +1,26 @@
 <tr id="user-row-{{ user.id }}" class="bg-blue-50/50">
-    <td class="px-6 py-3 text-sm font-bold text-gray-900">
+    <td class="px-2 py-2 text-xs font-bold text-gray-900">
         {{ user.username }}
         <input type="hidden" name="username" value="{{ user.username }}">
     </td>
-    <td class="px-6 py-3">
-        <input type="email" name="email" value="{{ user.email }}"
-               class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">
+    <td class="px-2 py-2">
+        <input type="text" name="full_name" value="{{ user.full_name or '' }}"
+               placeholder="Full Name"
+               class="w-full border border-gray-300 rounded-lg p-1.5 text-xs focus:ring-1 focus:ring-blue-300 outline-none">
     </td>
-    <td class="px-6 py-3">
+    <td class="px-2 py-2">
+        <input type="email" name="email" value="{{ user.email }}"
+               placeholder="Email"
+               class="w-full border border-gray-300 rounded-lg p-1.5 text-xs focus:ring-1 focus:ring-blue-300 outline-none">
+    </td>
+    <td class="px-2 py-2">
+        <input type="text" name="phone_number" value="{{ user.phone_number or '' }}"
+               placeholder="Phone"
+               class="w-full border border-gray-300 rounded-lg p-1.5 text-xs focus:ring-1 focus:ring-blue-300 outline-none">
+    </td>
+    <td class="px-2 py-2">
         <div class="relative">
-            <select name="role" class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none appearance-none bg-white uppercase pr-8">
+            <select name="role" class="w-full border border-gray-300 rounded-lg p-1.5 text-xs focus:ring-1 focus:ring-blue-300 outline-none appearance-none bg-white uppercase pr-6">
                 <option value="admin" {{ 'selected' if user.role == 'admin' }}>Admin</option>
                 <option value="user" {{ 'selected' if user.role == 'user' }}>User</option>
                 <option value="viewer" {{ 'selected' if user.role == 'viewer' }}>Viewer</option>
@@ -19,11 +30,11 @@
             </div>
         </div>
     </td>
-    <td class="px-6 py-3">
+    <td class="px-2 py-2">
         <input type="password" name="password" placeholder="New password..."
-               class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">
+               class="w-full border border-gray-300 rounded-lg p-1.5 text-xs focus:ring-1 focus:ring-blue-300 outline-none">
     </td>
-    <td class="px-6 py-3 text-right">
+    <td class="px-2 py-2 text-right">
         <div class="flex justify-end gap-3">
             <button hx-get="{{ url_for('settings.view_user_row', id=user.id) }}"
                     hx-target="#user-row-{{ user.id }}"

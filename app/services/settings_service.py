@@ -51,9 +51,6 @@ class MetadataService(BaseService):
         Ensures threshold is cents and names are not empty.
         """
         company_name = data.get('company_name', '').strip()
-        address = data.get('address', '').strip()
-        timezone = data.get('timezone', 'America/Chicago').strip()
-        
         # 1. Mandatory Name Check
         if not company_name:
             raise ValueError("Company Name cannot be empty.")
@@ -77,13 +74,32 @@ class MetadataService(BaseService):
         except (ValueError, TypeError):
             raise ValueError("Document padding must be a valid number.")
 
-        # 4. Return clean dictionary
+        # 4. Map and sanitize new fields
         clean = {
             'company_name': company_name,
-            'address': address,
-            'timezone': timezone,
-            'invoice_threshold': threshold,
-            'doc_padding': padding
+            'address': data.get('address', '').strip(),
+            'timezone': data.get('timezone', 'America/Chicago').strip(),
+            'invoice_threshold': threshold, # from your existing logic
+            'doc_padding': padding,         # from your existing logic
+            
+            # Identity & Contact
+            'company_phone': data.get('company_phone', '').strip(),
+            'company_fax': data.get('company_fax', '').strip(),
+            'payable_address': data.get('payable_address', '').strip(),
+            'shipping_address': data.get('shipping_address', '').strip(),
+
+            # Banking
+            'bank_name': data.get('bank_name', '').strip(),
+            'bank_swift': data.get('bank_swift', '').strip(),
+            'bank_routing': data.get('bank_routing', '').strip(),
+            'bank_account': data.get('bank_account', '').strip(),
+
+            # Defaults
+            'default_net_days': int(data.get('default_net_days', 30)),
+            'default_quote_expiry_days': int(data.get('default_quote_expiry_days', 30)),
+            'default_quote_terms': data.get('default_quote_terms', '').strip(),
+            'default_invoice_terms': data.get('default_invoice_terms', '').strip(),
+            'default_po_terms': data.get('default_po_terms', '').strip()
         }
         
         # 5. Handle Optional Logo (only update if provided)

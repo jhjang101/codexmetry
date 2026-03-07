@@ -51,14 +51,8 @@ def update_metadata():
     Handles image persistence and delegates logic to MetadataService.
     """
     try:
-        # 1. Prepare raw data dictionary from form
-        data = {
-            'company_name': request.form.get('company_name'),
-            'address': request.form.get('address'),
-            'timezone': request.form.get('timezone'),
-            'invoice_threshold': request.form.get('threshold'), # Raw string, Service handles parsing
-            'doc_padding': request.form.get('doc_padding')
-        }
+        # 1. Capture all fields from the form
+        data = request.form.to_dict()
         
         # 2. Specialized Image Handling (The Messenger manages files)
         new_logo = request.files.get('logo')
