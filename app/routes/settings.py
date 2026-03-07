@@ -153,6 +153,9 @@ def add_lookup():
     try:
         table_name = request.form.get('table_name')
         value = request.form.get('value', '').strip()
+
+        # Capture COGS flag for expense categories
+        is_cogs = True if request.form.get('is_cogs') else False
         
         if not table_name:
             raise ValueError("Target table not specified.")
@@ -163,10 +166,14 @@ def add_lookup():
 
         if not value:
             raise ValueError("Value cannot be empty.")
-
-        # Brain Call: Add to database
-        table.add(type=value)
         
+        # Logic: If it's an expense category, include the is_cogs flag
+        if table_name == 'expense_categories':
+            table.add(type=value, is_cogs=is_cogs)
+        else:
+            # Service Call: Add to database
+            table.add(type=value)
+
         # Success: Return the updated card partial
         items = table.get_all()
         return render_template('settings/partials/lookup_card.html', 
@@ -176,6 +183,25 @@ def add_lookup():
     except ValueError as e:
         db.session.rollback()
         # Failure: Return OOB Error and keep the "Add" input intact
+        resp = make_response(render_template('partials/error_notification.html', message=str(e)), 200)
+        resp.headers['HX-Reswap'] = 'none'
+        return resp
+    
+@bp.route('/lookup/toggle-cogs/<int:id>', methods=['POST'])
+def toggle_cogs(id):
+    """Messenger: Toggles COGS flag and returns the updated row."""
+    try:
+        category = ExpenseCategoryService.toggle_cogs(id)
+        
+        # We return only the <li> fragment to match the hx-target
+        # Using the same table_name variable the template expects
+        return render_template('settings/partials/lookup_card.html', 
+                            table_name='expense_categories', 
+                            items=[category],
+                            toggle_only=True) 
+
+    except ValueError as e:
+        db.session.rollback()
         resp = make_response(render_template('partials/error_notification.html', message=str(e)), 200)
         resp.headers['HX-Reswap'] = 'none'
         return resp

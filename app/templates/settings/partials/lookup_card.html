@@ -1,3 +1,5 @@
+{# If toggle_only is passed, we skip the card header/form and just return the list items #}
+{% if not toggle_only %}
 <section class="bg-white p-6 rounded-lg shadow mb-2">
     <h2 class="text-md font-semibold mb-2 border-b pb-2">
         {{ table_name | 
@@ -8,34 +10,68 @@
             replace('adjustment_categories', 'Adjustment Categories') 
         }}
     </h2>
+    <ul class="space-y-2 mb-4">
+{% endif %}
     
     <!-- List and Archive Items  -->
-    <ul class="space-y-2 mb-2">
         {% for item in items %}
         <li class="flex justify-between items-center bg-gray-50 p-2 rounded-lg border text-sm" id="item-{{ table_name }}-{{ item.id }}">
-            <span>{{ item.type }}</span>
+            <div class="flex items-center gap-3">
+                <span class="font-medium text-gray-700">{{ item.type }}</span>
+                
+                {# ONLY show COGS toggle for Expense Categories #}
+                {% if table_name == 'expense_categories' %}
+                <button hx-post="{{ url_for('settings.toggle_cogs', id=item.id) }}"
+                        hx-target="#item-{{ table_name }}-{{ item.id }}"
+                        hx-swap="outerHTML"
+                        class="flex items-center gap-1.5 group/cogs">
+                    <div class="w-6 h-3.5 rounded-full p-0.5 transition-colors {{ 'bg-blue-500' if item.is_cogs else 'bg-gray-300' }}">
+                        <div class="w-2.5 h-2.5 bg-white rounded-full shadow-sm transition-transform {{ 'translate-x-2.5' if item.is_cogs else 'translate-x-0' }}"></div>
+                    </div>
+                    <span class="text-[9px] font-bold uppercase tracking-tight {{ 'text-blue-700' if item.is_cogs else 'text-gray-400' }}">
+                        COGS
+                    </span>
+                </button>
+                {% endif %}
+            </div>
+
             <button 
                 hx-post="{{ url_for('settings.archive_lookup', table_name=table_name, id=item.id) }}" 
                 hx-confirm="Archive this item?"
                 hx-target="#item-{{ table_name }}-{{ item.id }}"
                 hx-swap="delete"
-                class="text-red-400 hover:text-red-800">
+                class="text-red-400 hover:text-red-800 transition-colors">
                     <i class="fa-solid fa-xmark"></i>
             </button>
         </li>
-        {% else %}
-            <p class="text-center text-gray-400 italic text-sm">No categories defined.</p>
         {% endfor %}
+        
+{% if not toggle_only %}
+        {% if not items %}
+            <p class="text-center text-gray-400 italic text-sm py-2">No categories defined.</p>
+        {% endif %}
     </ul>
 
-    <!-- Add Form (Targets this specific card) -->
+    <!-- Add Form -->
     <form hx-post="{{ url_for('settings.add_lookup') }}" 
           hx-target="closest section" 
           hx-swap="outerHTML" 
-          class="flex gap-2">
+          class="space-y-2">
         <input type="hidden" name="table_name" value="{{ table_name }}">
-        <input type="text" name="value" placeholder="New category..." 
-               class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none" required>
-        <button type="submit" class="bg-blue-600 text-white px-3 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors">+</button>
+        
+        <div class="flex gap-2">
+            <input type="text" name="value" placeholder="New category name..." 
+                   class="block w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none transition-all" required>
+            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors">+</button>
+        </div>
+
+        {# If Expense, allow setting COGS flag on creation #}
+        {% if table_name == 'expense_categories' %}
+        <label class="flex items-center gap-2 cursor-pointer group w-fit px-1">
+            <input type="checkbox" name="is_cogs" value="1" class="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider group-hover:text-gray-600 transition-colors">Mark as COGS (Cost of Goods Sold)</span>
+        </label>
+        {% endif %}
     </form>
 </section>
+{% endif %}

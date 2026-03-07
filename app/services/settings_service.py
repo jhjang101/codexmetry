@@ -12,14 +12,25 @@ class PoTypeService(BaseService):
 class ProductCategoryService(BaseService):
     model = ProductCategory
 
-class ExpenseCategoryService(BaseService):
-    model = ExpenseCategory
-
 class PaymentTypeService(BaseService):
     model = PaymentType
 
 class AdjustmentCategoryService(BaseService):
     model = AdjustmentCategory
+
+class ExpenseCategoryService(BaseService):
+    model = ExpenseCategory
+
+    @classmethod
+    def toggle_cogs(cls, category_id: int) -> ExpenseCategory:
+        """Flips the COGS status for reporting."""
+        category = cls.get_by_id(category_id)
+        if not category:
+            raise ValueError("Expense Category not found.")
+        
+        category.is_cogs = not category.is_cogs
+        db.session.commit()
+        return category
 
 class MetadataService(BaseService):
     model = SettingsMetadata
