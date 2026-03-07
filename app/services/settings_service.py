@@ -12,6 +12,17 @@ class PoTypeService(BaseService):
 class ProductCategoryService(BaseService):
     model = ProductCategory
 
+    @classmethod
+    def toggle_revenue(cls, category_id: int) -> ProductCategory:
+        """Flips the revenue status for reporting."""
+        category = cls.get_by_id(category_id)
+        if not category:
+            raise ValueError("Product Category not found.")
+        
+        category.is_revenue = not category.is_revenue
+        db.session.commit()
+        return category
+
 class PaymentTypeService(BaseService):
     model = PaymentType
 

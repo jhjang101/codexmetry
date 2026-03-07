@@ -19,7 +19,7 @@
             <div class="flex items-center gap-3">
                 <span class="font-medium text-gray-700">{{ item.type }}</span>
                 
-                {# ONLY show COGS toggle for Expense Categories #}
+                {# ONLY show toggle for Expense and Product Categories #}
                 {% if table_name == 'expense_categories' %}
                 <button hx-post="{{ url_for('settings.toggle_cogs', id=item.id) }}"
                         hx-target="#item-{{ table_name }}-{{ item.id }}"
@@ -33,9 +33,23 @@
                     </span>
                 </button>
                 {% endif %}
+
+                {% if table_name == 'product_categories' %}
+                <button hx-post="{{ url_for('settings.toggle_revenue', id=item.id) }}"
+                        hx-target="#item-{{ table_name }}-{{ item.id }}"
+                        hx-swap="outerHTML"
+                        class="flex items-center gap-1.5 group/rev">
+                    <div class="w-6 h-3.5 rounded-full p-0.5 transition-colors {{ 'bg-blue-500' if item.is_revenue else 'bg-gray-300' }}">
+                        <div class="w-2.5 h-2.5 bg-white rounded-full shadow-sm transition-transform {{ 'translate-x-2.5' if item.is_revenue else 'translate-x-0' }}"></div>
+                    </div>
+                    <span class="text-[9px] font-bold uppercase tracking-tight {{ 'text-blue-700' if item.is_revenue else 'text-gray-400' }}">
+                        Revenue
+                    </span>
+                </button>
+                {% endif %}
             </div>
 
-            <button 
+            <button
                 hx-post="{{ url_for('settings.archive_lookup', table_name=table_name, id=item.id) }}" 
                 hx-confirm="Archive this item?"
                 hx-target="#item-{{ table_name }}-{{ item.id }}"
@@ -72,6 +86,15 @@
             <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider group-hover:text-gray-600 transition-colors">Mark as COGS (Cost of Goods Sold)</span>
         </label>
         {% endif %}
+
+        {# If Product, allow setting revenue flag on creation #}
+        {% if table_name == 'product_categories' %}
+        <label class="flex items-center gap-2 cursor-pointer group w-fit px-1">
+            <input type="checkbox" name="is_revenue" value="1" class="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider group-hover:text-gray-600 transition-colors">Mark as Revenue (Sales of Goods)</span>
+        </label>
+        {% endif %}
+
     </form>
 </section>
 {% endif %}

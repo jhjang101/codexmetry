@@ -154,8 +154,9 @@ def add_lookup():
         table_name = request.form.get('table_name')
         value = request.form.get('value', '').strip()
 
-        # Capture COGS flag for expense categories
+        # Capture Financial Reporting flag for expense and product categories
         is_cogs = True if request.form.get('is_cogs') else False
+        is_revenue = True if request.form.get('is_revenue') else False
         
         if not table_name:
             raise ValueError("Target table not specified.")
@@ -170,6 +171,9 @@ def add_lookup():
         # Logic: If it's an expense category, include the is_cogs flag
         if table_name == 'expense_categories':
             table.add(type=value, is_cogs=is_cogs)
+        # Logic: If it's an product category, include the is_revenue flag
+        elif table_name == 'product_categories':
+            table.add(type=value, is_revenue=is_revenue)
         else:
             # Service Call: Add to database
             table.add(type=value)
@@ -197,6 +201,25 @@ def toggle_cogs(id):
         # Using the same table_name variable the template expects
         return render_template('settings/partials/lookup_card.html', 
                             table_name='expense_categories', 
+                            items=[category],
+                            toggle_only=True) 
+
+    except ValueError as e:
+        db.session.rollback()
+        resp = make_response(render_template('partials/error_notification.html', message=str(e)), 200)
+        resp.headers['HX-Reswap'] = 'none'
+        return resp
+    
+@bp.route('/lookup/toggle-revenue/<int:id>', methods=['POST'])
+def toggle_revenue(id):
+    """Messenger: Toggles revenue flag and returns the updated row."""
+    try:
+        category = ProductCategoryService.toggle_revenue(id)
+        
+        # We return only the <li> fragment to match the hx-target
+        # Using the same table_name variable the template expects
+        return render_template('settings/partials/lookup_card.html', 
+                            table_name='product_categories', 
                             items=[category],
                             toggle_only=True) 
 
