@@ -1,5 +1,6 @@
 from .base_service import BaseService
 from ..models import Quote, QuoteItem, Client, OrderRegistry, SettingsMetadata
+from .audit_service import AuditLogService
 from ..extensions import db
 from ..utils.money import parse_to_cents
 from sqlalchemy import select, or_
@@ -102,12 +103,24 @@ class QuoteService(BaseService):
         # 2. Validate & transform
         clean_data = cls._validate_and_transform(data)
 
+        # 3. Audit_logs snapshot
+        old_snapshot = cls._get_snapshot(quote)
+        old_snapshot['line_items'] = cls._get_items_fingerprint(quote.items, 'quantity', 'quoted_unit_price')
+
         # 3. Update header
         for key, value in clean_data.items():
             setattr(quote, key, value)
 
         # 4. Save items (Wipe and re-insert)
-        cls._save_items(quote, items_data)
+        clean_data['line_items'] = cls._save_items(quote, items_data)
+        clean_data['total_amount'] = quote.total_amount 
+        
+        # 5. Deep Audit Trigger
+        AuditLogService.record(quote_id, 
+                               cls.model.__name__, 
+                               'UPDATE', 
+                               old_data=old_snapshot, 
+                               new_data=clean_data)
 
         db.session.commit()
         return quote
@@ -221,6 +234,7 @@ class QuoteService(BaseService):
         )
 
         total_cents = 0
+        fingerprint = []
 
         # 2. Re-insert current list
         for row in items_data:
@@ -240,5 +254,15 @@ class QuoteService(BaseService):
                 item.description = description
                 db.session.add(item)
 
+                # Generate fingerprint
+                fingerprint.append({
+                    'product_id': int(product_id), 
+                    'quantity': qty, 
+                    'unit_price': price,
+                    'description': description
+                })
+
         # 3. Update the snapshot total on the header
         quote.total_amount = total_cents
+
+        return sorted(fingerprint, key=lambda x: x['product_id'])

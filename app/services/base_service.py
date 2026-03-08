@@ -29,7 +29,8 @@ class BaseService:
         old_snapshot = {c.name: getattr(row, c.name) for c in row.__table__.columns}
         
         for key, value in kwargs.items():
-            setattr(row, key, value)
+            if hasattr(row, key):
+                setattr(row, key, value)
             
         # Hand off to the Audit Brain
         AuditLogService.record(
@@ -98,3 +99,28 @@ class BaseService:
             stmt = stmt.order_by(desc(default_col))
 
         return stmt
+
+    @classmethod
+    def _get_snapshot(cls, model_instance):
+        """
+        Brain: Generates a dictionary of all current columns for an object.
+        Used for audit_logs.
+        """
+        return {c.name: getattr(model_instance, c.name) for c in model_instance.__table__.columns}
+    
+    @classmethod
+    def _get_items_fingerprint(cls, items_collection, qty_attr, price_attr):
+        """
+        Brain: Converts a collection of line items into a comparable list.
+        Example: [{'product_id': 5, 'quantity': 10, 'unit_price': 500}, ...]
+        """
+        data = [
+            {
+                'product_id': item.product_id, 
+                'quantity': getattr(item, qty_attr), 
+                'unit_price': getattr(item, price_attr),
+                'description': item.description
+            }
+            for item in items_collection
+        ]
+        return sorted(data, key=lambda x: x['product_id'])

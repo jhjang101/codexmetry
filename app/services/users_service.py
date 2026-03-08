@@ -39,12 +39,7 @@ class UserService(BaseService):
         clean_data = cls._validate_and_transform(data, is_new=False, current_user_id=user_id)
 
         # 2. Forensic Snapshot
-        old_snapshot = {
-            'email': user.email,
-            'full_name': user.full_name,
-            'phone_number': user.phone_number,
-            'role': user.role
-        }
+        old_snapshot = cls._get_snapshot(user)
 
         # 2. Update standard attributes
         for key, value in clean_data.items():

@@ -39,15 +39,15 @@ class AuditLogService:
 
         # 4. Save entry if there's a delta or it's a lifecycle event
         if changes or action in ['CREATE', 'ARCHIVE']:
-
+            user_id = int(current_user.get_id()) if (has_request_context() and current_user.is_authenticated) else None
+            
 
             # Forensic Print for Debugging
-            print(f"--- AUDIT LOG: {action} on {target_type} by ID {target_id} ---")
+            print(f"--- AUDIT LOG: {action} on {target_type} ID {target_id} by User {user_id} ---")
             print(f"Changes: {changes}")
 
 
-            user_id = int(current_user.get_id()) if (has_request_context() and current_user.is_authenticated) else None
-            
+
             log = AuditLog()
             log.user_id=user_id
             log.action=action
