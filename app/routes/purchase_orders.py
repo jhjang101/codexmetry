@@ -81,6 +81,8 @@ def add():
 
             # 5. Success Flow
             flash(f'PO {new_po.order.order_number} created successfully!', 'success')
+            if new_po.quote:
+                flash(f"Quote {new_po.quote.quote_number} has been accepted.", "success")
 
             # The Safe Save Redirect: Forces a clean page load to 'View' mode
             response = make_response("", 200)
@@ -211,7 +213,11 @@ def edit(id):
     if request.method == 'POST':
         # 1. Extract and Transform
         try:
-            # 1. Prepare Data
+            # 1. State Capture for Feedback logic
+            old_quote_id = po.quote_id
+            old_quote_number = po.quote.quote_number if po.quote else None
+
+            # 2. Prepare Data
             header_data = {
                 'client_id': request.form.get('client_id'),
                 'bill_to_id': request.form.get('bill_to_id'),
@@ -223,7 +229,7 @@ def edit(id):
                 'note': request.form.get('note')
             }
 
-            # 2. Parse Line Items
+            # 3. Parse Line Items
             items = _parse_items_form(request.form)
 
             # 4. Parse Attachments
@@ -231,10 +237,23 @@ def edit(id):
             raw_delete_ids = request.form.getlist('delete_ids[]')
             delete_ids = [int(fid) for fid in raw_delete_ids if fid.isdigit()]
 
-            # 3. Call Service (Handles Quote Release/Re-link)
+            # 5. Call Service (Handles Quote Release/Re-link)
             PurchaseOrderService.edit_po(id, header_data, items, new_files=new_files, delete_ids=delete_ids)
 
+            # 6. Flash
             flash(f'PO {po.order.order_number} updated successfully!', 'success')
+            # Quote Ripple Feedback
+            new_quote_id = po.quote_id
+            if old_quote_id != new_quote_id:
+                if old_quote_id and new_quote_id:
+                    flash(f"Quote link updated: {old_quote_number} released, {po.quote.quote_number} accepted.", "success")
+                elif old_quote_id:
+                    flash(f"Quote {old_quote_number} has been released and reverted to 'Sent'.", "info")
+                elif new_quote_id:
+                    flash(f"Quote {po.quote.quote_number} has been accepted.", "success")
+
+
+
             response = make_response("", 200)
             response.headers['HX-Redirect'] = url_for('purchase_orders.view', id=id)
             return response
