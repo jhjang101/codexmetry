@@ -48,8 +48,8 @@
                                     <span class="text-blue-700 font-medium">{{ values[1] | usd }}</span>
                                 
                                 {# Line Item Summary Logic #}
-                                {% elif field == 'line_items' %}
-                                    <span class="text-blue-700 font-medium italic">Table modified.</span>
+                                {% elif field in ['line_items', 'items', 'contacts'] %}
+                                    <span class="text-blue-700 font-medium italic">{{ field | capitalize }} modified.</span>
                                 
                                 {# Default Text Logic #}
                                 {% else %}

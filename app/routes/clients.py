@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash, make_response
 from flask_login import login_required
 from ..services.clients_service import ClientService
+from ..services.audit_service import AuditLogService
 from ..utils.auth import role_required
 from ..extensions import db
 
@@ -85,12 +86,14 @@ def view(id):
             flash("Client not found.", "error")
             return redirect(url_for('clients.index'))
         
+        history = AuditLogService.get_for_entity('Client', id)
+        
     except ValueError as e:
         db.session.rollback()
         flash(f"Error loading client: {str(e)}", 'error')
         return redirect(url_for('clients.index'))
 
-    return render_template('clients/form.html', mode='view', client=client)
+    return render_template('clients/form.html', mode='view', client=client, history=history)
 
 @bp.route('/edit/<int:id>', methods=['GET', 'POST'])
 @role_required(['admin', 'user'])

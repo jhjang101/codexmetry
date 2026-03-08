@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash, make_response
 from flask_login import login_required
 from ..services.vendors_service import VendorService
+from ..services.audit_service import AuditLogService
 from ..utils.auth import role_required
 from ..extensions import db
 
@@ -84,12 +85,14 @@ def view(id):
             flash("Vendor not found.", "error")
             return redirect(url_for('vendors.index'))
         
+        history = AuditLogService.get_for_entity('Vendor', id)
+        
     except ValueError as e:
         db.session.rollback()
         flash(f"Error loading vendor: {str(e)}", 'error')
         return redirect(url_for('vendors.index'))
     
-    return render_template('vendors/form.html', mode='view', vendor=vendor)
+    return render_template('vendors/form.html', mode='view', vendor=vendor, history=history)
 
 @bp.route('/edit/<int:id>', methods=['GET', 'POST'])
 @role_required(['admin', 'user'])

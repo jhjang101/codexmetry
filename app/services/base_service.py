@@ -148,3 +148,15 @@ class BaseService:
             for item in items_collection
         ]
         return sorted(data, key=lambda x: x['product_id'])
+    
+    @classmethod
+    def _get_contacts_fingerprint(cls, contacts_collection):
+        """Brain: Converts a collection of contacts into a comparable list."""
+        data = [
+            {
+                'name': f"{c.first_name} {c.last_name}".strip(),
+                'email': c.email
+            }
+            for c in contacts_collection
+        ]
+        return sorted(data, key=lambda x: x['email'] or '')

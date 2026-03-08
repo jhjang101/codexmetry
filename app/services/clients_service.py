@@ -1,5 +1,6 @@
 from .base_service import BaseService
 from ..models import Client, ClientContact
+from .audit_service import AuditLogService
 from ..extensions import db
 from sqlalchemy import select, or_, func
 from sqlalchemy.orm import contains_eager, selectinload
@@ -116,7 +117,19 @@ class ClientService(BaseService):
         db.session.flush() # Get ID for contacts
 
         # 3. Save contacts
-        cls._save_contacts(client.id, contacts_data)
+        new_contacts_fingerprint = cls._save_contacts(client.id, contacts_data)
+
+        # 4. Prepare the Snapshot for the log
+        new_snapshot = clean_data.copy()
+        new_snapshot['contacts'] = new_contacts_fingerprint
+
+        # 5. Record 'CREATE' Audit
+        AuditLogService.record(
+            target_id=client.id, 
+            target_type=cls.model.__name__, 
+            action='CREATE', 
+            new_data=new_snapshot
+        )
 
         db.session.commit()
         return client
@@ -134,12 +147,23 @@ class ClientService(BaseService):
         # 2. Validate & transform
         clean_data = cls._validate_and_transform(data)
 
-        # 3. Update client
+        # 3. Audit_logs snapshot
+        old_snapshot = cls._get_snapshot(client)
+        old_snapshot['contacts'] = cls._get_contacts_fingerprint(client.contacts)
+
+        # 4. Update client
         for key, value in clean_data.items():
             setattr(client, key, value)
 
         # 4. Save contacts (Wipe and re-insert)
-        cls._save_contacts(client.id, contacts_data)
+        clean_data['contacts'] = cls._save_contacts(client.id, contacts_data)
+
+        # 5. Deep Audit Trigger
+        AuditLogService.record(client_id, 
+                               cls.model.__name__, 
+                               'UPDATE', 
+                               old_data=old_snapshot, 
+                               new_data=clean_data)
 
         db.session.commit()
         return client
@@ -187,6 +211,7 @@ class ClientService(BaseService):
             db.delete(ClientContact).where(ClientContact.client_id == client_id)
         )
 
+        fingerprint = []
         # 2. Re-insert current list
         for row in contacts_data:
             first = row.get('first_name', '').strip()
@@ -201,3 +226,10 @@ class ClientService(BaseService):
                 contact.last_name = last
                 contact.email = email
                 db.session.add(contact)
+
+                fingerprint.append({
+                'name': f"{first} {last}".strip(),
+                'email': email
+            })
+                
+        return sorted(fingerprint, key=lambda x: x['email'])

@@ -1,5 +1,6 @@
 from .base_service import BaseService
 from ..models import Vendor, VendorContact
+from .audit_service import AuditLogService
 from ..extensions import db
 from sqlalchemy import select, or_, func
 from sqlalchemy.orm import contains_eager, selectinload
@@ -103,7 +104,19 @@ class VendorService(BaseService):
         db.session.flush() # Get ID for contacts
 
         # 3. Save contacts
-        cls._save_contacts(vendor.id, contacts_data)
+        new_contacts_fingerprint = cls._save_contacts(vendor.id, contacts_data)
+
+        # 4. Prepare the Snapshot for Log
+        new_snapshot = clean_data.copy()
+        new_snapshot['contacts'] = new_contacts_fingerprint
+
+        # 5. Record 'CREATE' Audit 
+        AuditLogService.record(
+            target_id=vendor.id, 
+            target_type=cls.model.__name__, 
+            action='CREATE', 
+            new_data=new_snapshot
+        )
 
         db.session.commit()
         return vendor
@@ -121,12 +134,23 @@ class VendorService(BaseService):
         # 2. Validate & transform
         clean_data = cls._validate_and_transform(data)
 
-        # 3. Update vendor header
+        # 3. Audit_logs smapshot
+        old_snapshot = cls._get_snapshot(vendor)
+        old_snapshot['contacts'] = cls._get_contacts_fingerprint(vendor.contacts)
+
+        # 4. Update vendor header
         for key, value in clean_data.items():
             setattr(vendor, key, value)
 
         # 4. Save contacts (Wipe and re-insert)
-        cls._save_contacts(vendor.id, contacts_data)
+        clean_data['contacts'] = cls._save_contacts(vendor.id, contacts_data)
+
+        # 5. Deep Audit Trigger
+        AuditLogService.record(vendor_id, 
+                               cls.model.__name__, 
+                               'UPDATE', 
+                               old_data=old_snapshot, 
+                               new_data=clean_data)
 
         db.session.commit()
         return vendor
@@ -158,6 +182,7 @@ class VendorService(BaseService):
             db.delete(VendorContact).where(VendorContact.vendor_id == vendor_id)
         )
 
+        fingerprint = []
         # 2. Re-insert current list from snapshot
         for row in contacts_data:
             first = row.get('first_name', '').strip()
@@ -172,3 +197,10 @@ class VendorService(BaseService):
                 contact.last_name = last
                 contact.email = email
                 db.session.add(contact)
+
+                fingerprint.append({
+                'name': f"{first} {last}".strip(),
+                'email': email
+            })
+                
+        return sorted(fingerprint, key=lambda x: x['email'])

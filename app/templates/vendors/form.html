@@ -205,5 +205,11 @@
             </div>
         </section>
     </form>
+
+    {% if mode == 'view' %}
+        {# NEW: The Forensic Trail #}
+        {% include 'partials/audit_history.html' %}
+    {% endif %}
+
 </div>
 {% endblock %}
