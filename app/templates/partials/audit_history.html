@@ -36,8 +36,9 @@
                     <ul class="mt-1 space-y-1 bg-gray-50 p-2 rounded border border-gray-100">
                         {% for field, values in log.changes.items() %}
                             <li class="flex items-center gap-2">
-                                <span class="font-semibold text-gray-500 w-24">
-                                    {{ field | replace('_', ' ') | capitalize }}:
+                                <span class="font-semibold text-gray-500 w-30">
+                                    {# Strip _id and format: client_id -> Client #}
+                                    {{ field | replace('_id', '') | replace('_', ' ') | capitalize }}:
                                 </span>
                                 
                                 {# Money Formatting Logic #}

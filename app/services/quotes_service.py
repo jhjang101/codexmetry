@@ -95,7 +95,7 @@ class QuoteService(BaseService):
         # 5. Record 'CREATE' Audit
         AuditLogService.record(
             target_id=quote.id, 
-            target_type='Quote', 
+            target_type=cls.model.__name__, 
             action='CREATE', 
             new_data=new_snapshot
         )

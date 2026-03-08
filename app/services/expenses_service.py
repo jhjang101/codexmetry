@@ -2,6 +2,7 @@ from .base_service import BaseService
 from ..models import (Expense, ExpenseItem,  Vendor,  
                       ExpenseCategory, Client, OrderRegistry, 
                       PurchaseOrder, Invoice, SettingsMetadata)
+from .audit_service import AuditLogService
 from ..extensions import db
 from ..utils.docs import generate_doc_number
 from ..utils.money import parse_to_cents
@@ -101,7 +102,19 @@ class ExpenseService(BaseService):
         db.session.flush() # Get ID for items
 
         # 3. Save items and update total
-        cls._save_items(expense, items_data)
+        new_items_fingerprint = cls._save_items(expense, items_data)
+
+        # 4. Prepare the Snapshot for the log
+        new_snapshot = clean_data.copy()
+        new_snapshot['line_items'] = new_items_fingerprint
+
+        # 5. Record 'CREATE' Audit
+        AuditLogService.record(
+            target_id=expense.id, 
+            target_type=cls.model.__name__, 
+            action='CREATE', 
+            new_data=new_snapshot
+        )
 
         db.session.commit()
         return expense
@@ -119,12 +132,24 @@ class ExpenseService(BaseService):
         # 2. Validate & transform
         clean_data = cls._validate_and_transform(data, items_data)
 
-        # 3. Update header attributes
+        # 3. Audit_logs snapshot
+        old_snapshot = cls._get_snapshot(expense)
+        old_snapshot['items'] = cls._get_items_fingerprint(expense.items)
+
+        # 4. Update header attributes
         for key, value in clean_data.items():
             setattr(expense, key, value)
 
-        # 4. Save items (Wipe and re-insert)
-        cls._save_items(expense, items_data)
+        # 5. Save items (Wipe and re-insert)
+        clean_data['items'] = cls._save_items(expense, items_data)
+
+        # 6. Deep Audit Trigger
+        AuditLogService.record(expense_id, 
+                               cls.model.__name__, 
+                               'UPDATE', 
+                               old_data=old_snapshot, 
+                               new_data=clean_data)
+
 
         db.session.commit()
         return expense
@@ -240,6 +265,7 @@ class ExpenseService(BaseService):
         )
 
         total_cents = 0
+        fingerprint = []
 
         # 2. Re-insert current snapshot
         for row in items_data:
@@ -260,8 +286,41 @@ class ExpenseService(BaseService):
                 item.unit_price = price
                 item.description = description
                 db.session.add(item)
+                
+                # Generate fingerprint
+                fingerprint.append({
+                    'item': item_text, 
+                    'cat_no': catalog_number,
+                    'quantity': qty, 
+                    'unit_price': price,
+                    'description': description
+                })
+
             else:
                 raise ValueError("Item description is required for all rows.")
 
         # 3. Update the header total
         expense.total_amount = total_cents
+
+        return sorted(fingerprint, key=lambda x: (x['item'], x['cat_no'] or ''))
+    
+
+
+    @classmethod
+    def _get_items_fingerprint(cls, items_collection):
+        """
+        Specialized Fingerprint for Expenses:
+        Uses the 'item' string and 'catalog_number' instead of product_id.
+        """
+        data = [
+            {
+                'item': item.item, 
+                'cat_no': item.catalog_number,
+                'quantity': item.quantity, 
+                'unit_price': item.unit_price,
+                'description': item.description
+            }
+            for item in items_collection
+        ]
+        # Sort by item name so the audit log doesn't think the order change is a data change
+        return sorted(data, key=lambda x: (x['item'], x['cat_no'] or ''))

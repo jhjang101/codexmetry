@@ -8,6 +8,8 @@ from ..services.attachment_service import AttachmentService
 from ..services.purchase_orders_service import PurchaseOrderService
 from ..services.invoices_service import InvoiceService
 from ..services.clients_service import ClientService
+from ..services.audit_service import AuditLogService
+from ..services.orders_service import OrderService
 from ..utils.money import parse_to_cents
 from ..utils.auth import role_required
 from ..utils.docs import generate_doc_number
@@ -184,11 +186,15 @@ def view(id):
         if not expense:
             flash("Expense not found.", "error")
             return redirect(url_for('expenses.index'))
+        
+        tree = OrderService.get_deal_tree(expense.order_id)
+        history = AuditLogService.get_for_entity('Expense', id)
+
     except Exception as e:
         flash(f"Error loading expense: {str(e)}", "error")
         return redirect(url_for('expenses.index'))
 
-    return render_template('expenses/form.html', mode='view', expense=expense)
+    return render_template('expenses/form.html', mode='view', expense=expense, tree=tree, history=history)
 
 @bp.route('/edit/<int:id>', methods=['GET', 'POST'])
 @role_required(['admin', 'user'])

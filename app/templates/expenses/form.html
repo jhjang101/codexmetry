@@ -323,5 +323,16 @@
             {% include 'expenses/partials/attachment_zone.html' %}
         </section>
     </form>
+
+        <!-- PROJECT CONTEXTUAL HISTORY -->
+    {% if mode == 'view' %}
+        {% if tree %}
+            {% include 'partials/order_tree.html' %}
+        {% endif %}
+        
+        {# NEW: The Forensic Trail #}
+        {% include 'partials/audit_history.html' %}
+    {% endif %}
+
 </div>
 {% endblock %}

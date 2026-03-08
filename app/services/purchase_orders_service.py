@@ -1,5 +1,6 @@
 from .base_service import BaseService
 from ..models import PurchaseOrder, PoItem, OrderRegistry, Client, Quote, Invoice, InvoiceItem, Payment, Product, SettingsMetadata
+from .audit_service import AuditLogService
 from ..extensions import db
 from ..utils.docs import generate_doc_number
 from ..utils.money import parse_to_cents
@@ -211,7 +212,20 @@ class PurchaseOrderService(BaseService):
         db.session.flush()
 
         # 5. Save items
-        cls._save_items(po, items_data)
+        new_items_fingerprint = cls._save_items(po, items_data)
+
+        # 6. Prepare the Snapshot for the log
+        new_snapshot = clean_data.copy()
+        new_snapshot['line_items'] = new_items_fingerprint
+        new_snapshot['total_amount'] = po.total_amount
+
+        # 7. Record 'CREATE' Audit
+        AuditLogService.record(
+            target_id=po.id, 
+            target_type=cls.model.__name__, 
+            action='CREATE', 
+            new_data=new_snapshot
+        )
 
         db.session.commit()
         return po
@@ -260,12 +274,24 @@ class PurchaseOrderService(BaseService):
         # 3. Validate & transform header
         clean_data = cls._validate_and_transform(data)
 
-        # 4. Update Header
+        # 4. Audit_logs snapshot
+        old_snapshot = cls._get_snapshot(po)
+        old_snapshot['line_items'] = cls._get_items_fingerprint(po.items, 'quantity', 'agreed_unit_price')
+
+        # 5. Update Header
         for key, value in clean_data.items():
             setattr(po, key, value)
 
-        # 5. Save Items
-        cls._save_items(po, items_data)
+        # 6. Save Items
+        clean_data['line_items'] = cls._save_items(po, items_data)
+        clean_data['total_amount'] = po.total_amount
+
+        # 7. Deep Audit Trigger
+        AuditLogService.record(po_id, 
+                               cls.model.__name__, 
+                               'UPDATE', 
+                               old_data=old_snapshot, 
+                               new_data=clean_data)
 
         db.session.commit()
         return po
@@ -429,6 +455,15 @@ class PurchaseOrderService(BaseService):
         for inv in po.invoices:
             inv.is_active = False
 
+        # 5. Forensic Record before we flip the bit
+        AuditLogService.record(
+            target_id=id, 
+            target_type=cls.model.__name__, 
+            action='ARCHIVE', 
+            old_data={'is_active': True}, 
+            new_data={'is_active': False}
+        )
+
         # 5. Archive the PO itself
         po.is_active = False
 
@@ -506,6 +541,8 @@ class PurchaseOrderService(BaseService):
         db.session.execute(db.delete(PoItem).where(PoItem.po_id == po.id))
 
         total_cents = 0
+        fingerprint = []
+
         for row in items_data:
             product_id = row.get('product_id')
             if product_id:
@@ -522,4 +559,14 @@ class PurchaseOrderService(BaseService):
                 item.description = description
                 db.session.add(item)
 
+                # Generate fingerprint
+                fingerprint.append({
+                    'product_id': int(product_id), 
+                    'quantity': qty, 
+                    'unit_price': price,
+                    'description': description
+                })
+
         po.total_amount = total_cents
+
+        return sorted(fingerprint, key=lambda x: x['product_id'])

@@ -6,6 +6,7 @@ from ..services.purchase_orders_service import PurchaseOrderService
 from ..services.products_service import ProductService
 from ..services.clients_service import ClientService
 from ..services.attachment_service import AttachmentService
+from ..services.audit_service import AuditLogService
 from ..utils.money import parse_to_cents
 from ..utils.docs import generate_doc_number
 from ..utils.sync import sync_invoice_status, sync_po_status
@@ -201,11 +202,14 @@ def view(id):
         # 2. Fetch the Order History (The Tree)
         # We only fetch this in 'view' mode to keep 'edit' and 'add' modes fast.
         tree = OrderService.get_deal_tree(invoice.order_id)
+        history = AuditLogService.get_for_entity('Invoice', id)
+
 
         return render_template('invoices/form.html', 
                                mode='view', 
                                invoice=invoice, 
-                               tree=tree)
+                               tree=tree,
+                               history=history)
 
     except Exception as e:
         flash(f"Error loading invoice: {str(e)}", "error")

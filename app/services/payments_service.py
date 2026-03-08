@@ -1,6 +1,7 @@
 from .base_service import BaseService
 from .purchase_orders_service import PurchaseOrderService
 from ..models import Payment, Invoice, InvoiceItem, Product, PurchaseOrder, OrderRegistry, Client, SettingsMetadata
+from .audit_service import AuditLogService
 from ..extensions import db
 from ..utils.money import parse_to_cents, format_usd
 from sqlalchemy import select, or_, func
@@ -101,6 +102,18 @@ class PaymentService(BaseService):
         # 2. Create object
         payment = cls.model(**clean_data)
         db.session.add(payment)
+        db.session.flush()
+
+        # 3. Prepare the Snapshot for the log
+        new_snapshot = clean_data.copy()
+
+        # 4. Record 'CREATE' Audit
+        AuditLogService.record(
+            target_id=payment.id, 
+            target_type=cls.model.__name__, 
+            action='CREATE', 
+            new_data=new_snapshot
+        )
         
         db.session.commit()
         return payment
@@ -136,19 +149,29 @@ class PaymentService(BaseService):
         # 2. Standard Validate & transform
         clean_data = cls._validate_and_transform(data)
 
-        # 3. Update header
+        # 3. Audit_logs snapshot
+        old_snapshot = cls._get_snapshot(payment)
+
+        # 4. Update header
         for key, value in clean_data.items():
             setattr(payment, key, value)
+
+        # 5. Deep Audit Trigger
+        AuditLogService.record(payment_id, 
+                               cls.model.__name__, 
+                               'UPDATE', 
+                               old_data=old_snapshot, 
+                               new_data=clean_data)
 
         db.session.commit()
         return payment
     
     @classmethod
-    def archive_payment(cls, id: int) -> Payment | None:
+    def archive_payment(cls, payment_id: int) -> Payment | None:
         """
         Specialized archive with Credit Pool protection (Funding Deletion Guard).
         """
-        payment = cls.get_payment_by_id(id)
+        payment = cls.get_payment_by_id(payment_id)
         if not payment:
             return None
 
@@ -164,7 +187,16 @@ class PaymentService(BaseService):
                     f"is currently reserved by active invoices. Archive the invoices first."
                 )
 
-        # 2. Perform the Soft Delete
+        # 2. Forensic Record before we flip the bit
+        AuditLogService.record(
+            target_id=payment_id, 
+            target_type=cls.model.__name__, 
+            action='ARCHIVE', 
+            old_data={'is_active': True}, 
+            new_data={'is_active': False}
+        )
+
+        # 3. Perform the Soft Delete
         payment.is_active = False
         db.session.commit()
         return payment

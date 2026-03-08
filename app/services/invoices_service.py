@@ -143,15 +143,28 @@ class InvoiceService(BaseService):
         db.session.flush()
 
         # 4. Save items and calculate total
-        cls._save_items(invoice, items_data)
+        new_items_fingerprint = cls._save_items(invoice, items_data)
+
+        # 5. Prepare the Snapshot for the log
+        new_snapshot = clean_data.copy()
+        new_snapshot['line_items'] = new_items_fingerprint
+        new_snapshot['total_amount'] = invoice.total_amount
+
+        # 6. Record 'CREATE' Audit
+        AuditLogService.record(
+            target_id=invoice.id, 
+            target_type=cls.model.__name__, 
+            action='CREATE', 
+            new_data=new_snapshot
+        )
 
         db.session.commit()
         return invoice
     
     @classmethod
-    def edit_invoice(cls, id: int, data: dict, items_data: list[dict]) -> Invoice:
+    def edit_invoice(cls, invoice_id: int, data: dict, items_data: list[dict]) -> Invoice:
         """Atomic update of header and items with credit pool validation."""
-        invoice = cls.get_invoice_by_id(id)
+        invoice = cls.get_invoice_by_id(invoice_id)
         if not invoice:
             raise ValueError("Invoice not found.")
 
@@ -169,14 +182,26 @@ class InvoiceService(BaseService):
                 raise ValueError("Cannot change Purchase Order link: this invoice already has active payments.")
 
         # 2. Double-Spending Guard
-        cls._validate_deposit_usage(po_id=clean_data['po_id'], items_data=items_data, invoice_id=id)
+        cls._validate_deposit_usage(po_id=clean_data['po_id'], items_data=items_data, invoice_id=invoice_id)
 
-        # 3. Update Header
+        # 3. Audit_logs snapshot
+        old_snapshot = cls._get_snapshot(invoice)
+        old_snapshot['line_items'] = cls._get_items_fingerprint(invoice.items, 'quantity', 'billed_unit_price')
+        
+        # 4. Update Header
         for key, value in clean_data.items():
             setattr(invoice, key, value)
+        
+        # 5. Save items
+        clean_data['line_items'] = cls._save_items(invoice, items_data)
+        clean_data['total_amount'] = invoice.total_amount
 
-        # 4. Save items
-        cls._save_items(invoice, items_data)
+        # 6. Deep Audit Trigger
+        AuditLogService.record(invoice_id, 
+                               cls.model.__name__, 
+                               'UPDATE', 
+                               old_data=old_snapshot, 
+                               new_data=clean_data)
 
         db.session.commit()
         return invoice
@@ -252,7 +277,7 @@ class InvoiceService(BaseService):
         # Forensic Record before we flip the bit
         AuditLogService.record(
             target_id=id, 
-            target_type='Invoice', 
+            target_type=cls.model.__name__, 
             action='ARCHIVE', 
             old_data={'is_active': True}, 
             new_data={'is_active': False}
@@ -341,6 +366,8 @@ class InvoiceService(BaseService):
         db.session.execute(db.delete(InvoiceItem).where(InvoiceItem.invoice_id == invoice.id))
 
         total_cents = 0
+        fingerprint = []
+
         for row in items_data:
             product_id = row.get('product_id')
             if product_id:
@@ -358,7 +385,17 @@ class InvoiceService(BaseService):
                 item.description = description
                 db.session.add(item)
 
+                # Generate fingerprint
+                fingerprint.append({
+                    'product_id': int(product_id), 
+                    'quantity': qty, 
+                    'unit_price': price,
+                    'description': description
+                })
+
         invoice.total_amount = total_cents
+
+        return sorted(fingerprint, key=lambda x: x['product_id'])
 
     @classmethod
     def _validate_deposit_usage(cls, po_id: int, items_data: list[dict], invoice_id: int | None = None):

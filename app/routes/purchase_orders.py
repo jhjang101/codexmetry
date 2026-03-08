@@ -7,6 +7,7 @@ from ..services.products_service import ProductService
 from ..services.clients_service import ClientService
 from ..services.settings_service import PoTypeService
 from ..services.attachment_service import AttachmentService
+from ..services.audit_service import AuditLogService
 from ..utils.money import parse_to_cents
 from ..utils.auth import role_required
 from ..extensions import db
@@ -190,8 +191,9 @@ def view(id):
 
 
         tree = OrderService.get_deal_tree(po.order_id)
+        history = AuditLogService.get_for_entity('PurchaseOrder', id)
 
-        return render_template('purchase_orders/form.html', mode='view', po=po, tree=tree)
+        return render_template('purchase_orders/form.html', mode='view', po=po, tree=tree, history=history)
 
     except Exception as e:
         db.session.rollback()

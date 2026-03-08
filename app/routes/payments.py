@@ -8,6 +8,7 @@ from ..services.purchase_orders_service import PurchaseOrderService
 from ..services.clients_service import ClientService
 from ..services.settings_service import PaymentTypeService
 from ..services.attachment_service import AttachmentService
+from ..services.audit_service import AuditLogService
 from ..utils.money import parse_to_cents
 from ..utils.docs import generate_doc_number
 from ..utils.sync import sync_invoice_status, sync_po_status
@@ -235,12 +236,14 @@ def view(id):
             payment_number = f'{payment.order.order_number}'
 
         tree = OrderService.get_deal_tree(payment.order_id)
+        history = AuditLogService.get_for_entity('Payment', id)
 
         return render_template('payments/form.html', 
                             mode='view', 
                             payment=payment,
                             payment_number=payment_number,
-                            tree=tree)
+                            tree=tree,
+                            history=history)
 
     except Exception as e:
         flash(f"Error loading payment: {str(e)}", "error")

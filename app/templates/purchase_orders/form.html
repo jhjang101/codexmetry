@@ -368,8 +368,13 @@
     </form>
 
     <!-- PROJECT CONTEXTUAL HISTORY -->
-    {% if mode == 'view' and tree %}
-        {% include 'partials/order_tree.html' %}
+    {% if mode == 'view' %}
+        {% if tree %}
+            {% include 'partials/order_tree.html' %}
+        {% endif %}
+        
+        {# NEW: The Forensic Trail #}
+        {% include 'partials/audit_history.html' %}
     {% endif %}
 
 </div>
