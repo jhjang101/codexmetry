@@ -3,6 +3,7 @@ from ..models import (
     SettingsMetadata, PoType, ProductCategory, 
     ExpenseCategory, PaymentType, AdjustmentCategory
 )
+from .audit_service import AuditLogService
 from ..extensions import db
 from ..utils.money import parse_to_cents
 
@@ -53,13 +54,24 @@ class MetadataService(BaseService):
         """
         # 1. Fetch the singleton record
         metadata = cls.get_by_id(1)
+
+        # 2. Audit_logs snapshot
+        old_snapshot = cls._get_snapshot(metadata)
         
-        # 2. Validate & Transform
+        # 3. Validate & Transform
         clean_data = cls._validate_and_transform(data)
         
-        # 3. Apply changes
+        # 4. Apply changes
         for key, value in clean_data.items():
             setattr(metadata, key, value)
+        
+        # 5. Deep Audit Trigger
+        AuditLogService.record(
+            1, 
+            cls.model.__name__, 
+            'UPDATE', 
+            old_data=old_snapshot, 
+            new_data=clean_data)
             
         db.session.commit()
         return metadata

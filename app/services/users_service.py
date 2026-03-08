@@ -25,8 +25,17 @@ class UserService(BaseService):
         # 3. Initialize and set password
         user = cls.model(**clean_data)
         user.set_password(password) # Using the User model's hash method
-        
         db.session.add(user)
+        db.session.flush() # Get ID for audit
+
+        # 3. Record Audit
+        AuditLogService.record(
+            target_id=user.id, 
+            target_type=cls.model.__name__, 
+            action='CREATE', 
+            new_data=clean_data
+        )
+
         db.session.commit()
         return user
 
@@ -51,7 +60,12 @@ class UserService(BaseService):
             user.set_password(new_password)
 
         # 4. Deep Audit Trigger
-        AuditLogService.record(user_id, cls.model.__name__, 'UPDATE', old_data=old_snapshot, new_data=clean_data)
+        AuditLogService.record(
+            user_id, 
+            cls.model.__name__, 
+            'UPDATE', 
+            old_data=old_snapshot, 
+            new_data=clean_data)
 
         db.session.commit()
         return user

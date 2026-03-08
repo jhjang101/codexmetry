@@ -37,6 +37,11 @@ class AuditLogService:
         if val is None or val == "" or val == "None":
             return "None"
         
+        # If 'val' is already a string (like 'CDX-123'), don't try to look it up.
+        # Just return it as is.
+        if isinstance(val, str) and not val.isdigit():
+            return val
+        
         # 1. Explicit Branching for 'category_id'
         if field == 'category_id':
             label_attr = 'type'
@@ -57,8 +62,11 @@ class AuditLogService:
             model_class, label_attr = map_entry
 
         # 3. Database Fetch
-        obj = db.session.get(model_class, int(val))
-        return getattr(obj, label_attr) if obj else f"Unknown ({val})"
+        try:
+            obj = db.session.get(model_class, int(val))
+            return getattr(obj, label_attr) if obj else f"Unknown ({val})"
+        except (ValueError, TypeError):
+            return str(val) # Final fallback: return it as a string
 
     @classmethod
     def record(cls, 

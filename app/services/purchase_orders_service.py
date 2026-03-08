@@ -202,6 +202,14 @@ class PurchaseOrderService(BaseService):
         if quote_id:
             quote = db.session.get(Quote, quote_id)
             if quote:
+                # Audit the Quote BEFORE changing its state
+                AuditLogService.record(
+                    target_id=quote.id,
+                    target_type='Quote',
+                    action='UPDATE',
+                    old_data={'status': quote.status, 'order_id': None},
+                    new_data={'status': 'accepted', 'order_id': registry.id}
+                )
                 quote.status = 'accepted'
                 quote.order_id = registry.id
 
@@ -273,12 +281,26 @@ class PurchaseOrderService(BaseService):
             if old_quote_id:
                 old_quote = db.session.get(Quote, old_quote_id)
                 if old_quote:
+                    AuditLogService.record(
+                        target_id=old_quote.id,
+                        target_type='Quote',
+                        action='UPDATE',
+                        old_data={'status': 'accepted', 'order_id': po.order_id},
+                        new_data={'status': 'sent', 'order_id': None}
+                    )
                     old_quote.status = 'sent'
                     old_quote.order_id = None
             # Accept the new quote
             if new_quote_id:
                 new_quote = db.session.get(Quote, new_quote_id)
                 if new_quote:
+                    AuditLogService.record(
+                        target_id=new_quote.id,
+                        target_type='Quote',
+                        action='UPDATE',
+                        old_data={'status': new_quote.status, 'order_id': None},
+                        new_data={'status': 'accepted', 'order_id': po.order_id}
+                    )
                     new_quote.status = 'accepted'
                     new_quote.order_id = po.order_id
 
@@ -465,11 +487,19 @@ class PurchaseOrderService(BaseService):
 
         # 3. Revert the Quote (liberates it back to Lead status)
         if po.quote:
+            AuditLogService.record(
+        po.quote.id, 'Quote', 'UPDATE', 
+        old_data={'status': 'accepted', 'order_id': po.order_id}, 
+        new_data={'status': 'sent', 'order_id': None}
+    )
             po.quote.status = 'sent'
             po.quote.order_id = None
 
         # 4. Ripple Archive to Invoices
         for inv in po.invoices:
+            if inv.is_active:
+                AuditLogService.record(inv.id, 'Invoice', 'ARCHIVE', 
+                                old_data={'is_active': True}, new_data={'is_active': False})
             inv.is_active = False
 
         # 5. Forensic Record before we flip the bit

@@ -2,6 +2,7 @@ from ..extensions import db
 from ..models import SettingsMetadata
 from ..services.invoices_service import InvoiceService
 from ..services.purchase_orders_service import PurchaseOrderService
+from ..services.audit_service import AuditLogService
 
 def sync_invoice_status(invoice_id: int | None):
     """
@@ -28,7 +29,20 @@ def sync_invoice_status(invoice_id: int | None):
 
     # 4. Update and Commit if changed
     if invoice.status != new_status:
+        # 1. Capture old status for the forensic record
+        old_status = invoice.status
+        # 2. Apply change
         invoice.status = new_status
+        # 3. Record Audit
+        # We use 'UPDATE' but the changes dict makes it clear it was a status flip
+        AuditLogService.record(
+            target_id=invoice.id,
+            target_type='Invoice',
+            action='UPDATE',
+            old_data={'status': old_status},
+            new_data={'status': new_status}
+        )
+
         db.session.commit()
         return True
     return False
@@ -66,7 +80,20 @@ def sync_po_status(po_id: int | None):
 
     # 3. Update and Commit if the status changed
     if po.status != new_status:
+        # 1. Capture old status for the forensic record
+        old_status = po.status
+        # 2. Apply change
         po.status = new_status
+        # 3. Record Audit
+        # We use 'UPDATE' but the changes dict makes it clear it was a status flip
+        AuditLogService.record(
+            target_id=po.id,
+            target_type='PurchaseOrder',
+            action='UPDATE',
+            old_data={'status': old_status},
+            new_data={'status': new_status}
+        )
+
         db.session.commit()
         return True
         

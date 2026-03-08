@@ -11,6 +11,7 @@ from ..services.settings_service import (
     PaymentTypeService, 
     AdjustmentCategoryService
 )
+from ..services.audit_service import AuditLogService
 from ..utils.images import save_image
 from ..utils.money import parse_to_cents
 
@@ -40,8 +41,9 @@ def index():
         lookups[name] = service.get_all()
 
     users = UserService.get_all()
+    history = AuditLogService.get_for_entity('SettingsMetadata', 1)
         
-    return render_template('settings/settings.html', lookups=lookups, users=users)
+    return render_template('settings/settings.html', lookups=lookups, users=users, history=history)
 
 # Route to update metadata
 @bp.route('/metadata/update', methods=['POST'])
