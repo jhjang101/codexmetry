@@ -2,6 +2,7 @@ from .base_service import BaseService
 from .purchase_orders_service import PurchaseOrderService
 from ..models import Payment, Invoice, InvoiceItem, Product, PurchaseOrder, OrderRegistry, Client, SettingsMetadata
 from .audit_service import AuditLogService
+from .attachment_service import AttachmentService
 from ..extensions import db
 from ..utils.money import parse_to_cents, format_usd
 from sqlalchemy import select, or_, func
@@ -91,7 +92,7 @@ class PaymentService(BaseService):
                             direction=direction)
     
     @classmethod
-    def add_payment(cls, data: dict) -> Payment:
+    def add_payment(cls, data: dict, new_files=None) -> Payment:
         """
         Create new payment.
         Inherits Registry link from the Source document.
@@ -104,8 +105,13 @@ class PaymentService(BaseService):
         db.session.add(payment)
         db.session.flush()
 
-        # 3. Prepare the Snapshot for the log
+        # 3. Save Attahments
+        AttachmentService.commit('Payment', payment.id, new_files=new_files)
+
+        # 4. Prepare the Snapshot for the log
+        db.session.refresh(payment)
         new_snapshot = clean_data.copy()
+        new_snapshot['attachments'] = AttachmentService._get_fingerprint(payment.attachments)
 
         # 4. Record 'CREATE' Audit
         AuditLogService.record(
@@ -119,7 +125,7 @@ class PaymentService(BaseService):
         return payment
     
     @classmethod
-    def edit_payment(cls, payment_id: int, data: dict) -> Payment:
+    def edit_payment(cls, payment_id: int, data: dict, new_files=None, delete_ids=None) -> Payment:
         """
         Update existing payment.
         If credit has already been used by an invoice,
@@ -151,12 +157,18 @@ class PaymentService(BaseService):
 
         # 3. Audit_logs snapshot
         old_snapshot = cls._get_snapshot(payment)
+        old_snapshot['attachments'] = AttachmentService._get_fingerprint(payment.attachments)
 
         # 4. Update header
         for key, value in clean_data.items():
             setattr(payment, key, value)
 
-        # 5. Deep Audit Trigger
+        # 5. Save Attachments
+        AttachmentService.commit('Payment', payment_id, new_files=new_files, delete_ids=delete_ids)
+        db.session.refresh(payment)
+        clean_data['attachments'] = AttachmentService._get_fingerprint(payment.attachments)
+
+        # 6. Deep Audit Trigger
         AuditLogService.record(payment_id, 
                                cls.model.__name__, 
                                'UPDATE', 

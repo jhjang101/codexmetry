@@ -73,21 +73,20 @@ def add():
                 'note': request.form.get('note')
             }
 
-            # 2. Call Atomic Service
-            new_payment = PaymentService.add_payment(payment_data)
+            # 2. Save Attachments
+            new_files = request.files.getlist('attachments')
 
-            # 3. Sync status
+            # 3. Call Atomic Service
+            new_payment = PaymentService.add_payment(payment_data, new_files=new_files)
+
+            # 4. Sync status
             invoice_status_updated = False
             po_status_updated = False
             if new_payment.invoice_id:
                 invoice_status_updated = sync_invoice_status(new_payment.invoice_id)
                 po_status_updated = sync_po_status(new_payment.po_id)
-
-            # 4. Save Attachments
-            new_files = request.files.getlist('attachments')
-            AttachmentService.commit('Payment', new_payment.id, new_files=new_files)
             
-            # 4. Flash message
+            # 5. Flash message
             if new_payment.invoice:
                 payment_number = f'invoice {new_payment.invoice.invoice_number}'
             elif new_payment.purchase_order.po_number:
@@ -284,14 +283,19 @@ def edit(id):
                 'note': request.form.get('note')
             }
 
-            # 3. Call Atomic Service (Guard handles "Snapshot Lock")
-            PaymentService.edit_payment(id, payment_data)
+            # 3. Update Attachments
+            new_files = request.files.getlist('attachments')
+            raw_delete_ids = request.form.getlist('delete_ids[]') 
+            delete_ids = [int(fid) for fid in raw_delete_ids if fid.isdigit()]
+
+            # 4. Call Atomic Service (Guard handles "Snapshot Lock")
+            PaymentService.edit_payment(id, payment_data, new_files=new_files, delete_ids=delete_ids)
             
-            # 4. Capture State AFTER update
+            # 5. Capture State AFTER update
             new_invoice_id = payment.invoice_id
             new_po_id = payment.po_id
             
-            # 5. Sync Brain Logic
+            # 6. Sync Brain Logic
             # If the invoice link changed, sync the old Invoice and PO first
             if old_invoice_id != new_invoice_id:
                 if old_invoice_id:
@@ -302,12 +306,6 @@ def edit(id):
             if new_invoice_id:
                 invoice_status_updated = sync_invoice_status(new_invoice_id)
                 po_status_updated = sync_po_status(new_po_id)
-
-            # 6. Update Attachments
-            new_files = request.files.getlist('attachments')
-            raw_delete_ids = request.form.getlist('delete_ids[]') 
-            delete_ids = [int(fid) for fid in raw_delete_ids if fid.isdigit()]
-            AttachmentService.commit('Payment', id, new_files=new_files, delete_ids=delete_ids)
 
             # 7. Flash Messages
             flash(f"Payment updated successfully!", "success")

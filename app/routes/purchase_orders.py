@@ -73,12 +73,11 @@ def add():
             # 2. Parse Items
             items = _parse_items_form(request.form)
 
-            # 3. Call Atomic Service (Handles Registry birth and Quote linking)
-            new_po = PurchaseOrderService.add_po(header_data, items)
-
-            # 4. Handle Attachments
+            # 3. Parse Attachments
             new_files = request.files.getlist('attachments')
-            AttachmentService.commit('PurchaseOrder', new_po.id, new_files=new_files)
+
+            # 4. Call Atomic Service (Handles Registry birth and Quote linking)
+            new_po = PurchaseOrderService.add_po(header_data, items, new_files=new_files)
 
             # 5. Success Flow
             flash(f'PO {new_po.order.order_number} created successfully!', 'success')
@@ -227,14 +226,13 @@ def edit(id):
             # 2. Parse Line Items
             items = _parse_items_form(request.form)
 
-            # 3. Call Service (Handles Quote Release/Re-link)
-            PurchaseOrderService.edit_po(id, header_data, items)
-
-            # 4. Update Attachments
+            # 4. Parse Attachments
             new_files = request.files.getlist('attachments')
             raw_delete_ids = request.form.getlist('delete_ids[]')
             delete_ids = [int(fid) for fid in raw_delete_ids if fid.isdigit()]
-            AttachmentService.commit('PurchaseOrder', id, new_files=new_files, delete_ids=delete_ids)
+
+            # 3. Call Service (Handles Quote Release/Re-link)
+            PurchaseOrderService.edit_po(id, header_data, items, new_files=new_files, delete_ids=delete_ids)
 
             flash(f'PO {po.order.order_number} updated successfully!', 'success')
             response = make_response("", 200)

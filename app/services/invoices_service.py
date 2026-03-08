@@ -1,6 +1,7 @@
 from .base_service import BaseService
 from ..models import Invoice, InvoiceItem, PurchaseOrder, OrderRegistry, Client, Payment, Product, SettingsMetadata
 from .audit_service import AuditLogService
+from .attachment_service import AttachmentService
 from ..extensions import db
 from ..utils.money import parse_to_cents, format_usd
 from ..utils.manual_pagination import ManualPagination
@@ -125,7 +126,7 @@ class InvoiceService(BaseService):
                                 direction=direction)
     
     @classmethod
-    def add_invoice(cls, data: dict, items_data: list[dict]) -> Invoice:
+    def add_invoice(cls, data: dict, items_data: list[dict], new_files=None) -> Invoice:
         """
         Saves the Invoice header and items, inheriting Registry ID from the PO.
         Includes a Validation Guard to prevent 'Double Spending' of deposits.
@@ -145,10 +146,15 @@ class InvoiceService(BaseService):
         # 4. Save items and calculate total
         new_items_fingerprint = cls._save_items(invoice, items_data)
 
-        # 5. Prepare the Snapshot for the log
+        # 5. Save Attahments
+        AttachmentService.commit('Invoice', invoice.id, new_files=new_files)
+
+        # 6. Prepare the Snapshot for the log
+        db.session.refresh(invoice) 
         new_snapshot = clean_data.copy()
         new_snapshot['line_items'] = new_items_fingerprint
         new_snapshot['total_amount'] = invoice.total_amount
+        new_snapshot['attachments'] = AttachmentService._get_fingerprint(invoice.attachments)
 
         # 6. Record 'CREATE' Audit
         AuditLogService.record(
@@ -162,8 +168,13 @@ class InvoiceService(BaseService):
         return invoice
     
     @classmethod
-    def edit_invoice(cls, invoice_id: int, data: dict, items_data: list[dict]) -> Invoice:
-        """Atomic update of header and items with credit pool validation."""
+    def edit_invoice(cls, 
+                     invoice_id: int, 
+                     data: dict, 
+                     items_data: list[dict],
+                     new_files=None, 
+                     delete_ids=None) -> Invoice:
+        """Atomic update of header, items, and attachments with credit pool validation."""
         invoice = cls.get_invoice_by_id(invoice_id)
         if not invoice:
             raise ValueError("Invoice not found.")
@@ -187,6 +198,7 @@ class InvoiceService(BaseService):
         # 3. Audit_logs snapshot
         old_snapshot = cls._get_snapshot(invoice)
         old_snapshot['line_items'] = cls._get_items_fingerprint(invoice.items, 'quantity', 'billed_unit_price')
+        old_snapshot['attachments'] = AttachmentService._get_fingerprint(invoice.attachments)
         
         # 4. Update Header
         for key, value in clean_data.items():
@@ -196,7 +208,12 @@ class InvoiceService(BaseService):
         clean_data['line_items'] = cls._save_items(invoice, items_data)
         clean_data['total_amount'] = invoice.total_amount
 
-        # 6. Deep Audit Trigger
+        # 6. Save Attachments
+        AttachmentService.commit('Invoice', invoice_id, new_files=new_files, delete_ids=delete_ids)
+        db.session.refresh(invoice)
+        clean_data['attachments'] = AttachmentService._get_fingerprint(invoice.attachments)
+
+        # 7. Deep Audit Trigger
         AuditLogService.record(invoice_id, 
                                cls.model.__name__, 
                                'UPDATE', 

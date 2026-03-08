@@ -81,14 +81,12 @@ def add():
             # This helper converts the parallel lists into a list of dictionaries
             items = _parse_items_form(request.form)
             
-            # 3. Call the Atomic Service method
-            # This handles numbering, fallback logic, and line item saving
-            new_expense = ExpenseService.add_expense(header_data, items)
-
-            # 4. Handle Attachments
-            # We call this after the service returns the saved expense object
+            # 3. Parse Attachments
             new_files = request.files.getlist('attachments')
-            AttachmentService.commit('Expense', new_expense.id, new_files=new_files)
+
+            # 4. Call the Atomic Service method
+            # This handles numbering, fallback logic, line item saving, and attachments saving.
+            new_expense = ExpenseService.add_expense(header_data, items, new_files=new_files)
             
             # 5. Success Feedback
             flash(f"Expense {new_expense.expense_number} recorded successfully!", "success")
@@ -223,14 +221,13 @@ def edit(id):
             # 2. Parse Items
             items = _parse_items_form(request.form)
 
-            # 3. Call Atomic Service
-            ExpenseService.edit_expense(id, header_data, items)
-
-            # 4. Update Attachments
+            # 3. Update Attachments
             new_files = request.files.getlist('attachments')
             raw_delete_ids = request.form.getlist('delete_ids[]') 
             delete_ids = [int(fid) for fid in raw_delete_ids if fid.isdigit()]
-            AttachmentService.commit('Expense', id, new_files=new_files, delete_ids=delete_ids)
+
+            # 4. Call Atomic Service
+            ExpenseService.edit_expense(id, header_data, items, new_files=new_files, delete_ids=delete_ids)
 
             flash(f"Expense {expense.expense_number} updated successfully!", "success")
             response = make_response("", 200)

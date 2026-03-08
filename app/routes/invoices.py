@@ -74,18 +74,16 @@ def add():
             # 2. Parse Items
             items = _parse_items_form(request.form)
 
-            # 3. Save Invoice and Line Items
-            new_invoice = InvoiceService.add_invoice(header_data, items)
+            # 3. Parse Attachments
+            new_files = request.files.getlist('attachments')
 
-            # 4. Sync invoice and po status
+            # 4. Save Invoice and Line Items
+            new_invoice = InvoiceService.add_invoice(header_data, items, new_files=new_files)
+
+            # 5. Sync invoice and po status
             # This handles the case where the invoice is fully covered by a deposit
             sync_invoice_status(new_invoice.id)
-            
             po_status_updated = sync_po_status(new_invoice.po_id)
-
-            # 5. Save Attachments
-            new_files = request.files.getlist('attachments')
-            AttachmentService.commit('Invoice', new_invoice.id, new_files=new_files)
             
             flash(f"Invoice {new_invoice.invoice_number} created!", "success")
             if po_status_updated:
@@ -248,11 +246,16 @@ def edit(id):
 
             # 3. Parse Items
             items = _parse_items_form(request.form)
+            
+            # 4. Update Attachments (Handle new and marked for delete)
+            new_files = request.files.getlist('attachments')
+            raw_delete_ids = request.form.getlist('delete_ids[]') 
+            delete_ids = [int(fid) for fid in raw_delete_ids if fid.isdigit()]
 
-            # 4. Update Invoice and Line Items
-            InvoiceService.edit_invoice(id, header_data, items)
+            # 5. Update Invoice and Line Items
+            InvoiceService.edit_invoice(id, header_data, items, new_files=new_files, delete_ids=delete_ids)
 
-            # 5. Sync logic (Invoice and PO status ripples)
+            # 6. Sync logic (Invoice and PO status ripples)
             sync_invoice_status(invoice.id)
 
             new_po_id = invoice.po_id
@@ -260,12 +263,6 @@ def edit(id):
             old_po_status_updated = False
             if old_po_id != new_po_id:
                 old_po_status_updated = sync_po_status(old_po_id)
-            
-            # 6. Update Attachments (Handle new and marked for delete)
-            new_files = request.files.getlist('attachments')
-            raw_delete_ids = request.form.getlist('delete_ids[]') 
-            delete_ids = [int(fid) for fid in raw_delete_ids if fid.isdigit()]
-            AttachmentService.commit('Invoice', id, new_files=new_files, delete_ids=delete_ids)
 
             # 7. Flash Messages
             flash(f"Invoice {invoice.invoice_number} updated successfully!", "success")

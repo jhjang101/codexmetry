@@ -1,6 +1,7 @@
 from .base_service import BaseService
 from ..models import Adjustment, AdjustmentCategory, SettingsMetadata
 from .audit_service import AuditLogService
+from .attachment_service import AttachmentService
 from ..extensions import db
 from ..utils.docs import generate_doc_number
 from ..utils.money import parse_to_cents
@@ -66,7 +67,7 @@ class AdjustmentService(BaseService):
                             direction=direction)
 
     @classmethod
-    def add_adjustment(cls, data: dict) -> Adjustment:
+    def add_adjustment(cls, data: dict, new_files=None) -> Adjustment:
         """
         Atomic creation of a non-operational adjustment.
         """
@@ -78,10 +79,15 @@ class AdjustmentService(BaseService):
         db.session.add(adjustment)
         db.session.flush() # Flush to get adjustment.id before commit
 
-        # 3. Prepare the Snapshot for the log
-        new_snapshot = clean_data.copy()
+        # 3. Save Attachments
+        AttachmentService.commit('Adjustment', adjustment.id, new_files=new_files)
 
-        # 4. Record 'CREATE' Audit
+        # 4. Prepare the Snapshot for the log
+        db.session.refresh(adjustment)
+        new_snapshot = clean_data.copy()
+        new_snapshot['attachments'] = AttachmentService._get_fingerprint(adjustment.attachments)
+
+        # 5. Record 'CREATE' Audit
         AuditLogService.record(
             target_id=adjustment.id, 
             target_type=cls.model.__name__, 
@@ -93,7 +99,7 @@ class AdjustmentService(BaseService):
         return adjustment
 
     @classmethod
-    def edit_adjustment(cls, adjustment_id: int, data: dict) -> Adjustment:
+    def edit_adjustment(cls, adjustment_id: int, data: dict, new_files=None, delete_ids=None) -> Adjustment:
         """
         Update an existing adjustment.
         """
@@ -105,12 +111,18 @@ class AdjustmentService(BaseService):
         # 2. Validate & transform
         clean_data = cls._validate_and_transform(data)
 
-        # 4. Audit_logs snapshot
+        # 3. Audit_logs snapshot
         old_snapshot = cls._get_snapshot(adjustment)
+        old_snapshot['attachments'] = AttachmentService._get_fingerprint(adjustment.attachments)
 
-        # 3. Update attributes
+        # 4. Update attributes
         for key, value in clean_data.items():
             setattr(adjustment, key, value)
+
+        # 7. Save Attachments
+        AttachmentService.commit('Adjustment', adjustment_id, new_files=new_files, delete_ids=delete_ids)
+        db.session.refresh(adjustment)
+        clean_data['attachments'] = AttachmentService._get_fingerprint(adjustment.attachments)
 
         # 4. Deep Audit Trigger
         AuditLogService.record(adjustment_id, 

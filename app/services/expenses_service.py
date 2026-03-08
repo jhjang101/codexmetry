@@ -3,6 +3,7 @@ from ..models import (Expense, ExpenseItem,  Vendor,
                       ExpenseCategory, Client, OrderRegistry, 
                       PurchaseOrder, Invoice, SettingsMetadata)
 from .audit_service import AuditLogService
+from .attachment_service import AttachmentService
 from ..extensions import db
 from ..utils.docs import generate_doc_number
 from ..utils.money import parse_to_cents
@@ -88,7 +89,7 @@ class ExpenseService(BaseService):
                             direction=direction)
     
     @classmethod
-    def add_expense(cls, data: dict, items_data: list[dict]) -> Expense:
+    def add_expense(cls, data: dict, items_data: list[dict], new_files=None) -> Expense:
         """
         Create new Expense header and items.
         Logic: If description is blank, fall back to the first item description.
@@ -104,9 +105,14 @@ class ExpenseService(BaseService):
         # 3. Save items and update total
         new_items_fingerprint = cls._save_items(expense, items_data)
 
-        # 4. Prepare the Snapshot for the log
+        # 4. Save Attahments
+        AttachmentService.commit('Expense', expense.id, new_files=new_files)
+
+        # 5. Prepare the Snapshot for the log
+        db.session.refresh(expense) 
         new_snapshot = clean_data.copy()
         new_snapshot['line_items'] = new_items_fingerprint
+        new_snapshot['attachments'] = AttachmentService._get_fingerprint(expense.attachments)
 
         # 5. Record 'CREATE' Audit
         AuditLogService.record(
@@ -120,9 +126,14 @@ class ExpenseService(BaseService):
         return expense
     
     @classmethod
-    def edit_expense(cls, expense_id: int, data: dict, items_data: list[dict]) -> Expense:
+    def edit_expense(cls, 
+                     expense_id: int, 
+                     data: dict, 
+                     items_data: list[dict], 
+                     new_files=None, 
+                     delete_ids=None) -> Expense:
         """
-        Update Expense header and items.
+        Update Expense header, items, and attachments.
         """
         # 1. Validation
         expense = cls.get_expense_by_id(expense_id)
@@ -135,6 +146,7 @@ class ExpenseService(BaseService):
         # 3. Audit_logs snapshot
         old_snapshot = cls._get_snapshot(expense)
         old_snapshot['items'] = cls._get_items_fingerprint(expense.items)
+        old_snapshot['atachments'] = AttachmentService._get_fingerprint(expense.attachments)
 
         # 4. Update header attributes
         for key, value in clean_data.items():
@@ -143,7 +155,12 @@ class ExpenseService(BaseService):
         # 5. Save items (Wipe and re-insert)
         clean_data['items'] = cls._save_items(expense, items_data)
 
-        # 6. Deep Audit Trigger
+        # 6. Save Attachments
+        AttachmentService.commit('Expense', expense_id, new_files=new_files, delete_ids=delete_ids)
+        db.session.refresh(expense)
+        clean_data['attachments'] = AttachmentService._get_fingerprint(expense.attachments)
+
+        # 7. Deep Audit Trigger
         AuditLogService.record(expense_id, 
                                cls.model.__name__, 
                                'UPDATE', 

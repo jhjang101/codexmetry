@@ -1,6 +1,7 @@
 from .base_service import BaseService
 from ..models import PurchaseOrder, PoItem, OrderRegistry, Client, Quote, Invoice, InvoiceItem, Payment, Product, SettingsMetadata
 from .audit_service import AuditLogService
+from .attachment_service import AttachmentService
 from ..extensions import db
 from ..utils.docs import generate_doc_number
 from ..utils.money import parse_to_cents
@@ -182,7 +183,7 @@ class PurchaseOrderService(BaseService):
                                 direction=direction)
 
     @classmethod
-    def add_po(cls, data: dict, items_data: list[dict]) -> PurchaseOrder:
+    def add_po(cls, data: dict, items_data: list[dict], new_files=None) -> PurchaseOrder:
         """
         Create new Order Registry and Purchase Order with items.
         """
@@ -214,10 +215,15 @@ class PurchaseOrderService(BaseService):
         # 5. Save items
         new_items_fingerprint = cls._save_items(po, items_data)
 
+        # 6. Save Attahments
+        AttachmentService.commit('PurchaseOrder', po.id, new_files=new_files)
+
         # 6. Prepare the Snapshot for the log
+        db.session.refresh(po) 
         new_snapshot = clean_data.copy()
         new_snapshot['line_items'] = new_items_fingerprint
         new_snapshot['total_amount'] = po.total_amount
+        new_snapshot['attachments'] = AttachmentService._get_fingerprint(po.attachments)
 
         # 7. Record 'CREATE' Audit
         AuditLogService.record(
@@ -231,9 +237,14 @@ class PurchaseOrderService(BaseService):
         return po
     
     @classmethod
-    def edit_po(cls, po_id: int, data: dict, items_data: list[dict]) -> PurchaseOrder:
+    def edit_po(cls, 
+                po_id: int, 
+                data: dict, 
+                items_data: list[dict],
+                new_files=None, 
+                delete_ids=None) -> PurchaseOrder:
         """
-        Update PO header and line items.
+        Update PO header, line items, and attachments.
         Handles Quote status reversion if the link changed.
         """
         # 1. Validation
@@ -277,6 +288,7 @@ class PurchaseOrderService(BaseService):
         # 4. Audit_logs snapshot
         old_snapshot = cls._get_snapshot(po)
         old_snapshot['line_items'] = cls._get_items_fingerprint(po.items, 'quantity', 'agreed_unit_price')
+        old_snapshot['attachments'] = AttachmentService._get_fingerprint(po.attachments)
 
         # 5. Update Header
         for key, value in clean_data.items():
@@ -286,7 +298,12 @@ class PurchaseOrderService(BaseService):
         clean_data['line_items'] = cls._save_items(po, items_data)
         clean_data['total_amount'] = po.total_amount
 
-        # 7. Deep Audit Trigger
+        # 7. Save Attachments
+        AttachmentService.commit('PurchaseOrder', po_id, new_files=new_files, delete_ids=delete_ids)
+        db.session.refresh(po)
+        clean_data['attachments'] = AttachmentService._get_fingerprint(po.attachments)
+
+        # 8. Deep Audit Trigger
         AuditLogService.record(po_id, 
                                cls.model.__name__, 
                                'UPDATE', 

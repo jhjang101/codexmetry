@@ -1,6 +1,7 @@
 from .base_service import BaseService
 from ..models import Quote, QuoteItem, Client, OrderRegistry, SettingsMetadata
 from .audit_service import AuditLogService
+from .attachment_service import AttachmentService
 from ..extensions import db
 from ..utils.money import parse_to_cents
 from sqlalchemy import select, or_
@@ -72,7 +73,7 @@ class QuoteService(BaseService):
                             direction=direction)
     
     @classmethod
-    def add_quote(cls, data: dict, items_data: list[dict]) -> Quote:
+    def add_quote(cls, data: dict, items_data: list[dict], new_files=None) -> Quote:
         """
         Create new Quote header and line items.
         """
@@ -87,10 +88,15 @@ class QuoteService(BaseService):
         # 3. Save items and calculate total
         new_items_fingerprint = cls._save_items(quote, items_data)
 
-        # 4. Prepare the Snapshot for the log
+        # 4. Save Attachments
+        AttachmentService.commit('Quote', quote.id, new_files=new_files)
+
+        # 5. Prepare the Snapshot for the log
+        db.session.refresh(quote) 
         new_snapshot = clean_data.copy()
         new_snapshot['line_items'] = new_items_fingerprint
         new_snapshot['total_amount'] = quote.total_amount
+        new_snapshot['attachments'] = AttachmentService._get_fingerprint(quote.attachments)
 
         # 5. Record 'CREATE' Audit
         AuditLogService.record(
@@ -104,31 +110,40 @@ class QuoteService(BaseService):
         return quote
     
     @classmethod
-    def edit_quote(cls, quote_id: int, data: dict, items_data: list[dict]) -> Quote:
+    def edit_quote(cls, 
+                   quote_id: int, 
+                   data: dict, 
+                   items_data: list[dict], 
+                   new_files=None, 
+                   delete_ids=None) -> Quote:
         """
-        Update Quote header and line items.
+        Update Quote header, line items, and attachments.
         """
-        # 1. Validation
-        quote = cls.get_quote_by_id(quote_id)
-        if not quote:
-            raise ValueError("Quote not found.")
-
-        # 2. Validate & transform
-        clean_data = cls._validate_and_transform(data)
-
-        # 3. Audit_logs snapshot
+        quote = cls.get_by_id(quote_id)
+        
+        # 1. Snapshot BEFORE (Header + Items + Attachments)
         old_snapshot = cls._get_snapshot(quote)
         old_snapshot['line_items'] = cls._get_items_fingerprint(quote.items, 'quantity', 'quoted_unit_price')
+        old_snapshot['attachments'] = AttachmentService._get_fingerprint(quote.attachments)
 
-        # 3. Update header
+        # 2. Update Header
+        clean_data = cls._validate_and_transform(data)
         for key, value in clean_data.items():
             setattr(quote, key, value)
 
-        # 4. Save items (Wipe and re-insert)
+        # 3. Update Line Items
         clean_data['line_items'] = cls._save_items(quote, items_data)
-        clean_data['total_amount'] = quote.total_amount 
+        clean_data['total_amount'] = quote.total_amount
 
-        # 5. Deep Audit Trigger
+        # 4. Update Attachments (Commits files to disk/db)
+        AttachmentService.commit('Quote', quote_id, new_files=new_files, delete_ids=delete_ids)
+        
+        # 5. Snapshot AFTER
+        # We refresh the quote object so it sees the new attachment records
+        db.session.refresh(quote) 
+        clean_data['attachments'] = AttachmentService._get_fingerprint(quote.attachments)
+
+        # 6. Record Audit
         AuditLogService.record(quote_id, 
                                cls.model.__name__, 
                                'UPDATE', 

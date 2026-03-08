@@ -61,13 +61,12 @@ def add():
                 'category_id': request.form.get('category_id'),
                 'note': request.form.get('note')
             }
-            
-            # 2. Call Service (handles numbering/parsing)
-            new_adjustment = AdjustmentService.add_adjustment(data)
 
-            # 3. Handle Attachments
+            # 2. Parse Attachments
             new_files = request.files.getlist('attachments')
-            AttachmentService.commit('Adjustment', new_adjustment.id, new_files=new_files)
+            
+            # 3. Call Service (handles numbering/parsing)
+            new_adjustment = AdjustmentService.add_adjustment(data, new_files=new_files)
             
             flash(f"Adjustment {new_adjustment.adjustment_number} recorded!", "success")
             # The Safe Save Redirect: Forces a clean page load to 'View' mode
@@ -127,15 +126,14 @@ def edit(id):
                 'category_id': request.form.get('category_id'),
                 'note': request.form.get('note')
             }
-            
-            # 2. Call Atomic Service
-            AdjustmentService.edit_adjustment(id, update_data)
 
-            # 3. Update Attachments
+            # 2. Parse Attachments
             new_files = request.files.getlist('attachments')
             raw_delete_ids = request.form.getlist('delete_ids[]') 
             delete_ids = [int(fid) for fid in raw_delete_ids if fid.isdigit()]
-            AttachmentService.commit('Adjustment', id, new_files=new_files, delete_ids=delete_ids)
+            
+            # 3. Call Atomic Service
+            AdjustmentService.edit_adjustment(id, update_data, new_files=new_files, delete_ids=delete_ids)
 
             # 4. Success Feedback
             flash(f"Adjustment {adjustment.adjustment_number} updated successfully!", "success")

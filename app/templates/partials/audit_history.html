@@ -47,9 +47,11 @@
                                     <i class="fa-solid fa-arrow-right text-[10px] text-gray-300"></i>
                                     <span class="text-blue-700 font-medium">{{ values[1] | usd }}</span>
                                 
-                                {# Line Item Summary Logic #}
-                                {% elif field in ['line_items', 'items', 'contacts'] %}
-                                    <span class="text-blue-700 font-medium italic">{{ field | capitalize }} modified.</span>
+                                {# Sub-form Summary Logic #}
+                                {% elif field in ['line_items', 'items', 'contacts', 'attachments'] %}
+                                    <span class="text-blue-700 font-medium italic">
+                                        {{ field | replace('_', ' ') | capitalize }} modified.
+                                    </span>
                                 
                                 {# Default Text Logic #}
                                 {% else %}

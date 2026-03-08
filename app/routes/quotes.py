@@ -72,12 +72,11 @@ def add():
             # 2. Parse Items
             items = _parse_items_form(request.form)
 
-            # 3. Call Service
-            new_quote = QuoteService.add_quote(header_data, items)
-
-            # 4. Save Attachments
+            # 3. Parse Attachments
             new_files = request.files.getlist('attachments')
-            AttachmentService.commit('Quote', new_quote.id, new_files=new_files)
+
+            # 4. Call Service
+            new_quote = QuoteService.add_quote(header_data, items, new_files=new_files)
             
             # 5. Success Flow
             flash(f"Quote {new_quote.quote_number} added successfully!", "success")
@@ -167,14 +166,13 @@ def edit(id):
             # 2. Parse Items
             items = _parse_items_form(request.form)
 
-            # 3. Call Service
-            QuoteService.edit_quote(id, header_data, items)
-
-            # 4. Update Attachments
+            # 3. Parse Attachments
             new_files = request.files.getlist('attachments')
             raw_delete_ids = request.form.getlist('delete_ids[]') 
             delete_ids = [int(fid) for fid in raw_delete_ids if fid.isdigit()]
-            AttachmentService.commit('Quote', id, new_files=new_files, delete_ids=delete_ids)
+
+            # 4. Call Service
+            QuoteService.edit_quote(id, header_data, items, new_files=new_files, delete_ids=delete_ids)
 
             flash(f"Quote {quote.quote_number} updated successfully!", "success")
             response = make_response("", 200)

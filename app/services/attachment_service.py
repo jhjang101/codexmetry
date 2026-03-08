@@ -57,3 +57,12 @@ class AttachmentService(BaseService):
                     db.session.add(new_attachment)
 
         db.session.commit()
+
+    @classmethod
+    def _get_fingerprint(cls, attachments_collection):
+        """Brain: Converts a collection of attachments into a comparable list."""
+        data = [
+            {'name': a.file_name, 'path': a.file_path}
+            for a in attachments_collection
+        ]
+        return sorted(data, key=lambda x: x['name'])
