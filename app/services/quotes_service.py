@@ -85,7 +85,20 @@ class QuoteService(BaseService):
         db.session.flush() # Get ID for items
 
         # 3. Save items and calculate total
-        cls._save_items(quote, items_data)
+        new_items_fingerprint = cls._save_items(quote, items_data)
+
+        # 4. Prepare the Snapshot for the log
+        new_snapshot = clean_data.copy()
+        new_snapshot['line_items'] = new_items_fingerprint
+        new_snapshot['total_amount'] = quote.total_amount
+
+        # 5. Record 'CREATE' Audit
+        AuditLogService.record(
+            target_id=quote.id, 
+            target_type='Quote', 
+            action='CREATE', 
+            new_data=new_snapshot
+        )
 
         db.session.commit()
         return quote
@@ -114,7 +127,7 @@ class QuoteService(BaseService):
         # 4. Save items (Wipe and re-insert)
         clean_data['line_items'] = cls._save_items(quote, items_data)
         clean_data['total_amount'] = quote.total_amount 
-        
+
         # 5. Deep Audit Trigger
         AuditLogService.record(quote_id, 
                                cls.model.__name__, 

@@ -1,5 +1,6 @@
 from .base_service import BaseService
 from ..models import Invoice, InvoiceItem, PurchaseOrder, OrderRegistry, Client, Payment, Product, SettingsMetadata
+from .audit_service import AuditLogService
 from ..extensions import db
 from ..utils.money import parse_to_cents, format_usd
 from ..utils.manual_pagination import ManualPagination
@@ -247,6 +248,15 @@ class InvoiceService(BaseService):
 
         # Check for active payments specifically linked to this invoice
         has_payments = any(p.is_active for p in invoice.payments)
+
+        # Forensic Record before we flip the bit
+        AuditLogService.record(
+            target_id=id, 
+            target_type='Invoice', 
+            action='ARCHIVE', 
+            old_data={'is_active': True}, 
+            new_data={'is_active': False}
+        )
 
         # Soft delete
         invoice.is_active = False

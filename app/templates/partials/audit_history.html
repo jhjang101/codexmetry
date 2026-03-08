@@ -1,0 +1,68 @@
+{% if history %}
+<section class="bg-white border border-gray-200 rounded-lg p-6 mt-4 shadow-sm">
+    <h3 class="text-sm font-bold text-gray-500 uppercase tracking-widest mb-4 border-b pb-2">
+        <i class="fa-solid fa-clock-rotate-left mr-2"></i>Activity Log
+    </h3>
+
+    <div class="space-y-3">
+        {% for log in history %}
+        <div class="flex items-start gap-4 text-xs group">
+            <!-- Timestamp Column -->
+            <div class="w-32 flex-shrink-0 text-gray-400 font-mono">
+                {{ (log.timestamp | localize).strftime('%Y-%m-%d %H:%M') }}
+            </div>
+
+            <!-- User Pill -->
+            <div class="w-24 flex-shrink-0">
+                <span class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-medium truncate block">
+                    {{ log.user.username if log.user else 'System' }}
+                </span>
+            </div>
+
+            <!-- Action & Changes -->
+            <div class="flex-1 text-gray-700">
+                <span class="font-bold uppercase text-[10px] mr-2 
+                    {% if log.action == 'CREATE' %}text-green-600
+                    {% elif log.action == 'ARCHIVE' %}text-red-600
+                    {% else %}text-blue-600{% endif %}">
+                    {{ log.action }}
+                </span>
+
+                {% if log.action == 'CREATE' %}
+                    <span class="italic text-gray-500 font-medium">Record created.</span>
+                {% elif log.action == 'ARCHIVE' %}
+                    <span class="italic text-red-500 font-medium">Record moved to archives.</span>
+                {% elif log.changes %}
+                    <ul class="mt-1 space-y-1 bg-gray-50 p-2 rounded border border-gray-100">
+                        {% for field, values in log.changes.items() %}
+                            <li class="flex items-center gap-2">
+                                <span class="font-semibold text-gray-500 w-24">
+                                    {{ field | replace('_', ' ') | capitalize }}:
+                                </span>
+                                
+                                {# Money Formatting Logic #}
+                                {% if 'amount' in field or 'price' in field or 'total' in field %}
+                                    <span class="text-gray-400">{{ values[0] | usd if values[0] is not none else 'None' }}</span>
+                                    <i class="fa-solid fa-arrow-right text-[10px] text-gray-300"></i>
+                                    <span class="text-blue-700 font-medium">{{ values[1] | usd }}</span>
+                                
+                                {# Line Item Summary Logic #}
+                                {% elif field == 'line_items' %}
+                                    <span class="text-blue-700 font-medium italic">Table modified.</span>
+                                
+                                {# Default Text Logic #}
+                                {% else %}
+                                    <span class="text-gray-400 truncate max-w-[20ch]">{{ values[0] if values[0] is not none else 'None' }}</span>
+                                    <i class="fa-solid fa-arrow-right text-[10px] text-gray-300"></i>
+                                    <span class="text-gray-800 font-medium truncate max-w-[20ch]">{{ values[1] }}</span>
+                                {% endif %}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}

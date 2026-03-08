@@ -5,6 +5,7 @@ from ..services.quotes_service import QuoteService
 from ..services.clients_service import ClientService
 from ..services.products_service import ProductService
 from ..services.attachment_service import AttachmentService
+from ..services.audit_service import AuditLogService
 from ..utils.money import parse_to_cents
 from ..utils.docs import generate_doc_number
 from ..utils.auth import role_required
@@ -134,8 +135,9 @@ def view(id):
             return redirect(url_for('quotes.index'))
         
         tree = OrderService.get_deal_tree(quote.order_id)
+        history = AuditLogService.get_for_entity('Quote', id)
 
-        return render_template('quotes/form.html', mode='view', quote=quote, tree=tree)
+        return render_template('quotes/form.html', mode='view', quote=quote, tree=tree, history=history)
 
     except Exception as e:
         flash(f"Error loading quote: {str(e)}", "error")

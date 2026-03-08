@@ -16,10 +16,23 @@ class BaseService:
     
     @classmethod
     def add(cls, **kwargs):
+        """Generic add with automated 'CREATE' audit."""
         row = cls.model(**kwargs)
         db.session.add(row)
+        db.session.flush() # Secure the ID for the log
+        
+        # Snapshot of the newborn record
+        new_snapshot = cls._get_snapshot(row)
+        
+        AuditLogService.record(
+            target_id=row.id, 
+            target_type=cls.model.__name__, 
+            action='CREATE', 
+            new_data=new_snapshot
+        )
+        
         db.session.commit()
-        return row  
+        return row
     
     @classmethod
     def update(cls, id, **kwargs):
@@ -47,7 +60,18 @@ class BaseService:
     
     @classmethod
     def archive(cls, id):
+        """Generic archive with automated 'ARCHIVE' audit."""
         row = cls.get_by_id(id)
+        
+        # Log the specific lifecycle change
+        AuditLogService.record(
+            target_id=id, 
+            target_type=cls.model.__name__, 
+            action='ARCHIVE', 
+            old_data={'is_active': True}, 
+            new_data={'is_active': False}
+        )
+        
         row.is_active = False
         db.session.commit()
         return row

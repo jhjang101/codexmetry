@@ -3,6 +3,8 @@ from flask import has_request_context
 from datetime import datetime, date
 from ..extensions import db
 from ..models import AuditLog
+from sqlalchemy import select
+from sqlalchemy.orm import joinedload
 
 class AuditLogService:
     # Fields to ignore globally
@@ -43,7 +45,7 @@ class AuditLogService:
             
 
             # Forensic Print for Debugging
-            print(f"--- AUDIT LOG: {action} on {target_type} ID {target_id} by User {user_id} ---")
+            print(f"--- AUDIT LOG: {action} on {target_type} ID {target_id} by User ID {user_id} ---")
             print(f"Changes: {changes}")
 
 
@@ -57,3 +59,17 @@ class AuditLogService:
 
             db.session.add(log)
             # We do NOT commit here. The calling service handles the transaction.
+
+    @classmethod
+    def get_for_entity(cls, target_type: str, target_id: int):
+        """Brain: Fetches all forensic records for a specific document."""
+        stmt = (
+            select(AuditLog)
+            .options(joinedload(AuditLog.user)) # Eager load the actor
+            .where(
+                AuditLog.target_type == target_type,
+                AuditLog.target_id == target_id
+            )
+            .order_by(AuditLog.timestamp.desc())
+        )
+        return db.session.execute(stmt).scalars().all()
