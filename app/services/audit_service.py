@@ -37,11 +37,18 @@ class AuditLogService:
         if val is None or val == "" or val == "None":
             return "None"
         
-        # 1. Handle Ambiguous Category Logic
+        # 1. Explicit Branching for 'category_id'
         if field == 'category_id':
-            # Products/Quotes use Product Categories, Expenses use Expense Categories
-            model_class = ProductCategory if target_type in ['Product', 'Quote'] else ExpenseCategory
             label_attr = 'type'
+            if target_type == 'Product':
+                model_class = ProductCategory
+            elif target_type == 'Expense':
+                model_class = ExpenseCategory
+            elif target_type == 'Adjustment':
+                model_class = AdjustmentCategory
+            else:
+                # If a category_id appears on an unexpected model, return the raw ID
+                return val 
         else:
             # 2. Standard Lookup
             map_entry = cls.RELATION_MAP.get(field)

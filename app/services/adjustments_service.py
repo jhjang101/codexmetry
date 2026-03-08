@@ -1,5 +1,6 @@
 from .base_service import BaseService
 from ..models import Adjustment, AdjustmentCategory, SettingsMetadata
+from .audit_service import AuditLogService
 from ..extensions import db
 from ..utils.docs import generate_doc_number
 from ..utils.money import parse_to_cents
@@ -75,6 +76,18 @@ class AdjustmentService(BaseService):
         # 2. Create header
         adjustment = cls.model(**clean_data)
         db.session.add(adjustment)
+        db.session.flush() # Flush to get adjustment.id before commit
+
+        # 3. Prepare the Snapshot for the log
+        new_snapshot = clean_data.copy()
+
+        # 4. Record 'CREATE' Audit
+        AuditLogService.record(
+            target_id=adjustment.id, 
+            target_type=cls.model.__name__, 
+            action='CREATE', 
+            new_data=new_snapshot
+        )
         
         db.session.commit()
         return adjustment
@@ -92,9 +105,19 @@ class AdjustmentService(BaseService):
         # 2. Validate & transform
         clean_data = cls._validate_and_transform(data)
 
+        # 4. Audit_logs snapshot
+        old_snapshot = cls._get_snapshot(adjustment)
+
         # 3. Update attributes
         for key, value in clean_data.items():
             setattr(adjustment, key, value)
+
+        # 4. Deep Audit Trigger
+        AuditLogService.record(adjustment_id, 
+                               cls.model.__name__, 
+                               'UPDATE', 
+                               old_data=old_snapshot, 
+                               new_data=clean_data)
 
         db.session.commit()
         return adjustment

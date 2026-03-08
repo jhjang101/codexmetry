@@ -177,7 +177,7 @@
                         <div class="relative">
                             <select name="document_placement" 
                                     class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none appearance-none bg-transparent cursor-pointer pr-10">
-                                <option value="lineitem" {{ 'selected' if product and product.document_placement == 'Lineitem' else '' }}>Standard Line Item</option>
+                                <option value="Lineitem" {{ 'selected' if product and product.document_placement == 'Lineitem' else '' }}>Standard Line Item</option>
                                 <option value="Shipping" {{ 'selected' if product and product.document_placement == 'Shipping' else '' }}>Shipping (Footer)</option>
                                 <option value="Tax" {{ 'selected' if product and product.document_placement == 'Tax' else '' }}>Sales Tax (Footer)</option>
                             </select>
@@ -191,5 +191,11 @@
             </div>
         </section>
     </form>
+
+    {% if mode == 'view' %}  
+        {# NEW: The Forensic Trail #}
+        {% include 'partials/audit_history.html' %}
+    {% endif %}
+
 </div>
 {% endblock %}

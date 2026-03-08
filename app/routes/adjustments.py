@@ -4,6 +4,7 @@ from ..models import Adjustment
 from ..services.adjustments_service import AdjustmentService
 from ..services.settings_service import AdjustmentCategoryService
 from ..services.attachment_service import AttachmentService
+from ..services.audit_service import AuditLogService
 from ..utils.auth import role_required
 from ..utils.docs import generate_doc_number
 from ..extensions import db
@@ -98,11 +99,14 @@ def view(id):
         if not adjustment:
             flash("Adjustment not found.", "error")
             return redirect(url_for('adjustments.index'))
+        
+        history = AuditLogService.get_for_entity('Adjustment', id)
+
     except Exception as e:
         flash(f"Error loading adjustment: {str(e)}", "error")
         return redirect(url_for('adjustments.index'))
 
-    return render_template('adjustments/form.html', mode='view', adjustment=adjustment)
+    return render_template('adjustments/form.html', mode='view', adjustment=adjustment, history=history)
 
 @bp.route('/edit/<int:id>', methods=['GET', 'POST'])
 @role_required(['admin', 'user'])

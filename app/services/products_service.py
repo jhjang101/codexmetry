@@ -1,5 +1,6 @@
 from .base_service import BaseService
 from ..models import Product, ProductCategory
+from .audit_service import AuditLogService
 from ..utils.money import parse_to_cents
 from ..extensions import db
 from sqlalchemy import select, or_
@@ -97,6 +98,16 @@ class ProductService(BaseService):
         # 2. Create product
         product = cls.model(**clean_data)
         db.session.add(product)
+        db.session.flush() # Flush to get product.id before commit
+
+        # 3. Record Audit
+        AuditLogService.record(
+            target_id=product.id, 
+            target_type=cls.model.__name__, 
+            action='CREATE', 
+            new_data=clean_data
+        )
+
         db.session.commit()
 
         return product
@@ -114,9 +125,19 @@ class ProductService(BaseService):
         # 2. Validate & transform
         clean_data = cls._validate_and_transform(data)
 
-        # 3. Update header
+        # 3. Audit_logs snapshot
+        old_snapshot = cls._get_snapshot(product)
+
+        # 4. Update header
         for key, value in clean_data.items():
             setattr(product, key, value)
+
+        # 5. Deep Audit Trigger
+        AuditLogService.record(product_id, 
+                               cls.model.__name__, 
+                               'UPDATE', 
+                               old_data=old_snapshot, 
+                               new_data=clean_data)
 
         db.session.commit()
         return product
@@ -136,7 +157,16 @@ class ProductService(BaseService):
         if is_system_product:
             raise ValueError("System products cannot be modified or archived.")
         
-        # 2. Archive
+        # 3. Record Audit
+        AuditLogService.record(
+            target_id=id, 
+            target_type=cls.model.__name__, 
+            action='ARCHIVE', 
+            old_data={'is_active': True}, 
+            new_data={'is_active': False}
+        )
+
+        # 4. Archive
         product.is_active = False
         db.session.commit()
 
@@ -156,7 +186,7 @@ class ProductService(BaseService):
         # 2. Transform data
         clean_data = {
             'name': name,
-            'catalog_number': data.get('catalog_number', '').strip() if data.get('catalog_number') else None,
+            'catalog_number': data.get('catalog_number', '').strip() if data.get('catalog_number') else "",
             'category_id': int(category_id) if category_id else None,
             'document_placement': data.get('document_placement', 'Lineitem'),
             'default_unit_price': parse_to_cents(str(data.get('default_unit_price', 0))),

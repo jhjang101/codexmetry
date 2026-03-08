@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, sessio
 from flask_login import login_required
 from ..services.products_service import ProductService
 from ..services.settings_service import ProductCategoryService
+from ..services.audit_service import AuditLogService
 from ..utils.images import save_image
 from ..utils.auth import role_required
 from ..extensions import db
@@ -94,12 +95,14 @@ def view(id):
             flash("Product not found.", "error")
             return redirect(url_for('products.index'))
         
+        history = AuditLogService.get_for_entity('Product', id)
+        
     except ValueError as e:
         db.session.rollback()
         flash(f"Error loading product: {str(e)}", 'error')
         return redirect(url_for('products.index'))
 
-    return render_template('products/form.html', mode='view', product=product)
+    return render_template('products/form.html', mode='view', product=product, history=history)
 
 @bp.route('/edit/<int:id>', methods=['GET', 'POST'])
 @role_required(['admin', 'user'])
