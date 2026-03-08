@@ -1,6 +1,7 @@
 from ..models import User
 from ..extensions import db
 from .base_service import BaseService
+from .audit_service import AuditLogService
 from sqlalchemy import select, or_, func
 
 class UserService(BaseService):
@@ -37,6 +38,14 @@ class UserService(BaseService):
         # 1. Standardized Transform & Validate
         clean_data = cls._validate_and_transform(data, is_new=False, current_user_id=user_id)
 
+        # 2. Forensic Snapshot
+        old_snapshot = {
+            'email': user.email,
+            'full_name': user.full_name,
+            'phone_number': user.phone_number,
+            'role': user.role
+        }
+
         # 2. Update standard attributes
         for key, value in clean_data.items():
             setattr(user, key, value)
@@ -45,6 +54,9 @@ class UserService(BaseService):
         new_password = data.get('password')
         if new_password and new_password.strip():
             user.set_password(new_password)
+
+        # 4. Deep Audit Trigger
+        AuditLogService.record(user_id, cls.model.__name__, 'UPDATE', old_data=old_snapshot, new_data=clean_data)
 
         db.session.commit()
         return user

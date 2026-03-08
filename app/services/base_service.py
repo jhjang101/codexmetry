@@ -1,4 +1,5 @@
 from sqlalchemy import desc, asc, select
+from .audit_service import AuditLogService
 from ..extensions import db
 
 class BaseService:
@@ -23,10 +24,25 @@ class BaseService:
     @classmethod
     def update(cls, id, **kwargs):
         row = cls.get_by_id(id)
+        
+        # Capture snapshot for the Audit Messenger
+        old_snapshot = {c.name: getattr(row, c.name) for c in row.__table__.columns}
+        
         for key, value in kwargs.items():
             setattr(row, key, value)
+            
+        # Hand off to the Audit Brain
+        AuditLogService.record(
+            target_id=id, 
+            target_type=cls.model.__name__, 
+            action='UPDATE', 
+            old_data=old_snapshot, 
+            new_data=kwargs
+        )
+        
         db.session.commit()
         return row
+
     
     @classmethod
     def archive(cls, id):
