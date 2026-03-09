@@ -327,6 +327,49 @@ def archive(id):
         
     return redirect(url_for('invoices.index'))
 
+# --- PRINT ---
+
+@bp.route('/print/<int:id>')
+@login_required
+def print_view(id):
+    """
+    Messenger: Fetches hydrated Invoice data for the printable layout.
+    Metadata is already injected via global context processor.
+    """
+    # 1. Fetch using your existing high-integrity service
+    invoice = InvoiceService.get_invoice_by_id(id)
+
+    if not invoice or not invoice.is_active:
+        flash("Invoice not found.", "error")
+        return redirect(url_for('invoices.index'))
+    
+    # 2. Initialize buckets
+    line_display_items = []
+    subtotal = 0
+    tax_total = 0
+    shipping_total = 0
+    
+    # 3. Sort items based on document_placement
+    for item in invoice.items:
+        item_value = item.quantity * item.billed_unit_price
+        placement = item.product.document_placement
+
+        if placement == 'Tax':
+            tax_total += item_value
+        elif placement == 'Shipping':
+            shipping_total += item_value
+        else:
+            line_display_items.append(item)
+            subtotal += item_value
+
+    # 4. Pass pre-calculated values to the template
+    return render_template('invoices/print.html', 
+                           invoice=invoice, 
+                           line_display_items=line_display_items,
+                           subtotal=subtotal,
+                           tax_total=tax_total,
+                           shipping_total=shipping_total)
+
 # --- HTMX Item-row and Calculation Routes ---
 
 @bp.route('/add-row')

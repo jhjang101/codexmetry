@@ -44,6 +44,13 @@
                                 <i class="fa-regular fa-pen-to-square w-2"></i>
                                 Edit Invoice Details
                             </a>
+
+                            <a href="{{ url_for('invoices.print_view', id=invoice.id) }}" 
+                                target="_blank"
+                                class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">
+                                <i class="fa-solid fa-print w-2"></i>
+                                Print / Save PDF
+                            </a>
                         </div>
 
                         <div class="border-t border-gray-100 my-1">
