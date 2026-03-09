@@ -39,9 +39,16 @@
                         <div class="py-1">
                             {# 1. Primary Edit Action #}
                             <a href="{{ url_for('quotes.edit', id=quote.id) }}" 
-                            class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">
+                               class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">
                                 <i class="fa-regular fa-pen-to-square w-2"></i>
                                 Edit Quote Details
+                            </a>
+
+                            <a href="{{ url_for('quotes.print_view', id=quote.id) }}" 
+                                target="_blank"
+                                class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">
+                                <i class="fa-solid fa-print w-2"></i>
+                                Print / Save PDF
                             </a>
                         </div>
 
@@ -52,11 +59,10 @@
                                     <p class="px-4 py-1 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Generate New</p>
                                     
                                     <a href="{{ url_for('purchase_orders.add', quote_id=quote.id) }}" 
-                                    class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors">
+                                       class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors">
                                         <i class="fa-solid fa-file-invoice-dollar w-2"></i>
                                         Purchase Order
                                     </a>
-
                                 </div>
                         {% endif %}
 
@@ -170,7 +176,14 @@
                     {% if mode == 'view' %}
                         <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ quote.quote_date or '-' }}</p>
                     {% else %}
-                        <input type="date" name="quote_date" value="{{ quote.quote_date if quote else now.strftime('%Y-%m-%d') }}" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">
+                        <input type="date" name="quote_date" 
+                        value="{{ quote.quote_date if quote else today }}" 
+                        class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 
+                               focus:ring-blue-300 outline-none"
+                        hx-get="{{ url_for('quotes.calculate_expiry') }}"
+                        hx-trigger="change"
+                        hx-target="#expiration-date-container"
+                        hx-swap="innerHTML">
                     {% endif %}
                 </div>
                 <div>
@@ -178,7 +191,9 @@
                     {% if mode == 'view' %}
                         <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ quote.expiration_date or '-' }}</p>
                     {% else %}
-                        <input type="date" name="expiration_date" value="{{ quote.expiration_date if quote else '' }}" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">
+                        <div id="expiration-date-container">
+                            {% include 'quotes/partials/expiration_input.html' %}
+                        </div>
                     {% endif %}
                 </div>
                 <div>

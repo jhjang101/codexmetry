@@ -228,6 +228,8 @@ class QuoteService(BaseService):
         # Get TimeZone from metadata
         metadata = db.session.get(SettingsMetadata, 1)
         tz_name = metadata.timezone if metadata else 'America/Chicago'
+        # Get dynamic expiry days (default to 30 if record missing)
+        expiry_days = metadata.default_quote_expiry_days if metadata else 30
         
         if raw_date:
             quote_date = datetime.strptime(raw_date, '%Y-%m-%d').date() 
@@ -236,7 +238,7 @@ class QuoteService(BaseService):
         if raw_expiry:
             expiration_date = datetime.strptime(raw_expiry, '%Y-%m-%d').date() 
         else:
-            expiration_date = quote_date + timedelta(days=30)
+            expiration_date = quote_date + timedelta(days=expiry_days)
 
         if quote_date > expiration_date:
             raise ValueError("Expiration date cannot be before quote date.")

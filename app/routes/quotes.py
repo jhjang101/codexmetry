@@ -6,13 +6,15 @@ from ..services.clients_service import ClientService
 from ..services.products_service import ProductService
 from ..services.attachment_service import AttachmentService
 from ..services.audit_service import AuditLogService
+from ..services.settings_service import SettingsMetadata
 from ..utils.money import parse_to_cents
 from ..utils.docs import generate_doc_number
 from ..utils.auth import role_required
 from ..models import Quote
 from ..extensions import db
-from datetime import datetime
+from datetime import datetime, timedelta
 import time
+import zoneinfo
 
 bp = Blueprint('quotes', __name__)
 
@@ -114,6 +116,11 @@ def add():
     products = ProductService.get_all_products()
     suggested_number = generate_doc_number(prefix='QTE', model=Quote, column_name='quote_number')
     initial_row_id = str(int(time.time() * 1000))
+    metadata = db.session.get(SettingsMetadata, 1)
+    tz_name = metadata.timezone if metadata else 'America/Chicago'
+    today = datetime.now(zoneinfo.ZoneInfo(tz_name)).date()
+    expiry_days = metadata.default_quote_expiry_days if metadata else 30
+    suggested_expiry = today + timedelta(days=expiry_days)
 
     return render_template('quotes/form.html', 
                            mode='add', 
@@ -122,6 +129,8 @@ def add():
                            products=products,
                            suggested_number=suggested_number,
                            client_id=client_id,
+                           today=today.strftime('%Y-%m-%d'),
+                           expiration_date=suggested_expiry.strftime('%Y-%m-%d'),
                            timestamp=initial_row_id,
                            cancel_url=cancel_url)
 
@@ -222,8 +231,34 @@ def print_view(id):
         flash("Quote not found.", "error")
         return redirect(url_for('quotes.index'))
 
-    # 2. Render the dedicated print template
-    return render_template('quotes/print.html', quote=quote)
+     # 2. Initialize buckets
+    line_display_items = []
+    subtotal = 0
+    tax_total = 0
+    shipping_total = 0
+
+    # 3. Logic: Sort items into buckets based on document_placement
+    for item in quote.items:
+        # Standardize value calculation in the "Brain"
+        item_value = item.quantity * item.quoted_unit_price
+        placement = item.product.document_placement
+
+        if placement == 'Tax':
+            tax_total += item_value
+        elif placement == 'Shipping':
+            shipping_total += item_value
+        else:
+            # if it's not 'Tax' or 'Shipping', it's a Lineitem
+            line_display_items.append(item)
+            subtotal += item_value
+
+    # 4. Pass pre-calculated values to the template
+    return render_template('quotes/print.html', 
+                           quote=quote,
+                           line_display_items=line_display_items,
+                           subtotal=subtotal,
+                           tax_total=tax_total,
+                           shipping_total=shipping_total)
 
 # --- HTMX PARTIALS & LIVE MATH ---
 
@@ -287,6 +322,28 @@ def calculate():
         # Tell HTMX not to clear the total or the input that caused the error
         resp.headers['HX-Reswap'] = 'none'
         return resp
+    
+# --- HTMX Quote Date Cascade Routes ---
+@bp.route('/calculate-expiry')
+@login_required
+def calculate_expiry():
+    quote_date_raw = request.args.get('quote_date')
+    
+    # 1. Fetch the business rule from Metadata
+    metadata = db.session.get(SettingsMetadata, 1)
+    expiry_days = metadata.default_quote_expiry_days if metadata else 30
+    
+    # 2. Perform the math
+    try:
+        if quote_date_raw:
+            quote_date = datetime.strptime(quote_date_raw, '%Y-%m-%d').date()
+            expiration_date = quote_date + timedelta(days=expiry_days)
+        expiry_str = expiration_date.strftime('%Y-%m-%d')
+    except (ValueError, TypeError):
+        expiry_str = "" # Fallback if date is invalid
+
+    # 3. Return the partial input
+    return render_template('quotes/partials/expiration_input.html', expiration_date=expiry_str)
 
 # --- INTERNAL HELPERS ---
 
