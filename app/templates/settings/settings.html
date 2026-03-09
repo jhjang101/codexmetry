@@ -19,7 +19,7 @@
             <!-- GROUP 1: Identity & Brand -->
             <section class="bg-white p-6 rounded-lg shadow mb-2">
                 <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4 border-b pb-1">Company Identity</h2>
-                <div class="grid grid-cols-6 gap-4">
+                <div class="grid grid-cols-8 gap-4">
                     <div class="col-span-1 flex flex-col items-center">
                         <div class="w-16 h-16 bg-gray-100 rounded rounded-lg border flex items-center justify-center overflow-hidden mb-2">
                             {% if metadata.company_logo %}
@@ -27,13 +27,17 @@
                             {% else %}<span class="text-[10px] text-gray-400">LOGO</span>{% endif %}
                         </div>
                     </div>
-                    <div class="col-span-2">
+                    <div class="col-span-3">
                         <label class="block text-xs font-medium text-gray-500">Company Name</label>
                         <input type="text" name="company_name" value="{{ metadata.company_name }}" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none" required>
                     </div>
-                    <div class="col-span-3">
+                    <div class="col-span-4">
                         <label class="block text-xs font-medium text-gray-500">Update Logo</label>
                         <input type="file" name="logo" class="mt-1 block w-full text-xs text-gray-500 file:mr-4 file:py-3 file:px-4 file rounded-lg file:border-0 file:bg-blue-50 hover:file:bg-blue-100 file:text-blue-700">
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-xs font-medium text-gray-500">Email</label>
+                        <input type="email" name="company_email" value="{{ metadata.company_email or '' }}" class="mt-1 block w-full border rounded-lg p-2 text-sm outline-none focus:ring-1 focus:ring-blue-300" placeholder="billing@company.com">
                     </div>
                     <div class="col-span-2">
                         <label class="block text-xs font-medium text-gray-500">Phone</label>

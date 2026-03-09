@@ -117,6 +117,7 @@ class MetadataService(BaseService):
             'doc_padding': padding,         # from your existing logic
             
             # Identity & Contact
+            'company_email': data.get('company_email', '').strip(),
             'company_phone': data.get('company_phone', '').strip(),
             'company_fax': data.get('company_fax', '').strip(),
             'payable_address': data.get('payable_address', '').strip(),
