@@ -104,6 +104,12 @@ class AdjustmentCategory(db.Model):
     type: Mapped[str] = mapped_column(String(50), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
+class Carrier(db.Model):
+    __tablename__ = 'carriers'
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    type: Mapped[str] = mapped_column(String(50), nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+
 # --- 3. SETTINGS ---
 class SettingsMetadata(db.Model):
     __tablename__ = 'settings_metadata'
@@ -116,6 +122,7 @@ class SettingsMetadata(db.Model):
     doc_padding: Mapped[int] = mapped_column(Integer, default=4)
 
     # New Identity Fields
+    company_email: Mapped[str | None] = mapped_column(String(255))
     company_phone: Mapped[str | None] = mapped_column(String(50))
     company_fax: Mapped[str | None] = mapped_column(String(50))
     payable_address: Mapped[str | None] = mapped_column(Text)
@@ -201,6 +208,8 @@ class ClientContact(db.Model):
     first_name: Mapped[str | None] = mapped_column(String(100))
     last_name: Mapped[str | None] = mapped_column(String(100))
     email: Mapped[str | None] = mapped_column(String(255))
+    phone_number: Mapped[str | None] = mapped_column(String(50))
+
 
     client: Mapped["Client"] = relationship(back_populates="contacts")
 
@@ -244,6 +253,7 @@ class VendorContact(db.Model):
     first_name: Mapped[str | None] = mapped_column(String(100))
     last_name: Mapped[str | None] = mapped_column(String(100))
     email: Mapped[str | None] = mapped_column(String(255))
+    phone_number: Mapped[str | None] = mapped_column(String(50))
 
     vendor: Mapped["Vendor"] = relationship(back_populates="contacts")
 
@@ -441,6 +451,8 @@ class Invoice(db.Model, AuditMixin):
     invoice_number: Mapped[str] = mapped_column(String(100), nullable=False) # Not unique
     total_amount: Mapped[int] = mapped_column(Integer, default=0)
     invoice_date: Mapped[date] = mapped_column(Date, server_default=func.current_date())
+    carrier_id: Mapped[int | None] = mapped_column(ForeignKey('carriers.id'))
+    ship_date: Mapped[date | None] = mapped_column(Date)
     tracking_number: Mapped[str | None] = mapped_column(String(100))
     status: Mapped[str] = mapped_column(String(20), default='open')
     note: Mapped[str | None] = mapped_column(Text)
@@ -452,6 +464,7 @@ class Invoice(db.Model, AuditMixin):
     expenses: Mapped[list["Expense"]] = relationship(back_populates="invoice")
     client: Mapped["Client"] = relationship(back_populates="invoices", foreign_keys=[client_id])
     bill_to: Mapped["Client"] = relationship(back_populates="invoice_billings", foreign_keys=[bill_to_id])
+    carrier: Mapped["Carrier"] = relationship()
     items: Mapped[list["InvoiceItem"]] = relationship(back_populates="invoice", cascade="all, delete-orphan")
     attachments: Mapped[list["Attachment"]] = relationship(
         primaryjoin="and_(Invoice.id==Attachment.entity_id, Attachment.entity_type=='Invoice')",
