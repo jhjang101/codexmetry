@@ -17,6 +17,19 @@
                 padding: 0 !important;
             }
             @page { margin: 15mm; }
+            /* Hide scrollbars and borders on paper */
+            textarea {
+                border: none !important;
+                padding: 0 !important;
+                resize: none !important;
+                overflow: hidden !important;
+                background: transparent !important;
+            }
+            /* Auto-sizing support for modern browsers */
+            .print-notes {
+                field-sizing: content; /* Modern CSS to auto-expand textarea */
+                min-height: 100px;
+            }
         }
         /* Extra spacing for electronical typing on PDF */
         .sig-line { border-bottom: 1px solid #94a3b8; min-height: 24px; }
@@ -157,10 +170,15 @@
         <!-- 5. SUMMARY SECTION -->
         <div class="flex justify-between items-start mb-10">
             <!-- Terms Notes (Left) -->
-            <div class="w-1/2 text-[10px] leading-relaxed text-gray-700">
-                <div class="whitespace-pre-line">
-                    {{ metadata.default_quote_terms }}
-                </div>
+            <div class="w-3/5">
+                <label class="no-print block text-[9px] font-bold text-blue-500 uppercase mb-1">
+                    Editable Terms & Notes (Transient):
+                </label>
+                <textarea class="print-notes w-full text-[10px] leading-relaxed text-gray-700 bg-gray-50 p-2 
+                                 border border-dashed border-gray-300 rounded outline-none focus:bg-white 
+                                 focus:border-blue-400 transition-all resize-none overflow-hidden"
+                        oninput='this.style.height = "";this.style.height = this.scrollHeight + "px"'
+                        placeholder="Enter terms, valid dates, or special instructions...">{{ quote.note or metadata.default_quote_terms }}</textarea>
             </div>
 
             <!-- Financials (Right) -->
