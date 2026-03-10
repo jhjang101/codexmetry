@@ -155,7 +155,8 @@ class BaseService:
         data = [
             {
                 'name': f"{c.first_name} {c.last_name}".strip(),
-                'email': c.email
+                'email': c.email,
+                'phone': c.phone_number
             }
             for c in contacts_collection
         ]

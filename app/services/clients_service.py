@@ -217,19 +217,25 @@ class ClientService(BaseService):
             first = row.get('first_name', '').strip()
             last = row.get('last_name', '').strip()
             email = row.get('email', '').strip()
+            phone = row.get('phone', '').strip()
+
+            print(first, last, email, phone)
 
             # Guard: Only save if at least one field is provided
-            if any([first, last, email]):
+            if any([first, last, email, phone]):
+                print('Saving contact')
                 contact = ClientContact()
                 contact.client_id = client_id
                 contact.first_name = first
                 contact.last_name = last
                 contact.email = email
+                contact.phone_number = phone
                 db.session.add(contact)
 
                 fingerprint.append({
                 'name': f"{first} {last}".strip(),
-                'email': email
+                'email': email,
+                'phone': phone
             })
                 
         return sorted(fingerprint, key=lambda x: x['email'])

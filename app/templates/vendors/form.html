@@ -166,17 +166,19 @@
 
             <div id="contact-list" class="space-y-3">
                 {% if mode == 'view' %}
-                    <div class="grid grid-cols-10 gap-4 text-sm text-gray-600 px-2">
-                        <div class="col-span-3 font-medium">First Name</div>
-                        <div class="col-span-3 font-medium">Last Name</div>
+                    <div class="grid grid-cols-11 gap-4 text-sm text-gray-600 px-2">
+                        <div class="col-span-2 font-medium">First Name</div>
+                        <div class="col-span-2 font-medium">Last Name</div>
                         <div class="col-span-4 font-medium">Email Address</div>
+                        <div class="col-span-3 font-medium">Phone Number</div>
                     </div>
 
                     {% for contact in vendor.contacts %}
-                        <div class="grid grid-cols-10 gap-4">
-                            <div class="col-span-3 mt-1 block bg-gray-100 w-full border rounded-lg p-2 whitespace-pre-wrap text-sm">{{ contact.first_name or '-' }}</div>
-                            <div class="col-span-3 mt-1 block bg-gray-100 w-full border rounded-lg p-2 whitespace-pre-wrap text-sm">{{ contact.last_name or '-' }}</div>
+                        <div class="grid grid-cols-11 gap-4">
+                            <div class="col-span-2 mt-1 block bg-gray-100 w-full border rounded-lg p-2 whitespace-pre-wrap text-sm">{{ contact.first_name or '-' }}</div>
+                            <div class="col-span-2 mt-1 block bg-gray-100 w-full border rounded-lg p-2 whitespace-pre-wrap text-sm">{{ contact.last_name or '-' }}</div>
                             <div class="col-span-4 mt-1 block bg-gray-100 w-full border rounded-lg p-2 whitespace-pre-wrap text-sm text-blue-600">{{ contact.email or '-' }}</div>
+                            <div class="col-span-3 mt-1 block bg-gray-100 w-full border rounded-lg p-2 whitespace-pre-wrap text-sm">{{ contact.phone_number or '-' }}</div>
                         </div>
                     {% else %}
                         <p class="py-8 text-center text-gray-400 italic text-sm">No contacts assigned.</p>
@@ -184,10 +186,11 @@
 
                 {% else %}
                     <!-- Edit/Add Mode -->
-                    <div class="grid grid-cols-11 gap-4 text-sm font-medium text-gray-700 px-2">
-                        <div class="col-span-3">First Name</div>
-                        <div class="col-span-3">Last Name</div>
+                    <div class="grid grid-cols-12 gap-4 text-sm font-medium text-gray-700 px-2">
+                        <div class="col-span-2">First Name</div>
+                        <div class="col-span-2">Last Name</div>
                         <div class="col-span-4">Email Address</div>
+                        <div class="col-span-3">Phone Number</div>
                         <div class="col-span-1"></div>
                     </div>
 

@@ -1,6 +1,6 @@
-<div class="grid grid-cols-11 gap-3 items-center contact-row">
+<div class="grid grid-cols-12 gap-3 items-center contact-row">
     <!-- First Name -->
-    <div class="col-span-3">
+    <div class="col-span-2">
         <input type="text" 
                name="contact_first[]" 
                value="{{ contact.first_name if contact else '' }}" 
@@ -9,12 +9,12 @@
     </div>
 
     <!-- Last Name -->
-    <div class="col-span-3">
+    <div class="col-span-2">
         <input type="text" 
                name="contact_last[]" 
                value="{{ contact.last_name if contact else '' }}" 
                placeholder="Last Name"
-               class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-0 outline-none transition-all">
+               class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none transition-all">
     </div>
 
     <!-- Email Address -->
@@ -23,6 +23,13 @@
                name="contact_email[]" 
                value="{{ contact.email if contact else '' }}" 
                placeholder="Email Address"
+               class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none transition-all">
+    </div>
+
+    <!-- Phone Number -->
+    <div class="col-span-3">
+        <input type="text" name="contact_phone[]" value="{{ contact.phone_number if contact else '' }}" 
+               placeholder="Phone" 
                class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none transition-all">
     </div>
 

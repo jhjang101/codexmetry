@@ -159,13 +159,15 @@ def _parse_contact_form(form_data):
     first_names = form_data.getlist('contact_first[]')
     last_names = form_data.getlist('contact_last[]')
     emails = form_data.getlist('contact_email[]')
+    phones = form_data.getlist('contact_phone[]')
     
     contacts = []
-    for first_name, last_name, email in zip(first_names, last_names, emails):
-        if first_name.strip() or last_name.strip(): # Only include if there is a name
+    for first_name, last_name, email, phone in zip(first_names, last_names, emails, phones):
+        if any([first_name.strip(), last_name.strip(), email.strip(), phone.strip()]):
             contacts.append({
                 'first_name': first_name.strip(),
                 'last_name': last_name.strip(),
-                'email': email.strip()
+                'email': email.strip(),
+                'phone': phone.strip()
             })
     return contacts
