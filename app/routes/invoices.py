@@ -8,13 +8,14 @@ from ..services.clients_service import ClientService
 from ..services.settings_service import CarrierService
 from ..services.attachment_service import AttachmentService
 from ..services.audit_service import AuditLogService
+from ..services.settings_service import SettingsMetadata
 from ..utils.money import parse_to_cents
 from ..utils.docs import generate_doc_number
 from ..utils.sync import sync_invoice_status, sync_po_status
 from ..utils.auth import role_required
 from ..models import Invoice
 from ..extensions import db
-from datetime import datetime
+from datetime import datetime, timedelta
 import time
 
 bp = Blueprint('invoices', __name__)
@@ -371,13 +372,19 @@ def print_view(id):
             line_display_items.append(item)
             subtotal += item_value
 
-    # 4. Pass pre-calculated values to the template
+    # 4. Calculate Payment Due Date
+    metadata = db.session.get(SettingsMetadata, 1)
+    net_days = metadata.default_net_days if metadata else 30
+    due_date = invoice.invoice_date + timedelta(days=net_days)
+
+    # 5. Pass pre-calculated values to the template
     return render_template('invoices/print.html', 
                            invoice=invoice, 
                            line_display_items=line_display_items,
                            subtotal=subtotal,
                            tax_total=tax_total,
-                           shipping_total=shipping_total)
+                           shipping_total=shipping_total,
+                           due_date=due_date)
 
 # --- HTMX Item-row and Calculation Routes ---
 

@@ -172,14 +172,20 @@ class Client(db.Model, AuditMixin):
         c = self.primary_contact
         if c:
             name = f"{c.first_name or ''} {c.last_name or ''}".strip()
-            return name if name else "-"
-        return "-"
+            return name if name else None
+        return None
 
     @property
     def primary_contact_email(self):
         """Returns email or '-'."""
         c = self.primary_contact
-        return c.email if (c and c.email) else "-"
+        return c.email if (c and c.email) else None
+    
+    @property
+    def primary_contact_phone(self):
+        """Returns phone or '-'."""
+        c = self.primary_contact
+        return c.phone_number if (c and c.phone_number) else None
     
     @property
     def full_display(self):
@@ -237,14 +243,20 @@ class Vendor(db.Model, AuditMixin):
         c = self.primary_contact
         if c:
             name = f"{c.first_name or ''} {c.last_name or ''}".strip()
-            return name if name else "-"
-        return "-"
+            return name if name else None
+        return None
 
     @property
     def primary_contact_email(self):
         """Returns email or '-'."""
         c = self.primary_contact
-        return c.email if (c and c.email) else "-"
+        return c.email if (c and c.email) else None
+    
+    @property
+    def primary_contact_phone(self):
+        """Returns phone or '-'."""
+        c = self.primary_contact
+        return c.phone_number if (c and c.phone_number) else None
 
 class VendorContact(db.Model):
     __tablename__ = 'vendor_contacts'

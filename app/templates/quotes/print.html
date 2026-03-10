@@ -97,16 +97,26 @@
             <div class="flex justify-start items-start gap-2">
                 <div class="font-bold uppercase tracking-widest pr-4">TO</div>
                 <div>
-                    <p class="font-medium">{{ quote.client.primary_contact_name }}</p>
-                    <p class="font-medium">{{ quote.client.company_name }}</p>
-                    <p class="text-gray-600 whitespace-pre-line">{{ quote.client.address or '-' }}</p>
+                    {% if quote.client.primary_contact_name %}
+                    <p>{{ quote.client.primary_contact_name }}</p>
+                    {% endif %}
+                    <p>{{ quote.client.company_name }}</p>
+                    {% if quote.client.address %}
+                    <p class="text-gray-600 whitespace-pre-line">{{ quote.client.address }}</p>
+                    {% endif %}
+                    {% if quote.client.primary_contact_email %}
+                    <p class="text-gray-600">{{ quote.client.primary_contact_email }}</p>
+                    {% endif %}
+                    {% if quote.client.primary_contact_phone %}
+                    <p class="text-gray-600">{{ quote.client.primary_contact_phone }}</p>
+                    {% endif %}
                 </div>
             </div>
 
             <!-- Quoted By: Internal -->
             <div class="grid grid-cols-3 content-start gap-y-1">
                 <div class="font-bold pr-4">Quoted by</div>
-                <div class="col-span-2 text-left font-medium">{{ quote.creator.full_name or quote.creator.username }}</div>
+                <div class="col-span-2 text-left">{{ quote.creator.full_name or quote.creator.username }}</div>
                 <div class="font-bold pr-4">E-mail</div>
                 <div class="col-span-2 text-blue-600">{{ quote.creator.email }}</div>
                 {% if quote.creator.phone_number or metadata.company_phone %}

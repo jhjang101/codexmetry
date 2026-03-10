@@ -31,8 +31,6 @@
                 min-height: 100px;
             }
         }
-        /* Extra spacing for electronical typing on PDF */
-        .sig-line { border-bottom: 1px solid #94a3b8; min-height: 24px; }
     </style>
 </head>
 <body class="bg-gray-100 font-sans p-4">
@@ -67,28 +65,31 @@
         </div>
 
         <!-- 2. COMPANY & DOCUMENT INFO GRID -->
-        <div class="grid grid-cols-5 gap-12 mb-6 text-xs">
+        <div class="grid grid-cols-7 gap-12 mb-4 text-xs">
             <!-- Seller Info -->
-            <div class="col-span-3 text-gray-700">
+            <div class="col-span-4 text-gray-700">
                 <p class="whitespace-pre-line">{{ metadata.address or '' }}</p>
                 {% if metadata.company_phone %}
-                <p class="mt-1">Phone: {{ metadata.company_phone }}</p>
+                <p>Phone: {{ metadata.company_phone }}</p>
                 {% endif %}
                 {% if metadata.company_fax %}
                 <p>Fax: {{ metadata.company_fax }}</p>
                 {% endif %}
+                {% if metadata.company_email %}
+                <p>Email: {{ metadata.company_email }}</p>
+                {% endif %}
             </div>
 
             <!-- Doc Meta -->
-            <div class="col-span-2 content-start gap-y-1 p-1 grid grid-cols-2 bg-gray-100">
+            <div class="col-span-3 content-start gap-y-1 p-1 grid grid-cols-2 bg-gray-100">
                 <div class="font-bold text-slate-800">Invoice NO.</div>
                 <div>{{ invoice.invoice_number }}</div>
                 
                 <div class="font-bold text-slate-800">Invoice Date</div>
                 <div>{{ invoice.invoice_date.strftime('%B %d, %Y') }}</div>
 
-                <div class="font-bold text-slate-800">Payment Terms</div>
-                <div>Net {{ metadata.default_net_days }}</div>
+                <div class="font-bold text-slate-800">Due Date</div>
+                <div>{{ due_date.strftime('%B %d, %Y') }}</div>
                 
                 <div class="font-bold text-slate-800">P.O. Number</div>
                 <div>{{ invoice.purchase_order.po_number if invoice.purchase_order else '' }}</div>
@@ -99,26 +100,52 @@
         <div class="grid grid-cols-2 gap-12 ml-8 mb-6 text-xs">
             <!-- Bill TO: -->
             <div class="justify-start items-start gap-2">
-                <div class="font-bold uppercase tracking-widest pr-4 mb-2">Bill To</div>
+                <div class="font-bold uppercase tracking-widest pr-4 mb-1">Bill To</div>
                 <div>
-                    <p class="pl-4 font-medium">{{ invoice.bill_to.company_name }}</p>
+                    <p class="pl-4">{{ invoice.bill_to.company_name }}</p>
                     <p class="pl-4 text-gray-600 whitespace-pre-line">{{ invoice.bill_to.address }}</p>
-                    <p class="pl-4">{{ invoice.bill_to.primary_contact_name or '-' }}</p>
+                    {% if invoice.bill_to.primary_contact_name %}
+                    <p class="pl-4 text-gray-600">{{ invoice.bill_to.primary_contact_name }}</p>
+                    {% endif %}
+                    {% if invoice.bill_to.primary_contact_email %}
+                    <p class="pl-4 text-gray-600">{{ invoice.bill_to.primary_contact_email }}</p>
+                    {% endif %}
+                    {% if invoice.bill_to.primary_contact_phone %}
+                    <p class="pl-4 text-gray-600">{{ invoice.bill_to.primary_contact_phone }}</p>
+                    {% endif %}
                 </div>
             </div>
 
             <!-- Ship TO:-->
             <div class="justify-start items-start gap-2">
-                <div class="font-bold uppercase tracking-widest pr-4 mb-2">Ship To</div>
+                <div class="font-bold uppercase tracking-widest pr-4 mb-1">Ship To</div>
                 <div>
-                    <p class="pl-4 font-medium">{{ invoice.client.company_name }}</p>
+                    <p class="pl-4">{{ invoice.client.company_name }}</p>
                     <p class="pl-4 text-gray-600 whitespace-pre-line">{{ invoice.client.address }}</p>
-                    <p class="pl-4">{{ invoice.client.primary_contact_name or '-' }}</p>
+                    {% if invoice.client.primary_contact_name %}
+                    <p class="pl-4 text-gray-600">{{ invoice.client.primary_contact_name }}</p>
+                    {% endif %}
+                    {% if invoice.client.primary_contact_email %}
+                    <p class="pl-4 text-gray-600">{{ invoice.client.primary_contact_email }}</p>
+                    {% endif %}
+                    {% if invoice.client.primary_contact_phone %}
+                    <p class="pl-4 text-gray-600">{{ invoice.client.primary_contact_phone }}</p>
+                    {% endif %}
                 </div>
             </div>
         </div>
 
-        <!-- 4. ITEMS TABLE -->
+        <!-- 4. SHIPPING GRID (NEW) -->
+        <div class="grid grid-cols-7 gap-2 mb-4 py-0.5 bg-blue-50/50 border border-blue-200 text-[10px]">
+                <span class="text-right text-gray-800 font-bold">Carrier:</span>
+                <span class="text-gray-800 font-medium">{{ invoice.carrier.type or 'N/A' }}</span>
+                <span class="text-right text-gray-800 font-bold">Ship Date:</span>
+                <span class="text-gray-800 font-medium">{{ invoice.ship_date or 'N/A'}}</span>
+                <span class="text-right text-gray-800 font-bold">Tracking:</span>
+                <span class="text-gray-800 font-mono">{{ invoice.tracking_number or 'N/A' }}</span>
+        </div>
+
+        <!-- 5. ITEMS TABLE -->
         <div class="mb-4">
             <table class="w-full border-collapse table-auto">
                 <thead>
@@ -164,7 +191,7 @@
             </table>
         </div>
 
-        <!-- 5. SUMMARY SECTION -->
+        <!-- 6. SUMMARY SECTION -->
         <div class="flex justify-between items-start mb-6">
             <!-- Terms Notes (Left) -->
             <div class="w-3/5">
@@ -178,7 +205,7 @@
                         placeholder="Enter terms, valid dates, or special instructions...">{{ metadata.default_invoice_terms }}</textarea>
             </div>
 
-            <!-- Financials (Right) -->
+            <!-- 7. Financials (Right) -->
             <div class="w-3/10">
                 <table class="w-full text-[10px]">
                     <tr class="border-b border-gray-200">
@@ -207,7 +234,7 @@
             </div>
         </div>
 
-        <!-- 6. PAYMENT INSTRUCTIONS (FOOTER) -->
+        <!-- 8. PAYMENT INSTRUCTIONS (FOOTER) -->
         <div class="grid grid-cols-2 gap-8 text-[10px] text-gray-600 pt-6 border-t-2 border-slate-100">
             <!-- Column 1: Check -->
             <div class="ml-8">
