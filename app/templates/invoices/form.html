@@ -140,7 +140,7 @@
 
             </div>
 
-            <div class="grid grid-cols-11 gap-4">
+            <div class="grid grid-cols-10 gap-4">
                 <div class="col-span-4">
                     <label class="block text-sm font-medium text-gray-500">Client</label>
                     {% if mode == 'view' %}
@@ -242,7 +242,7 @@
                     </div>
                 </div>
                 
-                <div class="col-span-2">
+                <div class="col-span-3">
                     <label class="block text-sm font-medium text-gray-500">Invoice Date</label>
                     {% if mode == 'view' %}
                         <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ invoice.invoice_date or '-' }}</p>
@@ -252,16 +252,6 @@
                 </div>
 
                 <div class="col-span-3">
-                    <label class="block text-sm font-medium text-gray-500">Tracking Number</label>
-                    {% if mode == 'view' %}
-                    <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ invoice.tracking_number or '-' }}</p>
-                    {% else %}
-                        <input type="text" name="tracking_number" value="{{ invoice.tracking_number if invoice else '' }}" 
-                               class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none transition-all">
-                    {% endif %}
-                </div>
-
-                <div class="col-span-2">
                     <label class="block text-sm font-medium text-gray-500">Status</label>
                     {% if mode == 'add' %}
                         <p class="p-2">
@@ -286,6 +276,45 @@
                                 <i class="fa-solid fa-chevron-down text-[10px]"></i>
                             </div>
                         </div>
+                    {% endif %}
+                </div>
+
+                <div class="col-span-4">
+                    <label class="block text-sm font-medium text-gray-500">Shipping Carrier</label>
+                    {% if mode == 'view' %}
+                        <p class="mt-1 block bg-gray-100 border rounded-lg p-2 text-sm">{{ invoice.carrier.type if invoice.carrier else 'Not Specified' }}</p>
+                    {% else %}
+                        <div class="relative">
+                            <select name="carrier_id" class="mt-1 block w-full border rounded-lg p-2 text-sm appearance-none bg-transparent cursor-pointer pr-10 focus:ring-1 focus:ring-blue-300 outline-none">
+                                <option value="">Select Carrier...</option>
+                                {% for carrier in carriers %}
+                                    <option value="{{ carrier.id }}" {{ 'selected' if (invoice and invoice.carrier_id == carrier.id) else '' }}>{{ carrier.type }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-400">
+                                <i class="fa-solid fa-chevron-down text-[10px]"></i>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="col-span-3">
+                    <label class="block text-sm font-medium text-gray-500">Ship Date</label>
+                    {% if mode == 'view' %}
+                        <p class="mt-1 block bg-gray-100 border rounded-lg p-2 text-sm">{{ invoice.ship_date or '-' }}</p>
+                    {% else %}
+                        <input type="date" name="ship_date" value="{{ invoice.ship_date if invoice and invoice.ship_date else invoice.invoice_date if invoice else now.strftime('%Y-%m-%d') }}" 
+                            class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">
+                    {% endif %}
+                </div>
+
+                <div class="col-span-3">
+                    <label class="block text-sm font-medium text-gray-500">Tracking Number</label>
+                    {% if mode == 'view' %}
+                    <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ invoice.tracking_number or '-' }}</p>
+                    {% else %}
+                        <input type="text" name="tracking_number" value="{{ invoice.tracking_number if invoice else '' }}" 
+                               class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none transition-all">
                     {% endif %}
                 </div>
                 

@@ -354,6 +354,7 @@ class PurchaseOrderService(BaseService):
                 # Load the Bill-To Client and their contacts
                 db.joinedload(cls.model.bill_to).selectinload(Client.contacts),
                 joinedload(cls.model.order),
+                selectinload(cls.model.items).joinedload(PoItem.product), 
                 selectinload(cls.model.invoices),
                 selectinload(cls.model.payments)
             )

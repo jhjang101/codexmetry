@@ -238,6 +238,8 @@ class InvoiceService(BaseService):
                 joinedload(cls.model.bill_to).selectinload(Client.contacts),
                 joinedload(cls.model.purchase_order),
                 joinedload(cls.model.order),
+                joinedload(cls.model.carrier),
+                selectinload(cls.model.items).joinedload(InvoiceItem.product),
                 selectinload(cls.model.payments)
             )
             .where(cls.model.id == id)
@@ -351,16 +353,19 @@ class InvoiceService(BaseService):
         if not po:
             raise ValueError("The selected Purchase Order does not exist.")
 
-        # Parse dates
-        raw_date = data.get('invoice_date')
         # Get TimeZone from metadata
         metadata = db.session.get(SettingsMetadata, 1)
         tz_name = metadata.timezone if metadata else 'America/Chicago'
 
+        # Parse dates
+        raw_date = data.get('invoice_date')
         if raw_date:
             invoice_date = datetime.strptime(raw_date, '%Y-%m-%d').date()
         else: 
             invoice_date = datetime.now(ZoneInfo(tz_name)).date()
+
+        raw_ship_date = data.get('ship_date')
+        carrier_id = data.get('carrier_id')
 
         # Transform data
         clean_data = {
@@ -370,6 +375,8 @@ class InvoiceService(BaseService):
             'bill_to_id': int(data.get('bill_to_id', po.bill_to_id)),
             'invoice_number': data.get('invoice_number', '').strip(),
             'invoice_date': invoice_date,
+            'ship_date': datetime.strptime(raw_ship_date, '%Y-%m-%d').date() if raw_ship_date else None,
+            'carrier_id': int(carrier_id) if carrier_id else None,
             'tracking_number': data.get('tracking_number', '').strip(),
             'status': data.get('status', 'open'),
             'note': data.get('note', '').strip()

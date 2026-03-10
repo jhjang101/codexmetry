@@ -5,6 +5,7 @@ from ..services.invoices_service import InvoiceService
 from ..services.purchase_orders_service import PurchaseOrderService
 from ..services.products_service import ProductService
 from ..services.clients_service import ClientService
+from ..services.settings_service import CarrierService
 from ..services.attachment_service import AttachmentService
 from ..services.audit_service import AuditLogService
 from ..utils.money import parse_to_cents
@@ -67,6 +68,8 @@ def add():
                 'po_id': request.form.get('po_id'),
                 'bill_to_id': request.form.get('bill_to_id'),
                 'invoice_date': request.form.get('invoice_date'),
+                'carrier_id': request.form.get('carrier_id'),
+                'ship_date': request.form.get('ship_date'),
                 'tracking_number': request.form.get('tracking_number'),
                 'note': request.form.get('note')
             }
@@ -164,6 +167,7 @@ def add():
     clients=ClientService.get_all()
     products=ProductService.get_all_products()
     suggested_number = generate_doc_number(prefix='INV', model=Invoice, column_name='invoice_number')
+    carriers = CarrierService.get_all()
     initial_row_id = str(int(time.time() * 1000))
     return render_template('invoices/form.html', 
                            mode='add', 
@@ -173,6 +177,7 @@ def add():
                            payers=payers,
                            products=products,
                            suggested_number=suggested_number,
+                           carriers=carriers,
                            client_id=client_id,
                            po_id=po_id,
                            payer_prefill_id=payer_prefill_id,
@@ -240,6 +245,8 @@ def edit(id):
                 'status': request.form.get('status'),
                 'bill_to_id': request.form.get('bill_to_id'),
                 'invoice_date': request.form.get('invoice_date'),
+                'carrier_id': request.form.get('carrier_id'),
+                'ship_date': request.form.get('ship_date'),
                 'tracking_number': request.form.get('tracking_number'),
                 'note': request.form.get('note')
             }
@@ -290,12 +297,14 @@ def edit(id):
     pos = PurchaseOrderService.get_pos_by_client(invoice.client_id, 
                                                  include_id=invoice.po_id,
                                                  statuses=['open'])
+    carriers = CarrierService.get_all()
     return render_template('invoices/form.html', 
                            mode='edit', 
                            invoice=invoice, 
                            clients=clients, 
                            payers=clients,
                            products=products, 
+                           carriers=carriers,
                            pos=pos)
 
 @bp.route('/archive/<int:id>', methods=['POST'])

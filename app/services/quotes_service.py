@@ -165,7 +165,9 @@ class QuoteService(BaseService):
                 # Load the Client and their nested contacts
                 joinedload(cls.model.client).selectinload(Client.contacts),
                 # Load the Order Registry to support quote.order.order_number
-                joinedload(cls.model.order)
+                joinedload(cls.model.order),
+                joinedload(cls.model.creator),
+                selectinload(cls.model.items).joinedload(QuoteItem.product)
             )
             .where(cls.model.id == id)
         )
