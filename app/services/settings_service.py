@@ -1,11 +1,15 @@
 from .base_service import BaseService
 from ..models import (
     SettingsMetadata, PoType, ProductCategory, 
-    ExpenseCategory, PaymentType, AdjustmentCategory
+    ExpenseCategory, PaymentType, AdjustmentCategory,
+    Carrier,
 )
 from .audit_service import AuditLogService
 from ..extensions import db
 from ..utils.money import parse_to_cents
+
+class CarrierService(BaseService):
+    model = Carrier
 
 class PoTypeService(BaseService):
     model = PoType

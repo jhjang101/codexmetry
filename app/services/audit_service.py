@@ -8,7 +8,7 @@ from sqlalchemy.orm import joinedload
 from ..models import (
     AuditLog, Client, User, PoType, Product, 
     ProductCategory, ExpenseCategory, PurchaseOrder, Invoice, Vendor,
-    PaymentType, AdjustmentCategory, OrderRegistry 
+    PaymentType, AdjustmentCategory, OrderRegistry , Carrier
 )
 
 class AuditLogService:
@@ -29,6 +29,8 @@ class AuditLogService:
         'bill_to_id': (Client, 'company_name'),
         'paid_from_id': (Client, 'company_name'),
         'payment_type_id': (PaymentType, 'type'),
+        'adjustment_category_id': (AdjustmentCategory, 'type'),
+        'carrier_id': (Carrier, 'type'),
     }
 
     @classmethod

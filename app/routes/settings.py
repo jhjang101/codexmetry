@@ -9,7 +9,8 @@ from ..services.settings_service import (
     ProductCategoryService, 
     ExpenseCategoryService, 
     PaymentTypeService, 
-    AdjustmentCategoryService
+    AdjustmentCategoryService,
+    CarrierService
 )
 from ..services.audit_service import AuditLogService
 from ..utils.images import save_image
@@ -21,7 +22,8 @@ LOOKUPS = {
     'product_categories': ProductCategoryService,
     'expense_categories': ExpenseCategoryService,
     'payment_types': PaymentTypeService,
-    'adjustment_categories': AdjustmentCategoryService
+    'adjustment_categories': AdjustmentCategoryService,
+    'carriers': CarrierService
 }
 
 bp = Blueprint('settings', __name__)
