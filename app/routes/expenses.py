@@ -280,6 +280,30 @@ def archive(id):
     else:
         flash('Expense not found.', 'error')
     return redirect(url_for('expenses.index'))
+    
+# --- PRINT ---
+
+@bp.route('/print/<int:id>')
+@login_required
+def print_view(id):
+    """
+    Messenger: Fetches hydrated Invoice data for the printable layout.
+    Metadata is already injected via global context processor.
+    """
+    # 1. Fetch hydrated expense using the Service Brain
+    expense = ExpenseService.get_expense_by_id(id)
+    
+    if not expense or not expense.is_active:
+        flash("Expense record not found.", "error")
+        return redirect(url_for('expenses.index'))
+
+    # 2. Calculate Subtotal (In-Memory)
+    subtotal = sum(item.quantity * item.unit_price for item in expense.items)
+
+    # 3. Render the dedicated print template
+    return render_template('expenses/print.html', 
+                           expense=expense, 
+                           subtotal=subtotal)
 
 # --- HTMX Item-row and Calculation Routes ---
 

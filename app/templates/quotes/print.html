@@ -28,7 +28,7 @@
             /* Auto-sizing support for modern browsers */
             .print-notes {
                 field-sizing: content; /* Modern CSS to auto-expand textarea */
-                min-height: 100px;
+                min-height: 80px;
             }
         }
         /* Extra spacing for electronical typing on PDF */
@@ -187,6 +187,7 @@
                 <textarea class="print-notes w-full text-[10px] leading-relaxed text-gray-700 bg-gray-50 p-2 
                                  border border-dashed border-gray-300 rounded outline-none focus:bg-white 
                                  focus:border-blue-400 transition-all resize-none overflow-hidden"
+                        style="height: 80px;"
                         oninput='this.style.height = "";this.style.height = this.scrollHeight + "px"'
                         placeholder="Enter terms, valid dates, or special instructions...">{{ metadata.default_quote_terms }}</textarea>
             </div>
@@ -207,8 +208,8 @@
                         <td class="py-1 px-2 text-right">{{ shipping_total | usd }}</td>
                     </tr>
                     <tr class="bg-gray-100 border-b border-gray-500">
-                        <td class="py-1.5 px-2 font-bold text-slate-900 text-xs uppercase">TOTAL</td>
-                        <td class="py-1.5 px-2 text-right font-bold text-xs text-slate-900">{{ quote.total_amount | usd }}</td>
+                        <td class="py-1.5 px-2 font-bold text-gray-800 text-xs uppercase">TOTAL</td>
+                        <td class="py-1.5 px-2 text-right font-bold text-xs text-gray-800">{{ quote.total_amount | usd }}</td>
                     </tr>
                 </table>
             </div>

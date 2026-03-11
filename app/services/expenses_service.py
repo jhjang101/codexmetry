@@ -182,11 +182,13 @@ class ExpenseService(BaseService):
             select(cls.model)
             .options(
                 # 1. Load mandatory Vendor relationship
-                joinedload(cls.model.vendor),
+                joinedload(cls.model.vendor).selectinload(Vendor.contacts),
                 # 2. Load the optional Client and their contacts for .full_display
                 joinedload(cls.model.client).selectinload(Client.contacts),
                 # 3. Load the lookup category
                 joinedload(cls.model.category),
+                joinedload(cls.model.creator),
+                selectinload(cls.model.items),
                 # 4. Load the Job Costing hierarchy
                 joinedload(cls.model.order),
                 joinedload(cls.model.purchase_order),
