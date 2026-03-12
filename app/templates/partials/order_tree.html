@@ -116,7 +116,14 @@
                             <td class="px-6 py-2 font-bold text-right text-gray-700">{{ tree.purchase_order.total_amount | usd }}</td>
                             <td class="px-6 py-2 font-bold text-right text-amber-600">{{ tree.purchase_order.balance_tobe_invoiced | usd }}</td>
                             <td class="px-6 py-2 text-center">
-                                <span class="px-2 py-0.5 rounded text-[9px] font-bold uppercase {{ 'bg-green-100 text-green-700' if tree.purchase_order.status == 'completed' else 'bg-red-100 text-red-700' }}">
+                                <span class="px-2 py-0.5 rounded text-[9px] font-bold uppercase 
+                                            {% if tree.purchase_order.status == 'completed' %}
+                                            bg-green-100 text-green-700
+                                            {% elif tree.purchase_order.status == 'invoiced' %}
+                                            bg-blue-100 text-blue-700
+                                            {% else %}
+                                            bg-red-100 text-red-700
+                                            {% endif %}">
                                     {{ tree.purchase_order.status }}
                                 </span>
                             </td>
@@ -159,7 +166,14 @@
                             <td class="px-6 py-2 text-right font-bold text-blue-700">{{ inv.total_due | usd }}</td>
                             <td class="px-6 py-2 text-right font-bold text-blue-700">{{ inv.contextual_balance | usd }}</td>
                             <td class="px-6 py-2 text-center">
-                                <span class="px-2 py-0.5 rounded text-[9px] font-bold uppercase {{ 'bg-green-100 text-green-700' if inv.status == 'completed' else 'bg-red-100 text-red-700' }}">
+                                <span class="px-2 py-0.5 rounded text-[9px] font-bold uppercase 
+                                            {% if inv.status == 'draft' %}
+                                            bg-gray-100 text-gray-700
+                                            {% elif inv.status == 'completed' %}
+                                            bg-green-100 text-green-700
+                                            {% else %}
+                                            bg-red-100 text-red-700
+                                            {% endif %}">
                                     {{ inv.status }}
                                 </span>
                             </td>
