@@ -6,8 +6,11 @@ from ..services.audit_service import AuditLogService
 
 def sync_invoice_status(invoice, old_status: str):
     """
-    Brain: Enforces status rules on a Invoice object.
-    Promotes 'draft' to 'open/completed' if payment.
+    Enforces status transitions based on user intent and financial reality.
+    1. Always honor manual user overrides.
+    2. Auto-complete if fully paid.
+    3. Auto-promote to 'open' if partially paid.
+    4. Auto-promote to 'open' if printed.
     """
     if not invoice or not invoice.is_active:
         return False
@@ -16,25 +19,37 @@ def sync_invoice_status(invoice, old_status: str):
     settings = db.session.get(SettingsMetadata, 1)
     threshold = settings.invoice_threshold if settings else 0
 
-    # 2. Determine the target status based on financial reality
-    if invoice.balance <= threshold:
-        target_status = 'completed'
-    else:
-        # If not fully paid, it's either 'open' or it stays 'draft'
-        # Rule: If it was already 'open' or 'completed', it must stay 'open'.
-        # Rule: If it's a 'draft' and this sync was triggered (by payment or print), 
-        # it is promoted to 'open'.
-        target_status = 'open' if old_status != 'draft' else 'draft'
-        
-        # Override: If it's a draft but has a linked payment, promote it
-        if old_status == 'draft' and any(p.is_active for p in invoice.payments):
-            target_status = 'open'
-    
-    # 3. Apply Change
-    if invoice.status != target_status:
-        invoice.status = target_status
+    is_fully_paid = invoice.balance <= threshold
+    has_payments = any(p.is_active for p in invoice.payments)
 
-    # 4. Final Audit Check: Did the status change from the BEGINNING of the request?
+    # RULE 1: If old_status != current status, the user manually overrode it.
+    # We honor that choice and do not perform auto-logic.
+    if old_status != invoice.status:
+        new_status = invoice.status
+    else:
+        # User did NOT override, apply automated rules:
+        
+        # RULE 2: If fully paid, move to completed.
+        if is_fully_paid:
+            new_status = 'completed'
+        
+        # RULE 3: If not fully paid but has payments, move to open.
+        elif has_payments:
+            new_status = 'open'
+
+        # RULE 4: If no payments, is a draft, and called by print, move to open.
+        elif old_status == 'draft':
+            new_status = 'open'
+
+        # RULE 5: Otherwise, maintain the current state (stays draft or stays open).
+        else:
+            new_status = old_status
+        
+    # Apply Change
+    if invoice.status != new_status:
+        invoice.status = new_status
+
+    # Final Audit Check: Did the status change from the BEGINNING of the request?
     if invoice.status != old_status:
         AuditLogService.record(
             target_id=invoice.id,
@@ -72,7 +87,7 @@ def sync_po_status(po_id: int | None):
     else:
         # 3. Physical fulfillment complete -> Check Invoice Payment Status
         # Look for any active invoices that are still 'open'
-        open_invoices = [invoice for invoice in po.invoices if invoice.is_active and invoice.status == 'open']
+        open_invoices = [invoice for invoice in po.invoices if invoice.is_active and invoice.status != 'completed']
 
         if open_invoices:
             new_status = 'invoiced'

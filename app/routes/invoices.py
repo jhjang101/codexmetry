@@ -86,7 +86,8 @@ def add():
 
             # 5. Sync invoice and po status
             # This handles the case where the invoice is fully covered by a deposit
-            sync_invoice_status(new_invoice, old_status='draft')
+            invoice = InvoiceService.get_invoice_by_id(new_invoice.id)
+            sync_invoice_status(invoice, old_status='draft')
             po_status_updated = sync_po_status(new_invoice.po_id)
             
             flash(f"Invoice {new_invoice.invoice_number} created!", "success")
@@ -265,6 +266,7 @@ def edit(id):
             InvoiceService.edit_invoice(id, header_data, items, new_files=new_files, delete_ids=delete_ids)
 
             print('old_status:', old_status)
+            print('new_status:', invoice.status)
             # 6. Sync logic (Invoice and PO status ripples)
             sync_invoice_status(invoice, old_status)
 
