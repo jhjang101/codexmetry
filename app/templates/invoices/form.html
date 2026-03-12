@@ -59,7 +59,7 @@
                             {# 2. Shortcuts #}
                             <p class="px-4 py-1 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Generate New</p>
 
-                            {% if invoice.status in ['open'] %}
+                            {% if invoice.status in ['draft', 'open'] %}
                             <a href="{{ url_for('payments.add', invoice_id=invoice.id) }}" 
                             class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors">
                                 <i class="fa-solid fa-money-check-dollar w-2"></i>
@@ -259,7 +259,9 @@
                         </p>
                     {% elif mode == 'view' %}
                         <p class="p-2">
-                            {% if invoice.status == 'open' %}
+                            {% if invoice.status == 'draft' %}
+                            <span class="px-2 py-1 text-xs font-bold uppercase rounded-lg bg-gray-100 text-gray-600">Draft</span>
+                            {% elif invoice.status == 'open' %}
                             <span class="px-2 py-1 text-xs font-bold uppercase rounded-lg bg-red-100 text-red-700">Open</span>
                             {% elif invoice.status == 'completed' %}
                             <span class="px-2 py-1 text-xs font-bold uppercase rounded-lg bg-green-100 text-green-700">Completed</span>
@@ -268,7 +270,7 @@
                     {% else %}
                         <div class="relative">
                             <select name="status" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none appearance-none bg-transparent cursor-pointer pr-10">
-                                {% for s in ['open', 'completed'] %}
+                                {% for s in ['draft', 'open', 'completed'] %}
                                     <option value="{{ s }}" {{ 'selected' if invoice.status == s else '' }}>{{ s|capitalize }}</option>
                                 {% endfor %}
                             </select>

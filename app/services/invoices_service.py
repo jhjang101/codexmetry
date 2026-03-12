@@ -314,13 +314,13 @@ class InvoiceService(BaseService):
                            include_id: int | None = None, 
                            statuses: list[str] | None = None):
         """
-        Fetcher: Returns 'open' invoices for a specific PO based on statuses.
+        Fetcher: Returns 'open' and 'draft' invoices for a specific PO based on statuses.
         If include_id is provided, that specific invoice is included regardless of status.
         Used for the Payment, and  Expense creation dropdown.
         """
         # 1. Handle Default Statuses
         if statuses is None:
-            statuses = ['open']
+            statuses = ['open', 'draft']
 
         # 2. Define the "Standard" criteria
         standard_criteria = (
@@ -378,7 +378,7 @@ class InvoiceService(BaseService):
             'ship_date': datetime.strptime(raw_ship_date, '%Y-%m-%d').date() if raw_ship_date else None,
             'carrier_id': int(carrier_id) if carrier_id else None,
             'tracking_number': data.get('tracking_number', '').strip(),
-            'status': data.get('status', 'open'),
+            'status': data.get('status', 'draft'),
             'note': data.get('note', '').strip()
         }
 

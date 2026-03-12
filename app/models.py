@@ -466,7 +466,7 @@ class Invoice(db.Model, AuditMixin):
     carrier_id: Mapped[int | None] = mapped_column(ForeignKey('carriers.id'))
     ship_date: Mapped[date | None] = mapped_column(Date)
     tracking_number: Mapped[str | None] = mapped_column(String(100))
-    status: Mapped[str] = mapped_column(String(20), default='open')
+    status: Mapped[str] = mapped_column(String(20), default='draft')
     note: Mapped[str | None] = mapped_column(Text)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 

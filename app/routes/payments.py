@@ -195,7 +195,7 @@ def add():
     if po_id:
         invoices = InvoiceService.get_invoices_by_po(po_id, 
                                                      include_id=invoice_id, 
-                                                     statuses=['open'])
+                                                     statuses=['draft', 'open'])
         
     # GET: Standar add Prepare form data    
     clients=ClientService.get_all()

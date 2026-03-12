@@ -129,7 +129,7 @@ def add():
             po_id = invoice.po_id
             # Hydrate lists so dropdowns are ready
             pos = PurchaseOrderService.get_pos_by_client(client_id, include_id=po_id, statuses=['open', 'invoiced', 'completed'])
-            invoices = InvoiceService.get_invoices_by_po(po_id, include_id=invoice_id, statuses=['open', 'completed'])
+            invoices = InvoiceService.get_invoices_by_po(po_id, include_id=invoice_id, statuses=['draft', 'open', 'completed'])
 
     # CASE B: From PO Shortcut
     elif po_id:
@@ -137,7 +137,7 @@ def add():
         if po and po.is_active:
             client_id = po.client_id
             pos = PurchaseOrderService.get_pos_by_client(client_id, include_id=po_id, statuses=['open', 'invoiced', 'completed'])
-            invoices = InvoiceService.get_invoices_by_po(po_id, statuses=['open', 'completed'])
+            invoices = InvoiceService.get_invoices_by_po(po_id, statuses=['draft', 'open', 'completed'])
 
     # CASE C: From Client View
     elif client_id:
@@ -259,7 +259,7 @@ def edit(id):
         invoices = InvoiceService.get_invoices_by_po(
             expense.po_id, 
             include_id=expense.invoice_id, 
-            statuses=['open', 'completed']
+            statuses=['draft', 'open', 'completed']
         )
 
     return render_template('expenses/form.html', 
@@ -399,7 +399,7 @@ def update_po_cascades():
     invoices = InvoiceService.get_invoices_by_po(
         po_id, 
         include_id=invoice_id,          # includes current invoice in edit
-        statuses=['open', 'completed']  # includes all POs.
+        statuses=['draft', 'open', 'completed']  # includes all POs.
     ) if po_id else []
 
     return render_template('expenses/partials/po_cascades.html',
