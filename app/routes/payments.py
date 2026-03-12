@@ -83,7 +83,8 @@ def add():
             invoice_status_updated = False
             po_status_updated = False
             if new_payment.invoice_id:
-                invoice_status_updated = sync_invoice_status(new_payment.invoice_id)
+                invoice = InvoiceService.get_invoice_by_id(new_payment.invoice_id)
+                invoice_status_updated = sync_invoice_status(invoice, old_status=invoice.status) # type: ignore
                 po_status_updated = sync_po_status(new_payment.po_id)
             
             # 5. Flash message
@@ -151,7 +152,7 @@ def add():
         # Set is_po_open based on the parent PO status
         is_po_open = (invoice.purchase_order.status == 'open')
         payer_prefill_id = invoice.bill_to_id
-        amount_prefill = invoice.balance 
+        amount_prefill = invoice.balance # type: ignore
 
     # 2. generate payment from PO Shortcut
     elif po_id:
@@ -299,12 +300,16 @@ def edit(id):
             # If the invoice link changed, sync the old Invoice and PO first
             if old_invoice_id != new_invoice_id:
                 if old_invoice_id:
-                    old_invoice_status_updated = sync_invoice_status(old_invoice_id)
+                    old_invoice = InvoiceService.get_invoice_by_id(old_invoice_id)
+                    old_invoice_status_updated = sync_invoice_status(old_invoice, old_status=old_invoice.status) # type: ignore
+                if old_po_id:
                     old_po_status_updated = sync_po_status(old_po_id)
 
             # Sync the current (new) invoice link
             if new_invoice_id:
-                invoice_status_updated = sync_invoice_status(new_invoice_id)
+                new_invoice = InvoiceService.get_invoice_by_id(new_invoice_id)
+                invoice_status_updated = sync_invoice_status(new_invoice, old_status=new_invoice.status) # type: ignore
+            if new_po_id:
                 po_status_updated = sync_po_status(new_po_id)
 
             # 7. Flash Messages
@@ -380,7 +385,8 @@ def archive(id):
         invoice_status_updated = False
 
         if invoice_id:
-            invoice_status_updated = sync_invoice_status(invoice_id)
+            invoice = InvoiceService.get_invoice_by_id(invoice_id)
+            invoice_status_updated = sync_invoice_status(invoice, old_status=invoice.status) # type: ignore
         po_status_updated = sync_po_status(po_id)
 
         # 3. Success Flashes
@@ -468,7 +474,7 @@ def update_po_cascades():
     if po_id:
         po = PurchaseOrderService.get_po_by_id(po_id)
         payer_prefill_id = po.bill_to.id if po else None
-        is_po_open = False if po.status != 'open' else True
+        is_po_open = False if po.status != 'open' else True # type: ignore
 
     # Populate payers from Clients for the Paid-from
     payers = ClientService.get_all()
@@ -506,8 +512,8 @@ def update_invoice_cascades():
     amount_prefill = None
     if invoice_id:
         invoice = InvoiceService.get_invoice_by_id(invoice_id)
-        payer_prefill_id = invoice.bill_to.id
-        amount_prefill = invoice.balance
+        payer_prefill_id = invoice.bill_to.id # type: ignore
+        amount_prefill = invoice.balance # type: ignore
     elif po_id:
         po = PurchaseOrderService.get_by_id(po_id) if po_id else None
         payer_prefill_id = po.bill_to.id if po else None 

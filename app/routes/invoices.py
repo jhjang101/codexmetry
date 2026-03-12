@@ -86,7 +86,7 @@ def add():
 
             # 5. Sync invoice and po status
             # This handles the case where the invoice is fully covered by a deposit
-            sync_invoice_status(new_invoice.id)
+            sync_invoice_status(new_invoice, old_status='draft')
             po_status_updated = sync_po_status(new_invoice.po_id)
             
             flash(f"Invoice {new_invoice.invoice_number} created!", "success")
@@ -148,13 +148,13 @@ def add():
         
         client_id = po.client_id if po else None
         payer_prefill_id = po.bill_to_id if po else None
-        po_total_prepayment = po.total_prepayment if po else 0
+        po_total_prepayment = po.total_prepayment if po else 0 # type: ignore
         pos = PurchaseOrderService.get_pos_by_client(client_id, 
                                                      include_id=po_id,
                                                      statuses=['open']) if client_id else []
         payers = ClientService.get_all()
 
-        print('po.remaining_items:', po.remaining_items)
+        print('po.remaining_items:', po.remaining_items) 
 
         # Prefill remaining items from this PO
         remaining = po.remaining_items # type: ignore
@@ -235,6 +235,7 @@ def edit(id):
     if request.method == 'POST':
         try:
             # 1. Capture State for Sync ripples
+            old_status = invoice.status
             old_po_id = invoice.po_id
             old_po_name = invoice.purchase_order.po_number or invoice.order.order_number
 
@@ -263,8 +264,9 @@ def edit(id):
             # 5. Update Invoice and Line Items
             InvoiceService.edit_invoice(id, header_data, items, new_files=new_files, delete_ids=delete_ids)
 
+            print('old_status:', old_status)
             # 6. Sync logic (Invoice and PO status ripples)
-            sync_invoice_status(invoice.id)
+            sync_invoice_status(invoice, old_status)
 
             new_po_id = invoice.po_id
             po_status_updated = sync_po_status(new_po_id)
@@ -527,7 +529,7 @@ def load_po_details():
             item['billed_unit_price'] = item.pop('agreed_unit_price')
             item['row_id'] = f"{int(time.time() * 1000)}{idx}"
         items = remaining
-        po_total_prepayment = po.total_prepayment if po else 0
+        po_total_prepayment = po.total_prepayment if po else 0 # type: ignore
 
 
         print('po.total_prepayment:', po.total_prepayment)
