@@ -381,7 +381,10 @@ def print_view(id):
     net_days = metadata.default_net_days if metadata else 30
     due_date = invoice.invoice_date + timedelta(days=net_days)
 
-    # 5. Pass pre-calculated values to the template
+    # 5. Change invoice status to open
+
+
+    # 6. Pass pre-calculated values to the template
     return render_template('invoices/print.html', 
                            invoice=invoice, 
                            line_display_items=line_display_items,

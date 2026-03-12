@@ -37,11 +37,7 @@ def sync_invoice_status(invoice, old_status: str):
         elif has_payments:
             new_status = 'open'
 
-        # RULE 4: If no payments, is a draft, and called by print, move to open.
-        elif old_status == 'draft':
-            new_status = 'open'
-
-        # RULE 5: Otherwise, maintain the current state (stays draft or stays open).
+        # RULE 4: Otherwise, maintain the current state (stays draft or stays open).
         else:
             new_status = old_status
         
