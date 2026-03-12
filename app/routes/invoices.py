@@ -87,7 +87,7 @@ def add():
             # 5. Sync invoice and po status
             # This handles the case where the invoice is fully covered by a deposit
             invoice = InvoiceService.get_invoice_by_id(new_invoice.id)
-            sync_invoice_status(invoice, old_status='draft')
+            sync_invoice_status(invoice)
             po_status_updated = sync_po_status(new_invoice.po_id)
             
             flash(f"Invoice {new_invoice.invoice_number} created!", "success")
@@ -263,26 +263,22 @@ def edit(id):
             delete_ids = [int(fid) for fid in raw_delete_ids if fid.isdigit()]
 
             # 5. Update Invoice and Line Items
-            InvoiceService.edit_invoice(id, header_data, items, new_files=new_files, delete_ids=delete_ids)
+            invoice, invoice_status, old_po_status, new_po_status = InvoiceService.edit_invoice(id, 
+                                                                                   header_data, 
+                                                                                   items, 
+                                                                                   new_files=new_files, 
+                                                                                   delete_ids=delete_ids)
 
-            print('old_status:', old_status)
-            print('new_status:', invoice.status)
-            # 6. Sync logic (Invoice and PO status ripples)
-            sync_invoice_status(invoice, old_status)
-
-            new_po_id = invoice.po_id
-            po_status_updated = sync_po_status(new_po_id)
-            old_po_status_updated = False
-            if old_po_id != new_po_id:
-                old_po_status_updated = sync_po_status(old_po_id)
-
-            # 7. Flash Messages
+            # 6. Flash Messages
             flash(f"Invoice {invoice.invoice_number} updated successfully!", "success")
-            if po_status_updated:
-                new_po_name = invoice.purchase_order.po_number or invoice.order.order_number
-                flash(f"Status of PO {new_po_name} updated successfully!", "success")
-            if old_po_id and old_po_status_updated:
-                flash(f"Status of PO {old_po_name} updated successfully!", "success")
+            # New/Current PO Ripple Feedback
+            if new_po_status and new_po_status['before'] != new_po_status['after']:
+                po_name = invoice.purchase_order.po_number or invoice.order.order_number
+                flash(f"Associated PO {po_name} status updated: {new_po_status['before'].upper()} → {new_po_status['after'].upper()}", "success")
+            # Old PO Ripple Feedback (Only fires if a PO swap occurred)
+            if old_po_status and old_po_status['before'] != old_po_status['after']:
+                # Fetch old name for forensic clarity in the UI
+                flash(f"Previous PO {old_po_name} status reverted: {old_po_status['before'].upper()} → {old_po_status['after'].upper()}", "info")
 
             # The Safe Save Redirect: Forces a clean page load to 'View' mode
             response = make_response("", 200)

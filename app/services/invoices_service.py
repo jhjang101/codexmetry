@@ -5,6 +5,7 @@ from .attachment_service import AttachmentService
 from ..extensions import db
 from ..utils.money import parse_to_cents, format_usd
 from ..utils.manual_pagination import ManualPagination
+from ..utils.sync import sync_invoice_status, sync_po_status
 from sqlalchemy import select, or_, func, case
 from sqlalchemy.orm import contains_eager, joinedload, selectinload
 from datetime import datetime
@@ -173,7 +174,7 @@ class InvoiceService(BaseService):
                      data: dict, 
                      items_data: list[dict],
                      new_files=None, 
-                     delete_ids=None) -> Invoice:
+                     delete_ids=None):
         """Atomic update of header, items, and attachments with credit pool validation."""
         invoice = cls.get_invoice_by_id(invoice_id)
         if not invoice:
@@ -195,7 +196,8 @@ class InvoiceService(BaseService):
         # 2. Double-Spending Guard
         cls._validate_deposit_usage(po_id=clean_data['po_id'], items_data=items_data, invoice_id=invoice_id)
 
-        # 3. Audit_logs snapshot
+        # 3. Original State Capture
+        old_po_id = invoice.po_id
         old_snapshot = cls._get_snapshot(invoice)
         old_snapshot['line_items'] = cls._get_items_fingerprint(invoice.items, 'quantity', 'billed_unit_price')
         old_snapshot['attachments'] = AttachmentService._get_fingerprint(invoice.attachments)
@@ -208,20 +210,34 @@ class InvoiceService(BaseService):
         clean_data['line_items'] = cls._save_items(invoice, items_data)
         clean_data['total_amount'] = invoice.total_amount
 
-        # 6. Save Attachments
+        # 6. Update Invoice Status
+        invoice_status = sync_invoice_status(invoice, old_snapshot['status'], clean_data['status'])
+        if invoice_status['before'] != invoice_status['after']:
+            invoice.status = invoice_status['after']
+            clean_data['status'] = invoice_status['after']
+
+        # 7. Save Attachments
         AttachmentService.commit('Invoice', invoice_id, new_files=new_files, delete_ids=delete_ids)
         db.session.refresh(invoice)
         clean_data['attachments'] = AttachmentService._get_fingerprint(invoice.attachments)
 
-        # 7. Deep Audit Trigger
+        # 8. Deep Audit Trigger
         AuditLogService.record(invoice_id, 
                                cls.model.__name__, 
                                'UPDATE', 
                                old_data=old_snapshot, 
                                new_data=clean_data)
+        
+        # 9. PO Status Ripple
+        new_po_status = sync_po_status(invoice.po_id)
+        
+        old_po_status = None
+        if old_po_id != invoice.po_id:
+            old_po_status = sync_po_status(old_po_id)
 
+        #10. Atomic Commit
         db.session.commit()
-        return invoice
+        return invoice, invoice_status, old_po_status, new_po_status
     
     @classmethod
     def get_invoice_by_id(cls, id: int) -> Invoice | None:
