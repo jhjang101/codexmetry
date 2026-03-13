@@ -154,9 +154,7 @@ class InvoiceService(BaseService):
         cls.get_invoice_by_id(invoice.id)
 
         # 7. Update Invoice Status
-        invoice_status = sync_invoice_status(invoice)
-        if invoice_status['before'] != invoice_status['after']:
-            invoice.status = invoice_status['after']
+        sync_invoice_status(invoice)
 
         # 8. Prepare the Snapshot for the log
         new_snapshot = clean_data.copy()
@@ -230,8 +228,6 @@ class InvoiceService(BaseService):
 
         # 8. Update Invoice Status
         invoice_status = sync_invoice_status(invoice, old_snapshot['status'], clean_data['status'])
-        if invoice_status['before'] != invoice_status['after']:
-            invoice.status = invoice_status['after']
 
         # 9. Prepare the Snapshot for the log
         new_snapshot = clean_data.copy()

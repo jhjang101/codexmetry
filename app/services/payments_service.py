@@ -1,10 +1,12 @@
 from .base_service import BaseService
 from .purchase_orders_service import PurchaseOrderService
+from .attachment_service import AttachmentService
 from ..models import Payment, Invoice, InvoiceItem, Product, PurchaseOrder, OrderRegistry, Client, SettingsMetadata
 from .audit_service import AuditLogService
-from .attachment_service import AttachmentService
+from .invoices_service import InvoiceService
 from ..extensions import db
 from ..utils.money import parse_to_cents, format_usd
+from ..utils.sync import sync_invoice_status, sync_po_status
 from sqlalchemy import select, or_, func
 from sqlalchemy.orm import contains_eager, joinedload, selectinload, aliased
 from datetime import datetime
@@ -92,7 +94,7 @@ class PaymentService(BaseService):
                             direction=direction)
     
     @classmethod
-    def add_payment(cls, data: dict, new_files=None) -> Payment:
+    def add_payment(cls, data: dict, new_files=None):
         """
         Create new payment.
         Inherits Registry link from the Source document.
@@ -100,38 +102,61 @@ class PaymentService(BaseService):
         # 1. Validate & transform
         clean_data = cls._validate_and_transform(data)
 
-        # 2. Create object
+        # 2. Stage object
         payment = cls.model(**clean_data)
         db.session.add(payment)
-        db.session.flush()
 
         # 3. Stage Attahments
         AttachmentService.stage('Payment', payment.id, new_files=new_files)
 
-        # 4. Prepare the Snapshot for the log
-        db.session.refresh(payment)
+        # 4. Flush and Hydrate
+        db.session.flush()
+
+        # 5. Prepare the Snapshot for the log
         new_snapshot = clean_data.copy()
         new_snapshot['attachments'] = AttachmentService._get_fingerprint(payment.attachments)
 
-        # 4. Record 'CREATE' Audit
+        # 6. Record 'CREATE' Audit
         AuditLogService.record(
             target_id=payment.id, 
             target_type=cls.model.__name__, 
             action='CREATE', 
             new_data=new_snapshot
         )
+
+        # 7. Invoice Status Ripple
+        if payment.invoice_id:
+            invoice = InvoiceService.get_invoice_by_id(payment.invoice_id)
+            invoice_status = sync_invoice_status(invoice, 
+                                                 original_status = invoice.status)
+        else:
+            invoice_status = None
+
+        if invoice_status and invoice_status['before'] != invoice_status['after']:
+            AuditLogService.record(
+                target_id=invoice.id, 
+                target_type='Invoice', 
+                action='UPDATE', 
+                old_data={'status': invoice_status['before']}, 
+                new_data={'status': invoice_status['after']}
+            )
         
+        # 8. PO Status Ripple
+        if payment.po_id:
+            po_status = sync_po_status(payment.po_id)
+        else:
+            po_status = None
+
         db.session.commit()
-        return payment
+        return payment, invoice_status, po_status
     
     @classmethod
-    def edit_payment(cls, payment_id: int, data: dict, new_files=None, delete_ids=None) -> Payment:
+    def edit_payment(cls, payment_id: int, data: dict, new_files=None, delete_ids=None):
         """
         Update existing payment.
         If credit has already been used by an invoice,
         the payment amount cannotbe reduced.
         """
-        # 1. Validation
         payment = cls.get_payment_by_id(payment_id)
         if not payment:
             raise ValueError("Payment not found.")
@@ -155,37 +180,88 @@ class PaymentService(BaseService):
         # 2. Standard Validate & transform
         clean_data = cls._validate_and_transform(data)
 
-        # 3. Audit_logs snapshot
+        # 3. Original State Capture
+        old_po_id = payment.po_id
+        old_invoice_id = payment.invoice_id
         old_snapshot = cls._get_snapshot(payment)
         old_snapshot['attachments'] = AttachmentService._get_fingerprint(payment.attachments)
 
-        # 4. Update header
+        # 4. Stage header
         for key, value in clean_data.items():
             setattr(payment, key, value)
 
         # 5. Stage Attachments
         AttachmentService.stage('Payment', payment_id, new_files=new_files, delete_ids=delete_ids)
-        db.session.refresh(payment)
-        clean_data['attachments'] = AttachmentService._get_fingerprint(payment.attachments)
 
-        # 6. Deep Audit Trigger
+        # 6. Flush and Hydrate
+        db.session.flush()
+
+        # 7. Prepare the Snapshot for the log
+        new_snapshot = clean_data.copy()
+        new_snapshot['attachments'] = AttachmentService._get_fingerprint(payment.attachments)
+
+        # 8. Record 'UPDATE' Audit
         AuditLogService.record(payment_id, 
                                cls.model.__name__, 
                                'UPDATE', 
                                old_data=old_snapshot, 
-                               new_data=clean_data)
+                               new_data=new_snapshot)
+        
+        # 9. Invoice Status Ripple
+        if old_invoice_id and old_invoice_id != payment.invoice_id:
+            old_invoice = InvoiceService.get_invoice_by_id(old_invoice_id)
+            old_invoice_status = sync_invoice_status(old_invoice, 
+                                                     original_status = old_invoice.status)
+            if old_invoice_status and old_invoice_status['before'] != old_invoice_status['after']:
+                AuditLogService.record(
+                    target_id=old_invoice.id, 
+                    target_type='Invoice', 
+                    action='UPDATE', 
+                    old_data={'status': old_invoice_status['before']}, 
+                    new_data={'status': old_invoice_status['after']}
+                )
+        else:
+            old_invoice_status = None
+        
+        if payment.invoice_id:
+            new_invoice = InvoiceService.get_invoice_by_id(payment.invoice_id)
+            new_invoice_status = sync_invoice_status(new_invoice, 
+                                                     original_status = new_invoice.status)
+            if new_invoice_status and new_invoice_status['before'] != new_invoice_status['after']:
+                AuditLogService.record(
+                    target_id=new_invoice.id, 
+                    target_type='Invoice', 
+                    action='UPDATE', 
+                    old_data={'status': new_invoice_status['before']}, 
+                    new_data={'status': new_invoice_status['after']}
+                )
+        else:
+            new_invoice_status = None
 
+        # 10. PO Status Ripple
+        if old_po_id and old_po_id != payment.po_id:
+            old_po_status = sync_po_status(old_po_id)
+        else:
+            old_po_status = None
+        
+        if payment.po_id:
+            new_po_status = sync_po_status(payment.po_id)
+        else:
+            new_po_status = None
+
+        # 11. Atomic Commit
         db.session.commit()
-        return payment
+
+        return payment, old_invoice_status, new_invoice_status, old_po_status, new_po_status 
     
     @classmethod
-    def archive_payment(cls, payment_id: int) -> Payment | None:
+    def archive_payment(cls, payment_id: int):
         """
         Specialized archive with Credit Pool protection (Funding Deletion Guard).
         """
         payment = cls.get_payment_by_id(payment_id)
         if not payment:
-            return None
+            return None, None, None
 
         # 1. Guard for Prepayments (Invoiceless Payments)
         # If this is a deposit, we must ensure it hasn't been "spent" by a credit invoice.
@@ -210,8 +286,33 @@ class PaymentService(BaseService):
 
         # 3. Perform the Soft Delete
         payment.is_active = False
+
+        # 4. Invoice Status Ripple
+        if payment.invoice_id:
+            invoice = InvoiceService.get_invoice_by_id(payment.invoice_id)
+            invoice_status = sync_invoice_status(invoice, 
+                                                 original_status = invoice.status)
+            if invoice_status and invoice_status['before'] != invoice_status['after']:
+                AuditLogService.record(
+                    target_id=invoice.id, 
+                    target_type='Invoice', 
+                    action='UPDATE',
+                    old_data={'status': invoice_status['before']}, 
+                    new_data={'status': invoice_status['after']}
+                    )
+        else:
+            invoice_status = None
+
+        # 5. PO Status Ripple
+        if payment.po_id:
+            po_status = sync_po_status(payment.po_id)
+        else:
+            po_status = None
+
+        # 6. Commit
         db.session.commit()
-        return payment
+
+        return payment, invoice_status, po_status
     
     @classmethod
     def get_payment_by_id(cls, id: int) -> Payment | None:

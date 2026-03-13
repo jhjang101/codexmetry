@@ -73,35 +73,36 @@ def add():
                 'note': request.form.get('note')
             }
 
-            # 2. Save Attachments
+            # 2. Parse Attachments
             new_files = request.files.getlist('attachments')
 
             # 3. Call Atomic Service
-            new_payment = PaymentService.add_payment(payment_data, new_files=new_files)
-
-            # 4. Sync status
-            invoice_status_updated = False
-            po_status_updated = False
-            if new_payment.invoice_id:
-                invoice = InvoiceService.get_invoice_by_id(new_payment.invoice_id)
-                invoice_status_updated = sync_invoice_status(invoice, old_status=invoice.status) # type: ignore
-                po_status_updated = sync_po_status(new_payment.po_id)
+            new_payment, invoice_status, po_status = PaymentService.add_payment(payment_data, new_files=new_files)
             
             # 5. Flash message
+            flash(f"Payment for {new_payment.payment_number} created successfully!", "success")
+
+            if invoice_status and invoice_status['before'] != invoice_status['after']:
+                invoice_name = new_payment.invoice.invoice_number
+                flash(f"Associated Invoice {invoice_name} status updated: {invoice_status['before'].upper()} → {invoice_status['after'].upper()}", "success")
+
+            if po_status and po_status['before'] != po_status['after']:
+                po_name = new_payment.purchase_order.po_number or new_payment.order.order_number
+                flash(f"Associated PO {po_name} status updated: {po_status['before'].upper()} → {po_status['after'].upper()}", "success")
+
             if new_payment.invoice:
                 payment_number = f'invoice {new_payment.invoice.invoice_number}'
             elif new_payment.purchase_order.po_number:
                 payment_number = f'PO {new_payment.purchase_order.po_number}'
             else:
                 payment_number = f'order {new_payment.order.order_number}'
-            flash(f"Payment for {payment_number} created successfully!", "success")
 
-            if invoice_status_updated:
-                invoice_name = new_payment.invoice.invoice_number if new_payment.invoice else None
-                flash(f"Status of invoice {invoice_name} updated successfully!", "success")
-            if po_status_updated:
-                po_name = new_payment.purchase_order.po_number or new_payment.order.order_number
-                flash(f"Status of PO {po_name} updated successfully!", "success")
+            # if invoice_status_updated:
+            #     invoice_name = new_payment.invoice.invoice_number if new_payment.invoice else None
+            #     flash(f"Status of invoice {invoice_name} updated successfully!", "success")
+            # if po_status_updated:
+            #     po_name = new_payment.purchase_order.po_number or new_payment.order.order_number
+            #     flash(f"Status of PO {po_name} updated successfully!", "success")
 
             # The Safe Save Redirect: Forces a clean page load to 'View' mode
             response = make_response("", 200)
@@ -261,17 +262,7 @@ def edit(id):
     
     if request.method == 'POST':
         try:
-            # 1. Capture State before update for Sync ripples
-            old_invoice_id = payment.invoice_id
-            old_invoice_name = payment.invoice.invoice_number if payment.invoice else None
-            old_po_id = payment.po_id
-            old_po_name = payment.purchase_order.po_number or payment.order.order_number 
-            old_invoice_status_updated = False
-            old_po_status_updated = False
-            invoice_status_updated = False
-            po_status_updated = False 
-
-            # 2. Prepare Data
+            # 1. Prepare Data
             payment_data = {
                 'client_id': request.form.get('client_id'),
                 'payment_number': request.form.get('payment_number'),
@@ -284,51 +275,28 @@ def edit(id):
                 'note': request.form.get('note')
             }
 
-            # 3. Update Attachments
+            # 2. Parse Attachments
             new_files = request.files.getlist('attachments')
             raw_delete_ids = request.form.getlist('delete_ids[]') 
             delete_ids = [int(fid) for fid in raw_delete_ids if fid.isdigit()]
 
-            # 4. Call Atomic Service (Guard handles "Snapshot Lock")
-            PaymentService.edit_payment(id, payment_data, new_files=new_files, delete_ids=delete_ids)
+            # 3. Call Atomic Service (Guard handles "Snapshot Lock")
+            payment, old_invoice_status, new_invoice_status, old_po_status, new_po_status = PaymentService.edit_payment(id, payment_data, new_files=new_files, delete_ids=delete_ids)
             
-            # 5. Capture State AFTER update
-            new_invoice_id = payment.invoice_id
-            new_po_id = payment.po_id
-            
-            # 6. Sync Brain Logic
-            # If the invoice link changed, sync the old Invoice and PO first
-            if old_invoice_id != new_invoice_id:
-                if old_invoice_id:
-                    old_invoice = InvoiceService.get_invoice_by_id(old_invoice_id)
-                    old_invoice_status_updated = sync_invoice_status(old_invoice, old_status=old_invoice.status) # type: ignore
-                if old_po_id:
-                    old_po_status_updated = sync_po_status(old_po_id)
-
-            # Sync the current (new) invoice link
-            if new_invoice_id:
-                new_invoice = InvoiceService.get_invoice_by_id(new_invoice_id)
-                invoice_status_updated = sync_invoice_status(new_invoice, old_status=new_invoice.status) # type: ignore
-            if new_po_id:
-                po_status_updated = sync_po_status(new_po_id)
-
-            # 7. Flash Messages
+            # 4. Flash Messages
             flash(f"Payment updated successfully!", "success")
-            
-            # Flash for the current invoice and PO
-            if invoice_status_updated:
-                invoice_name = payment.invoice.invoice_number if payment.invoice else None
-                flash(f"Status of invoice {invoice_name} updated successfully!", "success")
-            if po_status_updated:
-                po_name = payment.purchase_order.po_number or payment.order.order_number
-                flash(f"Status of PO {po_name} updated successfully!", "success")
-            
-            # Flash for the old invoice and PO (if it was swapped)
-            if old_invoice_status_updated:
-                flash(f"Status of invoice {old_invoice_name} updated successfully!", "success")
-
-            if old_po_status_updated:
-                flash(f"Status of PO {old_po_name} updated successfully!", "success")
+            # New Invoice Flash
+            if new_invoice_status and new_invoice_status['before'] != new_invoice_status['after']:
+                flash(f"Linked Invoice updated: {new_invoice_status['before']} → {new_invoice_status['after']}", "success")
+            # Old Invoice Flash (The Reversion)
+            if old_invoice_status and old_invoice_status['before'] != old_invoice_status['after']:
+                flash(f"Previous Invoice reverted: {old_invoice_status['before']} → {old_invoice_status['after']}", "info")
+            # New PO Flash
+            if new_po_status and new_po_status['before'] != new_po_status['after']:
+                flash(f"Associated PO updated: {new_po_status['before']} → {new_po_status['after']}", "success")
+            # Old PO Flash
+            if old_po_status and old_po_status['before'] != old_po_status['after']:
+                flash(f"Previous PO reverted: {old_po_status['before']} → {old_po_status['after']}", "info")
                 
             response = make_response("", 200)
             response.headers['HX-Redirect'] = url_for('payments.view', id=id)
@@ -373,39 +341,21 @@ def archive(id):
     """Soft delete the payment with credit pool validation."""
     try:
         # 1. Attempt specialized archive
-        payment = PaymentService.archive_payment(id)
+        payment, invoice_status, po_status = PaymentService.archive_payment(id)
         
         if not payment:
             flash(f'Payment not found.', 'error')
             return redirect(url_for('payments.index'))
         
-        # 2. Sync invoice status (if this was a standard invoice payment)
-        invoice_id = payment.invoice_id if payment else None
-        po_id = payment.po_id if payment else None
-        invoice_status_updated = False
-
-        if invoice_id:
-            invoice = InvoiceService.get_invoice_by_id(invoice_id)
-            invoice_status_updated = sync_invoice_status(invoice, old_status=invoice.status) # type: ignore
-        po_status_updated = sync_po_status(po_id)
-
-        # 3. Success Flashes
-        # Document name logic for the message
-        if payment.invoice:
-                payment_number = f'invoice {payment.invoice.invoice_number}'
-        elif payment.purchase_order.po_number:
-            payment_number = f'PO {payment.purchase_order.po_number}'
-        else:
-            payment_number = f'order {payment.order.order_number}'
-
-        flash(f'Payment for {payment_number} moved to archives.', 'warning')
-        
-        if invoice_status_updated:
-            invoice_name = payment.invoice.invoice_number if payment.invoice else None
-            flash(f"Status of invoice {invoice_name} updated successfully!", "success")
-        if po_status_updated:
+        # 2. Success Flashes
+        flash(f'Payment for {payment.payment_number} moved to archives.', 'warning')
+        if invoice_status and invoice_status['before'] != invoice_status['after']:
+            invoice_name = payment.invoice.invoice_number
+            flash(f"Associated Invoice {invoice_name} status updated: {invoice_status['before']} → {invoice_status['after']}", "success")
+        if po_status and po_status['before'] != po_status['after']:
             po_name = payment.purchase_order.po_number or payment.order.order_number
-            flash(f"Status of PO {po_name} updated successfully!", "success")
+            flash(f"Associated PO {po_name} status updated: {po_status['before']} → {po_status['after']}", "success")
+
 
     except ValueError as e:
         db.session.rollback()

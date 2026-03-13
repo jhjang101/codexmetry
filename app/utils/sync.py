@@ -33,20 +33,29 @@ def sync_invoice_status(invoice, original_status: str | None = None, proposed_st
     # If the status from the form differs from what was in the database,
     # the user's intent is the highest authority.
     if proposed_status and proposed_status != original_status:
-        return {"before": original_status, "after": proposed_status}
+        new_status = proposed_status
 
     # If the user did NOT override, apply automated logic:
     
     # RULE 2: If fully paid, move to completed.
-    if is_fully_paid:
-        return {"before": original_status, "after": "completed"}
+    elif is_fully_paid:
+        new_status = "completed"
 
     # RULE 3: If not fully paid but has payments, move to open.
-    if has_payments:
-        return {"before": original_status, "after": "open"}
+    elif has_payments:
+        new_status = "open"
 
     # RULE 4: Otherwise, switch back to draft state.
-    return {"before": original_status, "after": "draft"}
+    else:
+        new_status = "draft"
+    
+    # Capture result and stage
+    res = {"before": original_status, "after": new_status}
+    if invoice.status != new_status:
+        invoice.status = new_status
+
+    return res
+
 
 def sync_po_status(po_id: int):
     """
