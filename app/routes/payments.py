@@ -90,20 +90,6 @@ def add():
                 po_name = new_payment.purchase_order.po_number or new_payment.order.order_number
                 flash(f"Associated PO {po_name} status updated: {po_status['before'].upper()} → {po_status['after'].upper()}", "success")
 
-            if new_payment.invoice:
-                payment_number = f'invoice {new_payment.invoice.invoice_number}'
-            elif new_payment.purchase_order.po_number:
-                payment_number = f'PO {new_payment.purchase_order.po_number}'
-            else:
-                payment_number = f'order {new_payment.order.order_number}'
-
-            # if invoice_status_updated:
-            #     invoice_name = new_payment.invoice.invoice_number if new_payment.invoice else None
-            #     flash(f"Status of invoice {invoice_name} updated successfully!", "success")
-            # if po_status_updated:
-            #     po_name = new_payment.purchase_order.po_number or new_payment.order.order_number
-            #     flash(f"Status of PO {po_name} updated successfully!", "success")
-
             # The Safe Save Redirect: Forces a clean page load to 'View' mode
             response = make_response("", 200)
             response.headers['HX-Redirect'] = url_for('payments.view', id=new_payment.id)
@@ -351,11 +337,10 @@ def archive(id):
         flash(f'Payment for {payment.payment_number} moved to archives.', 'warning')
         if invoice_status and invoice_status['before'] != invoice_status['after']:
             invoice_name = payment.invoice.invoice_number
-            flash(f"Associated Invoice {invoice_name} status updated: {invoice_status['before']} → {invoice_status['after']}", "success")
+            flash(f"Associated Invoice {invoice_name} status updated: {invoice_status['before'].upper()} → {invoice_status['after'].upper()}", "success")
         if po_status and po_status['before'] != po_status['after']:
             po_name = payment.purchase_order.po_number or payment.order.order_number
-            flash(f"Associated PO {po_name} status updated: {po_status['before']} → {po_status['after']}", "success")
-
+            flash(f"Associated PO {po_name} status updated: {po_status['before'].upper()} → {po_status['after'].upper()}", "success")
 
     except ValueError as e:
         db.session.rollback()
