@@ -322,7 +322,7 @@ class PurchaseOrderService(BaseService):
 
         # 7. Save Attachments
         AttachmentService.stage('PurchaseOrder', po_id, new_files=new_files, delete_ids=delete_ids)
-        db.session.refresh(po)
+        db.session.flush()
         clean_data['attachments'] = AttachmentService._get_fingerprint(po.attachments)
 
         # 8. Deep Audit Trigger

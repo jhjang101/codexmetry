@@ -83,16 +83,18 @@ class QuoteService(BaseService):
         # 2. Create quote
         quote = cls.model(**clean_data)
         db.session.add(quote)
-        db.session.flush() # Get ID for items
 
         # 3. Stage items and calculate total
-        new_items_fingerprint = cls._save_items(quote, items_data)
+        new_items_fingerprint = cls._stage_items(quote, items_data)
 
-        # 4. Stage Attachments
+        # 4. Stage attachments
         AttachmentService.stage('Quote', quote.id, new_files=new_files)
 
-        # 5. Prepare the Snapshot for the log
-        db.session.refresh(quote) 
+        # 5. flash and hydrate
+        db.session.flush()
+        db.session.refresh(quote)
+
+        # 6. Capture new state for audit log
         new_snapshot = clean_data.copy()
         new_snapshot['line_items'] = new_items_fingerprint
         new_snapshot['total_amount'] = quote.total_amount
@@ -120,36 +122,47 @@ class QuoteService(BaseService):
         Update Quote header, line items, and attachments.
         """
         quote = cls.get_by_id(quote_id)
+        if not quote:
+            raise ValueError("Quote not found.")
         
-        # 1. Snapshot BEFORE (Header + Items + Attachments)
+        # 1. Validate & transform
+        clean_data = cls._validate_and_transform(data)
+        
+        # 2. Capture original state for audit
         old_snapshot = cls._get_snapshot(quote)
         old_snapshot['line_items'] = cls._get_items_fingerprint(quote.items, 'quantity', 'quoted_unit_price')
         old_snapshot['attachments'] = AttachmentService._get_fingerprint(quote.attachments)
 
-        # 2. Update Header
-        clean_data = cls._validate_and_transform(data)
+        print('old_snapshot[attachments]:', old_snapshot['attachments'])
+
+        # 3. Stage quote header
         for key, value in clean_data.items():
             setattr(quote, key, value)
 
-        # 3. Update Line Items
-        clean_data['line_items'] = cls._save_items(quote, items_data)
-        clean_data['total_amount'] = quote.total_amount
+        # 4. Stage updated line items and calculate total
+        new_items_fingerprint = cls._stage_items(quote, items_data)
 
-        # 4. Update Attachments (Commits files to disk/db)
+        # 5. Stage attachments
         AttachmentService.stage('Quote', quote_id, new_files=new_files, delete_ids=delete_ids)
         
-        # 5. Snapshot AFTER
-        # We refresh the quote object so it sees the new attachment records
-        db.session.refresh(quote) 
-        clean_data['attachments'] = AttachmentService._get_fingerprint(quote.attachments)
+        # 6. Flash and hydrate
+        db.session.flush()
+        db.session.refresh(quote)
 
-        # 6. Record Audit
+        # 7. Capture new state for audit log
+        new_snapshot = clean_data.copy()
+        new_snapshot['line_items'] = new_items_fingerprint
+        new_snapshot['total_amount'] = quote.total_amount
+        new_snapshot['attachments'] = AttachmentService._get_fingerprint(quote.attachments)
+
+        # 8. Record audit
         AuditLogService.record(quote_id, 
                                cls.model.__name__, 
                                'UPDATE', 
                                old_data=old_snapshot, 
-                               new_data=clean_data)
+                               new_data=new_snapshot)
 
+        # 9. Commit
         db.session.commit()
         return quote
     
@@ -258,7 +271,7 @@ class QuoteService(BaseService):
         return clean_data
 
     @classmethod
-    def _save_items(cls, quote: Quote, items_data: list[dict]):
+    def _stage_items(cls, quote: Quote, items_data: list[dict]):
         """Manages QuoteItem rows and updates Quote.total_amount."""
         # 1. Wipe current items
         db.session.execute(

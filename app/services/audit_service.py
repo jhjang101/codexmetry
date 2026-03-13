@@ -110,9 +110,11 @@ class AuditLogService:
             
 
             # Forensic Print for Debugging
+            import pprint
             print(f"--- AUDIT LOG: {action} on {target_type} ID {target_id} by User ID {user_id} ---")
-            print(f"Changes: {changes}")
-
+            print("--- Changes: ---")
+            pprint.pprint(changes, indent=4)
+            print("----------------")
 
             log = AuditLog()
             log.user_id = user_id
