@@ -317,7 +317,7 @@ class PurchaseOrderService(BaseService):
             setattr(po, key, value)
 
         # 6. Save Items
-        clean_data['line_items'] = cls._save_items(po, items_data)
+        clean_data['line_items'] = cls._stage_items(po, items_data)
         clean_data['total_amount'] = po.total_amount
 
         # 7. Save Attachments
