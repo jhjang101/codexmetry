@@ -220,14 +220,14 @@ class PurchaseOrderService(BaseService):
         db.session.add(po)
         db.session.flush()
 
-        # 5. Save items
-        new_items_fingerprint = cls._save_items(po, items_data)
+        # 5. Stage items
+        new_items_fingerprint = cls._stage_items(po, items_data)
 
         # 6. Stage Attahments
         AttachmentService.stage('PurchaseOrder', po.id, new_files=new_files)
 
         # 6. Prepare the Snapshot for the log
-        db.session.refresh(po) 
+        db.session.flush() 
         new_snapshot = clean_data.copy()
         new_snapshot['line_items'] = new_items_fingerprint
         new_snapshot['total_amount'] = po.total_amount
@@ -584,7 +584,7 @@ class PurchaseOrderService(BaseService):
         return clean_data
     
     @classmethod
-    def _save_items(cls, po: PurchaseOrder, items_data: list[dict]):
+    def _stage_items(cls, po: PurchaseOrder, items_data: list[dict]):
         """Manages PoItem rows and updates total_amount."""
         db.session.execute(db.delete(PoItem).where(PoItem.po_id == po.id))
 
