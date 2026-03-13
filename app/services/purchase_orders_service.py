@@ -223,8 +223,8 @@ class PurchaseOrderService(BaseService):
         # 5. Save items
         new_items_fingerprint = cls._save_items(po, items_data)
 
-        # 6. Save Attahments
-        AttachmentService.commit('PurchaseOrder', po.id, new_files=new_files)
+        # 6. Stage Attahments
+        AttachmentService.stage('PurchaseOrder', po.id, new_files=new_files)
 
         # 6. Prepare the Snapshot for the log
         db.session.refresh(po) 
@@ -321,7 +321,7 @@ class PurchaseOrderService(BaseService):
         clean_data['total_amount'] = po.total_amount
 
         # 7. Save Attachments
-        AttachmentService.commit('PurchaseOrder', po_id, new_files=new_files, delete_ids=delete_ids)
+        AttachmentService.stage('PurchaseOrder', po_id, new_files=new_files, delete_ids=delete_ids)
         db.session.refresh(po)
         clean_data['attachments'] = AttachmentService._get_fingerprint(po.attachments)
 

@@ -127,7 +127,7 @@ class InvoiceService(BaseService):
                                 direction=direction)
     
     @classmethod
-    def add_invoice(cls, data: dict, items_data: list[dict], new_files=None) -> Invoice:
+    def add_invoice(cls, data: dict, items_data: list[dict], new_files=None):
         """
         Saves the Invoice header and items, inheriting Registry ID from the PO.
         Includes a Validation Guard to prevent 'Double Spending' of deposits.
@@ -139,25 +139,33 @@ class InvoiceService(BaseService):
         # 2. Double-Spending Guard
         cls._validate_deposit_usage(po_id=clean_data['po_id'], items_data=items_data)
 
-        # 3. Create header (Inherits registry link from PO)
+        # 3. Stage header (Inherits registry link from PO)
         invoice = cls.model(**clean_data)
         db.session.add(invoice)
+
+        # 4. Stage items and calculate total
+        new_items_fingerprint = cls._stage_items(invoice, items_data)
+
+        # 5. Stage Attahments
+        AttachmentService.stage('Invoice', invoice.id, new_files=new_files)
+
+        # 6. Flush and Hydrate
         db.session.flush()
+        cls.get_invoice_by_id(invoice.id)
 
-        # 4. Save items and calculate total
-        new_items_fingerprint = cls._save_items(invoice, items_data)
+        # 7. Update Invoice Status
+        invoice_status = sync_invoice_status(invoice)
+        if invoice_status['before'] != invoice_status['after']:
+            invoice.status = invoice_status['after']
 
-        # 5. Save Attahments
-        AttachmentService.commit('Invoice', invoice.id, new_files=new_files)
-
-        # 6. Prepare the Snapshot for the log
-        db.session.refresh(invoice) 
+        # 8. Prepare the Snapshot for the log
         new_snapshot = clean_data.copy()
         new_snapshot['line_items'] = new_items_fingerprint
         new_snapshot['total_amount'] = invoice.total_amount
         new_snapshot['attachments'] = AttachmentService._get_fingerprint(invoice.attachments)
+        new_snapshot['status'] = invoice.status
 
-        # 6. Record 'CREATE' Audit
+        # 9. Record 'CREATE' Audit
         AuditLogService.record(
             target_id=invoice.id, 
             target_type=cls.model.__name__, 
@@ -165,8 +173,11 @@ class InvoiceService(BaseService):
             new_data=new_snapshot
         )
 
+        # 10. PO Status Ripple
+        po_status = sync_po_status(invoice.po_id)
+        
         db.session.commit()
-        return invoice
+        return invoice, po_status
     
     @classmethod
     def edit_invoice(cls, 
@@ -183,6 +194,7 @@ class InvoiceService(BaseService):
         # 1. Validate & Transform
         clean_data = cls._validate_and_transform(data)
 
+        # 2. Guard
         # Locking guard: if invoice have payments prevent switching client and po link
         new_client_id = data.get('client_id')
         if new_client_id and int(new_client_id) != invoice.client_id:
@@ -193,7 +205,7 @@ class InvoiceService(BaseService):
             if invoice.has_active_payments: # type: ignore
                 raise ValueError("Cannot change Purchase Order link: this invoice already has active payments.")
 
-        # 2. Double-Spending Guard
+        # Double-Spending Guard
         cls._validate_deposit_usage(po_id=clean_data['po_id'], items_data=items_data, invoice_id=invoice_id)
 
         # 3. Original State Capture
@@ -202,41 +214,49 @@ class InvoiceService(BaseService):
         old_snapshot['line_items'] = cls._get_items_fingerprint(invoice.items, 'quantity', 'billed_unit_price')
         old_snapshot['attachments'] = AttachmentService._get_fingerprint(invoice.attachments)
         
-        # 4. Update Header
+        # 4. Stage Header
         for key, value in clean_data.items():
             setattr(invoice, key, value)
         
-        # 5. Save items
-        clean_data['line_items'] = cls._save_items(invoice, items_data)
-        clean_data['total_amount'] = invoice.total_amount
+        # 5. Stage items
+        new_items_fingerprint = cls._stage_items(invoice, items_data)
 
-        # 6. Update Invoice Status
+        # 6. Stage Attachments
+        AttachmentService.stage('Invoice', invoice_id, new_files=new_files, delete_ids=delete_ids)
+
+        # 7. Flush and Hydrate
+        db.session.flush()
+        cls.get_invoice_by_id(invoice_id)
+
+        # 8. Update Invoice Status
         invoice_status = sync_invoice_status(invoice, old_snapshot['status'], clean_data['status'])
         if invoice_status['before'] != invoice_status['after']:
             invoice.status = invoice_status['after']
-            clean_data['status'] = invoice_status['after']
 
-        # 7. Save Attachments
-        AttachmentService.commit('Invoice', invoice_id, new_files=new_files, delete_ids=delete_ids)
-        db.session.refresh(invoice)
-        clean_data['attachments'] = AttachmentService._get_fingerprint(invoice.attachments)
+        # 9. Prepare the Snapshot for the log
+        new_snapshot = clean_data.copy()
+        new_snapshot['line_items'] = new_items_fingerprint
+        new_snapshot['total_amount'] = invoice.total_amount
+        new_snapshot['attachments'] = AttachmentService._get_fingerprint(invoice.attachments)
+        new_snapshot['status'] = invoice_status['after']
 
-        # 8. Deep Audit Trigger
+        # 10. Record 'UPDATE' Audit
         AuditLogService.record(invoice_id, 
                                cls.model.__name__, 
                                'UPDATE', 
                                old_data=old_snapshot, 
-                               new_data=clean_data)
+                               new_data=new_snapshot)
         
-        # 9. PO Status Ripple
+        # 11. PO Status Ripple
         new_po_status = sync_po_status(invoice.po_id)
         
         old_po_status = None
         if old_po_id != invoice.po_id:
             old_po_status = sync_po_status(old_po_id)
 
-        #10. Atomic Commit
+        #12. Atomic Commit
         db.session.commit()
+
         return invoice, invoice_status, old_po_status, new_po_status
     
     @classmethod
@@ -304,7 +324,7 @@ class InvoiceService(BaseService):
         """
         invoice = cls.get_invoice_by_id(id)
         if not invoice:
-            return None, False
+            return None, False, None
 
         # Check for active payments specifically linked to this invoice
         has_payments = any(p.is_active for p in invoice.payments)
@@ -320,9 +340,14 @@ class InvoiceService(BaseService):
 
         # Soft delete
         invoice.is_active = False
+
+        # PO Status Ripple
+        po_status = sync_po_status(invoice.po_id)
+
+        # Commit
         db.session.commit()
 
-        return invoice, has_payments
+        return invoice, has_payments, po_status
     
     @classmethod
     def get_invoices_by_po(cls, 
@@ -401,7 +426,7 @@ class InvoiceService(BaseService):
         return clean_data
     
     @classmethod
-    def _save_items(cls, invoice: Invoice, items_data: list[dict]):
+    def _stage_items(cls, invoice: Invoice, items_data: list[dict]):
         """Manages InvoiceItem snapshot and updates total_amount."""
         db.session.execute(db.delete(InvoiceItem).where(InvoiceItem.invoice_id == invoice.id))
 

@@ -105,8 +105,8 @@ class PaymentService(BaseService):
         db.session.add(payment)
         db.session.flush()
 
-        # 3. Save Attahments
-        AttachmentService.commit('Payment', payment.id, new_files=new_files)
+        # 3. Stage Attahments
+        AttachmentService.stage('Payment', payment.id, new_files=new_files)
 
         # 4. Prepare the Snapshot for the log
         db.session.refresh(payment)
@@ -163,8 +163,8 @@ class PaymentService(BaseService):
         for key, value in clean_data.items():
             setattr(payment, key, value)
 
-        # 5. Save Attachments
-        AttachmentService.commit('Payment', payment_id, new_files=new_files, delete_ids=delete_ids)
+        # 5. Stage Attachments
+        AttachmentService.stage('Payment', payment_id, new_files=new_files, delete_ids=delete_ids)
         db.session.refresh(payment)
         clean_data['attachments'] = AttachmentService._get_fingerprint(payment.attachments)
 

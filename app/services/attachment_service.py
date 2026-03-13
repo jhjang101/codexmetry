@@ -17,7 +17,7 @@ class AttachmentService(BaseService):
         return list(db.session.execute(stmt).scalars().all())
 
     @classmethod
-    def commit(cls, 
+    def stage(cls, 
                entity_type: str, 
                entity_id: int, 
                new_files: list | None = None, 
@@ -55,8 +55,6 @@ class AttachmentService(BaseService):
                     new_attachment.file_path = saved_name
                     new_attachment.file_name = file.filename # Original name
                     db.session.add(new_attachment)
-
-        db.session.commit()
 
     @classmethod
     def _get_fingerprint(cls, attachments_collection):

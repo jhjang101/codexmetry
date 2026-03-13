@@ -79,8 +79,8 @@ class AdjustmentService(BaseService):
         db.session.add(adjustment)
         db.session.flush() # Flush to get adjustment.id before commit
 
-        # 3. Save Attachments
-        AttachmentService.commit('Adjustment', adjustment.id, new_files=new_files)
+        # 3. Stage Attachments
+        AttachmentService.stage('Adjustment', adjustment.id, new_files=new_files)
 
         # 4. Prepare the Snapshot for the log
         db.session.refresh(adjustment)
@@ -119,8 +119,8 @@ class AdjustmentService(BaseService):
         for key, value in clean_data.items():
             setattr(adjustment, key, value)
 
-        # 7. Save Attachments
-        AttachmentService.commit('Adjustment', adjustment_id, new_files=new_files, delete_ids=delete_ids)
+        # 7. Stage Attachments
+        AttachmentService.stage('Adjustment', adjustment_id, new_files=new_files, delete_ids=delete_ids)
         db.session.refresh(adjustment)
         clean_data['attachments'] = AttachmentService._get_fingerprint(adjustment.attachments)
 

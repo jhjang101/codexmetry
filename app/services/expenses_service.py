@@ -105,8 +105,8 @@ class ExpenseService(BaseService):
         # 3. Save items and update total
         new_items_fingerprint = cls._save_items(expense, items_data)
 
-        # 4. Save Attahments
-        AttachmentService.commit('Expense', expense.id, new_files=new_files)
+        # 4. Stage Attahments
+        AttachmentService.stage('Expense', expense.id, new_files=new_files)
 
         # 5. Prepare the Snapshot for the log
         db.session.refresh(expense) 
@@ -155,8 +155,8 @@ class ExpenseService(BaseService):
         # 5. Save items (Wipe and re-insert)
         clean_data['items'] = cls._save_items(expense, items_data)
 
-        # 6. Save Attachments
-        AttachmentService.commit('Expense', expense_id, new_files=new_files, delete_ids=delete_ids)
+        # 6. Stage Attachments
+        AttachmentService.stage('Expense', expense_id, new_files=new_files, delete_ids=delete_ids)
         db.session.refresh(expense)
         clean_data['attachments'] = AttachmentService._get_fingerprint(expense.attachments)
 

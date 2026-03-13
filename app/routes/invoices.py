@@ -82,18 +82,14 @@ def add():
             new_files = request.files.getlist('attachments')
 
             # 4. Save Invoice and Line Items
-            new_invoice = InvoiceService.add_invoice(header_data, items, new_files=new_files)
+            new_invoice, po_status = InvoiceService.add_invoice(header_data, items, new_files=new_files)
 
-            # 5. Sync invoice and po status
-            # This handles the case where the invoice is fully covered by a deposit
-            invoice = InvoiceService.get_invoice_by_id(new_invoice.id)
-            sync_invoice_status(invoice)
-            po_status_updated = sync_po_status(new_invoice.po_id)
-            
+            # 5. Flash Messages
             flash(f"Invoice {new_invoice.invoice_number} created!", "success")
-            if po_status_updated:
+            # New/Current PO Ripple Feedback
+            if po_status and po_status['before'] != po_status['after']:
                 po_name = new_invoice.purchase_order.po_number or new_invoice.order.order_number
-                flash(f"Status of PO {po_name} updated successfully!", "success")
+                flash(f"Associated PO {po_name} status updated: {po_status['before'].upper()} → {po_status['after'].upper()}", "success")
 
             # The Safe Save Redirect: Forces a clean page load to 'View' mode
             response = make_response("", 200)
@@ -313,14 +309,11 @@ def edit(id):
 def archive(id):
     """Specialized archive for invoices with payment protection."""
     # 1. Perform specialized archive
-    invoice, has_payments = InvoiceService.archive_invoice(id)
+    invoice, has_payments, po_status = InvoiceService.archive_invoice(id)
 
     if not invoice:
         flash(f'Invoice not found.', 'error')
         return redirect(url_for('invoices.index'))
-
-    # 2. Sync parent PO status (since an invoice just disappeared)
-    po_status_updated = sync_po_status(invoice.po_id)
 
     # 3. Flash Messages
     flash(f'Invoice {invoice.invoice_number} moved to archives.', 'warning')
@@ -331,9 +324,9 @@ def archive(id):
         flash(f'ATTENTION: This invoice had active payments. These funds are now sitting as a credit on PO {po_name}.', 'error')
 
     # PO SYNC FEEDBACK
-    if po_status_updated:
+    if po_status and po_status['before'] != po_status['after']:
         po_name = invoice.purchase_order.po_number or invoice.order.order_number
-        flash(f'Status of PO {po_name} updated successfully!', 'success')
+        flash(f"Previous PO {po_name} status reverted: {po_status['before'].upper()} → {po_status['after'].upper()}", "info")
         
     return redirect(url_for('invoices.index'))
 

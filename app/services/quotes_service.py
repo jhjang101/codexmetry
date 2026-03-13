@@ -85,11 +85,11 @@ class QuoteService(BaseService):
         db.session.add(quote)
         db.session.flush() # Get ID for items
 
-        # 3. Save items and calculate total
+        # 3. Stage items and calculate total
         new_items_fingerprint = cls._save_items(quote, items_data)
 
-        # 4. Save Attachments
-        AttachmentService.commit('Quote', quote.id, new_files=new_files)
+        # 4. Stage Attachments
+        AttachmentService.stage('Quote', quote.id, new_files=new_files)
 
         # 5. Prepare the Snapshot for the log
         db.session.refresh(quote) 
@@ -136,7 +136,7 @@ class QuoteService(BaseService):
         clean_data['total_amount'] = quote.total_amount
 
         # 4. Update Attachments (Commits files to disk/db)
-        AttachmentService.commit('Quote', quote_id, new_files=new_files, delete_ids=delete_ids)
+        AttachmentService.stage('Quote', quote_id, new_files=new_files, delete_ids=delete_ids)
         
         # 5. Snapshot AFTER
         # We refresh the quote object so it sees the new attachment records

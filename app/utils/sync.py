@@ -45,8 +45,8 @@ def sync_invoice_status(invoice, original_status: str | None = None, proposed_st
     if has_payments:
         return {"before": original_status, "after": "open"}
 
-    # RULE 4: Otherwise, maintain the current state (stays draft or stays open).
-    return {"before": original_status, "after": original_status}
+    # RULE 4: Otherwise, switch back to draft state.
+    return {"before": original_status, "after": "draft"}
 
 def sync_po_status(po_id: int):
     """
@@ -57,10 +57,6 @@ def sync_po_status(po_id: int):
     Explicitly called in invoice and payment. 
     Returns: {"before": str, "after": str}
     """
-    if not po_id:
-        return None
-
-
     # 1. Fetch the augmented PO (provides .remaining_items and .invoices)
     po = PurchaseOrderService.get_po_by_id(po_id)
     if not po or not po.is_active:
