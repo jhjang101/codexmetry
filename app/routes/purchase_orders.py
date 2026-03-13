@@ -248,7 +248,7 @@ def edit(id):
                 if old_quote_id and new_quote_id:
                     flash(f"Quote link updated: {old_quote_number} released, {po.quote.quote_number} accepted.", "success")
                 elif old_quote_id:
-                    flash(f"Quote {old_quote_number} has been released and reverted to 'Sent'.", "info")
+                    flash(f"Previous Quote {old_quote_number} has been released and reverted to 'SENT' status.", "info")
                 elif new_quote_id:
                     flash(f"Quote {po.quote.quote_number} has been accepted.", "success")
 
@@ -292,7 +292,7 @@ def archive(id):
 
         # Free the Quote? Notify the user.
         if po.quote:
-            flash(f'Quote {po.quote.quote_number} has been reverted to "Sent" status.', 'success')
+            flash(f"Quote {po.quote.quote_number} released and reverted to 'SENT' status.", 'success')
 
         # MONEY SAFETY WARNING
         if has_payments:

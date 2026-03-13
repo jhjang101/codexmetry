@@ -6,8 +6,8 @@ from ..models import AuditLog
 from sqlalchemy import select
 from sqlalchemy.orm import joinedload
 from ..models import (
-    AuditLog, Client, User, PoType, Product, 
-    ProductCategory, ExpenseCategory, PurchaseOrder, Invoice, Vendor,
+    AuditLog, User, PoType, ProductCategory, ExpenseCategory, 
+    Quote, PurchaseOrder, Invoice, Product, Vendor, Client,
     PaymentType, AdjustmentCategory, OrderRegistry , Carrier
 )
 
@@ -23,6 +23,7 @@ class AuditLogService:
         'po_type_id': (PoType, 'type'),
         'category_id': (ProductCategory, 'type'), # Note: We need logic to distinguish between Prod/Exp/Adj categories
         'product_id': (Product, 'name'),
+        'quote_id': (Quote, 'quote_number'),
         'po_id': (PurchaseOrder, 'po_number'),
         'invoice_id': (Invoice, 'invoice_number'),
         'user_id': (User, 'username'),

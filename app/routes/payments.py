@@ -214,13 +214,13 @@ def view(id):
             flash("Payment not found.", "error")
             return redirect(url_for('payments.index'))
 
-        # Identifiers for title display
-        if payment.invoice:
-            payment_number = f'{payment.invoice.invoice_number}'
-        elif payment.purchase_order.po_number:
-            payment_number = f'{payment.purchase_order.po_number}'
-        else:
-            payment_number = f'{payment.order.order_number}'
+        # # Identifiers for title display
+        # if payment.invoice:
+        #     payment_number = f'{payment.invoice.invoice_number}'
+        # elif payment.purchase_order.po_number:
+        #     payment_number = f'{payment.purchase_order.po_number}'
+        # else:
+        #     payment_number = f'{payment.order.order_number}'
 
         tree = OrderService.get_deal_tree(payment.order_id)
         history = AuditLogService.get_for_entity('Payment', id)
@@ -228,7 +228,7 @@ def view(id):
         return render_template('payments/form.html', 
                             mode='view', 
                             payment=payment,
-                            payment_number=payment_number,
+                            # payment_number=payment_number,
                             tree=tree,
                             history=history)
 
@@ -248,6 +248,9 @@ def edit(id):
     
     if request.method == 'POST':
         try:
+            old_invoice_name = payment.invoice.invoice_number if payment.invoice else None
+            old_po_name = payment.purchase_order.po_number or payment.order.order_number
+
             # 1. Prepare Data
             payment_data = {
                 'client_id': request.form.get('client_id'),
@@ -273,16 +276,18 @@ def edit(id):
             flash(f"Payment updated successfully!", "success")
             # New Invoice Flash
             if new_invoice_status and new_invoice_status['before'] != new_invoice_status['after']:
-                flash(f"Linked Invoice updated: {new_invoice_status['before']} → {new_invoice_status['after']}", "success")
+                invoice_name = payment.invoice.invoice_number if payment.invoice else None
+                flash(f"Associated Invoice {invoice_name} status pdated: {new_invoice_status['before'].upper()} → {new_invoice_status['after'].upper()}", "success")
             # Old Invoice Flash (The Reversion)
             if old_invoice_status and old_invoice_status['before'] != old_invoice_status['after']:
-                flash(f"Previous Invoice reverted: {old_invoice_status['before']} → {old_invoice_status['after']}", "info")
+                flash(f"Previous Invoice {old_invoice_name} status reverted: {old_invoice_status['before'].upper()} → {old_invoice_status['after'].upper()}", "info")
             # New PO Flash
             if new_po_status and new_po_status['before'] != new_po_status['after']:
-                flash(f"Associated PO updated: {new_po_status['before']} → {new_po_status['after']}", "success")
+                po_name = payment.purchase_order.po_number or payment.order.order_number
+                flash(f"Associated PO {po_name} updated: {new_po_status['before'].upper()} → {new_po_status['after'].upper()}", "success")
             # Old PO Flash
             if old_po_status and old_po_status['before'] != old_po_status['after']:
-                flash(f"Previous PO reverted: {old_po_status['before']} → {old_po_status['after']}", "info")
+                flash(f"Previous PO {old_invoice_name} reverted: {old_po_status['before'].upper()} → {old_po_status['after'].upper()}", "info")
                 
             response = make_response("", 200)
             response.headers['HX-Redirect'] = url_for('payments.view', id=id)
@@ -336,7 +341,7 @@ def archive(id):
         # 2. Success Flashes
         flash(f'Payment for {payment.payment_number} moved to archives.', 'warning')
         if invoice_status and invoice_status['before'] != invoice_status['after']:
-            invoice_name = payment.invoice.invoice_number
+            invoice_name = payment.invoice.invoice_number if payment.invoice else None
             flash(f"Associated Invoice {invoice_name} status updated: {invoice_status['before'].upper()} → {invoice_status['after'].upper()}", "success")
         if po_status and po_status['before'] != po_status['after']:
             po_name = payment.purchase_order.po_number or payment.order.order_number

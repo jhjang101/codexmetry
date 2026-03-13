@@ -82,12 +82,15 @@ class AdjustmentService(BaseService):
         # 3. Stage Attachments
         AttachmentService.stage('Adjustment', adjustment.id, new_files=new_files)
 
-        # 4. Prepare the Snapshot for the log
+        # 4. Flush and hydrate
+        db.session.flush()
         db.session.refresh(adjustment)
+
+        # 5. Prepare the Snapshot for the log
         new_snapshot = clean_data.copy()
         new_snapshot['attachments'] = AttachmentService._get_fingerprint(adjustment.attachments)
 
-        # 5. Record 'CREATE' Audit
+        # 6. Record 'CREATE' Audit
         AuditLogService.record(
             target_id=adjustment.id, 
             target_type=cls.model.__name__, 
@@ -119,17 +122,23 @@ class AdjustmentService(BaseService):
         for key, value in clean_data.items():
             setattr(adjustment, key, value)
 
-        # 7. Stage Attachments
+        # 5. Stage Attachments
         AttachmentService.stage('Adjustment', adjustment_id, new_files=new_files, delete_ids=delete_ids)
+        
+        # 6. Flush and hydrate
+        db.session.flush()
         db.session.refresh(adjustment)
-        clean_data['attachments'] = AttachmentService._get_fingerprint(adjustment.attachments)
 
-        # 4. Deep Audit Trigger
+        # 7. Prepare the Snapshot for the log
+        new_smapshot = clean_data.copy()
+        new_smapshot['attachments'] = AttachmentService._get_fingerprint(adjustment.attachments)
+
+        # 8. Deep Audit Trigger
         AuditLogService.record(adjustment_id, 
                                cls.model.__name__, 
                                'UPDATE', 
                                old_data=old_snapshot, 
-                               new_data=clean_data)
+                               new_data=new_smapshot)
 
         db.session.commit()
         return adjustment

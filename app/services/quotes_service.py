@@ -83,6 +83,7 @@ class QuoteService(BaseService):
         # 2. Create quote
         quote = cls.model(**clean_data)
         db.session.add(quote)
+        db.session.flush()
 
         # 3. Stage items and calculate total
         new_items_fingerprint = cls._stage_items(quote, items_data)

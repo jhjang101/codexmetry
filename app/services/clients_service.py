@@ -116,14 +116,18 @@ class ClientService(BaseService):
         db.session.add(client)
         db.session.flush() # Get ID for contacts
 
-        # 3. Save contacts
-        new_contacts_fingerprint = cls._save_contacts(client.id, contacts_data)
+        # 3. Stage contacts
+        new_contacts_fingerprint = cls._stage_contacts(client.id, contacts_data)
 
-        # 4. Prepare the Snapshot for the log
+        # 4. Flash and hydrate
+        db.session.flush()
+        db.session.refresh(client)
+
+        # 5. Prepare the Snapshot for the log
         new_snapshot = clean_data.copy()
         new_snapshot['contacts'] = new_contacts_fingerprint
 
-        # 5. Record 'CREATE' Audit
+        # 6. Record 'CREATE' Audit
         AuditLogService.record(
             target_id=client.id, 
             target_type=cls.model.__name__, 
@@ -155,15 +159,23 @@ class ClientService(BaseService):
         for key, value in clean_data.items():
             setattr(client, key, value)
 
-        # 4. Save contacts (Wipe and re-insert)
-        clean_data['contacts'] = cls._save_contacts(client.id, contacts_data)
+        # 4. Stage contacts (Wipe and re-insert)
+        new_contacts_fingerprint = cls._stage_contacts(client.id, contacts_data)
 
-        # 5. Deep Audit Trigger
+        # 5. Flush and hydrate
+        db.session.flush()
+        db.session.refresh(client)
+
+        # 6. Prepare the Snapshot for the log
+        new_snapshot = clean_data.copy()
+        new_snapshot['contacts'] = new_contacts_fingerprint
+
+        # 7. Deep Audit Trigger
         AuditLogService.record(client_id, 
                                cls.model.__name__, 
                                'UPDATE', 
                                old_data=old_snapshot, 
-                               new_data=clean_data)
+                               new_data=new_snapshot)
 
         db.session.commit()
         return client
@@ -204,7 +216,7 @@ class ClientService(BaseService):
         return clean_data
     
     @classmethod
-    def _save_contacts(cls, client_id: int, contacts_data: list[dict]):
+    def _stage_contacts(cls, client_id: int, contacts_data: list[dict]):
         """Manages the child contact rows."""
         # 1. Remove all current contacts for this client
         db.session.execute(

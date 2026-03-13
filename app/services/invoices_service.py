@@ -142,11 +142,12 @@ class InvoiceService(BaseService):
         # 3. Stage header (Inherits registry link from PO)
         invoice = cls.model(**clean_data)
         db.session.add(invoice)
+        db.session.flush()
 
         # 4. Stage items and calculate total
         new_items_fingerprint = cls._stage_items(invoice, items_data)
 
-        # 5. Stage Attahments
+        # 5. Stage Attahments    
         AttachmentService.stage('Invoice', invoice.id, new_files=new_files)
 
         # 6. Flush and Hydrate

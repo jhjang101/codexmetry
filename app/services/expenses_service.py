@@ -97,24 +97,28 @@ class ExpenseService(BaseService):
         # 1. Validate & transform (includes description fallback)
         clean_data = cls._validate_and_transform(data, items_data)
 
-        # 2. Create header
+        # 2. Stage Expense header
         expense = cls.model(**clean_data)
         db.session.add(expense)
         db.session.flush() # Get ID for items
 
-        # 3. Save items and update total
-        new_items_fingerprint = cls._save_items(expense, items_data)
+        # 3. Stage items and calculate total
+        new_items_fingerprint = cls._stage_items(expense, items_data)
 
         # 4. Stage Attahments
         AttachmentService.stage('Expense', expense.id, new_files=new_files)
 
-        # 5. Prepare the Snapshot for the log
+        # 5. Flush and hydrate
+        db.session.flush()
         db.session.refresh(expense) 
+
+        # 6. Capture new state for audit log
         new_snapshot = clean_data.copy()
         new_snapshot['line_items'] = new_items_fingerprint
+        new_snapshot['total_amount'] = expense.total_amount
         new_snapshot['attachments'] = AttachmentService._get_fingerprint(expense.attachments)
 
-        # 5. Record 'CREATE' Audit
+        # 7. Record 'CREATE' Audit
         AuditLogService.record(
             target_id=expense.id, 
             target_type=cls.model.__name__, 
@@ -146,27 +150,34 @@ class ExpenseService(BaseService):
         # 3. Audit_logs snapshot
         old_snapshot = cls._get_snapshot(expense)
         old_snapshot['items'] = cls._get_items_fingerprint(expense.items)
-        old_snapshot['atachments'] = AttachmentService._get_fingerprint(expense.attachments)
+        old_snapshot['attachments'] = AttachmentService._get_fingerprint(expense.attachments)
 
-        # 4. Update header attributes
+        # 4. Stage header attributes
         for key, value in clean_data.items():
             setattr(expense, key, value)
 
-        # 5. Save items (Wipe and re-insert)
-        clean_data['items'] = cls._save_items(expense, items_data)
+        # 5. Stage items (Wipe and re-insert)
+        new_items_fingerprint = cls._stage_items(expense, items_data)
 
         # 6. Stage Attachments
         AttachmentService.stage('Expense', expense_id, new_files=new_files, delete_ids=delete_ids)
+        
+        # 7. Flush and hydrate
+        db.session.flush()
         db.session.refresh(expense)
-        clean_data['attachments'] = AttachmentService._get_fingerprint(expense.attachments)
 
-        # 7. Deep Audit Trigger
+        # 8. Capture new state for audit log
+        new_smapshot = clean_data.copy()
+        new_smapshot['items'] = new_items_fingerprint
+        new_smapshot['total_amount'] = expense.total_amount
+        new_smapshot['attachments'] = AttachmentService._get_fingerprint(expense.attachments)
+
+        # 9. Deep Audit Trigger
         AuditLogService.record(expense_id, 
                                cls.model.__name__, 
                                'UPDATE', 
                                old_data=old_snapshot, 
-                               new_data=clean_data)
-
+                               new_data=new_smapshot)
 
         db.session.commit()
         return expense
@@ -276,7 +287,7 @@ class ExpenseService(BaseService):
 
 
     @classmethod
-    def _save_items(cls, expense: Expense, items_data: list[dict]):
+    def _stage_items(cls, expense: Expense, items_data: list[dict]):
         """Manages ExpenseItem rows (strings) and updates Expense.total_amount."""
         # 1. Wipe current items
         db.session.execute(

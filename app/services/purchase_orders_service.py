@@ -213,7 +213,7 @@ class PurchaseOrderService(BaseService):
                 quote.status = 'accepted'
                 quote.order_id = registry.id
 
-        # 4. Create PO Header
+        # 4. Stage PO Header
         po = cls.model(**clean_data)
         po.order_id = registry.id
         po.status = 'open'
@@ -225,6 +225,10 @@ class PurchaseOrderService(BaseService):
 
         # 6. Stage Attahments
         AttachmentService.stage('PurchaseOrder', po.id, new_files=new_files)
+
+        # 7. flash and hydrate
+        db.session.flush()
+        db.session.refresh(po)
 
         # 6. Prepare the Snapshot for the log
         db.session.flush() 
@@ -260,7 +264,7 @@ class PurchaseOrderService(BaseService):
         if not po:
             raise ValueError("Purchase Order not found.")
         
-        # Locking guard: if PO has invoices or payments prevent switching client and quote link
+        # 2. Locking guard: if PO has invoices or payments prevent switching client and quote link
         new_client_id = data.get('client_id')
         if new_client_id and int(new_client_id) != po.client_id:
             if po.has_active_invoices or po.has_active_payments: # type: ignore
@@ -272,7 +276,7 @@ class PurchaseOrderService(BaseService):
         
         quote_id = data.get('quote_id')
         
-        # 2. Handle Quote Link Reversion (1:1 logic)
+        # 3. Handle Quote Link Reversion (1:1 logic)
         old_quote_id = po.quote_id
         new_quote_id = int(quote_id) if quote_id else None
 
@@ -317,21 +321,29 @@ class PurchaseOrderService(BaseService):
             setattr(po, key, value)
 
         # 6. Save Items
-        clean_data['line_items'] = cls._stage_items(po, items_data)
-        clean_data['total_amount'] = po.total_amount
+        new_items_fingerprint = cls._stage_items(po, items_data)
 
         # 7. Save Attachments
         AttachmentService.stage('PurchaseOrder', po_id, new_files=new_files, delete_ids=delete_ids)
+
+        # 8. Flash and hydrate
         db.session.flush()
+        db.session.refresh(po)
+
+        # 9. Capture new state for audit log
+        new_snapshot = clean_data.copy()
+        new_snapshot['line_items'] = new_items_fingerprint
+        clean_data['total_amount'] = po.total_amount
         clean_data['attachments'] = AttachmentService._get_fingerprint(po.attachments)
 
-        # 8. Deep Audit Trigger
+        # 10. Record audit
         AuditLogService.record(po_id, 
                                cls.model.__name__, 
                                'UPDATE', 
                                old_data=old_snapshot, 
                                new_data=clean_data)
 
+        # 11. Commit
         db.session.commit()
         return po
     
@@ -489,18 +501,21 @@ class PurchaseOrderService(BaseService):
         # 3. Revert the Quote (liberates it back to Lead status)
         if po.quote:
             AuditLogService.record(
-        po.quote.id, 'Quote', 'UPDATE', 
-        old_data={'status': 'accepted', 'order_id': po.order_id}, 
-        new_data={'status': 'sent', 'order_id': None}
-    )
+                po.quote.id, 'Quote', 'UPDATE', 
+                old_data={'status': 'accepted', 'order_id': po.order_id}, 
+                new_data={'status': 'sent', 'order_id': None}
+            )
             po.quote.status = 'sent'
             po.quote.order_id = None
 
         # 4. Ripple Archive to Invoices
         for inv in po.invoices:
             if inv.is_active:
-                AuditLogService.record(inv.id, 'Invoice', 'ARCHIVE', 
-                                old_data={'is_active': True}, new_data={'is_active': False})
+                AuditLogService.record(inv.id, 
+                                       'Invoice', 
+                                       'ARCHIVE', 
+                                       old_data={'is_active': True}, 
+                                       new_data={'is_active': False})
             inv.is_active = False
 
         # 5. Forensic Record before we flip the bit

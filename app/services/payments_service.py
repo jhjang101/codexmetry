@@ -105,12 +105,14 @@ class PaymentService(BaseService):
         # 2. Stage object
         payment = cls.model(**clean_data)
         db.session.add(payment)
+        db.session.flush()
 
         # 3. Stage Attahments
         AttachmentService.stage('Payment', payment.id, new_files=new_files)
 
         # 4. Flush and Hydrate
         db.session.flush()
+        db.session.refresh(payment)
 
         # 5. Prepare the Snapshot for the log
         new_snapshot = clean_data.copy()
