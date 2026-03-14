@@ -111,15 +111,11 @@
                 {{ now.strftime('%Y-%m-%d %-H:%M:%S') }}
             </div>
         </header>
-
-        {# <!-- Global Error Target -->
-        <div id="global-error-target"></div> #}
-        
-        <section class="flex-1 overflow-y-auto p-1">
+      
+        <section class="flex-1 overflow-y-auto p-1" 
+                 id="main-content-area">
             <!-- Flash -->
-            <div id="flash-container" 
-                {% if request.headers.get('HX-Request') %}hx-swap-oob="true"{% endif %}>
-
+            <div id="flash-container">
                 {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
                     {% for category, message in messages %}

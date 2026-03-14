@@ -21,9 +21,9 @@
      {% if mode == 'view' and quote.status == 'draft' %}
         hx-get="{{ url_for('quotes.view', id=quote.id) }}"
         hx-trigger="focus from:window"
-        hx-target="#quote-view-wrapper"
-        hx-select="#quote-view-wrapper"
-        hx-swap="outerHTML"
+        hx-target="#main-content-area"
+        hx-select="#main-content-area"
+        hx-swap="innerHTML"
      {% endif %}>
     
     <!-- 1. HEADER ACTION BAR -->

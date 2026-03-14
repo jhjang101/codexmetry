@@ -339,12 +339,17 @@ def print_view(id):
     Messenger: Fetches hydrated Invoice data for the printable layout.
     Metadata is already injected via global context processor.
     """
-    # 1. Fetch using your existing high-integrity service
-    invoice = InvoiceService.get_invoice_by_id(id)
-
-    if not invoice or not invoice.is_active:
+    # 1. Promote status and fetch hydrated object
+    invoice, status = InvoiceService.issue_invoice(id)
+    if not invoice:
         flash("Invoice not found.", "error")
         return redirect(url_for('invoices.index'))
+
+    print('status:', status)
+
+    # 2. Feedback
+    if status and status['before'] != status['after']:
+        flash(f"Invoice issued. Status updated from {status['before'].upper()} to {status['after'].upper()}.", "success")
     
     # 2. Initialize buckets
     line_display_items = []

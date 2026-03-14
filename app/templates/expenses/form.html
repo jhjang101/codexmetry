@@ -10,12 +10,12 @@
 {% block content %}
 <div class="max-w-5xl mx-auto"
      id="expense-view-wrapper"
-     {# 1. Focus-Sync enabled only for DRAFT expenses in VIEW mode #}
+     {# Focus-Sync enabled only for DRAFT expenses in VIEW mode #}
      {% if mode == 'view' and expense.status == 'draft' %}
         hx-get="{{ url_for('expenses.view', id=expense.id) }}"
         hx-trigger="focus from:window"
-        hx-target="#expense-view-wrapper"
-        hx-select="#expense-view-wrapper"
+        hx-target="#main-content-area"
+        hx-select="#main-content-area"
         hx-swap="outerHTML"
      {% endif %}>
      

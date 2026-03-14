@@ -378,6 +378,43 @@ class InvoiceService(BaseService):
 
         return db.session.execute(stmt).scalars().all()
     
+    @classmethod
+    def issue_invoice(cls, id: int):
+        """Transitions Invoice from draft to issued state."""
+        invoice = cls.get_invoice_by_id(id) # Hydrated with .balance
+        if not invoice or not invoice.is_active:
+            return None, None
+
+        before = invoice.status
+        if before == 'draft':
+            # 1. Ask the sync logic for the 'Financial Reality'
+            # We pass proposed_status=None to ignore manual overrides
+            from ..utils.sync import sync_invoice_status
+            res = sync_invoice_status(invoice, original_status='draft', proposed_status=None)
+            
+            target = res['after']
+            
+            # 2. Apply the "Issuance Floor" 
+            # If no money exists, sync_invoice_status returns 'draft'. 
+            # We must promote to 'open' because it's being printed.
+            if target == 'draft':
+                target = 'open'
+
+            # 3. Finalize state
+            invoice.status = target
+
+            # 4. Forensic Record (One log for the transition)
+            AuditLogService.record(
+                target_id=id,
+                target_type='Invoice',
+                action='UPDATE',
+                old_data={'status': 'draft'},
+                new_data={'status': target}
+            )
+            db.session.commit()
+        
+        return invoice, {"before": before, "after": invoice.status}
+    
     # --- INTERNAL HELPERS ---
 
     @classmethod
