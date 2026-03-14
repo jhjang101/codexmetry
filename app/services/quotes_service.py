@@ -223,6 +223,30 @@ class QuoteService(BaseService):
         ).order_by(cls.model.quote_date.desc())
 
         return db.session.execute(stmt).scalars().all()
+    
+    @classmethod
+    def issue_quote(cls, id: int):
+        """Transitions Quote from draft to sent. Audits and Commits."""
+        quote = cls.get_quote_by_id(id)
+        if not quote or not quote.is_active:
+            return None, None
+        
+        before = quote.status
+        if before == 'draft':
+            # 1. Forensic Record
+            AuditLogService.record(
+                target_id=id,
+                target_type='Quote',
+                action='UPDATE',
+                old_data={'status': 'draft'},
+                new_data={'status': 'sent'}
+            )
+            # 2. Status Flip
+            quote.status = 'sent'
+            
+            db.session.commit()
+        
+        return quote, {"before": before, "after": quote.status}
 
     # --- INTERNAL HELPERS ---
 

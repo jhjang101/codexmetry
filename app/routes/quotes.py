@@ -223,21 +223,23 @@ def print_view(id):
     Messenger: Fetches hydrated Quote data for the printable layout.
     Metadata is already injected via global context processor.
     """
-    # 1. Fetch using your existing high-integrity service
-    # This already eager-loads Client and Contacts
-    quote = QuoteService.get_quote_by_id(id)
-    
-    if not quote or not quote.is_active:
+    # 1. Promote status if it is currently a draft
+    quote, status = QuoteService.issue_quote(id)
+    if not quote:
         flash("Quote not found.", "error")
         return redirect(url_for('quotes.index'))
 
-     # 2. Initialize buckets
+    # 2. Feedback: Notify the user of the deal's progression
+    if status and status['before'] != status['after']:
+        flash(f"Quote issued. Status updated: {status['before'].upper()} → {status['after'].upper()}", "success")
+
+    # 3. Initialize buckets
     line_display_items = []
     subtotal = 0
     tax_total = 0
     shipping_total = 0
 
-    # 3. Logic: Sort items into buckets based on document_placement
+    # 4. Sort items into buckets based on document_placement
     for item in quote.items:
         # Standardize value calculation in the "Brain"
         item_value = item.quantity * item.quoted_unit_price
@@ -252,7 +254,7 @@ def print_view(id):
             line_display_items.append(item)
             subtotal += item_value
 
-    # 4. Pass pre-calculated values to the template
+    # 5. Pass pre-calculated values to the template
     return render_template('quotes/print.html', 
                            quote=quote,
                            line_display_items=line_display_items,

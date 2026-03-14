@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Codexmetry{% endblock %}</title>
+    <!-- CDNs -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+
+<body class="bg-gray-50 flex h-screen overflow-hidden">
+    <main class="flex-1 flex flex-col overflow-hidden">
+
+            <div id="flash-container" hx-swap-oob="true">
+                <div class="mb-2 p-2 pl-5 w-full rounded-lg text-red-700 bg-red-100 border-l-4 border-red-500 animate-pulse">
+                    <div class="flex justify-between items-center w-full">
+                        <span>
+                            <i class="fa-solid fa-triangle-exclamation mr-2"></i>
+                            <strong>Database Error:</strong> {{ message }}
+                        </span>
+                        <span class="pl-4 pr-2 cursor-pointer hover:text-red-900" onclick="this.closest('.mb-2').remove()">
+                            <i class="fa-solid fa-xmark opacity-50 text-lg"></i>
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="flash-container" hx-swap-oob="true">
+                <div class="bg-red-50 border-l-4 border-red-500 p-3 mb-2 rounded shadow-sm flex justify-between items-center animate-pulse">
+                    <div class="flex items-center">
+                        <i class="fa-solid fa-triangle-exclamation text-red-500 mr-2"></i>
+                        <span class="text-xs font-bold text-red-800 uppercase tracking-wider">Database Error:</span>
+                        <span class="text-xs text-red-700 ml-2">{{ message }}</span>
+                    </div>
+                    <button type="button" class="text-red-400 hover:text-red-600" onclick="this.parentElement.parentElement.innerHTML=''">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="mb-2 p-2 pl-5 w-full rounded-lg text-red-700 bg-red-100">
+                <div class="flex justify-between items-center w-full">
+                    <span>{{ message }}</span>
+                    <span class="pl-4 pr-2 cursor-pointer hover:text-gray-900" onclick="this.closest('.mb-2').remove()">
+                        <i class="fa-solid fa-xmark opacity-50 text-lg"></i>
+                    </span>
+                </div>
+            </div>
+
+            <div class="mb-2 p-1 pl-5 w-full text-sm 
+                        flex justify-between items-center border-l-4
+                        text-green-700 bg-green-100 border-green-400">
+                <div class="flex items-center">
+                    <i class="fa-solid fa-circle-check mr-2"></i>
+                    <span class="font-bold uppercase tracking-wider">Success:</span> 
+                    <span class="ml-2">Quote Q-1234 added successfully!</span>
+                </div>    
+                <span class="px-4 cursor-pointer hover:text-gray-900" onclick="this.closest('.mb-2').remove()">
+                    <i class="fa-solid fa-xmark opacity-50 text-lg"></i>
+                </span>
+            </div>
+
+            <div class="mb-2 p-1 pl-5 w-full text-sm 
+                        flex justify-between items-center border-l-4
+                        text-blue-700 bg-blue-100 border-blue-400">
+                <div class="flex items-center">
+                    <i class="fa-solid fa-circle-info mr-2"></i>
+                    <span class="font-bold uppercase tracking-wider">Info:</span> 
+                    <span class="ml-2">Previous PO PO2894 status reverted from OPEN to INVOICED.</span>
+                </div>    
+                <span class="px-4 cursor-pointer hover:text-gray-900" onclick="this.closest('.mb-2').remove()">
+                    <i class="fa-solid fa-xmark opacity-50 text-lg"></i>
+                </span>
+            </div>
+
+            <div class="mb-2 p-1 pl-5 w-full text-sm 
+                        flex justify-between items-center border-l-4
+                        text-yellow-700 bg-yellow-100 border-yellow-400">
+                <div class="flex items-center">
+                    <i class="fa-solid fa-circle-exclamation mr-2"></i>
+                    <span class="font-bold uppercase tracking-wider">Warning:</span> 
+                    <span class="ml-2">PO PO2894 has already been fully invoiced.</span>
+                </div>    
+                <span class="px-4 cursor-pointer hover:text-gray-900" onclick="this.closest('.mb-2').remove()">
+                    <i class="fa-solid fa-xmark opacity-50 text-lg"></i>
+                </span>
+            </div>
+
+            <div class="mb-2 p-1 pl-5 w-full text-sm 
+                        flex justify-between items-center border-l-4
+                        text-red-700 bg-red-100 border-red-400">
+                <div class="flex items-center">
+                    <i class="fa-solid fa-circle-xmark mr-2"></i>
+                    <span class="font-bold uppercase tracking-wider">Error:</span> 
+                    <span class="ml-2">Purchase Order not found.</span>
+                </div>    
+                <span class="px-4 cursor-pointer hover:text-gray-900" onclick="this.closest('.mb-2').remove()">
+                    <i class="fa-solid fa-xmark opacity-50 text-lg"></i>
+                </span>
+            </div>
+
+            <div class="mb-2 p-1 pl-5 w-full text-sm 
+                        flex justify-between items-center border-l-4
+                        text-red-700 bg-red-100 border-red-400">
+                <div class="flex items-center">
+                    <i class="fa-solid fa-triangle-exclamation mr-2"></i>
+                    <span class="font-bold uppercase tracking-wider">Database Error:</span> 
+                    <span class="ml-2">Quote Number is required.</span>
+                </div>    
+                <span class="px-4 cursor-pointer hover:text-gray-900" onclick="this.closest('.mb-2').remove()">
+                    <i class="fa-solid fa-xmark opacity-50 text-lg"></i>
+                </span>
+            </div>
+
+    </main>
+</body>
+</html>

@@ -1,12 +1,14 @@
-<div id="global-error-target" hx-swap-oob="true">
-    <div class="bg-red-50 border-l-4 border-red-500 p-3 mb-2 rounded shadow-sm flex justify-between items-center animate-pulse">
+<div id="flash-container" hx-swap-oob="true">
+    <div class="mb-2 p-1 pl-5 w-full text-sm 
+                flex justify-between items-center border-l-4
+                text-red-700 bg-red-100 border-red-400">
         <div class="flex items-center">
-            <i class="fa-solid fa-triangle-exclamation text-red-500 mr-2"></i>
-            <span class="text-xs font-bold text-red-800 uppercase tracking-wider">Database Error:</span>
-            <span class="text-xs text-red-700 ml-2">{{ message }}</span>
-        </div>
-        <button type="button" class="text-red-400 hover:text-red-600" onclick="this.parentElement.parentElement.innerHTML=''">
-            <i class="fa-solid fa-xmark"></i>
-        </button>
+            <i class="fa-solid fa-triangle-exclamation mr-2"></i>
+            <span class="font-bold uppercase tracking-wider">Database Error:</span> 
+            <span class="ml-2">{{ message }}</span>
+        </div>    
+        <span class="px-4 cursor-pointer hover:text-gray-900" onclick="this.closest('.mb-2').remove()">
+            <i class="fa-solid fa-xmark opacity-50 text-lg"></i>
+        </span>
     </div>
 </div>

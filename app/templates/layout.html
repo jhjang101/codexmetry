@@ -112,31 +112,50 @@
             </div>
         </header>
 
-        <!-- Global Error Target -->
-        <div id="global-error-target"></div>
+        {# <!-- Global Error Target -->
+        <div id="global-error-target"></div> #}
         
-        <section class="flex-1 overflow-y-auto p-4">
+        <section class="flex-1 overflow-y-auto p-1">
             <!-- Flash -->
-            {% with messages = get_flashed_messages(with_categories=true) %}
-              {% if messages %}
-                {% for category, message in messages %}
-                  <div class="mb-2 p-2 pl-5 w-full rounded-lg  
-                    {% if category == 'error' %} text-red-700 bg-red-100
-                    {% elif category == 'info' %} text-blue-700 bg-blue-100
-                    {% elif category == 'success' %} text-green-700 bg-green-100 border-l-4 border-green-400
-                    {% elif category == 'warning' %} text-yellow-700 bg-yellow-100
-                    {% else %} text-gray-700 bg-gray-100
-                    {% endif %}">
-                    <div class="flex justify-between items-center w-full">
-                        <span>{{ message }}</span>
-                        <span class="pl-4 pr-2 cursor-pointer hover:text-gray-900" onclick="this.closest('.mb-2').remove()">
+            <div id="flash-container" 
+                {% if request.headers.get('HX-Request') %}hx-swap-oob="true"{% endif %}>
+
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                    <div class="mb-2 p-1 pl-5 w-full text-sm 
+                                flex justify-between items-center border-l-4
+                                {% if category == 'success' %} text-green-700 bg-green-100 border-green-400
+                                {% elif category == 'info' %} text-blue-700 bg-blue-100 border-blue-400
+                                {% elif category == 'warning' %} text-yellow-700 bg-yellow-100 border-yellow-400
+                                {% elif category == 'error' %} text-red-700 bg-red-100 border-red-400
+                                {% else %} text-gray-700 bg-gray-100 border-gray-400
+                                {% endif %}">
+                        <div class="flex items-center">
+                            {% if category == 'success' %}
+                                <i class="fa-solid fa-circle-check mr-2"></i>
+                                <span class="font-bold uppercase tracking-wider">Success:</span> 
+                            {% elif category == 'info' %}
+                                <i class="fa-solid fa-circle-info mr-2"></i>
+                                <span class="font-bold uppercase tracking-wider">Info:</span> 
+                            {% elif category == 'warning' %}
+                                <i class="fa-solid fa-circle-exclamation mr-2"></i>
+                                <span class="font-bold uppercase tracking-wider">Warning:</span> 
+                            {% elif category == 'error' %} 
+                                <i class="fa-solid fa-circle-xmark mr-2"></i>
+                                <span class="font-bold uppercase tracking-wider">Error:</span> 
+                            {% endif %}
+                            <span class="ml-2">{{ message }}</span>
+                        </div>
+                        <span class="px-4 cursor-pointer hover:text-gray-900" onclick="this.closest('.mb-2').remove()">
                             <i class="fa-solid fa-xmark opacity-50 text-lg"></i>
                         </span>
                     </div>
-                  </div>
-                {% endfor %}
-              {% endif %}
-            {% endwith %}
+                    {% endfor %}
+                {% endif %}
+                {% endwith %}
+
+            </div>
 
             <!-- Content -->
             {% block content %}{% endblock %}
