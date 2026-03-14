@@ -290,17 +290,20 @@ def print_view(id):
     Messenger: Fetches hydrated Invoice data for the printable layout.
     Metadata is already injected via global context processor.
     """
-    # 1. Fetch hydrated expense using the Service Brain
-    expense = ExpenseService.get_expense_by_id(id)
-    
-    if not expense or not expense.is_active:
+    # 1. Promote status and fetch hydrated object
+    expense, status = ExpenseService.issue_expense(id)
+    if not expense:
         flash("Expense record not found.", "error")
         return redirect(url_for('expenses.index'))
+    
+    # 2. Feedback
+    if status and status['before'] != status['after']:
+        flash(f"Purchase Order issued. Status: {status['before'].upper()} → {status['after'].upper()}", "success")
 
-    # 2. Calculate Subtotal (In-Memory)
+    # 3. Calculate Subtotal (In-Memory)
     subtotal = sum(item.quantity * item.unit_price for item in expense.items)
 
-    # 3. Render the dedicated print template
+    # 4. Render the dedicated print template
     return render_template('expenses/print.html', 
                            expense=expense, 
                            subtotal=subtotal)

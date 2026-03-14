@@ -209,6 +209,30 @@ class ExpenseService(BaseService):
         )
         return db.session.execute(stmt).scalar_one_or_none()
     
+    @classmethod
+    def issue_expense(cls, id: int):
+        """Transitions Expense from draft to open. Audits and Commits."""
+        # Ensure hydrated fetch for the return object
+        expense = cls.get_expense_by_id(id)
+        if not expense or not expense.is_active:
+            return None, None
+        
+        before = expense.status
+        if before == 'draft':
+            # 1. Forensic Record
+            AuditLogService.record(
+                target_id=id,
+                target_type='Expense',
+                action='UPDATE',
+                old_data={'status': 'draft'},
+                new_data={'status': 'open'}
+            )
+            # 2. Status Flip
+            expense.status = 'open'
+            db.session.commit()
+        
+        return expense, {"before": before, "after": expense.status}
+    
     # --- INTERNAL HELPERS ---
 
     @classmethod
