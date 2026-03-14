@@ -383,7 +383,7 @@ class InvoiceService(BaseService):
         """Transitions Invoice from draft to issued state."""
         invoice = cls.get_invoice_by_id(id) # Hydrated with .balance
         if not invoice or not invoice.is_active:
-            return None, None
+            return None, None, None
 
         before = invoice.status
         if before == 'draft':
@@ -416,11 +416,11 @@ class InvoiceService(BaseService):
             # If the invoice jumped straight to 'completed' (or even 'open'), 
             # the PO needs to re-evaluate its lifecycle.
             if invoice.po_id:
-                sync_po_status(invoice.po_id)
+                po_status = sync_po_status(invoice.po_id)
 
             db.session.commit()
         
-        return invoice, {"before": before, "after": invoice.status}
+        return invoice, {"before": before, "after": invoice.status}, po_status
     
     # --- INTERNAL HELPERS ---
 

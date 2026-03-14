@@ -340,17 +340,19 @@ def print_view(id):
     Metadata is already injected via global context processor.
     """
     # 1. Promote status and fetch hydrated object
-    invoice, status = InvoiceService.issue_invoice(id)
-    if not invoice:
+    invoice, invoice_status, po_status = InvoiceService.issue_invoice(id)
+    if not invoice_status:
         flash("Invoice not found.", "error")
         return redirect(url_for('invoices.index'))
 
-    print('status:', status)
-
     # 2. Feedback
-    if status and status['before'] != status['after']:
-        flash(f"Invoice issued. Status updated from {status['before'].upper()} to {status['after'].upper()}.", "success")
-    
+    if invoice_status and invoice_status['before'] != invoice_status['after']:
+        flash(f"Invoice issued. Status updated from {invoice_status['before'].upper()} to {invoice_status['after'].upper()}.", "success")
+    if po_status and po_status['before'] != po_status['after']:
+        # Fetch old name for forensic clarity in the UI
+        po_name = invoice.purchase_order.po_number or invoice.order.order_number # type: ignore
+        flash(f"Associated PO {po_name} status updated from {po_status['before'].upper()} to {po_status['after'].upper()}.", "success")
+
     # 2. Initialize buckets
     line_display_items = []
     subtotal = 0
