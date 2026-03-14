@@ -411,6 +411,13 @@ class InvoiceService(BaseService):
                 old_data={'status': 'draft'},
                 new_data={'status': target}
             )
+
+            # 5. PO Status Ripple
+            # If the invoice jumped straight to 'completed' (or even 'open'), 
+            # the PO needs to re-evaluate its lifecycle.
+            if invoice.po_id:
+                sync_po_status(invoice.po_id)
+
             db.session.commit()
         
         return invoice, {"before": before, "after": invoice.status}

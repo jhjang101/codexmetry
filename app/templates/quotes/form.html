@@ -15,8 +15,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="max-w-5xl mx-auto" 
-     id="quote-view-wrapper"
+<div class="max-w-5xl mx-auto"
      {# 1. ONLY enable focus-sync if we are viewing a DRAFT quote #}
      {% if mode == 'view' and quote.status == 'draft' %}
         hx-get="{{ url_for('quotes.view', id=quote.id) }}"

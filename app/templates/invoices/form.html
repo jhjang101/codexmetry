@@ -17,7 +17,6 @@
 {% block content %}
 
 <div class="max-w-5xl mx-auto"
-     id="invoice-view-wrapper"
      {# Focus-Sync enabled only for DRAFT expenses in VIEW mode #}
      {% if mode == 'view' and invoice.status == 'draft' %}
         hx-get="{{ url_for('invoices.view', id=invoice.id) }}"
