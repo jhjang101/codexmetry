@@ -161,29 +161,53 @@
 
             <!-- Table: Recent Activity (Forensic Feed) -->
             <section class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <div class="px-4 py-3 border-b border-gray-100 bg-slate-900">
+                <div class="px-4 py-3 border-b border-gray-100 flex justify-between items-center bg-slate-900">
                     <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
                         <i class="fa-solid fa-clock-rotate-left"></i> Forensic Feed
                     </h3>
+                    <span class="text-[9px] text-slate-500 font-bold uppercase tracking-tighter">Live Audit Trail</span>
                 </div>
-                <div class="divide-y divide-gray-50">
-                    {% for log in data.activity %}
-                    <div class="px-4 py-2 flex items-center justify-between hover:bg-gray-50 transition-colors group">
-                        <div class="flex flex-col">
-                            <span class="text-[10px] font-bold text-slate-800">
-                                {{ log.user.username if log.user else 'System' }} 
-                                <span class="font-normal text-gray-400 uppercase ml-1 tracking-tighter">{{ log.action }}</span>
-                            </span>
-                            <span class="text-[11px] text-gray-600">
-                                {{ log.target_type }} <span class="font-mono text-blue-600">{{ log.target_label }}</span>
-                            </span>
-                        </div>
-                        <span class="text-[10px] text-gray-500 font-mono">
-                            {{ (log.timestamp | localize).strftime('%m/%d %H:%M') }}
-                        </span>
-                    </div>
-                    {% endfor %}
-                </div>
+                <table class="min-w-full divide-y divide-gray-100">
+                    <thead class="bg-gray-50/50">
+                        <tr class="text-[10px] font-bold text-gray-400 uppercase text-left">
+                            <th class="px-4 py-2">User</th>
+                            <th class="px-4 py-2">Action</th>
+                            <th class="px-4 py-2">Target</th>
+                            <th class="px-4 py-2 text-right">Time</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-50">
+                        {% for log in data.activity %}
+                        <tr class="hover:bg-gray-50 transition-colors text-xs">
+                            <!-- User -->
+                            <td class="px-4 py-2 font-bold text-slate-700">
+                                {{ log.user.username if log.user else 'System' }}
+                            </td>
+
+                            <!-- Action -->
+                            <td class="px-4 py-2">
+                                <span class="text-[9px] font-bold uppercase tracking-tighter
+                                    {% if log.action == 'CREATE' %}text-green-600
+                                    {% elif log.action == 'ARCHIVE' %}text-red-600
+                                    {% else %}text-blue-600{% endif %}">
+                                    {{ log.action }}
+                                </span>
+                            </td>
+
+                            <!-- Target: Type + Label -->
+                            <td class="px-4 py-2 text-gray-600">
+                                <span class="text-gray-400 font-medium">{{ log.target_type }}:</span>
+                                <span class="font-bold text-blue-700">{{ log.target_label or log.target_id }}</span>
+                            </td>
+
+                            <!-- Date -->
+                            <td class="px-4 py-2 text-right text-gray-400 font-mono text-[10px]">
+                                {{ (log.timestamp | localize).strftime('%H:%M') }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </section>
 
         </div>
