@@ -2,13 +2,13 @@ from flask_login import current_user
 from flask import has_request_context
 from datetime import datetime, date
 from ..extensions import db
-from ..models import AuditLog
 from sqlalchemy import select
 from sqlalchemy.orm import joinedload
 from ..models import (
     AuditLog, User, PoType, ProductCategory, ExpenseCategory, 
-    Quote, PurchaseOrder, Invoice, Product, Vendor, Client,
-    PaymentType, AdjustmentCategory, OrderRegistry , Carrier
+    Quote, PurchaseOrder, Invoice, Payment, Product, Vendor, Client,
+    PaymentType, AdjustmentCategory, OrderRegistry , Carrier,
+    Expense, Adjustment, SettingsMetadata
 )
 
 class AuditLogService:
@@ -32,6 +32,39 @@ class AuditLogService:
         'payment_type_id': (PaymentType, 'type'),
         'adjustment_category_id': (AdjustmentCategory, 'type'),
         'carrier_id': (Carrier, 'type'),
+    }
+
+    # Maps target_type string to the imported Model Class
+    MODEL_MAP = {
+        'Quote': Quote, 
+        'PurchaseOrder': PurchaseOrder, 
+        'Invoice': Invoice,
+        'Payment': Payment, 
+        'Expense': Expense, 
+        'Adjustment': Adjustment,
+        'OrderRegistry': OrderRegistry, 
+        'Client': Client, 
+        'Vendor': Vendor,
+        'Product': Product, 
+        'User': User, 
+        'SettingsMetadata': SettingsMetadata
+    }
+
+
+    # Maps target_type to the column we use for the human label
+    TARGET_MAP = {
+        'Quote': 'quote_number',
+        'PurchaseOrder': 'po_number', # or we can logic-fallback to order.order_number
+        'Invoice': 'invoice_number',
+        'Payment': 'payment_number',
+        'Expense': 'expense_number',
+        'Adjustment': 'adjustment_number',
+        'OrderRegistry': 'order_number',
+        'Client': 'company_name',
+        'Vendor': 'company_name',
+        'Product': 'name',
+        'User': 'username',
+        'SettingsMetadata': 'company_name'
     }
 
     @classmethod
@@ -108,11 +141,32 @@ class AuditLogService:
         # 4. Save entry if there's a delta or it's a lifecycle event
         if changes or action in ['CREATE', 'ARCHIVE']:
             user_id = int(current_user.get_id()) if (has_request_context() and current_user.is_authenticated) else None
+
+            # 1. GENERATE THE TARGET LABEL
+            target_label = f"{target_type} #{target_id}" # Default fallback
+
+            model_class = cls.MODEL_MAP.get(target_type)
+            label_attr = cls.TARGET_MAP.get(target_type)
+
+            if model_class and label_attr:
+                # Use the session to find the object
+                obj = db.session.get(model_class, target_id)
+                if obj:
+                    val = getattr(obj, label_attr, None)
+                    
+                    # SPECIAL CASE: PO Number Fallback
+                    if target_type == 'PurchaseOrder' and not val:
+                        # Re-use the CDX number if client PO ref is blank
+                        val = obj.order.order_number if obj.order else f"#{target_id}"
+                    
+                    if val:
+                        target_label = str(val)
             
 
             # Forensic Print for Debugging
             import pprint
-            print(f"--- AUDIT LOG: {action} on {target_type} ID {target_id} by User ID {user_id} ---")
+            user_name = current_user.username if current_user.is_authenticated else 'Anonymous'
+            print(f"--- AUDIT LOG: {action} on {target_type} id# {target_id} {target_label} by User id# {user_id} {user_name} ---")
             print("--- Changes: ---")
             pprint.pprint(changes, indent=4)
             print("----------------")
@@ -122,6 +176,7 @@ class AuditLogService:
             log.action = action
             log.target_type = target_type
             log.target_id = target_id
+            log.target_label = target_label
             log.changes = changes if changes else None
             db.session.add(log)
             # We do NOT commit here. The calling service handles the transaction.

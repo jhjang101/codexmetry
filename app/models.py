@@ -37,6 +37,7 @@ class AuditLog(db.Model):
     action: Mapped[str] = mapped_column(String(20)) # CREATE, UPDATE, ARCHIVE
     target_type: Mapped[str] = mapped_column(String(50)) # 'Invoice', 'Product', etc.
     target_id: Mapped[int] = mapped_column(Integer)
+    target_label: Mapped[str | None] = mapped_column(String(255))
     
     # Stores a dict of {'field_name': [old_value, new_value]}
     changes: Mapped[dict | None] = mapped_column(JSON) 
