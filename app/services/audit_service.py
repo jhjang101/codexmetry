@@ -21,7 +21,7 @@ class AuditLogService:
         'client_id': (Client, 'company_name'),
         'vendor_id': (Vendor, 'company_name'), # Use Client or Vendor model accordingly
         'po_type_id': (PoType, 'type'),
-        'category_id': (ProductCategory, 'type'), # Note: We need logic to distinguish between Prod/Exp/Adj categories
+        # 'category_id': (ProductCategory, 'type'), # Note: We need logic to distinguish between Prod/Exp/Adj categories
         'product_id': (Product, 'name'),
         'quote_id': (Quote, 'quote_number'),
         'po_id': (PurchaseOrder, 'po_number'),

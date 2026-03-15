@@ -623,8 +623,10 @@ class PurchaseOrderService(BaseService):
                 db.session.add(item)
 
                 # Generate fingerprint
+                product = db.session.get(Product, product_id)
                 fingerprint.append({
                     'product_id': int(product_id), 
+                    'product': product.name if product else "Unknown",
                     'quantity': qty, 
                     'unit_price': price,
                     'description': description

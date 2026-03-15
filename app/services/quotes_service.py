@@ -1,5 +1,5 @@
 from .base_service import BaseService
-from ..models import Quote, QuoteItem, Client, OrderRegistry, SettingsMetadata
+from ..models import Quote, QuoteItem, Client, OrderRegistry, SettingsMetadata, Product
 from .audit_service import AuditLogService
 from .attachment_service import AttachmentService
 from ..extensions import db
@@ -325,8 +325,10 @@ class QuoteService(BaseService):
                 db.session.add(item)
 
                 # Generate fingerprint
+                product = db.session.get(Product, product_id)
                 fingerprint.append({
                     'product_id': int(product_id), 
+                    'product': product.name if product else "Unknown",
                     'quantity': qty, 
                     'unit_price': price,
                     'description': description

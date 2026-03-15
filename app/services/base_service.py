@@ -141,6 +141,7 @@ class BaseService:
         data = [
             {
                 'product_id': item.product_id, 
+                'product': item.product.name if item.product else "Unknown",
                 'quantity': getattr(item, qty_attr), 
                 'unit_price': getattr(item, price_attr),
                 'description': item.description
