@@ -333,15 +333,15 @@ class PurchaseOrderService(BaseService):
         # 9. Capture new state for audit log
         new_snapshot = clean_data.copy()
         new_snapshot['line_items'] = new_items_fingerprint
-        clean_data['total_amount'] = po.total_amount
-        clean_data['attachments'] = AttachmentService._get_fingerprint(po.attachments)
+        new_snapshot['total_amount'] = po.total_amount
+        new_snapshot['attachments'] = AttachmentService._get_fingerprint(po.attachments)
 
         # 10. Record audit
         AuditLogService.record(po_id, 
                                cls.model.__name__, 
                                'UPDATE', 
                                old_data=old_snapshot, 
-                               new_data=clean_data)
+                               new_data=new_snapshot)
 
         # 11. Commit
         db.session.commit()
