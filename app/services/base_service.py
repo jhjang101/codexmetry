@@ -117,7 +117,7 @@ class BaseService:
         # 3. Apply sorting logic
         if target_col is not None:
             # Sort by requested column
-            stmt = stmt.order_by(sort_dir(target_col))
+            stmt = stmt.order_by(sort_dir(target_col), desc(default_col))
         else:
             # Fallback to default (usually Date or ID descending)
             stmt = stmt.order_by(desc(default_col))

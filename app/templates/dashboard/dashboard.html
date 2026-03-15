@@ -178,8 +178,8 @@
                                 {{ log.target_type }} <span class="font-mono text-blue-600">#{{ log.target_id }}</span>
                             </span>
                         </div>
-                        <span class="text-[10px] text-gray-400 font-mono">
-                            {{ (log.timestamp | localize).strftime('%H:%M') }}
+                        <span class="text-[10px] text-gray-500 font-mono">
+                            {{ (log.timestamp | localize).strftime('%m/%d %H:%M') }}
                         </span>
                     </div>
                     {% endfor %}
