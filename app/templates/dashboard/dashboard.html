@@ -173,7 +173,7 @@
                             <th class="px-4 py-2">User</th>
                             <th class="px-4 py-2">Action</th>
                             <th class="px-4 py-2">Target</th>
-                            <th class="px-4 py-2 text-right">Time</th>
+                            <th class="px-4 py-2 text-right">Date & Time</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-50">
@@ -202,7 +202,7 @@
 
                             <!-- Date -->
                             <td class="px-4 py-2 text-right text-gray-400 font-mono text-[10px]">
-                                {{ (log.timestamp | localize).strftime('%H:%M') }}
+                                {{ (log.timestamp | localize).strftime('%m/%d %H:%M') }}
                             </td>
                         </tr>
                         {% endfor %}
