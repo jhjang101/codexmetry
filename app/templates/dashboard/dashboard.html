@@ -3,5 +3,190 @@
 {% block header %}Dashboard{% endblock %}
 
 {% block content %}
+<div class="max-w-full mx-auto px-4 pb-8">
 
+    <!-- 1. KPI Pulse Bar -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <!-- Backlog -->
+        <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-amber-500 flex flex-col justify-between">
+            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Contractual Backlog</span>
+            <span class="text-2xl font-bold text-slate-800">{{ data.kpis.backlog | usd }}</span>
+            <span class="text-[10px] text-amber-600 font-medium mt-1">Unbilled PO Value</span>
+        </div>
+
+        <!-- Accounts Receivable -->
+        <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-blue-500 flex flex-col justify-between">
+            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Accounts Receivable</span>
+            <span class="text-2xl font-bold text-slate-800">{{ data.kpis.ar | usd }}</span>
+            <span class="text-[10px] text-blue-600 font-medium mt-1">Unpaid Invoices</span>
+        </div>
+
+        <!-- MTD Cash Flow -->
+        <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 {{ 'border-green-500' if data.kpis.mtd_cash >= 0 else 'border-red-500' }} flex flex-col justify-between">
+            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">MTD Cash Flow</span>
+            <span class="text-2xl font-bold {{ 'text-green-700' if data.kpis.mtd_cash >= 0 else 'text-red-700' }}">
+                {{ data.kpis.mtd_cash | usd }}
+            </span>
+            <span class="text-[10px] text-gray-500 font-medium mt-1">This Month (Received - Paid)</span>
+        </div>
+
+        <!-- YTD Cash Flow -->
+        <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 {{ 'border-green-500' if data.kpis.ytd_cash >= 0 else 'border-red-500' }} flex flex-col justify-between">
+            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">YTD Cash Flow</span>
+            <span class="text-2xl font-bold {{ 'text-green-700' if data.kpis.ytd_cash >= 0 else 'text-red-700' }}">
+                {{ data.kpis.ytd_cash | usd }}
+            </span>
+            <span class="text-[10px] text-gray-500 font-medium mt-1">This Year (Received - Paid)</span>
+        </div>
+    </div>
+
+    <!-- 2. Operational Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        <!-- Column Left: Sales Pipeline -->
+        <div class="space-y-6">
+            
+            <!-- Table: Outstanding Purchase Orders -->
+            <section class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div class="px-4 py-3 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                    <h3 class="text-xs font-bold text-gray-600 uppercase tracking-wider">Outstanding POs</h3>
+                    <a href="{{ url_for('purchase_orders.index') }}" class="text-[10px] font-bold text-blue-600 hover:underline">View All</a>
+                </div>
+                <table class="min-w-full divide-y divide-gray-100">
+                    <thead class="bg-white">
+                        <tr class="text-[10px] font-bold text-gray-400 uppercase text-left">
+                            <th class="px-4 py-2">Status</th>
+                            <th class="px-4 py-2">PO #</th>
+                            <th class="px-4 py-2">Client</th>
+                            <th class="px-4 py-2 text-right">Backlog</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-50">
+                        {% for po in data.pos %}
+                        <tr class="hover:bg-blue-50/30 transition-colors cursor-pointer text-xs"
+                            hx-get="{{ url_for('purchase_orders.view', id=po.id) }}" hx-target="body" hx-push-url="true">
+                            <td class="px-4 py-2">
+                                <span class="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase 
+                                            {% if po.status == 'open' %}
+                                            bg-red-100 text-red-700
+                                            {% elif po.status == 'invoiced' %}
+                                            bg-blue-100 text-blue-700
+                                            {% else %}
+                                            bg-green-100 text-green-700
+                                            {% endif %}">
+                                    {{ po.status }}
+                                </span>
+                            </td>
+                            <td class="px-4 py-2 font-mono font-medium text-gray-700">{{ po.po_number or po.order.order_number }}</td>
+                            <td class="px-4 py-2 text-gray-600 truncate max-w-[150px]">{{ po.client.company_name }}</td>
+                            <td class="px-4 py-2 text-right font-bold text-amber-600">{{ po.to_be_invoiced | usd }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- Table: Recent Expenses -->
+            <section class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div class="px-4 py-3 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                    <h3 class="text-xs font-bold text-gray-600 uppercase tracking-wider">Recent Expenses</h3>
+                    <a href="{{ url_for('expenses.index') }}" class="text-[10px] font-bold text-blue-600 hover:underline">View All</a>
+                </div>
+                <table class="min-w-full divide-y divide-gray-100">
+                    <thead class="bg-white">
+                        <tr class="text-[10px] font-bold text-gray-400 uppercase text-left">
+                            <th class="px-4 py-2">Vendor</th>
+                            <th class="px-4 py-2">Category</th>
+                            <th class="px-4 py-2 text-right">Amount</th>
+                            <th class="px-4 py-2">Date</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-50">
+                        {% for exp in data.expenses %}
+                        <tr class="hover:bg-blue-50/30 transition-colors cursor-pointer text-xs"
+                            hx-get="{{ url_for('expenses.view', id=exp.id) }}" hx-target="body" hx-push-url="true">
+                            <td class="px-4 py-2 font-medium text-gray-700 truncate max-w-[120px]">{{ exp.vendor.company_name }}</td>
+                            <td class="px-4 py-2 text-gray-500 text-[10px] uppercase font-bold">{{ exp.category.type if exp.category else '-' }}</td>
+                            <td class="px-4 py-2 text-right font-bold text-red-600">{{ exp.total_amount | usd }}</td>
+                            <td class="px-4 py-2 text-gray-400 text-[10px]">{{ exp.expense_date }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </section>
+
+
+
+
+        </div>
+
+        <!-- Column Right: Financials & Audit -->
+        <div class="space-y-6">
+
+            <!-- Table: Unpaid Invoices -->
+            <section class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div class="px-4 py-3 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                    <h3 class="text-xs font-bold text-gray-600 uppercase tracking-wider">Outstanding Invoices</h3>
+                    <a href="{{ url_for('invoices.index') }}" class="text-[10px] font-bold text-blue-600 hover:underline">View All</a>
+                </div>
+                <table class="min-w-full divide-y divide-gray-100">
+                    <thead class="bg-white">
+                        <tr class="text-[10px] font-bold text-gray-400 uppercase text-left">
+                            <th class="px-4 py-2">Status</th>
+                            <th class="px-4 py-2">Inv #</th>
+                            <th class="px-4 py-2">Client</th>
+                            <th class="px-4 py-2 text-right">Balance</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-50">
+                        {% for inv in data.invoices %}
+                        <tr class="hover:bg-blue-50/30 transition-colors cursor-pointer text-xs"
+                            hx-get="{{ url_for('invoices.view', id=inv.id) }}" hx-target="body" hx-push-url="true">
+                            <td class="px-4 py-2">
+                                <span class="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase 
+                                    {{ 'bg-gray-100 text-gray-600' if inv.status == 'draft' else 'bg-red-100 text-red-700' if inv.status == 'open' else 'bg-green-100 text-green-700' }}">
+                                    {{ inv.status }}
+                                </span>
+                            </td>
+                            <td class="px-4 py-2 font-mono font-medium text-gray-700">{{ inv.invoice_number }}</td>
+                            <td class="px-4 py-2 text-gray-600 truncate max-w-[150px]">{{ inv.client.company_name }}</td>
+                            <td class="px-4 py-2 text-right font-bold text-blue-700">{{ inv.balance | usd }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </section>
+            
+            
+
+            <!-- Table: Recent Activity (Forensic Feed) -->
+            <section class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div class="px-4 py-3 border-b border-gray-100 bg-slate-900">
+                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                        <i class="fa-solid fa-clock-rotate-left"></i> Forensic Feed
+                    </h3>
+                </div>
+                <div class="divide-y divide-gray-50">
+                    {% for log in data.activity %}
+                    <div class="px-4 py-2 flex items-center justify-between hover:bg-gray-50 transition-colors group">
+                        <div class="flex flex-col">
+                            <span class="text-[10px] font-bold text-slate-800">
+                                {{ log.user.username if log.user else 'System' }} 
+                                <span class="font-normal text-gray-400 uppercase ml-1 tracking-tighter">{{ log.action }}</span>
+                            </span>
+                            <span class="text-[11px] text-gray-600">
+                                {{ log.target_type }} <span class="font-mono text-blue-600">#{{ log.target_id }}</span>
+                            </span>
+                        </div>
+                        <span class="text-[10px] text-gray-400 font-mono">
+                            {{ (log.timestamp | localize).strftime('%H:%M') }}
+                        </span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </section>
+
+        </div>
+    </div>
+</div>
 {% endblock %}

@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template
 from flask_login import login_required
+from ..services.dashboard_service import DashboardService
 
 bp = Blueprint('dashboard', __name__)
 
@@ -12,4 +13,6 @@ def before_request():
 @bp.route('/')
 @bp.route('/dashboard')
 def index():
-    return render_template('dashboard/dashboard.html')
+    # Messenger: Simply requests the full data payload from the Brain
+    data = DashboardService.get_dashboard_data()
+    return render_template('dashboard/dashboard.html', data=data)
