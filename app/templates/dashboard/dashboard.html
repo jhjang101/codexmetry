@@ -79,7 +79,7 @@
                             </td>
                             <td class="px-4 py-2 font-mono font-medium text-gray-700">{{ po.po_number or po.order.order_number }}</td>
                             <td class="px-4 py-2 text-gray-600 truncate max-w-[150px]">{{ po.client.company_name }}</td>
-                            <td class="px-4 py-2 text-right font-bold text-amber-600">{{ po.to_be_invoiced | usd }}</td>
+                            <td class="px-4 py-2 text-right font-bold text-amber-600">{{ po.to_be_invoiced | usd if po.to_be_invoiced else '-'}}</td>
                         </tr>
                         {% endfor %}
                     </tbody>

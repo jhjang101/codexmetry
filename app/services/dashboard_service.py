@@ -73,26 +73,15 @@ class DashboardService:
 
     @classmethod
     def _get_dashboard_pos(cls):
-        """All 'open' POs + Last 5 'completed' POs. Max 15."""
-        open_pos = PurchaseOrderService.get_all_with_search(page=1, per_page=15).items
-        # Filter for open
-        display = [po for po in open_pos if po.status == 'open']
-        # If we have space, get invoiced
-        if len(display) < 15:
-            invoiced = db.session.execute(
-                select(PurchaseOrder).where(PurchaseOrder.status == 'invoiced', PurchaseOrder.is_active == True)
-                .order_by(PurchaseOrder.po_date.desc())
-            ).scalars().all()
-            display.extend(invoiced)
-        # If we still have space, get completed
-        if len(display) < 15:
-            completed = db.session.execute(
-                select(PurchaseOrder).where(PurchaseOrder.status == 'completed', PurchaseOrder.is_active == True)
-                .order_by(PurchaseOrder.po_date.desc())
-            ).scalars().all()
-            display.extend(completed)
-
-        return display[:15]
+        """Fetches exactly 15 POs, priority-sorted by Status (Open -> Invoiced -> Completed)."""
+        # We use sort='status' and dir='desc' because 'O' > 'I' > 'C'
+        pagination = PurchaseOrderService.get_all_with_search(
+            page=1, 
+            per_page=15, 
+            sort_by='status', 
+            direction='desc'
+        )
+        return pagination.items
 
     @classmethod
     def _get_dashboard_invoices(cls):
@@ -102,7 +91,7 @@ class DashboardService:
         if len(display) < 15:
             completed = db.session.execute(
                 select(Invoice).where(Invoice.status == 'completed', Invoice.is_active == True)
-                .order_by(Invoice.invoice_date.desc()).limit(5)
+                .order_by(Invoice.invoice_date.desc())
             ).scalars().all()
             display.extend(completed)
         return display[:15]
