@@ -84,7 +84,7 @@ def add():
         
     # GET: Prepare form data
     categories = AdjustmentCategoryService.get_all()
-    suggested_number = generate_doc_number(prefix='ADJ', model=Adjustment, column_name='adjustment_number')
+    suggested_number = generate_doc_number(prefix='A', model=Adjustment, column_name='adjustment_number')
     return render_template('adjustments/form.html', 
                            mode='add', 
                            adjustment=None, 

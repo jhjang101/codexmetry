@@ -164,7 +164,7 @@ def add():
     # GET: Prepare form data    
     clients=ClientService.get_all()
     products=ProductService.get_all_products()
-    suggested_number = generate_doc_number(prefix='INV', model=Invoice, column_name='invoice_number')
+    suggested_number = generate_doc_number(prefix='I', model=Invoice, column_name='invoice_number')
     carriers = CarrierService.get_all()
     initial_row_id = str(int(time.time() * 1000))
     return render_template('invoices/form.html', 

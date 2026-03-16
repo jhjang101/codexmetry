@@ -1,6 +1,6 @@
 import os
 from app import create_app, db
-from app.models import SettingsMetadata, Product, User
+from app.models import SettingsMetadata, Product, User, ProductCategory
 from sqlalchemy import select
 
 app = create_app()
@@ -17,9 +17,25 @@ if __name__ == '__main__':
             seed.company_name = "Codexmetry Corp"
             db.session.add(seed)
             db.session.commit()
-            print("Database initialized: Tables created and Settings seeded.")
+            print("Database initialized: Tables created and Settings seeded successfully.")
 
-        # 2.seed system product: "Applied Deposit"
+        # 2. Seed System Category (SYSTEM-DEPOSIT)
+        system_category = db.session.execute(
+            select(ProductCategory).filter_by(is_system=True)
+        ).scalar_one_or_none()
+
+        if not system_category:
+            system_category = ProductCategory()
+            system_category.id = 1
+            system_category.type='SYSTEM-DEPOSIT'
+            system_category.is_revenue=False # Deposits are not revenue until spent
+            system_category.is_system=True
+            
+            db.session.add(system_category)
+            db.session.commit()
+            print("System Category 'SYSTEM-DEPOSIT' seeded successfully.")
+
+        # 3.seed system product: "Applied Deposit"
         # Check if Applied Deposit entry is exist by both name and the is_system flag
         applied_deposit = db.session.execute(
             db.select(Product).filter_by(name='Applied Deposit', is_system=True)
@@ -32,6 +48,8 @@ if __name__ == '__main__':
             system_product.is_system = True
             system_product.default_unit_price = 0
             system_product.is_active = True
+            system_product.document_placement='Lineitem'
+            system_product.category_id = 1
 
             db.session.add(system_product)
             db.session.commit()

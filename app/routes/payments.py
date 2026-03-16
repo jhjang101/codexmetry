@@ -187,7 +187,7 @@ def add():
         
     # GET: Standar add Prepare form data    
     clients=ClientService.get_all()
-    suggested_number = generate_doc_number(prefix='PMT', model=Payment, column_name='payment_number')
+    suggested_number = generate_doc_number(prefix='P', model=Payment, column_name='payment_number')
     payment_types = PaymentTypeService.get_all()
     return render_template('payments/form.html', 
                            mode='add', 

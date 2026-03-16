@@ -80,6 +80,7 @@ class ProductCategory(db.Model):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     type: Mapped[str] = mapped_column(String(50), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    is_system: Mapped[bool] = mapped_column(Boolean, default=False)
 
     # New Accounting Flag
     is_revenue: Mapped[bool] = mapped_column(Boolean, default=True, server_default='1')

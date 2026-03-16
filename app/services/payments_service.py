@@ -74,7 +74,7 @@ class PaymentService(BaseService):
                     cls.client_alias.company_name.icontains(search_term),
                     cls.payer_alias.company_name.icontains(search_term),
                     PurchaseOrder.po_number.icontains(search_term),   # Client's Ref PO #
-                    Invoice.invoice_number.icontains(search_term),  # INV-YY0000
+                    Invoice.invoice_number.icontains(search_term),  # I-YY0000
                 )
             )
 

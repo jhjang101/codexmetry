@@ -7,6 +7,7 @@ from ..models import (
 from .audit_service import AuditLogService
 from ..extensions import db
 from ..utils.money import parse_to_cents
+from sqlalchemy import select
 
 class CarrierService(BaseService):
     model = Carrier
@@ -16,6 +17,15 @@ class PoTypeService(BaseService):
 
 class ProductCategoryService(BaseService):
     model = ProductCategory
+
+    @classmethod
+    def get_all(cls):
+        """Override: Hide system-deposit category from the UI."""
+        stmt = select(cls.model).where(
+            cls.model.is_active == True,
+            cls.model.is_system == False
+        ).order_by(cls.model.type.asc())
+        return db.session.execute(stmt).scalars().all()
 
     @classmethod
     def toggle_revenue(cls, category_id: int) -> ProductCategory:

@@ -114,7 +114,7 @@ def add():
     # GET: Prepare form data
     clients = ClientService.get_all()
     products = ProductService.get_all_products()
-    suggested_number = generate_doc_number(prefix='QTE', model=Quote, column_name='quote_number')
+    suggested_number = generate_doc_number(prefix='Q', model=Quote, column_name='quote_number')
     initial_row_id = str(int(time.time() * 1000))
     metadata = db.session.get(SettingsMetadata, 1)
     tz_name = metadata.timezone if metadata else 'America/Chicago'
