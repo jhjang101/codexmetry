@@ -43,6 +43,8 @@ class UserService(BaseService):
     def update_user(cls, user_id: int, data: dict) -> User:
         """Brain: Updates user profile and optionally resets password."""
         user = cls.get_by_id(user_id)
+        if user.is_root:
+            raise ValueError("The Root Administrator account cannot be modified via User Management.")
         
         # 1. Standardized Transform & Validate
         clean_data = cls._validate_and_transform(data, is_new=False, current_user_id=user_id)
@@ -74,6 +76,8 @@ class UserService(BaseService):
     def toggle_status(cls, user_id: int):
         """Brain: Enables/Disables account without deleting historical data."""
         user = cls.get_by_id(user_id)
+        if user.is_root:
+            raise ValueError("The Root Administrator account cannot be disabled.")
         
         # Safety Guard: Prevent lockout if only one admin exists
         if user.role == 'admin' and user.is_active:

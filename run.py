@@ -59,12 +59,13 @@ if __name__ == '__main__':
         if db.session.execute(select(User)).first() is None:
             admin_user = User()
             admin_user.username = os.getenv('INITIAL_ADMIN_USERNAME', 'admin')
-            admin_user.email = os.getenv('INITIAL_ADMIN_EMAIL', 'admin@codexmetry.local')
+            admin_user.email = os.getenv('INITIAL_ADMIN_EMAIL', 'admin@example.com')
             admin_user.role = 'admin'
             admin_user.is_active = True
+            admin_user.is_root = True
             
             # Use the method in your User model to hash the password safely
-            password = os.environ.get('INITIAL_ADMIN_PASSWORD', 'admin123')
+            password = os.environ.get('INITIAL_ADMIN_PASSWORD', 'password')
             admin_user.set_password(password)
             
             db.session.add(admin_user)

@@ -54,6 +54,7 @@ class User(UserMixin, db.Model):
     password_hash: Mapped[str | None] = mapped_column(String(256))
     role: Mapped[str] = mapped_column(String(20), default='user')
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    is_root: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.current_timestamp())
     updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.current_timestamp(), onupdate=func.current_timestamp())
 
