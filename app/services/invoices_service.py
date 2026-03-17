@@ -288,13 +288,30 @@ class InvoiceService(BaseService):
         )
         total_paid = db.session.execute(pay_stmt).scalar() or 0
 
-        # 3. The total cash ever received for the linked PO (Initial pool)
-        prepay_stmt = select(func.sum(Payment.amount)).where(
+        # 3. The invoiceless payments ever received for the linked PO (Initial pool)
+        unlinked_stmt = select(func.sum(Payment.amount)).where(
             Payment.po_id == invoice.po_id, 
             Payment.invoice_id == None, 
             Payment.is_active == True
         )
-        po_total_prepayment = db.session.execute(prepay_stmt).scalar() or 0
+        unlinked_prepayment = db.session.execute(unlinked_stmt).scalar() or 0
+
+        # 3. Payments to PRE-PMT invoices
+        # We find all invoices for this PO where items are only PRE-PMT
+        # This is a bit heavy for a property, so we use a filtered query
+        prepmt_inv_stmt = select(Invoice.id).join(InvoiceItem).join(Product).where(
+            Invoice.po_id == invoice.po_id,
+            Invoice.is_active == True
+        ).group_by(Invoice.id).having(
+            func.sum(case((Product.catalog_number != 'PRE-PMT', 1), else_=0)) == 0
+        )
+        
+        linked_prepay_stmt = select(func.sum(Payment.amount)).where(
+            Payment.invoice_id.in_(prepmt_inv_stmt),
+            Payment.is_active == True
+        )
+
+        linked_prepayment = db.session.execute(linked_prepay_stmt).scalar() or 0
         
         # Attach dynamic UI attributes
         # Total Due: What they owe now (never negative)
@@ -306,9 +323,9 @@ class InvoiceService(BaseService):
         # Balance: Based on what is actually due after payments
         invoice.balance = invoice.total_due - total_paid
         # The total cash ever received for the linked PO (without invoices)
-        invoice.po_total_prepayment = po_total_prepayment
+        invoice.po_total_prepayment = unlinked_prepayment + linked_prepayment
 
-        # Check is invoice has active ayment for locking edit.
+        # Check is invoice has active payment for locking edit.
         invoice.has_active_payments = any(payment.is_active for payment in invoice.payments)
 
         return invoice
@@ -421,6 +438,18 @@ class InvoiceService(BaseService):
             db.session.commit()
         
         return invoice, {"before": before, "after": invoice.status}, po_status
+    
+    @classmethod
+    def _validate_pure_prepayment(cls, items_data: list[dict]):
+        """Ensures Prepayment invoices are single-line and contain no other items."""
+        has_prepayment = any(row.get('catalog_number') == 'PRE-PMT' or 
+                            (db.session.get(Product, int(row['product_id'])).catalog_number == 'PRE-PMT' # type: ignore
+                            if row.get('product_id') else False)
+                            for row in items_data)
+        
+        if has_prepayment:
+            if len(items_data) > 1:
+                raise ValueError("Prepayment Request invoices must only contain a single line item.")
     
     # --- INTERNAL HELPERS ---
 

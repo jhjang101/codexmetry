@@ -344,10 +344,24 @@ class OrderRegistry(db.Model, AuditMixin):
 
     @property
     def total_prepayments(self):
-        """Sum of all payments not yet linked to an invoice."""
+        """Sum of unlinked payments + payments to 'PRE-PMT' only invoices."""
+        total = 0
         if 'payments' in self.__dict__:
-            return sum(p.amount for p in self.payments if p.is_active and p.invoice_id is None)
-        return 0
+            for p in self.payments:
+                if not p.is_active:
+                    continue
+                
+                # 1. Standard Prepayment (No invoice)
+                if p.invoice_id is None:
+                    total += p.amount
+                
+                # 2. Formal Prepayment (Linked to an invoice with only PRE-PMT items)
+                # We use a generator expression to check if all items are Prepayments
+                elif p.invoice and p.invoice.is_active:
+                    if all(item.product.catalog_number == 'PRE-PMT' for item in p.invoice.items):
+                        total += p.amount
+        return total
+
 
 class Quote(db.Model, AuditMixin):
     __tablename__ = 'quotes'
@@ -431,6 +445,13 @@ class PurchaseOrder(db.Model, AuditMixin):
         for inv in self.invoices:
             if not inv.is_active:
                 continue
+
+            # Identify if this is a 'Prepayment' invoice
+            is_prepayment_invoice = all(item.product.catalog_number == 'PRE-PMT' for item in inv.items)
+            
+            # If it's a prepayment invoice, it doesn't fulfill goods. Skip fulfillment math.
+            if is_prepayment_invoice:
+                continue
             
             # Track negative grand totals for carry-over
             if inv.total_amount < 0:
@@ -444,8 +465,8 @@ class PurchaseOrder(db.Model, AuditMixin):
                 if item.product.is_system:
                     applied_deposits += (item.quantity * item.billed_unit_price)
 
-        # 3. Prepayments (Cash in at PO level)
-        prepayments = sum(p.amount for p in self.payments if p.is_active and p.invoice_id is None)
+        # 3. Prepayments (sum of unlinked payments + payments to 'PRE-PMT' only invoices)
+        prepayments = self.order.total_prepayments
 
         # 4. Math
         remaining_fulfillment = commitment - fulfilled
