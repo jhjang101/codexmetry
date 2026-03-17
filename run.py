@@ -55,7 +55,27 @@ if __name__ == '__main__':
             db.session.commit()
             print("System Product 'Applied Deposit' seeded successfully.")
 
-        # 3. Seed Initial Admin User from .env
+        # 4.seed default product: "Prepayment"
+        # Check if Prepayment entry is exist by both name and the catalog_number
+        prepayment = db.session.execute(
+            db.select(Product).filter_by(name='Prepayment', catalog_number='PRE-PMT')
+        ).scalar_one_or_none()
+
+        if not prepayment:
+            prepayment = Product()
+            prepayment.name = 'Prepayment'
+            prepayment.catalog_number = 'PRE-PMT'
+            prepayment.is_system = False
+            prepayment.default_unit_price = 0
+            prepayment.is_active = True
+            prepayment.document_placement='Lineitem'
+            prepayment.category_id = 1
+
+            db.session.add(prepayment)
+            db.session.commit()
+            print("Default Product 'Prepayment' seeded successfully.")
+
+        # 5. Seed Initial Admin User from .env
         if db.session.execute(select(User)).first() is None:
             admin_user = User()
             admin_user.username = os.getenv('INITIAL_ADMIN_USERNAME', 'admin')
