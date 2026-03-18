@@ -98,7 +98,7 @@
     </td>
 
     <td class="py-2 pl-2 text-center">
-        {% if mode != 'view' and not is_system %}
+        {% if mode != 'view' %}
         <button type="button" class="text-red-400 hover:text-red-800 remove-row"
                 onclick="this.closest('.item-row').remove(); htmx.trigger('body', 'recalculate')">
             <i class="fa-solid fa-xmark"></i>

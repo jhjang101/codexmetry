@@ -136,8 +136,15 @@ class InvoiceService(BaseService):
         # 1. Validate & Transform
         clean_data = cls._validate_and_transform(data)
 
-        # 2. Double-Spending Guard
-        cls._validate_deposit_usage(po_id=clean_data['po_id'], items_data=items_data)
+        # 2. Guards
+        # 2.1. Prepayment Check: Prepayment invoice can not mix with product invoice.
+        # returns True if this is a PRE-PMT invoice
+        is_prepmt = cls._validate_pure_prepayment(items_data)
+
+        # 2.2. Double-Spending Guard: Consumption of prepayment cannot be more than total prepayment
+        # We do not check for Prepayment invoice
+        if not is_prepmt:
+            cls._validate_deposit_usage(po_id=clean_data['po_id'], items_data=items_data)
 
         # 3. Stage header (Inherits registry link from PO)
         invoice = cls.model(**clean_data)
@@ -203,9 +210,14 @@ class InvoiceService(BaseService):
         if new_po_id and int(new_po_id) != invoice.po_id:
             if invoice.has_active_payments: # type: ignore
                 raise ValueError("Cannot change Purchase Order link: this invoice already has active payments.")
+            
+        # Prepayment Check: Prepayment invoice can not mix with product invoice.
+        is_prepmt = cls._validate_pure_prepayment(items_data)
 
-        # Double-Spending Guard
-        cls._validate_deposit_usage(po_id=clean_data['po_id'], items_data=items_data, invoice_id=invoice_id)
+        # Double-Spending Guard: Consumption of prepayment cannot be more than total prepayment
+        # We do not check for Prepayment invoice
+        if not is_prepmt:
+            cls._validate_deposit_usage(po_id=clean_data['po_id'], items_data=items_data, invoice_id=invoice_id)
 
         # 3. Original State Capture
         old_po_id = invoice.po_id
@@ -440,16 +452,32 @@ class InvoiceService(BaseService):
         return invoice, {"before": before, "after": invoice.status}, po_status
     
     @classmethod
-    def _validate_pure_prepayment(cls, items_data: list[dict]):
-        """Ensures Prepayment invoices are single-line and contain no other items."""
-        has_prepayment = any(row.get('catalog_number') == 'PRE-PMT' or 
-                            (db.session.get(Product, int(row['product_id'])).catalog_number == 'PRE-PMT' # type: ignore
-                            if row.get('product_id') else False)
-                            for row in items_data)
-        
-        if has_prepayment:
-            if len(items_data) > 1:
-                raise ValueError("Prepayment Request invoices must only contain a single line item.")
+    def _validate_pure_prepayment(cls, items_data: list[dict]) -> bool:
+        """
+        Brain: Enforces the 'Prepayment Check' rule.
+        Returns True if the invoice is a Prepayment Request.
+        Raises ValueError if PRE-PMT is mixed with other products.
+        """
+        prepmt_count = 0
+        total_items = len(items_data)
+
+        for row in items_data:
+            pid = row.get('product_id')
+            if not pid: continue
+            
+            product = db.session.get(Product, int(pid))
+            if product and product.catalog_number == 'PRE-PMT':
+                prepmt_count += 1
+
+        if prepmt_count > 0:
+            # RULE 1: Only 1 line allowed
+            if total_items > 1:
+                raise ValueError("Prepayment Request invoices cannot contain multiple line items or mixed products.")
+            
+            # RULE 2: Return True to signify this is a special invoice
+            return True
+            
+        return False
     
     # --- INTERNAL HELPERS ---
 
@@ -541,7 +569,7 @@ class InvoiceService(BaseService):
             select(Product.id).where(Product.is_system == True, Product.name == 'Applied Deposit')
         ).scalar()
 
-        # 1. Calc Proposed Consumption
+        # 1. Calc Proposed Consumption (Current Invoice)
         proposed_total = 0
         proposed_dep_line = 0
         for row in items_data:
@@ -551,12 +579,26 @@ class InvoiceService(BaseService):
             proposed_total += line
             if int(row.get('product_id', 0)) == system_product:
                 proposed_dep_line = line
-        
+
+        # The amount of credit used to pay for products
         proposed_consumption = abs(proposed_dep_line - min(0, proposed_total))
 
-        # 2. Calc Total Cash Pool
+        # 2. Calc Total Cash Pool (include invoiceless and linked prepayment)
+        # Linked Prepayments
+        prepmt_inv_stmt = select(Invoice.id).join(InvoiceItem).join(Product).where(
+            Invoice.po_id == po_id,
+            Invoice.is_active == True
+        ).group_by(Invoice.id).having(
+            func.sum(case((Product.catalog_number != 'PRE-PMT', 1), else_=0)) == 0
+        )
+        # Invoiceless Payments + Linked Prepayments
         cash_stmt = select(func.sum(Payment.amount)).where(
-            Payment.po_id == po_id, Payment.invoice_id == None, Payment.is_active == True
+            Payment.po_id == po_id, 
+            Payment.is_active == True,
+            or_(
+                Payment.invoice_id == None,
+                Payment.invoice_id.in_(select(prepmt_inv_stmt.c.id))
+            )
         )
         total_cash = db.session.execute(cash_stmt).scalar() or 0
 
@@ -564,7 +606,7 @@ class InvoiceService(BaseService):
         other_lines = db.session.execute(
             select(func.sum(InvoiceItem.quantity * InvoiceItem.billed_unit_price))
             .join(Invoice).join(Product)
-            .where(Invoice.po_id == po_id, Invoice.is_active == True, Product.is_system == True, Invoice.id != invoice_id)
+            .where(Invoice.po_id == po_id, Invoice.is_active == True, Product.name == 'Applied Deposit', Invoice.id != invoice_id)
         ).scalar() or 0
 
         other_negs = db.session.execute(
