@@ -426,6 +426,8 @@ def calculate():
     Returns targeted swaps for the row and OOB swaps for the footer.
     """
     try:
+        # 1. Capture State
+        raw_pids = request.form.getlist('product_ids[]')
         row_id = request.form.get('row_id')
         row_ids = request.form.getlist('row_ids[]')
         quantities = request.form.getlist('quantities[]')
@@ -437,11 +439,26 @@ def calculate():
         except (ValueError, TypeError):
             po_total_prepayment = 0
 
+        # 2. Guard: Detect if 'PRE-PMT' is present in the current rows
+        # We need to look up the catalog numbers of the submitted product_ids
+        raw_pids = request.form.getlist('product_ids[]')
+        product_ids = [int(pid) for pid in raw_pids if pid.strip()]
+        
+        has_prepayment = False
+        for pid in product_ids:
+            if not pid: continue
+            product = db.session.get(Product, int(pid))
+            # If Prepayment Invoice flag has_prepayment True
+            if product and product.catalog_number == 'PRE-PMT':
+                has_prepayment = True
+                break
+        
+        # 3. Calculation
         # Initialize variables
         line_total = 0
         grand_total = 0
 
-        # 1. Iterate through all rows to calculate the Grand Total
+        # Iterate through all rows to calculate the Grand Total
         for r_id, qty, price_str in zip(row_ids, quantities, unit_prices):
             q = int(qty) if qty else 0
             # parse_to_cents handles the negative sign from the Applied Deposit row
@@ -454,7 +471,7 @@ def calculate():
             if r_id == row_id:
                 line_total = total
 
-        # 3. Derive UI-only properties
+        # 4. Derive UI-only properties
         # Total Due is the amount the client must pay (never less than 0)
         total_due = max(0, grand_total)
         # Remaining Deposit is the excess deposit (absolute value of negative total)
@@ -463,20 +480,6 @@ def calculate():
         print('po_total_prepayment:', po_total_prepayment)
         print('total_due:', total_due)
 
-        # 1. Detect if 'PRE-PMT' is present in the current rows
-        # We need to look up the catalog numbers of the submitted product_ids
-        raw_pids = request.form.getlist('product_ids[]')
-        product_ids = [int(pid) for pid in raw_pids if pid.strip()]
-
-        print('product_ids:', product_ids)
-        
-        has_prepayment = False
-        for pid in product_ids:
-            if not pid: continue
-            product = db.session.get(Product, int(pid))
-            if product and product.catalog_number == 'PRE-PMT':
-                has_prepayment = True
-                break
 
         return render_template(
             'invoices/partials/calculation_result.html',
