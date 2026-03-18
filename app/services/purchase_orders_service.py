@@ -62,25 +62,41 @@ class PurchaseOrderService(BaseService):
             .subquery()
         )
 
-        # 3. Bucket: Invoiceless Payments (Cash received but not linked to an invoice)
+        # 2.5 NEW Bucket: Pure Prepayment Invoice IDs
+        pure_prepmt_inv_ids = (
+            select(InvoiceItem.invoice_id)
+            .join(Product)
+            .group_by(InvoiceItem.invoice_id)
+            .having(func.sum(case((Product.catalog_number != 'PRE-PMT', 1), else_=0)) == 0)
+            .subquery()
+        )
+
+        # 3. Bucket: Invoiceless Payments + Linked Prepayments
         pay_sub = (
             select(
                 Payment.po_id, 
                 func.sum(Payment.amount).label('total_invoiceless_payments')
             )
-            .where(Payment.is_active == True, Payment.invoice_id == None)
+            .where(
+                Payment.is_active == True,
+                or_(
+                    Payment.invoice_id == None,
+                    Payment.invoice_id.in_(select(pure_prepmt_inv_ids.c.invoice_id))
+                )
+            )
             .group_by(Payment.po_id)
             .subquery()
         )
 
-        # 4. Bucket: Applied Deposits (Total of Applied Deposit line items on invoices)
+        # 4. Bucket: Applied Deposits (Total of Applied Deposit line items on invoices) 
+        # MUST NOT include 'PRE-PMT' lines.
         applied_dep_sub = (
             select(
                 Invoice.po_id,
                 func.sum(InvoiceItem.quantity * InvoiceItem.billed_unit_price).label('total_applied_deposits')
             )
             .join(InvoiceItem).join(Product)
-            .where(Invoice.is_active == True, Product.is_system == True)
+            .where(Invoice.is_active == True, Product.name == 'Applied Deposit')
             .group_by(Invoice.po_id)
             .subquery()
         )
@@ -388,11 +404,22 @@ class PurchaseOrderService(BaseService):
         )
         total_invoiced = db.session.execute(inv_sum_stmt).scalar() or 0
 
-        # 3. Calculate Total Prepayment (invoiceless payments)
+        # 3. Calculate Total Prepayment
+        # 3.1. Invoice-linked Prepayments
+        prepmt_inv_stmt = select(Invoice.id).join(InvoiceItem).join(Product).where(
+            Invoice.po_id == po.id,
+            Invoice.is_active == True
+        ).group_by(Invoice.id).having(
+            func.sum(case((Product.catalog_number != 'PRE-PMT', 1), else_=0)) == 0
+        )
+        # 3.2. Add with Invoiceless payments 
         prepay_stmt = select(func.sum(Payment.amount)).where(
-            Payment.po_id == po.id, 
-            Payment.invoice_id == None, 
-            Payment.is_active == True
+            Payment.po_id == po.id,
+            Payment.is_active == True,
+            or_(
+                Payment.invoice_id == None,
+                Payment.invoice_id.in_(prepmt_inv_stmt)
+            )
         )
         total_prepayment = db.session.execute(prepay_stmt).scalar() or 0
 
@@ -402,7 +429,7 @@ class PurchaseOrderService(BaseService):
             .join(Invoice).join(Product)
             .where(Invoice.po_id == po.id, 
                    Invoice.is_active == True, 
-                   Product.is_system == True,
+                   Product.name == 'Applied Deposit', # Hard check for consumption line
                    Invoice.id != exclude_invoice_id)
         )
         total_applied_deposit = db.session.execute(applied_stmt).scalar() or 0
