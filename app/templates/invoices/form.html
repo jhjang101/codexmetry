@@ -336,13 +336,15 @@
             <div class="flex justify-between items-center mb-2 border-b pb-2">
                 <h2 class="text-xl font-semibold">Products & Services</h2>
                 {% if mode != 'view' %}
-                    <button type="button" 
-                            hx-get="{{ url_for('invoices.add_row') }}" 
-                            hx-target="#item-list" 
-                            hx-swap="beforeend"
-                            class="text-blue-600 hover:text-blue-800 text-sm font-bold flex items-center gap-1">
-                        + Add Item
-                    </button>
+                    <div id="add-item-btn-container">
+                        <button type="button" 
+                                hx-get="{{ url_for('invoices.add_row') }}" 
+                                hx-target="#item-list" 
+                                hx-swap="beforeend"
+                                class="text-blue-600 hover:text-blue-800 text-sm font-bold flex items-center gap-1">
+                            + Add Item
+                        </button>
+                    </div>
                 {% endif %}
             </div>
 

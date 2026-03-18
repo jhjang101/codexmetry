@@ -13,7 +13,7 @@ from ..utils.money import parse_to_cents
 from ..utils.docs import generate_doc_number
 from ..utils.sync import sync_invoice_status, sync_po_status
 from ..utils.auth import role_required
-from ..models import Invoice
+from ..models import Invoice, Product, SettingsMetadata
 from ..extensions import db
 from datetime import datetime, timedelta
 import time
@@ -163,7 +163,7 @@ def add():
         
     # GET: Prepare form data    
     clients=ClientService.get_all()
-    products=ProductService.get_all_products()
+    products=ProductService.get_all_products(include_prepayment=True)
     suggested_number = generate_doc_number(prefix='I', model=Invoice, column_name='invoice_number')
     carriers = CarrierService.get_all()
     initial_row_id = str(int(time.time() * 1000))
@@ -394,7 +394,7 @@ def print_view(id):
 @bp.route('/add-row')
 def add_row():
     """Returns a blank product row for the dynamic sub-form."""
-    products = ProductService.get_all_products()
+    products = ProductService.get_all_products(include_prepayment=True)
     # Generate a unique row_id based on a timestamp
     row_id = str(int(time.time() * 1000))
     return render_template('invoices/partials/item_row.html',
@@ -463,6 +463,21 @@ def calculate():
         print('po_total_prepayment:', po_total_prepayment)
         print('total_due:', total_due)
 
+        # 1. Detect if 'PRE-PMT' is present in the current rows
+        # We need to look up the catalog numbers of the submitted product_ids
+        raw_pids = request.form.getlist('product_ids[]')
+        product_ids = [int(pid) for pid in raw_pids if pid.strip()]
+
+        print('product_ids:', product_ids)
+        
+        has_prepayment = False
+        for pid in product_ids:
+            if not pid: continue
+            product = db.session.get(Product, int(pid))
+            if product and product.catalog_number == 'PRE-PMT':
+                has_prepayment = True
+                break
+
         return render_template(
             'invoices/partials/calculation_result.html',
             row_id=row_id,
@@ -470,7 +485,8 @@ def calculate():
             grand_total=grand_total,
             total_due=total_due,
             remaining_credit=remaining_credit,
-            po_total_prepayment=po_total_prepayment
+            po_total_prepayment=po_total_prepayment,
+            has_prepayment=has_prepayment # OOB swap that hides the "Add Item" button if a prepayment is detected.
         )
     
     except ValueError as e:

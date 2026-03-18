@@ -63,14 +63,26 @@ class ProductService(BaseService):
                             direction=direction)
 
     @classmethod
-    def get_all_products(cls):
+    def get_all_products(cls, include_prepayment: bool = False):
         """
         Dropdowns: Fetches active non-system products for form selection.
+        Controls visibility of products. 
+        Filters out 'Prepayment' and 'Applied Deposit' from operational views.
         """
-        stmt = select(cls.model).where(
+        if include_prepayment:
+            stmt = select(cls.model).where(
             cls.model.is_active == True,
-            cls.model.is_system == False
-        ).order_by(cls.model.name.asc())
+            cls.model.is_system == False, # Always hide 'Applied Deposit'
+        )
+        else:
+            stmt = select(cls.model).where(
+                cls.model.is_active == True,
+                cls.model.is_system == False, # Always hide 'Applied Deposit'
+                cls.model.catalog_number != 'PRE-PMT'
+            )
+        
+        stmt = stmt.order_by(cls.model.name.asc())
+
         return db.session.execute(stmt).scalars().all()
 
     @classmethod

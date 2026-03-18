@@ -25,3 +25,20 @@
     </div>
     {% endif %}
 </div>
+
+{# OOB SWAP: Toggle the Add Item button visibility #}
+<div id="add-item-btn-container" hx-swap-oob="true">
+    {% if not has_prepayment %}
+        <button type="button" 
+                hx-get="{{ url_for('invoices.add_row') }}" 
+                hx-target="#item-list" 
+                hx-swap="beforeend"
+                class="text-blue-600 hover:text-blue-800 text-sm font-bold flex items-center gap-1">
+            + Add Itemd
+        </button>
+    {% else %}
+        <span class="text-amber-600 text-[10px] font-bold uppercase italic">
+            Deposit Request Mode: Single-item only
+        </span>
+    {% endif %}
+</div>
