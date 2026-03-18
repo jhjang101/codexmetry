@@ -394,7 +394,14 @@ def print_view(id):
 @bp.route('/add-row')
 def add_row():
     """Returns a blank product row for the dynamic sub-form."""
-    products = ProductService.get_all_products(include_prepayment=True)
+    row_ids = request.args.getlist('row_ids[]')
+
+    print('row_ids:', row_ids)
+
+    # 2. If no rows exist in the DOM yet, this is the first row
+    is_first_row = (len(row_ids) == 0)
+
+    products = ProductService.get_all_products(include_prepayment=is_first_row)    
     # Generate a unique row_id based on a timestamp
     row_id = str(int(time.time() * 1000))
     return render_template('invoices/partials/item_row.html',
