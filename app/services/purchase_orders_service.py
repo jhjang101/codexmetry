@@ -49,21 +49,29 @@ class PurchaseOrderService(BaseService):
         )
 
         # 2. Bucket: Fulfilled PO Items from invoices
-        # Matches Invoice Items to original PO items to ignore extra fees/tax/shipping
+        # Uses EXISTS to prevent duplication and only counts Real Products
         inv_fulfilled_sub = (
             select(
                 Invoice.po_id,
                 func.sum(InvoiceItem.quantity * InvoiceItem.billed_unit_price).label('total_fulfilled_po_items')
             )
             .join(InvoiceItem)
-            .join(PoItem, and_(PoItem.po_id == Invoice.po_id, PoItem.product_id == InvoiceItem.product_id))
-            .where(Invoice.is_active == True)
+            .where(
+                Invoice.is_active == True,
+                # Guard: Only count items that actually exist on the parent PO
+                exists().where(
+                    and_(
+                        PoItem.po_id == Invoice.po_id,
+                        PoItem.product_id == InvoiceItem.product_id
+                    )
+                )
+            )
             .group_by(Invoice.po_id)
             .subquery()
         )
 
-        # 2.5 NEW Bucket: Pure Prepayment Invoice IDs
-        pure_prepmt_inv_ids = (
+        # 3. Helper: Identify "Pure Prepayment" Invoice IDs
+        pure_prepmt_ids = (
             select(InvoiceItem.invoice_id)
             .join(Product)
             .group_by(InvoiceItem.invoice_id)
@@ -71,24 +79,30 @@ class PurchaseOrderService(BaseService):
             .subquery()
         )
 
-        # 3. Bucket: Invoiceless Payments + Linked Prepayments
-        pay_sub = (
+        # 4. Bucket C: Invoiced Prepayments (Linked Prepayments)
+        linked_prepmt_sub = (
             select(
-                Payment.po_id, 
-                func.sum(Payment.amount).label('total_invoiceless_payments')
+                Invoice.po_id,
+                func.sum(Invoice.total_amount).label('invoiced_prepayments')
             )
             .where(
-                Payment.is_active == True,
-                or_(
-                    Payment.invoice_id == None,
-                    Payment.invoice_id.in_(select(pure_prepmt_inv_ids.c.invoice_id))
-                )
+                Invoice.is_active == True,
+                Invoice.id.in_(select(pure_prepmt_ids.c.invoice_id)) # Pylance fix
             )
-            .group_by(Payment.po_id)
-            .subquery()
+            .group_by(Invoice.po_id).subquery()
         )
 
-        # 4. Bucket: Applied Deposits (Total of Applied Deposit line items on invoices) 
+        # 5. Bucket D: invoiceless_prepayments (Unlinked Payments)
+        unlinked_prepmt_sub = (
+            select(
+                Payment.po_id,
+                func.sum(Payment.amount).label('invoiceless_prepayments')
+            )
+            .where(Payment.is_active == True, Payment.invoice_id == None)
+            .group_by(Payment.po_id).subquery()
+        )
+
+        # 6. Bucket: Applied Deposits (Total of Applied Deposit line items on invoices) 
         # MUST NOT include 'PRE-PMT' lines.
         applied_dep_sub = (
             select(
@@ -101,7 +115,7 @@ class PurchaseOrderService(BaseService):
             .subquery()
         )
 
-        # 5. Bucket: Negative Invoice Credit (Carry-over from credit-memo style invoices)
+        # 7. Bucket: Negative Invoice Credit (Carry-over from credit-memo style invoices)
         neg_inv_sub = (
             select(
                 Invoice.po_id,
@@ -112,10 +126,11 @@ class PurchaseOrderService(BaseService):
             .subquery()
         )
 
-        # 6. Define the intermediate logic for the Credit Pool
+        # 8. Define the intermediate logic for the Credit Pool
         # We coalesce everything to 0 to handle POs that have no payments or no invoices yet.
         raw_credit_pool = (
-            func.coalesce(pay_sub.c.total_invoiceless_payments, 0) + 
+            func.coalesce(linked_prepmt_sub.c.invoiced_prepayments, 0) +
+            func.coalesce(unlinked_prepmt_sub.c.invoiceless_prepayments, 0) + 
             func.coalesce(applied_dep_sub.c.total_applied_deposits, 0) - 
             func.coalesce(neg_inv_sub.c.total_negative_invoice_credit, 0)
         )
@@ -123,7 +138,7 @@ class PurchaseOrderService(BaseService):
         # Clamp the credit pool at 0 (mimics po.remaining_credit = max(0, ...))
         clamped_credit_pool = case((raw_credit_pool > 0, raw_credit_pool), else_=0)
 
-        # 7. Main Query
+        # 9. Main Query
         stmt = (
             select(
                 cls.model,
@@ -138,19 +153,20 @@ class PurchaseOrderService(BaseService):
             .join(cls.model.client)
             .outerjoin(po_commitment_sub, po_commitment_sub.c.po_id == cls.model.id)
             .outerjoin(inv_fulfilled_sub, inv_fulfilled_sub.c.po_id == cls.model.id)
-            .outerjoin(pay_sub, pay_sub.c.po_id == cls.model.id)
+            .outerjoin(linked_prepmt_sub, linked_prepmt_sub.c.po_id == cls.model.id)
+            .outerjoin(unlinked_prepmt_sub, unlinked_prepmt_sub.c.po_id == cls.model.id)
             .outerjoin(applied_dep_sub, applied_dep_sub.c.po_id == cls.model.id)
             .outerjoin(neg_inv_sub, neg_inv_sub.c.po_id == cls.model.id)
             .where(cls.model.is_active == True)
         )
 
-        # 8. Eager load relationship for list view
+        # 10. Eager load relationship for list view
         stmt = stmt.options(
             contains_eager(cls.model.order),
             contains_eager(cls.model.client)
         )
 
-        # 9. Apply filters
+        # 11. Apply filters
         if search_term:
             stmt = stmt.where(
                 or_(
@@ -161,7 +177,7 @@ class PurchaseOrderService(BaseService):
                 )
             )
 
-        # 10. Apply Sorting using the BaseService helper
+        # 12. Apply Sorting using the BaseService helper
         stmt = cls.apply_sorting(
             stmt=stmt,
             sort_by=sort_by,
@@ -170,12 +186,12 @@ class PurchaseOrderService(BaseService):
             default_col=cls.model.po_date # Default: newest first
         )
 
-        # 11. Calculate Total Items (for the pagination numbers)
+        # 13. Calculate Total Items (for the pagination numbers)
         # We create a count query derived from your main statement
         count_stmt = select(func.count()).select_from(stmt.subquery())
         total = db.session.execute(count_stmt).scalar()
 
-        # 12. Fetch the Page of Items (keeping the tuples!)
+        # 14. Fetch the Page of Items (keeping the tuples!)
         # Apply limit and offset manually
         paginated_stmt = stmt.limit(per_page).offset((page - 1) * per_page)
         
@@ -183,14 +199,14 @@ class PurchaseOrderService(BaseService):
         # This returns 'Row' objects containing (PurchaseOrder, to_be_invoiced)
         rows = db.session.execute(paginated_stmt).all()
 
-        # 13. Unwrap and Attach 'to_be_invoiced'
+        # 15. Unwrap and Attach 'to_be_invoiced'
         items = []
         for row in rows:
             po = row[0]              # The PurchaseOrder model
             po.to_be_invoiced = row[1]      # The to_be_invoiced
             items.append(po)
 
-        # 14. Create the Pagination Object Manually
+        # 16. Create the Pagination Object Manually
         return ManualPagination(items=items, 
                                 page=page, 
                                 per_page=per_page, 
@@ -452,14 +468,22 @@ class PurchaseOrderService(BaseService):
         # 7. Calculate Fulfillment (Items left to ship)
         remaining_items = []
         for po_item in po.items:
+            prepmt_inv_ids_stmt = select(Invoice.id).join(InvoiceItem).join(Product).where(
+                Invoice.po_id == po.id,
+                Invoice.is_active == True
+            ).group_by(Invoice.id).having(
+                func.sum(case((Product.catalog_number != 'PRE-PMT', 1), else_=0)) == 0
+            )
+
             invoiced_qty_stmt = (
                 select(func.sum(InvoiceItem.quantity))
-                .join(Invoice).join(Product)
+                .join(Invoice)
                 .where(
                     Invoice.po_id == po.id, 
                     InvoiceItem.product_id == po_item.product_id,
                     Invoice.is_active == True, 
-                    Product.is_system == False,
+                    # IGNORE Prepayment Request invoices here:
+                    Invoice.id.notin_(select(prepmt_inv_ids_stmt.c.id)),
                     Invoice.id != exclude_invoice_id
                 )
             )

@@ -441,6 +441,7 @@ class PurchaseOrder(db.Model, AuditMixin):
         fulfilled = 0
         applied_deposits = 0
         negative_carryover = 0
+        invoiced_prepayments = 0
 
         for inv in self.invoices:
             if not inv.is_active:
@@ -451,6 +452,7 @@ class PurchaseOrder(db.Model, AuditMixin):
             
             # If it's a prepayment invoice, it doesn't fulfill goods. Skip fulfillment math.
             if is_prepayment_invoice:
+                invoiced_prepayments += inv.total_amount
                 continue
             
             # Track negative grand totals for carry-over
@@ -465,14 +467,14 @@ class PurchaseOrder(db.Model, AuditMixin):
                 if item.product.is_system:
                     applied_deposits += (item.quantity * item.billed_unit_price)
 
-        # 3. Prepayments (sum of unlinked payments + payments to 'PRE-PMT' only invoices)
-        prepayments = self.order.total_prepayments
+        # 3. Invoiceless Prepayments
+        invoiceless_prepayments = sum(p.amount for p in self.payments if p.is_active and p.invoice_id is None)
 
         # 4. Math
         remaining_fulfillment = commitment - fulfilled
         
         # Applied deposits and Negative carryover are negative in DB, so we add them
-        raw_credit_pool = prepayments + applied_deposits - negative_carryover
+        raw_credit_pool = invoiceless_prepayments + invoiced_prepayments + applied_deposits - negative_carryover
         clamped_credit = max(0, raw_credit_pool)
 
         return remaining_fulfillment - clamped_credit
