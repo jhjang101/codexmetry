@@ -319,21 +319,15 @@ class OrderRegistry(db.Model, AuditMixin):
     @property
     def remaining_to_collect(self):
         """How much has been billed but not yet paid."""
-        # Total Due (Positive Invoices) - Total Paid (including prepayment)
-        total_due = sum(max(0, inv.total_amount) for inv in self.invoices if inv.is_active)
-        return total_due - self.total_paid
+        # Total Due - Total Paid (including prepayment)
+        return self.total_invoiced_due - self.total_paid
     
     @property
     def total_contextual_balance(self):
-        """
-        Sum of unpaid balances across all invoices. 
-        Formula: (Total Billed) - (Payments already applied to Invoices)
-        Shortcut: remaining_to_collect + total_prepayments
-        """
-        # Total Due is all positive billing
-        # remaining_to_collect is (Total Due - Total Paid)
-        # We add back the prepayments to show only the gap on issued invoices
-        return self.remaining_to_collect + self.total_prepayments
+        """Sum of unpaid balances across all issued invoices (Receivables)."""
+        if 'invoices' in self.__dict__:
+            return sum(inv.contextual_balance for inv in self.invoices if inv.is_active)
+        return 0
     
     @property
     def total_invoiced_due(self):
@@ -519,13 +513,17 @@ class Invoice(db.Model, AuditMixin):
     @property
     def contextual_balance(self):
         """Calculates balance using payments already in the parent order's memory."""
-        # Logic: Look at parent order's payments to find matches for THIS invoice
+        # 1. Attempt to use the parent order's pre-loaded collection (Fast, prevents N+1)
         if self.order and 'payments' in self.order.__dict__:
             applied_payments = sum(p.amount for p in self.order.payments 
                                 if p.invoice_id == self.id and p.is_active)
-            return self.total_due - applied_payments
-        return self.total_due
-
+        else:
+            # 2. Fallback: Use the direct relationship (Triggers a single query if needed)
+            # This ensures the balance is accurate on the Invoice Detail/Edit pages.
+            applied_payments = sum(p.amount for p in self.payments if p.is_active)
+            
+        return self.total_due - applied_payments
+    
 class Payment(db.Model, AuditMixin):
     __tablename__ = 'payments'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
