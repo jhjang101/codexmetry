@@ -441,11 +441,12 @@ class InvoiceService(BaseService):
                 new_data={'status': target}
             )
 
-            # 5. PO Status Ripple
-            # If the invoice jumped straight to 'completed' (or even 'open'), 
-            # the PO needs to re-evaluate its lifecycle.
-            if invoice.po_id:
-                po_status = sync_po_status(invoice.po_id)
+        # 5. PO Status Ripple
+        # If the invoice jumped straight to 'completed' (or even 'open'), 
+        # the PO needs to re-evaluate its lifecycle.
+        po_status = None
+        if invoice.po_id:
+            po_status = sync_po_status(invoice.po_id)
 
             db.session.commit()
         
