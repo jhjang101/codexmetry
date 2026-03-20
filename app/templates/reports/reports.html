@@ -16,7 +16,7 @@
                     {% endfor %}
                 </select>
                 <select name="year" class="border rounded-lg p-1.5 text-xs outline-none focus:ring-1 focus:ring-blue-500 bg-gray-50">
-                    {% for y in range(2024, 2027) %}
+                    {% for y in range(now.year, now.year - 6, -1) %}
                         <option value="{{ y }}" {{ 'selected' if y == year }}>{{ y }}</option>
                     {% endfor %}
                 </select>
