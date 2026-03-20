@@ -116,129 +116,41 @@
     <!-- 3. DETAILED AUDIT TABLES (The Evidence) -->
     <div class="grid grid-cols-1 gap-8">
         
-        <!-- Table 3: Revenue Audit (Invoices) -->
+        <!-- Revenue Audit Table -->
         <section>
-            <h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 px-1">3. Revenue Detail Audit (Issued Invoices)</h4>
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <table class="min-w-full text-[11px]">
-                    <thead class="bg-gray-50 text-gray-500 uppercase font-bold text-[9px]">
-                        <tr>
-                            <th class="px-4 py-2 text-left">Date</th>
-                            <th class="px-4 py-2 text-left">Invoice #</th>
-                            <th class="px-4 py-2 text-left">Client</th>
-                            <th class="px-4 py-2 text-right">Revenue Portion</th>
-                            <th class="px-4 py-2 text-right">Non-Revenue</th>
-                            <th class="px-4 py-2 text-right">Total Due</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100">
-                        {% for row in data.audit.invoices %}
-                        <tr class="hover:bg-blue-50/40 transition-colors">
-                            <td class="px-4 py-1.5 text-gray-500">{{ row.obj.invoice_date }}</td>
-                            <td class="px-4 py-1.5 font-mono font-bold text-blue-700">{{ row.obj.invoice_number }}</td>
-                            <td class="px-4 py-1.5 truncate max-w-[250px]">{{ row.obj.client.company_name }}</td>
-                            <td class="px-4 py-1.5 text-right font-bold text-blue-600">{{ row.revenue_portion | usd }}</td>
-                            <td class="px-4 py-1.5 text-right text-gray-400">{{ row.non_revenue_portion | usd }}</td>
-                            <td class="px-4 py-1.5 text-right font-bold text-slate-800">{{ row.obj.total_amount | usd }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+            <h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 px-1">3. Revenue Audit (Invoices Issued)</h4>
+            {% with rows=data.audit.invoices, month=month, year=year %}
+                {% include 'reports/partials/revenue_table.html' %}
+            {% endwith %}
         </section>
 
-        <!-- Table 4: Payment Audit (Cash In) -->
+        <!-- Payment Audit Table -->
         <section>
-            <h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 px-1">4. Payment Detail Audit (Raw Cash Received)</h4>
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <table class="min-w-full text-[11px]">
-                    <thead class="bg-green-50/50 text-green-700 uppercase font-bold text-[9px]">
-                        <tr>
-                            <th class="px-4 py-2 text-left">Date</th>
-                            <th class="px-4 py-2 text-left">Payment #</th>
-                            <th class="px-4 py-2 text-left">Ref Doc</th>
-                            <th class="px-4 py-2 text-left">Client</th>
-                            <th class="px-4 py-2 text-right">Amount Received</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100">
-                        {% for pay in data.audit.payments %}
-                        <tr class="hover:bg-green-50/40 transition-colors">
-                            <td class="px-4 py-1.5 text-gray-500">{{ pay.payment_date }}</td>
-                            <td class="px-4 py-1.5 font-mono font-bold text-green-700">{{ pay.payment_number }}</td>
-                            <td class="px-4 py-1.5 text-gray-400">{{ pay.invoice.invoice_number if pay.invoice else 'Prepayment' }}</td>
-                            <td class="px-4 py-1.5 truncate max-w-[250px]">{{ pay.client.company_name }}</td>
-                            <td class="px-4 py-1.5 text-right font-black text-green-700">{{ pay.amount | usd }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+            <h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 px-1">4. Payment Audit (Raw Cash Received)</h4>
+            {% with rows=data.audit.payments, month=month, year=year %}
+                {% include 'reports/partials/payment_table.html' %}
+            {% endwith %}
         </section>
 
-        <!-- Table 5: Expense Audit (Outgoings) -->
+        <!-- Expense Audit Table -->
         <section>
-            <h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 px-1">5. Expense Detail Audit (Committed Costs)</h4>
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <table class="min-w-full text-[11px]">
-                    <thead class="bg-red-50/50 text-red-700 uppercase font-bold text-[9px]">
-                        <tr>
-                            <th class="px-4 py-2 text-left">Date</th>
-                            <th class="px-4 py-2 text-left">Exp #</th>
-                            <th class="px-4 py-2 text-left">Vendor</th>
-                            <th class="px-4 py-2 text-left">Description</th>
-                            <th class="px-4 py-2 text-right">COGS</th>
-                            <th class="px-4 py-2 text-right">OPEX</th>
-                            <th class="px-4 py-2 text-right">Total</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100">
-                        {% for row in data.audit.expenses %}
-                        <tr class="hover:bg-red-50/40 transition-colors">
-                            <td class="px-4 py-1.5 text-gray-500">{{ row.obj.expense_date }}</td>
-                            <td class="px-4 py-1.5 font-mono font-bold text-red-700">{{ row.obj.expense_number }}</td>
-                            <td class="px-4 py-1.5 truncate max-w-[150px] font-medium">{{ row.obj.vendor.company_name }}</td>
-                            <td class="px-4 py-1.5 truncate max-w-[200px] text-gray-400 italic">{{ row.obj.description }}</td>
-                            <td class="px-4 py-1.5 text-right font-bold text-red-600">{{ row.cogs_portion | usd }}</td>
-                            <td class="px-4 py-1.5 text-right text-gray-500">{{ row.opex_portion | usd }}</td>
-                            <td class="px-4 py-1.5 text-right font-bold text-slate-800">{{ row.obj.total_amount | usd }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+            <h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 px-1">5. Expense Audit (Committed Costs)</h4>
+            {% with rows=data.audit.expenses, month=month, year=year %}
+                {% include 'reports/partials/expense_table.html' %}
+            {% endwith %}
         </section>
 
-        <!-- Table 6: Adjustment Audit (Misc) -->
+        <!-- Adjustment Audit Table -->
         <section>
-            <h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 px-1">6. Adjustment Detail Audit (Non-Operating)</h4>
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <table class="min-w-full text-[11px]">
-                    <thead class="bg-gray-50 text-gray-500 uppercase font-bold text-[9px]">
-                        <tr>
-                            <th class="px-4 py-2 text-left">Date</th>
-                            <th class="px-4 py-2 text-left">Adj #</th>
-                            <th class="px-4 py-2 text-left">Category</th>
-                            <th class="px-4 py-2 text-left">Description</th>
-                            <th class="px-4 py-2 text-right">Amount</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100 text-gray-600">
-                        {% for adj in data.audit.adjustments %}
-                        <tr class="hover:bg-gray-50 transition-colors">
-                            <td class="px-4 py-1.5">{{ adj.adjustment_date }}</td>
-                            <td class="px-4 py-1.5 font-mono">{{ adj.adjustment_number }}</td>
-                            <td class="px-4 py-1.5 font-bold uppercase text-[9px]">{{ adj.category.type }}</td>
-                            <td class="px-4 py-1.5 truncate max-w-[300px]">{{ adj.description }}</td>
-                            <td class="px-4 py-1.5 text-right font-bold {{ 'text-green-600' if adj.amount >= 0 else 'text-red-500' }}">
-                                {{ adj.amount | usd }}
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+            <h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 px-1">6. Adjustment Audit (Non-Operating)</h4>
+            {% with rows=data.audit.adjustments, month=month, year=year %}
+                {% include 'reports/partials/adjustment_table.html' %}
+            {% endwith %}
         </section>
+
+
+
+        
 
     </div>
 </div>

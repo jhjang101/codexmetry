@@ -53,3 +53,73 @@ def index():
         month=month, 
         calendar=calendar
     )
+
+# --- HTMX TARGETED AUDIT ROUTES ---
+
+@bp.route('/revenue-audit')
+def revenue_audit():
+    """Messenger: Targeted sort for the Revenue Audit table."""
+    # 1. Context extraction
+    month = request.args.get('month', type=int)
+    year = request.args.get('year', type=int)
+    sort_by = request.args.get('sort')
+    direction = request.args.get('dir')
+
+    # 2. Date windowing
+    _, last_day = calendar.monthrange(year, month)
+    start_date, end_date = date(year, month, 1), date(year, month, last_day)
+
+    # 3. Brain Call
+    rows = ReportService._get_invoice_audit(start_date, end_date, sort_by, direction)
+
+    # 4. Return only the partial
+    return render_template('reports/partials/revenue_table.html', 
+                           rows=rows, month=month, year=year)
+
+@bp.route('/payment-audit')
+def payment_audit():
+    """Messenger: Targeted sort for the Payment Audit table."""
+    month = request.args.get('month', type=int)
+    year = request.args.get('year', type=int)
+    sort_by = request.args.get('sort')
+    direction = request.args.get('dir')
+
+    _, last_day = calendar.monthrange(year, month)
+    start_date, end_date = date(year, month, 1), date(year, month, last_day)
+
+    rows = ReportService._get_payment_audit(start_date, end_date, sort_by, direction)
+
+    return render_template('reports/partials/payment_table.html', 
+                           rows=rows, month=month, year=year)
+
+@bp.route('/expense-audit')
+def expense_audit():
+    """Messenger: Targeted sort for the Expense Audit table."""
+    month = request.args.get('month', type=int)
+    year = request.args.get('year', type=int)
+    sort_by = request.args.get('sort')
+    direction = request.args.get('dir')
+
+    _, last_day = calendar.monthrange(year, month)
+    start_date, end_date = date(year, month, 1), date(year, month, last_day)
+
+    rows = ReportService._get_expense_audit(start_date, end_date, sort_by, direction)
+
+    return render_template('reports/partials/expense_table.html', 
+                           rows=rows, month=month, year=year)
+
+@bp.route('/adjustment-audit')
+def adjustment_audit():
+    """Messenger: Targeted sort for the Adjustment Audit table."""
+    month = request.args.get('month', type=int)
+    year = request.args.get('year', type=int)
+    sort_by = request.args.get('sort')
+    direction = request.args.get('dir')
+
+    _, last_day = calendar.monthrange(year, month)
+    start_date, end_date = date(year, month, 1), date(year, month, last_day)
+
+    rows = ReportService._get_adjustment_audit(start_date, end_date, sort_by, direction)
+
+    return render_template('reports/partials/adjustment_table.html', 
+                           rows=rows, month=month, year=year)

@@ -1,0 +1,48 @@
+<div id="revenue-audit-container" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+    <table class="min-w-full text-[11px]">
+        <thead class="bg-gray-50 text-gray-500 uppercase font-bold text-[9px]">
+            <tr>
+                {% set current_sort = request.args.get('sort', 'date') %}
+                {% set current_dir = request.args.get('dir', 'asc') %}
+                {% set next_dir = 'desc' if current_dir == 'asc' else 'asc' %}
+                
+                {# Custom Header Helper for Reports #}
+                {% macro report_header(label, key, endpoint) %}
+                <th class="px-4 py-2 text-left cursor-pointer hover:bg-gray-100 transition-colors"
+                    hx-get="{{ url_for(endpoint, month=month, year=year, sort=key, dir=next_dir) }}"
+                    hx-target="#revenue-audit-container" hx-swap="outerHTML" hx-push-url="false">
+                    <div class="flex items-center gap-1">
+                        {{ label }}
+                        {% if current_sort == key %}
+                            <i class="fa-solid fa-sort-{{ 'up' if current_dir == 'asc' else 'down' }} text-blue-600"></i>
+                        {% else %}
+                            <i class="fa-solid fa-sort text-gray-300"></i>
+                        {% endif %}
+                    </div>
+                </th>
+                {% endmacro %}
+
+                {{ report_header('Date', 'date', 'reports.revenue_audit') }}
+                {{ report_header('Invoice #', 'number', 'reports.revenue_audit') }}
+                {{ report_header('Client', 'client', 'reports.revenue_audit') }}
+                <th class="px-4 py-2 text-right">Revenue Portion</th>
+                <th class="px-4 py-2 text-right">Non-Revenue</th>
+                {{ report_header('Total Due', 'amount', 'reports.revenue_audit') }}
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+            {% for row in rows %}
+            <tr class="hover:bg-blue-50/40 transition-colors">
+                <td class="px-4 py-1.5 text-gray-500">{{ row.obj.invoice_date }}</td>
+                <td class="px-4 py-1.5 font-mono font-bold text-blue-700">
+                    <a href="{{ url_for('invoices.view', id=row.obj.id) }}" class="hover:underline">{{ row.obj.invoice_number }}</a>
+                </td>
+                <td class="px-4 py-1.5 truncate max-w-[200px]">{{ row.obj.client.company_name }}</td>
+                <td class="px-4 py-1.5 text-right font-bold text-blue-600">{{ row.revenue_portion | usd }}</td>
+                <td class="px-4 py-1.5 text-right text-gray-400">{{ row.non_revenue_portion | usd }}</td>
+                <td class="px-4 py-1.5 text-right font-bold text-slate-800">{{ row.obj.total_amount | usd }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

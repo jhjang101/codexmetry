@@ -1,0 +1,45 @@
+<div id="expense-audit-container" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+    <table class="min-w-full text-[11px]">
+        <thead class="bg-red-50/50 text-red-700 uppercase font-bold text-[9px]">
+            <tr>
+                {% set current_sort = request.args.get('sort', 'date') %}
+                {% set current_dir = request.args.get('dir', 'asc') %}
+                {% set next_dir = 'desc' if current_dir == 'asc' else 'asc' %}
+
+                {% macro exp_header(label, key) %}
+                <th class="px-4 py-2 text-left cursor-pointer hover:bg-red-100/50"
+                    hx-get="{{ url_for('reports.expense_audit', month=month, year=year, sort=key, dir=next_dir) }}"
+                    hx-target="#expense-audit-container" hx-swap="outerHTML" hx-push-url="false">
+                    <div class="flex items-center gap-1">
+                        {{ label }}
+                        {% if current_sort == key %}<i class="fa-solid fa-sort-{{ 'up' if current_dir == 'asc' else 'down' }}"></i>{% endif %}
+                    </div>
+                </th>
+                {% endmacro %}
+
+                {{ exp_header('Date', 'date') }}
+                {{ exp_header('Exp #', 'number') }}
+                {{ exp_header('Vendor', 'vendor') }}
+                <th class="px-4 py-2 text-left">Description</th>
+                <th class="px-4 py-2 text-right">COGS</th>
+                <th class="px-4 py-2 text-right">OPEX</th>
+                {{ exp_header('Total', 'amount') }}
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+            {% for row in rows %}
+            <tr class="hover:bg-red-50/40 transition-colors">
+                <td class="px-4 py-1.5 text-gray-500">{{ row.obj.expense_date }}</td>
+                <td class="px-4 py-1.5 font-mono font-bold text-red-700">
+                    <a href="{{ url_for('expenses.view', id=row.obj.id) }}" class="hover:underline">{{ row.obj.expense_number }}</a>
+                </td>
+                <td class="px-4 py-1.5 truncate max-w-[150px] font-medium">{{ row.obj.vendor.company_name }}</td>
+                <td class="px-4 py-1.5 truncate max-w-[200px] text-gray-400 italic">{{ row.obj.description }}</td>
+                <td class="px-4 py-1.5 text-right font-bold text-red-600">{{ row.cogs_portion | usd }}</td>
+                <td class="px-4 py-1.5 text-right text-gray-500">{{ row.opex_portion | usd }}</td>
+                <td class="px-4 py-1.5 text-right font-bold text-slate-800">{{ row.obj.total_amount | usd }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

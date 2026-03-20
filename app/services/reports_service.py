@@ -1,9 +1,9 @@
-from sqlalchemy import select, func, and_, case
+from sqlalchemy import select, func, desc, asc
 from ..extensions import db
 from ..models import (
     Invoice, InvoiceItem, Expense, ExpenseItem, 
     Payment, Adjustment, AdjustmentCategory, 
-    Product, ProductCategory, ExpenseCategory, Client
+    Product, ProductCategory, ExpenseCategory, Client, Vendor
 )
 
 class ReportService:
@@ -131,19 +131,48 @@ class ReportService:
             else: data['opex_paid'] = total
         data['total_paid'] = data['cogs_paid'] + data['opex_paid']
         return data
+    
+    # --- SORTING HELPER ---
+
+    @classmethod
+    def _apply_audit_sorting(cls, stmt, sort_by, direction, whitelist, default_col):
+        """
+        Brain: Local sorting logic for report tables.
+        Defaults to ASC (Oldest first) for accounting ledger style.
+        """
+        # Standardize Direction: Default to ASC for ledgers
+        sort_dir = desc if direction == 'desc' else asc
+        target_col = whitelist.get(sort_by)
+
+        if target_col is not None:
+            # Primary: User Selection | Secondary: Default (Date)
+            return stmt.order_by(sort_dir(target_col), asc(default_col))
+        
+        # Fallback: Chronological Ledger Order
+        return stmt.order_by(asc(default_col))
 
     # --- AUDIT TABLES (The Evidence) ---
 
     @classmethod
-    def _get_invoice_audit(cls, start, end):
+    def _get_invoice_audit(cls, start, end, sort_by=None, direction=None):
         """Chronological justification for Accrual Revenue."""
-        invoices = db.session.execute(
-            select(Invoice).where(
-                Invoice.is_active == True, 
-                Invoice.status != 'draft',
-                Invoice.invoice_date.between(start, end)
-            ).order_by(Invoice.invoice_date.asc())
-        ).scalars().all()
+        # Whitelist for Invoices
+        MAP = {
+            'date': Invoice.invoice_date,
+            'number': Invoice.invoice_number,
+            'amount': Invoice.total_amount,
+            'client': Client.company_name
+        }
+
+        stmt = select(Invoice).join(Client, Invoice.client_id == Client.id).where(
+            Invoice.is_active == True, 
+            Invoice.status != 'draft',
+            Invoice.invoice_date.between(start, end)
+        )
+
+        stmt = cls._apply_audit_sorting(stmt, sort_by, direction, MAP, Invoice.invoice_date)
+
+        invoices = db.session.execute(stmt).scalars().all()
 
         audit_rows = []
         for inv in invoices:
@@ -156,22 +185,42 @@ class ReportService:
         return audit_rows
 
     @classmethod
-    def _get_payment_audit(cls, start, end):
+    def _get_payment_audit(cls, start, end, sort_by=None, direction=None):
         """Chronological justification for Cash Income."""
-        return db.session.execute(
-            select(Payment).options(db.joinedload(Payment.client))
-            .where(Payment.is_active == True, Payment.payment_date.between(start, end))
-            .order_by(Payment.payment_date.asc())
-        ).scalars().all()
+        MAP = {
+            'date': Payment.payment_date,
+            'number': Payment.payment_number,
+            'amount': Payment.amount,
+            'client': Client.company_name
+        }
+
+        stmt = select(Payment).join(Client, Payment.client_id == Client.id).where(
+            Payment.is_active == True,
+            Payment.payment_date.between(start, end)
+        )
+
+        stmt = cls._apply_audit_sorting(stmt, sort_by, direction, MAP, Payment.payment_date)
+        return db.session.execute(stmt.options(db.joinedload(Payment.client))).scalars().all()
 
     @classmethod
-    def _get_expense_audit(cls, start, end):
+    def _get_expense_audit(cls, start, end, sort_by=None, direction=None):
         """Chronological justification for Outgoings (Issued and Completed)."""
-        expenses = db.session.execute(
-            select(Expense).options(db.joinedload(Expense.category), db.joinedload(Expense.vendor))
-            .where(Expense.is_active == True, Expense.status != 'draft', Expense.expense_date.between(start, end))
-            .order_by(Expense.expense_date.asc())
-        ).scalars().all()
+        MAP = {
+            'date': Expense.expense_date,
+            'number': Expense.expense_number,
+            'amount': Expense.total_amount,
+            'vendor': Vendor.company_name,
+            'category': ExpenseCategory.type
+        }
+
+        stmt = select(Expense).join(Vendor, Expense.vendor_id == Vendor.id).outerjoin(ExpenseCategory).where(
+            Expense.is_active == True,
+            Expense.status != 'draft',
+            Expense.expense_date.between(start, end)
+        )
+
+        stmt = cls._apply_audit_sorting(stmt, sort_by, direction, MAP, Expense.expense_date)
+        expenses = db.session.execute(stmt.options(db.joinedload(Expense.category), db.joinedload(Expense.vendor))).scalars().all()
 
         audit_rows = []
         for exp in expenses:
@@ -184,12 +233,22 @@ class ReportService:
         return audit_rows
 
     @classmethod
-    def _get_adjustment_audit(cls, start, end):
-        return db.session.execute(
-            select(Adjustment).options(db.joinedload(Adjustment.category))
-            .where(Adjustment.is_active == True, Adjustment.adjustment_date.between(start, end))
-            .order_by(Adjustment.adjustment_date.asc())
-        ).scalars().all()
+    def _get_adjustment_audit(cls, start, end, sort_by=None, direction=None):
+        """Chronological justification for Adjustments with dynamic sorting."""
+        MAP = {
+            'date': Adjustment.adjustment_date,
+            'number': Adjustment.adjustment_number,
+            'amount': Adjustment.amount,
+            'category': AdjustmentCategory.type
+        }
+
+        stmt = select(Adjustment).join(AdjustmentCategory).where(
+            Adjustment.is_active == True,
+            Adjustment.adjustment_date.between(start, end)
+        )
+
+        stmt = cls._apply_audit_sorting(stmt, sort_by, direction, MAP, Adjustment.adjustment_date)
+        return db.session.execute(stmt.options(db.joinedload(Adjustment.category))).scalars().all()
 
     @classmethod
     def _get_adjustments_breakdown(cls, start, end):
