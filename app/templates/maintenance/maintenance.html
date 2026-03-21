@@ -1,0 +1,100 @@
+{% extends 'layout.html' %}
+{% block title %}Maintenance - Codexmetry{% endblock %}
+{% block header %}System Maintenance
+<style>
+    /* HTMX Indicator Logic */
+    .htmx-indicator {
+        display: none;
+    }
+    .htmx-request .htmx-indicator {
+        display: inline-block;
+    }
+    .htmx-request.htmx-indicator {
+        display: inline-block;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 pb-12">
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        
+        <!-- CARD 1: DATABASE HEALTH -->
+        <section class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
+            <div class="px-4 py-3 bg-slate-900 border-b border-gray-800 flex justify-between items-center">
+                <h3 class="text-xs font-bold text-slate-300 uppercase tracking-widest flex items-center gap-2">
+                    <i class="fa-solid fa-microchip"></i> Database Engine
+                </h3>
+            </div>
+            <div class="p-6 flex-1 flex flex-col justify-center">
+                <p class="text-xs text-gray-500 mb-6 leading-relaxed">
+                    Optimize the SQLite database engine by reclaiming unused space and defragmenting the file. This ensures high-speed query performance.
+                </p>
+                <form action="{{ url_for('maintenance.vacuum') }}" method="POST" 
+                      onsubmit="return confirm('OPTIMIZATION WARNING:\n\nThis will temporarily lock the database while reclaiming space. This is best performed when no other users are active.\n\nProceed with VACUUM?')">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg text-xs uppercase tracking-widest shadow-md transition-all active:scale-[0.98]">
+                        Run Database Optimization (VACUUM)
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <!-- CARD 2: DATA EXPORTS -->
+        <section class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="px-4 py-3 bg-slate-100 border-b border-gray-200">
+                <h3 class="text-xs font-bold text-slate-700 uppercase tracking-widest flex items-center gap-2">
+                    <i class="fa-solid fa-file-export"></i> Data Portability
+                </h3>
+            </div>
+            <div class="p-6">
+                <p class="text-[10px] font-bold text-gray-400 uppercase mb-4 tracking-wider">Export to CSV (Flat Structure)</p>
+                <div class="grid grid-cols-2 gap-3">
+                    <a href="{{ url_for('maintenance.export_data', target_type='clients') }}" 
+                       class="flex items-center justify-between px-4 py-2 bg-gray-50 border rounded-lg text-xs font-medium text-gray-700 hover:bg-blue-50 hover:border-blue-200 transition-colors">
+                        Clients <i class="fa-solid fa-download text-blue-500 opacity-50"></i>
+                    </a>
+                    <a href="{{ url_for('maintenance.export_data', target_type='vendors') }}" 
+                       class="flex items-center justify-between px-4 py-2 bg-gray-50 border rounded-lg text-xs font-medium text-gray-700 hover:bg-blue-50 hover:border-blue-200 transition-colors">
+                        Vendors <i class="fa-solid fa-download text-blue-500 opacity-50"></i>
+                    </a>
+                    <a href="{{ url_for('maintenance.export_data', target_type='products') }}" 
+                       class="flex items-center justify-between px-4 py-2 bg-gray-50 border rounded-lg text-xs font-medium text-gray-700 hover:bg-blue-50 hover:border-blue-200 transition-colors">
+                        Products <i class="fa-solid fa-download text-blue-500 opacity-50"></i>
+                    </a>
+                    <a href="{{ url_for('maintenance.export_data', target_type='adjustments') }}" 
+                       class="flex items-center justify-between px-4 py-2 bg-gray-50 border rounded-lg text-xs font-medium text-gray-700 hover:bg-blue-50 hover:border-blue-200 transition-colors">
+                        Adjustments <i class="fa-solid fa-download text-blue-500 opacity-50"></i>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- CARD 3: BACKUP & DISASTER RECOVERY (Full Span) -->
+        <section class="md:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="px-4 py-3 border-b border-gray-200 flex justify-between items-center bg-slate-50">
+                <h3 class="text-xs font-bold text-slate-700 uppercase tracking-widest flex items-center gap-2">
+                    <i class="fa-solid fa-database"></i> Database Backups (Physical Snapshots)
+                </h3>
+                <button hx-post="{{ url_for('maintenance.create_backup') }}"
+                        hx-target="#backup-table-container"
+                        hx-indicator="#backup-indicator"
+                        class="bg-green-600 hover:bg-green-700 text-white px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest shadow-sm transition-all">
+                    <i class="fa-solid fa-plus mr-1"></i> Create Snapshot
+                </button>
+            </div>
+            
+            <div id="backup-table-container" class="min-h-[200px]">
+                {% include 'maintenance/partials/backup_table.html' %}
+            </div>
+
+            <!-- Loading Indicator for Backups -->
+            <div id="backup-indicator" class="htmx-indicator p-4 text-center text-blue-600 text-xs font-bold italic animate-pulse">
+                <i class="fa-solid fa-spinner fa-spin mr-2"></i> Capturing database state...
+            </div>
+        </section>
+
+    </div>
+</div>
+{% endblock %}

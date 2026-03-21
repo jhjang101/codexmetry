@@ -1,17 +1,41 @@
-# Python-generated files
+# --- Python Core ---
 __pycache__/
-*.py[oc]
+*.py[cod]
+*$py.class
+.venv/
+env/
 build/
 dist/
-wheels/
-*.egg-info
+*.egg-info/
 
 # Virtual environments
 .venv
 
-# environment variables
-**/.env
+# --- Environment & Secrets ---
+.env
+.flaskenv
+# Protect any local secret files
+instance/config.py
 
-# others
-app/instance/codexmetry.db
-app/static/uploads/
+# --- Database & Storage ---
+app/instance/*
+# SQLite temporary/journal files
+*.db-journal
+*.db-shm
+*.db-wal
+
+# --- Uploads & Static Assets ---
+app/static/uploads/*
+
+# --- OS Specific ---
+.DS_Store
+Thumbs.db
+
+# --- IDE Specific (VS Code / PyCharm) ---
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# --- Logs ---
+*.log

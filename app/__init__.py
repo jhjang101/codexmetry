@@ -19,6 +19,7 @@ def create_app():
     app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-key-for-local-only')
     app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{INSTANCE_FOLDER}/codexmetry.db'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    app.config['INSTANCE_FOLDER'] = INSTANCE_FOLDER
     app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
     # 2. Initialize extensions
@@ -59,7 +60,7 @@ def create_app():
     # 3. Register Blueprints
     from .routes import (dashboard, quotes, purchase_orders, invoices, 
                          payments, expenses, clients, products, vendors, 
-                         adjustments, reports, settings, auth
+                         adjustments, reports, settings, maintenance ,auth
     )
     app.register_blueprint(dashboard.bp)
     app.register_blueprint(quotes.bp, url_prefix='/quotes')
@@ -73,6 +74,7 @@ def create_app():
     app.register_blueprint(adjustments.bp, url_prefix='/adjustments')
     app.register_blueprint(reports.bp, url_prefix='/reports')
     app.register_blueprint(settings.bp, url_prefix='/settings')
+    app.register_blueprint(maintenance.bp, url_prefix='/maintenance')
     app.register_blueprint(auth.bp, url_prefix='/auth')
 
     # 4. Register Jinja Filter
