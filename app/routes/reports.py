@@ -6,6 +6,7 @@ from zoneinfo import ZoneInfo
 from ..services.reports_service import ReportService
 from ..services.settings_service import MetadataService
 from ..extensions import db
+import json
 
 bp = Blueprint('reports', __name__)
 
@@ -52,6 +53,28 @@ def index():
         year=year, 
         month=month, 
         calendar=calendar
+    )
+
+@bp.route('/trends')
+def trends():
+    # 1. Fetch data
+    history = ReportService.get_historical_summary(years=5)
+    
+    # 2. Prep Chart.js JSON
+    chart_raw = sorted(history, key=lambda x: x['month_label'])
+    chart_data = {
+        'labels': [m['month_label'] for m in chart_raw],
+        'accrual_revenue': [m['accrual']['revenue'] / 100 for m in chart_raw],
+        'accrual_net': [m['accrual']['net_income'] / 100 for m in chart_raw],
+        'cash_income': [m['cash']['income'] / 100 for m in chart_raw],
+        'cash_net': [m['cash']['net_cash'] / 100 for m in chart_raw]
+    }
+
+    # 3. Render partial template
+    return render_template(
+        'reports/partials/trends_content.html',
+        history=history,
+        chart_json=json.dumps(chart_data)
     )
 
 # --- HTMX TARGETED AUDIT ROUTES ---

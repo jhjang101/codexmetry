@@ -1,157 +1,236 @@
 {% extends 'layout.html' %}
 {% block title %}Financial Reports - Codexmetry{% endblock %}
-{% block header %}Financial Reports{% endblock %}
+{% block header %}Financial Reports
+<style>
+    /* HTMX Indicator Logic */
+    .htmx-indicator {
+        display: none;
+    }
+    .htmx-request .htmx-indicator {
+        display: inline-block;
+    }
+    .htmx-request.htmx-indicator {
+        display: inline-block;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
 <div class="max-w-5xl mx-auto px-4 pb-12">
+
+    <!-- 1. TAB NAVIGATION (Persistent) -->
+    <div class="flex items-end -mb-px">
+        <button onclick="switchTab('monthly')" id="tab-btn-monthly"
+           class="tab-btn px-6 py-2.5 text-[10px] font-black uppercase tracking-widest transition-all border-t border-l border-r rounded-t-lg z-10 bg-white border-gray-200 text-blue-600">
+            Monthly Statement
+        </button>
+
+        <button hx-get="{{ url_for('reports.trends') }}" 
+                hx-trigger="click once" 
+                hx-target="#pane-trends" 
+                hx-indicator="#loading-spinner"
+                onclick="switchTab('trends')" id="tab-btn-trends"
+                class="tab-btn px-6 py-2.5 text-[10px] font-black uppercase tracking-widest transition-all border-t border-l border-r rounded-t-lg bg-gray-100 border-transparent text-gray-400 hover:bg-gray-50">
+            Trends & Analytics
+        </button>
+    </div>
+
+
+    <!-- 2. MAIN CONNECTED CONTAINER -->
+    <div class="bg-white border border-gray-200 rounded-b-xl rounded-tr-xl shadow-sm overflow-hidden min-h-[600px]">
+
+
+        <!-- PANE 1: MONTHLY (Visible by default) -->
+        <div id="pane-monthly" class="report-pane">
+
+
+            <!-- 1. DATE SELECTOR (Standard GET Form) -->
+            <div class="p-4 border-b border-gray-100 bg-gray-50/30 flex justify-between items-center">
+                <div class="flex items-center gap-4">
+                    <h2 class="text-sm font-bold text-gray-600 uppercase tracking-wider">Report Period:</h2>
+                    <form method="GET" action="{{ url_for('reports.index') }}" class="flex gap-2">
+                        <select name="month" class="border rounded-lg p-1.5 text-xs outline-none focus:ring-1 focus:ring-blue-500 bg-gray-50">
+                            {% for m in range(1, 13) %}
+                                <option value="{{ m }}" {{ 'selected' if m == month }}>{{ calendar.month_name[m] }}</option>
+                            {% endfor %}
+                        </select>
+                        <select name="year" class="border rounded-lg p-1.5 text-xs outline-none focus:ring-1 focus:ring-blue-500 bg-gray-50">
+                            {% for y in range(now.year, now.year - 6, -1) %}
+                                <option value="{{ y }}" {{ 'selected' if y == year }}>{{ y }}</option>
+                            {% endfor %}
+                        </select>
+                        <button type="submit" class="bg-slate-800 text-white px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-slate-700 transition-colors">
+                            Update Report
+                        </button>
+                    </form>
+
+                    
+                </div>
+                <div class="flex flex-col items-end">
+                    <span class="text-[10px] font-mono text-gray-400 uppercase tracking-widest">Financial Fortress Engine v3.3</span>
+                    <span class="text-[9px] text-blue-500 font-bold uppercase italic">Dual-Perspective: Accrual & Cash</span>
+                </div>
+            </div>
+
+            <!-- 2. SUMMARY MATRICES (Top Row) -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
+                
+                <!-- Table 1: Performance Statement (Accrual) -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div class="px-4 py-2 bg-slate-100 border-b border-gray-200">
+                        <h3 class="font-bold text-slate-700 uppercase text-[10px] tracking-widest">1. Performance Statement (Accrual Basis)</h3>
+                    </div>
+                    <table class="min-w-full text-xs">
+                        <tbody class="divide-y divide-gray-100">
+                            <tr class="bg-blue-50/30">
+                                <td class="px-4 py-2 text-gray-600">Operating Revenue (Invoiced)</td>
+                                <td class="px-4 py-2 text-right font-bold text-blue-700">{{ data.accrual.revenue | usd }}</td>
+                            </tr>
+                            <tr class="text-red-600">
+                                <td class="px-4 py-2">Cost of Goods Sold (COGS)</td>
+                                <td class="px-4 py-2 text-right font-medium">-{{ data.accrual.cogs | usd }}</td>
+                            </tr>
+                            <tr class="bg-gray-50 font-bold text-gray-800 uppercase text-[10px]">
+                                <td class="px-4 py-2">Gross Profit</td>
+                                <td class="px-4 py-2 text-right">{{ data.accrual.gross_profit | usd }}</td>
+                            </tr>
+                            <tr class="text-gray-500">
+                                <td class="px-4 py-2 italic">Operating Expenses (OPEX)</td>
+                                <td class="px-4 py-2 text-right font-medium">-{{ data.accrual.opex | usd }}</td>
+                            </tr>
+                            <tr class="font-bold text-gray-900 uppercase text-[10px] border-t-2 border-gray-200">
+                                <td class="px-4 py-2">Operating Profit (EBIT)</td>
+                                <td class="px-4 py-2 text-right">{{ data.accrual.operating_profit | usd }}</td>
+                            </tr>
+                            {% for adj in data.adjustments %}
+                            <tr class="text-gray-500 italic text-[11px]">
+                                <td class="px-4 py-1.5 pl-8">Non-Op: {{ adj.category }}</td>
+                                <td class="px-4 py-1.5 text-right {{ 'text-green-600' if adj.total >= 0 else 'text-red-500' }}">
+                                    {{ adj.total | usd }}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            <tr class="bg-slate-900 text-white font-bold uppercase text-xs">
+                                <td class="px-4 py-3 tracking-widest">Net Income</td>
+                                <td class="px-4 py-3 text-right text-lg">{{ data.accrual.net_income | usd }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Table 2: Cash Flow Summary (Cash) -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div class="px-4 py-2 bg-green-50 border-b border-green-100">
+                        <h3 class="font-bold text-green-800 uppercase text-[10px] tracking-widest">2. Cash Flow Summary (Cash Basis)</h3>
+                    </div>
+                    <table class="min-w-full text-xs">
+                        <tbody class="divide-y divide-gray-100 h-full">
+                            <tr class="bg-green-50/30">
+                                <td class="px-4 py-2 text-gray-600">Total Cash Receipts (Payments)</td>
+                                <td class="px-4 py-2 text-right font-bold text-green-700">{{ data.cash.income | usd }}</td>
+                            </tr>
+                            <tr class="text-red-600">
+                                <td class="px-4 py-2">COGS Actually Paid</td>
+                                <td class="px-4 py-2 text-right">-{{ data.cash.cogs_paid | usd }}</td>
+                            </tr>
+                            <tr class="bg-gray-50 font-bold text-gray-800 uppercase text-[10px]">
+                                <td class="px-4 py-2">Gross Profit (Cash)</td>
+                                <td class="px-4 py-2 text-right">{{ data.cash.gross_profit_cash | usd }}</td>
+                            </tr>
+                            <tr class="text-gray-500">
+                                <td class="px-4 py-2 italic">OPEX Actually Paid</td>
+                                <td class="px-4 py-2 text-right">-{{ data.cash.opex_paid | usd }}</td>
+                            </tr>
+                            <tr class="font-bold text-gray-900 uppercase text-[10px] border-t-2 border-gray-200">
+                                <td class="px-4 py-2">Net Operations Cash Flow</td>
+                                <td class="px-4 py-2 text-right">{{ data.cash.net_cash | usd }}</td>
+                            </tr>
+                            <tr class="bg-slate-700 text-white font-bold uppercase text-xs">
+                                <td class="px-4 py-3 tracking-widest">Net Cash Movement</td>
+                                <td class="px-4 py-3 text-right text-lg">{{ data.cash.net_cash | usd }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 3. DETAILED AUDIT TABLES (The Evidence) -->
+            <div class="grid grid-cols-1 gap-8">
+                
+                <!-- Revenue Audit Table -->
+                <section>
+                    <h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 px-1">3. Revenue Audit (Invoices Issued)</h4>
+                    {% with rows=data.audit.invoices, month=month, year=year %}
+                        {% include 'reports/partials/revenue_table.html' %}
+                    {% endwith %}
+                </section>
+
+                <!-- Payment Audit Table -->
+                <section>
+                    <h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 px-1">4. Payment Audit (Raw Cash Received)</h4>
+                    {% with rows=data.audit.payments, month=month, year=year %}
+                        {% include 'reports/partials/payment_table.html' %}
+                    {% endwith %}
+                </section>
+
+                <!-- Expense Audit Table -->
+                <section>
+                    <h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 px-1">5. Expense Audit (Committed Costs)</h4>
+                    {% with rows=data.audit.expenses, month=month, year=year %}
+                        {% include 'reports/partials/expense_table.html' %}
+                    {% endwith %}
+                </section>
+
+                <!-- Adjustment Audit Table -->
+                <section>
+                    <h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 px-1">6. Adjustment Audit (Non-Operating)</h4>
+                    {% with rows=data.audit.adjustments, month=month, year=year %}
+                        {% include 'reports/partials/adjustment_table.html' %}
+                    {% endwith %}
+                </section>
+
+            </div>
+        
+
+        </div>
+
     
-    <!-- 1. DATE SELECTOR (Standard GET Form) -->
-    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 mb-4 flex justify-between items-center">
-        <div class="flex items-center gap-4">
-            <h2 class="text-sm font-bold text-gray-600 uppercase tracking-wider">Report Period:</h2>
-            <form method="GET" action="{{ url_for('reports.index') }}" class="flex gap-2">
-                <select name="month" class="border rounded-lg p-1.5 text-xs outline-none focus:ring-1 focus:ring-blue-500 bg-gray-50">
-                    {% for m in range(1, 13) %}
-                        <option value="{{ m }}" {{ 'selected' if m == month }}>{{ calendar.month_name[m] }}</option>
-                    {% endfor %}
-                </select>
-                <select name="year" class="border rounded-lg p-1.5 text-xs outline-none focus:ring-1 focus:ring-blue-500 bg-gray-50">
-                    {% for y in range(now.year, now.year - 6, -1) %}
-                        <option value="{{ y }}" {{ 'selected' if y == year }}>{{ y }}</option>
-                    {% endfor %}
-                </select>
-                <button type="submit" class="bg-slate-800 text-white px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-slate-700 transition-colors">
-                    Update Report
-                </button>
-            </form>
-        </div>
-        <div class="flex flex-col items-end">
-            <span class="text-[10px] font-mono text-gray-400 uppercase tracking-widest">Financial Fortress Engine v3.3</span>
-            <span class="text-[9px] text-blue-500 font-bold uppercase italic">Dual-Perspective: Accrual & Cash</span>
-        </div>
-    </div>
-
-    <!-- 2. SUMMARY MATRICES (Top Row) -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
-        
-        <!-- Table 1: Performance Statement (Accrual) -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <div class="px-4 py-2 bg-slate-100 border-b border-gray-200">
-                <h3 class="font-bold text-slate-700 uppercase text-[10px] tracking-widest">1. Performance Statement (Accrual Basis)</h3>
-            </div>
-            <table class="min-w-full text-xs">
-                <tbody class="divide-y divide-gray-100">
-                    <tr class="bg-blue-50/30">
-                        <td class="px-4 py-2 text-gray-600">Operating Revenue (Invoiced)</td>
-                        <td class="px-4 py-2 text-right font-bold text-blue-700">{{ data.accrual.revenue | usd }}</td>
-                    </tr>
-                    <tr class="text-red-600">
-                        <td class="px-4 py-2">Cost of Goods Sold (COGS)</td>
-                        <td class="px-4 py-2 text-right font-medium">-{{ data.accrual.cogs | usd }}</td>
-                    </tr>
-                    <tr class="bg-gray-50 font-bold text-gray-800 uppercase text-[10px]">
-                        <td class="px-4 py-2">Gross Profit</td>
-                        <td class="px-4 py-2 text-right">{{ data.accrual.gross_profit | usd }}</td>
-                    </tr>
-                    <tr class="text-gray-500">
-                        <td class="px-4 py-2 italic">Operating Expenses (OPEX)</td>
-                        <td class="px-4 py-2 text-right font-medium">-{{ data.accrual.opex | usd }}</td>
-                    </tr>
-                    <tr class="font-bold text-gray-900 uppercase text-[10px] border-t-2 border-gray-200">
-                        <td class="px-4 py-2">Operating Profit (EBIT)</td>
-                        <td class="px-4 py-2 text-right">{{ data.accrual.operating_profit | usd }}</td>
-                    </tr>
-                    {% for adj in data.adjustments %}
-                    <tr class="text-gray-500 italic text-[11px]">
-                        <td class="px-4 py-1.5 pl-8">Non-Op: {{ adj.category }}</td>
-                        <td class="px-4 py-1.5 text-right {{ 'text-green-600' if adj.total >= 0 else 'text-red-500' }}">
-                            {{ adj.total | usd }}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                    <tr class="bg-slate-900 text-white font-bold uppercase text-xs">
-                        <td class="px-4 py-3 tracking-widest">Net Income</td>
-                        <td class="px-4 py-3 text-right text-lg">{{ data.accrual.net_income | usd }}</td>
-                    </tr>
-                </tbody>
-            </table>
+        <!-- PANE 2: TRENDS (Hidden by default, future-proof) -->
+        <div id="pane-trends" class="report-pane hidden p-6">
+            <!-- HTMX will inject trends_content.html here -->
         </div>
 
-        <!-- Table 2: Cash Flow Summary (Cash) -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <div class="px-4 py-2 bg-green-50 border-b border-green-100">
-                <h3 class="font-bold text-green-800 uppercase text-[10px] tracking-widest">2. Cash Flow Summary (Cash Basis)</h3>
-            </div>
-            <table class="min-w-full text-xs">
-                <tbody class="divide-y divide-gray-100 h-full">
-                    <tr class="bg-green-50/30">
-                        <td class="px-4 py-2 text-gray-600">Total Cash Receipts (Payments)</td>
-                        <td class="px-4 py-2 text-right font-bold text-green-700">{{ data.cash.income | usd }}</td>
-                    </tr>
-                    <tr class="text-red-600">
-                        <td class="px-4 py-2">COGS Actually Paid</td>
-                        <td class="px-4 py-2 text-right">-{{ data.cash.cogs_paid | usd }}</td>
-                    </tr>
-                    <tr class="bg-gray-50 font-bold text-gray-800 uppercase text-[10px]">
-                        <td class="px-4 py-2">Gross Profit (Cash)</td>
-                        <td class="px-4 py-2 text-right">{{ data.cash.gross_profit_cash | usd }}</td>
-                    </tr>
-                    <tr class="text-gray-500">
-                        <td class="px-4 py-2 italic">OPEX Actually Paid</td>
-                        <td class="px-4 py-2 text-right">-{{ data.cash.opex_paid | usd }}</td>
-                    </tr>
-                    <tr class="font-bold text-gray-900 uppercase text-[10px] border-t-2 border-gray-200">
-                        <td class="px-4 py-2">Net Operations Cash Flow</td>
-                        <td class="px-4 py-2 text-right">{{ data.cash.net_cash | usd }}</td>
-                    </tr>
-                    <tr class="bg-slate-700 text-white font-bold uppercase text-xs">
-                        <td class="px-4 py-3 tracking-widest">Net Cash Movement</td>
-                        <td class="px-4 py-3 text-right text-lg">{{ data.cash.net_cash | usd }}</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
 
-    <!-- 3. DETAILED AUDIT TABLES (The Evidence) -->
-    <div class="grid grid-cols-1 gap-8">
-        
-        <!-- Revenue Audit Table -->
-        <section>
-            <h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 px-1">3. Revenue Audit (Invoices Issued)</h4>
-            {% with rows=data.audit.invoices, month=month, year=year %}
-                {% include 'reports/partials/revenue_table.html' %}
-            {% endwith %}
-        </section>
-
-        <!-- Payment Audit Table -->
-        <section>
-            <h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 px-1">4. Payment Audit (Raw Cash Received)</h4>
-            {% with rows=data.audit.payments, month=month, year=year %}
-                {% include 'reports/partials/payment_table.html' %}
-            {% endwith %}
-        </section>
-
-        <!-- Expense Audit Table -->
-        <section>
-            <h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 px-1">5. Expense Audit (Committed Costs)</h4>
-            {% with rows=data.audit.expenses, month=month, year=year %}
-                {% include 'reports/partials/expense_table.html' %}
-            {% endwith %}
-        </section>
-
-        <!-- Adjustment Audit Table -->
-        <section>
-            <h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 px-1">6. Adjustment Audit (Non-Operating)</h4>
-            {% with rows=data.audit.adjustments, month=month, year=year %}
-                {% include 'reports/partials/adjustment_table.html' %}
-            {% endwith %}
-        </section>
-
-
-
-        
 
     </div>
 </div>
+
+
+
+<!-- 3. TAB LOGIC & LOADING -->
+<div id="loading-spinner" class="htmx-indicator fixed bottom-4 right-4 bg-slate-900 text-white px-4 py-2 rounded-full text-[10px] font-bold shadow-xl animate-pulse z-50">
+    <i class="fa-solid fa-spinner fa-spin mr-2"></i> CALCULATING 5-YEAR HISTORY...
+</div>
+
+<script>
+    function switchTab(tabName) {
+        // 1. Hide all panes
+        document.querySelectorAll('.report-pane').forEach(p => p.classList.add('hidden'));
+        // 2. Show target pane
+        document.getElementById('pane-' + tabName).classList.remove('hidden');
+
+        // 3. Reset all tab button styles
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.remove('bg-white', 'border-gray-200', 'text-blue-600', 'z-10');
+            btn.classList.add('bg-gray-100', 'border-transparent', 'text-gray-400');
+        });
+
+        // 4. Apply Active styles to selected button
+        const activeBtn = document.getElementById('tab-btn-' + tabName);
+        activeBtn.classList.remove('bg-gray-100', 'border-transparent', 'text-gray-400');
+        activeBtn.classList.add('bg-white', 'border-gray-200', 'text-blue-600', 'z-10');
+    }
+</script>
+
+
 {% endblock %}

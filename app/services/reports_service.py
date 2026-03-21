@@ -1,4 +1,6 @@
-from sqlalchemy import select, func, desc, asc
+from sqlalchemy import select, func, desc, asc, and_, case
+from dateutil.relativedelta import relativedelta
+from datetime import date
 from ..extensions import db
 from ..models import (
     Invoice, InvoiceItem, Expense, ExpenseItem, 
@@ -262,3 +264,110 @@ class ReportService:
             .group_by(AdjustmentCategory.type)
         )
         return [{'category': r[0], 'total': r[1]} for r in db.session.execute(stmt).all()]
+    
+
+# --- 60-month financial table  ---
+
+    @classmethod
+    def get_historical_summary(cls, years=5):
+        """
+        Brain: Generates a 60-month gapless financial timeline.
+        Uses high-performance SQL aggregation grouped by YYYY-MM.
+        """
+        # 1. Setup Time Window
+        # Based on current business time (localized in route/service)
+        end_date = date.today().replace(day=1) + relativedelta(months=1) - relativedelta(days=1)
+        start_date = (end_date + relativedelta(days=1)) - relativedelta(years=years)
+        
+        # 2. Initialize the Timeline (The Master Dictionary)
+        # format: {'2025-05': {'month': '2025-05', 'revenue': 0, ...}}
+        timeline = {}
+        curr = start_date.replace(day=1)
+        while curr <= end_date:
+            key = curr.strftime('%Y-%m')
+            timeline[key] = {
+                'month_label': key,
+                'accrual': {'revenue': 0, 'cogs': 0, 'opex': 0, 'adj': 0},
+                'cash': {'income': 0, 'cogs_paid': 0, 'opex_paid': 0}
+            }
+            curr += relativedelta(months=1)
+
+        # 3. Aggregate Data via SQL (Bucket by Bucket)
+        
+        # BUCKET A: Accrual Revenue
+        # We define the expression to reuse it in group_by
+        inv_month_expr = func.strftime('%Y-%m', Invoice.invoice_date)
+        rev_stmt = (
+            select(inv_month_expr, func.sum(InvoiceItem.quantity * InvoiceItem.billed_unit_price))
+            .select_from(InvoiceItem).join(Invoice).join(Product).join(ProductCategory)
+            .where(Invoice.is_active == True, Invoice.status != 'draft', 
+                   Invoice.invoice_date.between(start_date, end_date), ProductCategory.is_revenue == True)
+            .group_by(inv_month_expr) # Fixed
+        )
+        for month, total in db.session.execute(rev_stmt).all():
+            if month in timeline: timeline[month]['accrual']['revenue'] = total or 0
+
+       # BUCKET B: Accrual Expenses
+        exp_month_expr = func.strftime('%Y-%m', Expense.expense_date)
+        exp_acc_stmt = (
+            select(exp_month_expr, ExpenseCategory.is_cogs, func.sum(ExpenseItem.quantity * ExpenseItem.unit_price))
+            .select_from(ExpenseItem).join(Expense).join(ExpenseCategory)
+            .where(Expense.is_active == True, Expense.status != 'draft', 
+                   Expense.expense_date.between(start_date, end_date))
+            .group_by(exp_month_expr, ExpenseCategory.is_cogs) # Fixed
+        )
+        for month, is_cogs, total in db.session.execute(exp_acc_stmt).all():
+            if month in timeline:
+                label = 'cogs' if is_cogs else 'opex'
+                timeline[month]['accrual'][label] = total or 0
+
+        # BUCKET C: Cash Income (Payments)
+        pay_month_expr = func.strftime('%Y-%m', Payment.payment_date)
+        cash_in_stmt = (
+            select(pay_month_expr, func.sum(Payment.amount))
+            .where(Payment.is_active == True, Payment.payment_date.between(start_date, end_date))
+            .group_by(pay_month_expr) # Fixed
+        )
+        for month, total in db.session.execute(cash_in_stmt).all():
+            if month in timeline: timeline[month]['cash']['income'] = total or 0
+
+        # BUCKET D: Cash Outgoings (Completed Expenses)
+        cash_out_stmt = (
+            select(exp_month_expr, ExpenseCategory.is_cogs, func.sum(Expense.total_amount))
+            .join(ExpenseCategory).where(Expense.is_active == True, Expense.status == 'completed',
+                                         Expense.expense_date.between(start_date, end_date))
+            .group_by(exp_month_expr, ExpenseCategory.is_cogs) # Fixed
+        )
+        for month, is_cogs, total in db.session.execute(cash_out_stmt).all():
+            if month in timeline:
+                label = 'cogs_paid' if is_cogs else 'opex_paid'
+                timeline[month]['cash'][label] = total or 0
+
+        # BUCKET E: Adjustments
+        adj_month_expr = func.strftime('%Y-%m', Adjustment.adjustment_date)
+        adj_stmt = (
+            select(adj_month_expr, func.sum(Adjustment.amount))
+            .where(Adjustment.is_active == True, Adjustment.adjustment_date.between(start_date, end_date))
+            .group_by(adj_month_expr) # Fixed
+        )
+        for month, total in db.session.execute(adj_stmt).all():
+            if month in timeline: timeline[month]['accrual']['adj'] = total or 0
+
+        # 4. Final Processing (Calculated Totals)
+        # Sort by month descending for the table view
+        sorted_keys = sorted(timeline.keys(), reverse=True)
+        results = []
+        
+        for k in sorted_keys:
+            m = timeline[k]
+            # Accrual Derived
+            m['accrual']['gross_profit'] = m['accrual']['revenue'] - m['accrual']['cogs']
+            m['accrual']['operating_profit'] = m['accrual']['gross_profit'] - m['accrual']['opex']
+            m['accrual']['net_income'] = m['accrual']['operating_profit'] + m['accrual']['adj']
+            
+            # Cash Derived
+            m['cash']['net_cash'] = m['cash']['income'] - (m['cash']['cogs_paid'] + m['cash']['opex_paid'])
+            
+            results.append(m)
+
+        return results

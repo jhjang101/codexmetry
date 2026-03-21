@@ -1,0 +1,100 @@
+{% extends 'layout.html' %}
+{% block title %}Trends & Analytics - Codexmetry{% endblock %}
+{% block header %}Trends & Analytics{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 pb-12">
+    
+    <!-- 1. Header with Shared Nav -->
+    <div class="flex justify-between items-end">
+        {% include 'reports/partials/nav.html' %}
+        
+        <div class="mb-2 text-right">
+            <span class="text-[10px] font-mono text-gray-400 uppercase tracking-widest">Financial Fortress Engine</span>
+        </div>
+    </div>
+
+    <!-- 2. VISUAL TRENDS (Chart.js) -->
+    <section class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
+        <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">5-Year Performance Trend (Accrual)</h3>
+        <div class="h-[300px]">
+            <canvas id="performanceChart"></canvas>
+        </div>
+    </section>
+
+    <!-- 3. HISTORICAL SUMMARY TABLE -->
+    <section class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="px-4 py-3 bg-slate-900 flex justify-between items-center">
+            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest">Historical Monthly Comparison</h3>
+            <span class="text-[9px] text-slate-500 font-bold uppercase">60-Month Timeline</span>
+        </div>
+        <table class="min-w-full text-[11px]">
+            <thead class="bg-gray-50 text-[9px] font-bold text-gray-500 uppercase border-b border-gray-200">
+                <tr>
+                    <th class="px-4 py-3 text-left bg-gray-100 w-24">Month</th>
+                    <th class="px-4 py-3 text-right text-blue-700 border-l border-gray-100">Accrual: Revenue</th>
+                    <th class="px-4 py-3 text-right text-blue-900">Accrual: Net</th>
+                    <th class="px-4 py-3 text-right text-green-700 border-l border-gray-100">Cash: Income</th>
+                    <th class="px-4 py-3 text-right text-slate-800">Cash: Net</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                {% for m in history %}
+                <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="px-4 py-2 font-bold text-gray-700 bg-gray-50/50">{{ m.month_label }}</td>
+                    <td class="px-4 py-2 text-right border-l border-gray-100">{{ m.accrual.revenue | usd }}</td>
+                    <td class="px-4 py-2 text-right font-bold {{ 'text-green-600' if m.accrual.net_income >= 0 else 'text-red-600' }}">
+                        {{ m.accrual.net_income | usd }}
+                    </td>
+                    <td class="px-4 py-2 text-right border-l border-gray-100">{{ m.cash.income | usd }}</td>
+                    <td class="px-4 py-2 text-right font-bold {{ 'text-green-700' if m.cash.net_cash >= 0 else 'text-red-700' }}">
+                        {{ m.cash.net_cash | usd }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </section>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    (function() {
+        const ctx = document.getElementById('performanceChart').getContext('2d');
+        const data = {{ chart_json | safe }};
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: data.labels,
+                datasets: [
+                    {
+                        label: 'Operating Revenue',
+                        data: data.accrual_revenue,
+                        borderColor: '#3b82f6',
+                        backgroundColor: '#3b82f622',
+                        borderWidth: 2,
+                        tension: 0.3,
+                        fill: true
+                    },
+                    {
+                        label: 'Net Income',
+                        data: data.accrual_net,
+                        borderColor: '#0f172a',
+                        borderWidth: 2,
+                        tension: 0.3,
+                        pointRadius: 0
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { ticks: { font: { size: 10 }, callback: (v) => '$' + v.toLocaleString() } },
+                    x: { ticks: { font: { size: 9 }, maxRotation: 45, minRotation: 45 } }
+                }
+            }
+        });
+    })();
+</script>
+{% endblock %}
