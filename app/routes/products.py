@@ -126,6 +126,7 @@ def edit(id):
                 'category_id': request.form.get('category_id'),
                 'document_placement': request.form.get('document_placement', 'Lineitem'),
                 'default_unit_price': request.form.get('unit_price', ''),
+                'image_url': old_image
             }
             
             # Only update image_url in DB if a new file was actually uploaded
