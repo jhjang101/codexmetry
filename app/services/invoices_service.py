@@ -547,6 +547,7 @@ class InvoiceService(BaseService):
                 item.quantity = qty
                 item.billed_unit_price = price
                 item.description = description
+                item.po_item_id = row.get('po_item_id')
                 db.session.add(item)
 
                 # Generate fingerprint
@@ -556,7 +557,8 @@ class InvoiceService(BaseService):
                     'product': product.name if product else "Unknown",
                     'quantity': qty, 
                     'unit_price': price,
-                    'description': description
+                    'description': description,
+                    'po_item_id': item.po_item_id
                 })
 
         invoice.total_amount = total_cents

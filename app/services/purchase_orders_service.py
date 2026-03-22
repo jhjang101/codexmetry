@@ -49,7 +49,8 @@ class PurchaseOrderService(BaseService):
         )
 
         # 2. Bucket: Fulfilled PO Items from invoices
-        # Uses EXISTS to prevent duplication and only counts Real Products
+        # FIXED: Logic now sums by po_item_id link, not product_id SKU.
+        # This prevents "Extras" or duplicate SKUs from skewing the math.
         inv_fulfilled_sub = (
             select(
                 Invoice.po_id,
@@ -58,13 +59,7 @@ class PurchaseOrderService(BaseService):
             .join(InvoiceItem)
             .where(
                 Invoice.is_active == True,
-                # Guard: Only count items that actually exist on the parent PO
-                exists().where(
-                    and_(
-                        PoItem.po_id == Invoice.po_id,
-                        PoItem.product_id == InvoiceItem.product_id
-                    )
-                )
+                InvoiceItem.po_item_id != None # Only count linked fulfillments
             )
             .group_by(Invoice.po_id)
             .subquery()
@@ -466,28 +461,28 @@ class PurchaseOrderService(BaseService):
         po.remaining_credit = max(0, remaining_credit)
 
         # 7. Calculate Fulfillment (Items left to ship)
+
+        # 7.1. Fetch all invoiced quantities for THIS PO deal, grouped by PO Item ID
+        # This one query replaces the loop-based queries for high efficiency.
+        qty_stmt = (
+            select(InvoiceItem.po_item_id, func.sum(InvoiceItem.quantity))
+            .join(Invoice)
+            .where(
+                Invoice.po_id == po.id,
+                Invoice.is_active == True,
+                Invoice.id != exclude_invoice_id,
+                InvoiceItem.po_item_id != None
+            )
+            .group_by(InvoiceItem.po_item_id)
+        )
+        # Create a lookup map: {po_item_id: total_qty_fulfilled}
+        fulfillment_map = {row[0]: row[1] for row in db.session.execute(qty_stmt).all()}
+
+        # 7.2. Calculate Fulfillment (Items left to ship)
         remaining_items = []
         for po_item in po.items:
-            prepmt_inv_ids_stmt = select(Invoice.id).join(InvoiceItem).join(Product).where(
-                Invoice.po_id == po.id,
-                Invoice.is_active == True
-            ).group_by(Invoice.id).having(
-                func.sum(case((Product.catalog_number != 'PRE-PMT', 1), else_=0)) == 0
-            )
-
-            invoiced_qty_stmt = (
-                select(func.sum(InvoiceItem.quantity))
-                .join(Invoice)
-                .where(
-                    Invoice.po_id == po.id, 
-                    InvoiceItem.product_id == po_item.product_id,
-                    Invoice.is_active == True, 
-                    # IGNORE Prepayment Request invoices here:
-                    Invoice.id.notin_(select(prepmt_inv_ids_stmt.c.id)),
-                    Invoice.id != exclude_invoice_id
-                )
-            )
-            already_invoiced = db.session.execute(invoiced_qty_stmt).scalar() or 0
+            # Look up how much has been fulfilled for this specific LINE ID
+            already_invoiced = fulfillment_map.get(po_item.id, 0)
             qty_left = po_item.quantity - already_invoiced
 
             if qty_left > 0:
@@ -496,7 +491,8 @@ class PurchaseOrderService(BaseService):
                     'product': po_item.product,
                     'quantity': qty_left,
                     'agreed_unit_price': po_item.agreed_unit_price,
-                    'description': po_item.description
+                    'description': po_item.description,
+                    'po_item_id': po_item.id # Pass the link for the Invoice Messenger
                 })
         
         # 8. Add Applied Deposit row for Invoice automation if remaining credit exists
@@ -516,7 +512,7 @@ class PurchaseOrderService(BaseService):
         po.remaining_items = remaining_items
 
         # 9. Calculate precise "To Be Invoiced"
-        # Formula: (Value of remaining real products) - (Clamped Credit Pool)
+        # Formula: (Value of unfulfilled products) - (Clamped Credit Pool)
         fulfillment_value = sum(
             item['quantity'] * item['agreed_unit_price'] 
             for item in po.remaining_items if not item['product'].is_system

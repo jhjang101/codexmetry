@@ -551,7 +551,9 @@ def load_po_details():
     if po_id:
         po = PurchaseOrderService.get_po_by_id(po_id, exclude_invoice_id=invoice_id)
         payer_prefill_id = po.bill_to_id if po else None
-        remaining = po.remaining_items # type: ignore
+
+        # Prefill remaining items from this PO
+        remaining = po.remaining_items # type: ignore # Already contains 'po_item_id' from Service
         for idx, item in enumerate(remaining):
             item['billed_unit_price'] = item.pop('agreed_unit_price')
             item['row_id'] = f"{int(time.time() * 1000)}{idx}"
@@ -590,19 +592,22 @@ def load_po_details():
 # --- INTERNAL HELPERS ---
 
 def _parse_items_form(form_data):
-    """Parses parallel lists from form into a list of dictionaries."""
+    """Parses parallel lists from form into a list of dictionaries, including PO Line links."""
     product_ids = form_data.getlist('product_ids[]')
     quantities = form_data.getlist('quantities[]')
     unit_prices = form_data.getlist('unit_prices[]')
     descriptions = form_data.getlist('descriptions[]')
+    po_item_ids = form_data.getlist('po_item_ids[]') # Capture the specific PO Line ID link
     
     items = []
-    for product_id, qty, price, description in zip(product_ids, quantities, unit_prices, descriptions):
+    # Zip all lists together
+    for product_id, qty, price, description, po_item_id in zip(product_ids, quantities, unit_prices, descriptions, po_item_ids):
         if product_id:
             items.append({
                 'product_id': product_id,
                 'quantity': int(qty) if qty else 1,
                 'unit_price': price, # Service handles parse_to_cents
-                'description': description.strip() if description else ''
+                'description': description.strip() if description else '',
+                'po_item_id': int(po_item_id) if (po_item_id and str(po_item_id).isdigit()) else None
             })
     return items

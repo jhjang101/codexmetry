@@ -423,9 +423,10 @@ class PurchaseOrder(db.Model, AuditMixin):
         # 1. Total PO Commitment
         commitment = sum(item.quantity * item.agreed_unit_price for item in self.items)
 
-        # 2. Total Fulfilled PO Items (Goods only)
-        # We only count invoice items that exist in the PO's product list
-        po_product_ids = {item.product_id for item in self.items}
+        # 2. Total Fulfilled PO Items (Line-ID Based)
+        # We create a set of valid PoItem IDs for this specific PO
+        valid_po_item_ids = {item.id for item in self.items}
+
         fulfilled = 0
         applied_deposits = 0
         negative_carryover = 0
@@ -448,7 +449,8 @@ class PurchaseOrder(db.Model, AuditMixin):
                 negative_carryover += inv.total_amount
 
             for item in inv.items:
-                if item.product_id in po_product_ids:
+                # Check if the InvoiceItem is explicitly linked to one of our PO items
+                if item.po_item_id in valid_po_item_ids:
                     fulfilled += (item.quantity * item.billed_unit_price)
                 
                 # Track 'Applied Deposit' system items
@@ -458,7 +460,7 @@ class PurchaseOrder(db.Model, AuditMixin):
         # 3. Invoiceless Prepayments
         invoiceless_prepayments = sum(p.amount for p in self.payments if p.is_active and p.invoice_id is None)
 
-        # 4. Math
+        # 4. Final Math
         remaining_fulfillment = commitment - fulfilled
         
         # Applied deposits and Negative carryover are negative in DB, so we add them
