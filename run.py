@@ -19,7 +19,7 @@ if __name__ == '__main__':
             db.session.commit()
             print("Database initialized: Tables created and Settings seeded successfully.")
 
-        # 2. Seed System Category (SYSTEM-DEPOSIT)
+        # 2. Seed System Category (SYS-DEP)
         system_category = db.session.execute(
             select(ProductCategory).filter_by(is_system=True)
         ).scalar_one_or_none()
@@ -27,13 +27,13 @@ if __name__ == '__main__':
         if not system_category:
             system_category = ProductCategory()
             system_category.id = 1
-            system_category.type='SYSTEM-DEPOSIT'
+            system_category.type='SYS-DEP'
             system_category.is_revenue=False # Deposits are not revenue until spent
             system_category.is_system=True
             
             db.session.add(system_category)
             db.session.commit()
-            print("System Category 'SYSTEM-DEPOSIT' seeded successfully.")
+            print("System Category 'SYS-DEP' seeded successfully.")
 
         # 3.seed system product: "Applied Deposit"
         # Check if Applied Deposit entry is exist by both name and the is_system flag
@@ -44,7 +44,7 @@ if __name__ == '__main__':
         if not applied_deposit:
             system_product = Product()
             system_product.name = 'Applied Deposit'
-            system_product.catalog_number = 'SYSTEM-DEPOSIT'
+            system_product.catalog_number = 'SYS-DEP'
             system_product.is_system = True
             system_product.default_unit_price = 0
             system_product.is_active = True
@@ -75,7 +75,7 @@ if __name__ == '__main__':
             db.session.commit()
             print("Default Product 'Prepayment' seeded successfully.")
 
-        # 5. Seed Initial Admin User from .env
+        # 5. Seed Root Admin User from .env
         if db.session.execute(select(User)).first() is None:
             admin_user = User()
             admin_user.username = os.getenv('INITIAL_ADMIN_USERNAME', 'admin')

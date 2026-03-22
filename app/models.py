@@ -79,21 +79,17 @@ class PoType(db.Model):
 class ProductCategory(db.Model):
     __tablename__ = 'product_categories'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    type: Mapped[str] = mapped_column(String(50), nullable=False)
+    type: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     is_system: Mapped[bool] = mapped_column(Boolean, default=False)
-
-    # New Accounting Flag
-    is_revenue: Mapped[bool] = mapped_column(Boolean, default=True, server_default='1')
+    is_revenue: Mapped[bool] = mapped_column(Boolean, default=True)
 
 class ExpenseCategory(db.Model):
     __tablename__ = 'expense_categories'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    type: Mapped[str] = mapped_column(String(50), nullable=False)
+    type: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
-
-    # New Reporting Field
-    is_cogs: Mapped[bool] = mapped_column(Boolean, default=False, server_default='0')
+    is_cogs: Mapped[bool] = mapped_column(Boolean, default=False)
 
 class PaymentType(db.Model):
     __tablename__ = 'payment_types'
@@ -104,7 +100,7 @@ class PaymentType(db.Model):
 class AdjustmentCategory(db.Model):
     __tablename__ = 'adjustment_categories'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    type: Mapped[str] = mapped_column(String(50), nullable=False)
+    type: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
 class Carrier(db.Model):
@@ -219,7 +215,6 @@ class ClientContact(db.Model):
     email: Mapped[str | None] = mapped_column(String(255))
     phone_number: Mapped[str | None] = mapped_column(String(50))
 
-
     client: Mapped["Client"] = relationship(back_populates="contacts")
 
 class Vendor(db.Model, AuditMixin):
@@ -276,16 +271,13 @@ class Product(db.Model, AuditMixin):
     __tablename__ = 'products'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
-    catalog_number: Mapped[str | None] = mapped_column(String(100))
-    category_id: Mapped[int | None] = mapped_column(ForeignKey('product_categories.id'))
+    catalog_number: Mapped[str | None] = mapped_column(String(100), unique=True)
+    category_id: Mapped[int | None] = mapped_column(ForeignKey('product_categories.id'), nullable=False)
     image_url: Mapped[str | None] = mapped_column(String(255))
     default_unit_price: Mapped[int] = mapped_column(Integer, default=0)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     is_system: Mapped[bool] = mapped_column(Boolean, default=False)
-
-    # New Placement Field for Printable Form 
     document_placement: Mapped[str] = mapped_column(String(20), default='Lineitem', server_default='Lineitem') # lineitem, shipping, tax
-
     category: Mapped["ProductCategory"] = relationship()
 
 # --- 5. REGISTRY & SALES ---
@@ -389,6 +381,8 @@ class PurchaseOrder(db.Model, AuditMixin):
     client_id: Mapped[int] = mapped_column(ForeignKey('clients.id'), nullable=False)
     bill_to_id: Mapped[int] = mapped_column(ForeignKey('clients.id'), nullable=False)
     po_number: Mapped[str | None] = mapped_column(String(100))
+    customer_po_number: Mapped[str | None] = mapped_column(String(100)) # Distributor's ref
+    net_days: Mapped[int | None] = mapped_column(Integer) # Terms override
     total_amount: Mapped[int] = mapped_column(Integer, default=0)
     po_date: Mapped[date] = mapped_column(Date, server_default=func.current_date())
     po_type_id: Mapped[int | None] = mapped_column(ForeignKey('po_types.id'))
@@ -481,6 +475,8 @@ class Invoice(db.Model, AuditMixin):
     client_id: Mapped[int] = mapped_column(ForeignKey('clients.id'), nullable=False)
     bill_to_id: Mapped[int] = mapped_column(ForeignKey('clients.id'), nullable=False)
     invoice_number: Mapped[str] = mapped_column(String(100), nullable=False) # Not unique
+    customer_po_number: Mapped[str | None] = mapped_column(String(100)) # Distributor's ref
+    net_days: Mapped[int | None] = mapped_column(Integer) # Terms override
     total_amount: Mapped[int] = mapped_column(Integer, default=0)
     invoice_date: Mapped[date] = mapped_column(Date, server_default=func.current_date())
     carrier_id: Mapped[int | None] = mapped_column(ForeignKey('carriers.id'))
@@ -612,6 +608,7 @@ class QuoteItem(db.Model):
     quantity: Mapped[int] = mapped_column(Integer, default=1)
     quoted_unit_price: Mapped[int] = mapped_column(Integer, default=0)
     description: Mapped[str | None] = mapped_column(Text)
+    sort_order: Mapped[int] = mapped_column(Integer, default=1) # Line number
 
     quote: Mapped["Quote"] = relationship(back_populates="items")
     product: Mapped["Product"] = relationship()
@@ -624,6 +621,7 @@ class PoItem(db.Model):
     quantity: Mapped[int] = mapped_column(Integer, default=1)
     agreed_unit_price: Mapped[int] = mapped_column(Integer, default=0)
     description: Mapped[str | None] = mapped_column(Text)
+    sort_order: Mapped[int] = mapped_column(Integer, default=1) # Line number
 
     po: Mapped["PurchaseOrder"] = relationship(back_populates="items")
     product: Mapped["Product"] = relationship()
@@ -633,13 +631,15 @@ class InvoiceItem(db.Model):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     invoice_id: Mapped[int] = mapped_column(ForeignKey('invoices.id'), nullable=False)
     product_id: Mapped[int] = mapped_column(ForeignKey('products.id'), nullable=False)
+    po_item_id: Mapped[int | None] = mapped_column(ForeignKey('po_items.id')) # Ambiguity Fix
     quantity: Mapped[int] = mapped_column(Integer, default=1)
     billed_unit_price: Mapped[int] = mapped_column(Integer, default=0)
     description: Mapped[str | None] = mapped_column(Text)
+    sort_order: Mapped[int] = mapped_column(Integer, default=1) # Line number
 
     invoice: Mapped["Invoice"] = relationship(back_populates="items")
     product: Mapped["Product"] = relationship()
-
+    po_item: Mapped["PoItem | None"] = relationship() # Relationship for precision math
 
 class ExpenseItem(db.Model):
     __tablename__ = 'expense_items'
@@ -650,6 +650,7 @@ class ExpenseItem(db.Model):
     quantity: Mapped[int] = mapped_column(Integer, default=1)
     unit_price: Mapped[int] = mapped_column(Integer, default=0)
     description: Mapped[str | None] = mapped_column(Text)
+    sort_order: Mapped[int] = mapped_column(Integer, default=1) # Line number
 
     expense: Mapped["Expense"] = relationship(back_populates="items")
 
@@ -662,6 +663,7 @@ class Attachment(db.Model, AuditMixin):
     file_path: Mapped[str] = mapped_column(String(255), nullable=False)
     file_name: Mapped[str] = mapped_column(String(255), nullable=False)
     uploaded_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.current_timestamp())
+    is_generated: Mapped[bool] = mapped_column(Boolean, default=False, server_default='0') # PDF Snapshot flag
 
 # --- 8. AUDIT EVENT LISTENERS ---
 
