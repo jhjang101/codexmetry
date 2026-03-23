@@ -150,12 +150,15 @@ class AdjustmentService(BaseService):
         """Handles validation and type conversion."""
         description = data.get('description', '').strip()
         adjustment_number = data.get('adjustment_number', '').strip()
+        category_id = data.get('category_id')
         amount_raw = data.get('amount', '0')
         
         if not description:
             raise ValueError("Adjustment Description is required.")
         if not adjustment_number:
             raise ValueError("Adjustment Number is required.")
+        if not category_id:
+            raise ValueError("Adjustment Category is required.")
         if not amount_raw:
             raise ValueError("Amount is required.")
 
@@ -170,14 +173,12 @@ class AdjustmentService(BaseService):
         else:
             adjustment_date = datetime.now(ZoneInfo(tz_name)).date()
 
-        category_id = data.get('category_id')
-
         clean_data = {
             'description': description,
             'adjustment_number': adjustment_number,
             'amount': parse_to_cents(str(amount_raw)),
             'adjustment_date': adjustment_date,
-            'category_id': int(category_id) if category_id else None,
+            'category_id': int(category_id),
             'note': data.get('note', '').strip()
         }
 

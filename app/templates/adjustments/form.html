@@ -132,7 +132,9 @@
                     {% else %}
                         <div class="relative">
                             <select name="category_id" 
-                                    class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none appearance-none bg-transparent cursor-pointer pr-10">
+                                    class="mt-1 block w-full border rounded-lg p-2 text-sm 
+                                    focus:ring-1 focus:ring-blue-300 outline-none appearance-none bg-transparent cursor-pointer pr-10"
+                                    required>
                                 <option value="">Select Category...</option>
                                 {% for c in categories %}
                                     <option value="{{ c.id }}" {{ 'selected' if (adjustment and adjustment.category_id == c.id) else '' }}>{{ c.type }}</option>

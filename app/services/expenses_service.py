@@ -240,11 +240,14 @@ class ExpenseService(BaseService):
         """Handles header validation and description fallback."""
         vendor_id = data.get('vendor_id')
         expense_number = data.get('expense_number', '').strip()
+        category_id = data.get('category_id')
 
         if not vendor_id:
             raise ValueError("Vendor is required.")
         if not expense_number:
             raise ValueError("Expense Number is required.")
+        if not category_id:
+            raise ValueError("Expense Category is required.")
         
         if not items_data:
             raise ValueError("At least one expense item is required.")
@@ -288,15 +291,11 @@ class ExpenseService(BaseService):
         else:
             expense_date = datetime.now(ZoneInfo(tz_name)).date()
 
-
-
-        category_id = data.get('category_id')
-
         # 3. Transform Data
         clean_data ={
             'vendor_id': int(vendor_id),
             'expense_number': expense_number,
-            'category_id': int(category_id) if category_id else None,
+            'category_id': int(category_id),
             'client_id': int(client_id) if client_id else None,
             'order_id': order_id,
             'po_id': int(po_id) if po_id else None,

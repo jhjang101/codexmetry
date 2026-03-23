@@ -191,15 +191,19 @@ class ProductService(BaseService):
         """Handles validation and price conversion."""
         # 1. Validation
         name = data.get('name', '').strip()
+        category_id = data.get('category_id')
+
         if not name:
             raise ValueError("Product Name is required.")
         category_id = data.get('category_id')
+        if not category_id:
+            raise ValueError("Product Category is required.")
         
         # 2. Transform data
         clean_data = {
             'name': name,
             'catalog_number': data.get('catalog_number', '').strip() if data.get('catalog_number') else "",
-            'category_id': int(category_id) if category_id else None,
+            'category_id': int(category_id),
             'document_placement': data.get('document_placement', 'Lineitem'),
             'default_unit_price': parse_to_cents(str(data.get('default_unit_price', 0))),
             'image_url': data.get('image_url') # Handled by Route/images.py
