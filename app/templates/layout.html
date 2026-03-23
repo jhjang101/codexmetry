@@ -11,6 +11,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="{{ url_for('static', filename='js/attachments.js') }}"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
     
     <!-- HTMX CSRF Configuration -->
     <script>
@@ -18,22 +19,6 @@
             event.detail.headers['X-CSRFToken'] = '{{ csrf_token() }}';
         });
     </script>
-
-    <style>
-        /* Self-Healing Item Line Numbers */
-        #item-list {
-            counter-reset: line;
-        }
-        #item-list tr.item-row {
-            counter-increment: line;
-        }
-        #item-list tr.item-row td.line-number::before {
-            content: counter(line);
-            font-weight: 700;
-            color: #94a3b8; /* text-slate-400 */
-            font-size: 10px;
-        }
-    </style>
 
 </head>
 <body class="bg-gray-50 flex h-screen overflow-hidden">

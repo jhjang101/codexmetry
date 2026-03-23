@@ -4,34 +4,8 @@
     <meta charset="UTF-8">
     <title>PO - {{ expense.expense_number }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @media print {
-            body { background: white !important; }
-            /* Force concealment of UI elements */
-            .no-print { display: none !important; }
-            /* Ensure the container doesn't have shadows or borders on paper */
-            .max-w-\[800px\] { 
-                box-shadow: none !important; 
-                border: none !important;
-                margin: 0 !important;
-                padding: 0 !important;
-            }
-            @page { margin: 15mm; }
-            /* Hide scrollbars and borders on paper */
-            textarea {
-                border: none !important;
-                padding: 0 !important;
-                resize: none !important;
-                overflow: hidden !important;
-                background: transparent !important;
-            }
-            /* Auto-sizing support for modern browsers */
-            .print-notes {
-                field-sizing: content; /* Modern CSS to auto-expand textarea */
-                min-height: 80px;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/print.css') }}">
+    
 </head>
 <body class="bg-gray-100 font-sans p-4">
 

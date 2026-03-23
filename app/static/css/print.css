@@ -1,0 +1,52 @@
+/* --- High-Integrity Print Layout --- */
+@media print {
+    body { 
+        background: white !important; 
+        -webkit-print-color-adjust: exact; 
+    }
+    
+    .no-print { 
+        display: none !important; 
+    }
+    
+    /* Remove browser-added shadows and UI borders */
+    .print-container { 
+        box-shadow: none !important; 
+        border: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    @page { 
+        margin: 15mm; 
+    }
+
+    /* Professional Textarea Formatting */
+    textarea, .print-notes {
+        border: none !important;
+        padding: 0 !important;
+        resize: none !important;
+        overflow: hidden !important;
+        background: transparent !important;
+        min-height: 80px;
+    }
+
+    /* Auto-sizing support for modern browsers */
+    .print-notes {
+        field-sizing: content; /* Modern CSS to auto-expand textarea */
+        min-height: 80px;
+    }
+}
+
+/* Extra spacing for electronical typing on PDF */
+.sig-line { 
+    border-bottom: 1px solid #94a3b8; /* slate-400 */
+    min-height: 24px; 
+}
+
+/* Ensure dashed borders show up clearly for notes */
+.border-dashed-print {
+    border: 1px dashed #d1d5db;
+}
