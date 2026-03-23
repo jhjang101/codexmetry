@@ -559,8 +559,8 @@ class InvoiceService(BaseService):
                     'quantity': qty, 
                     'unit_price': price,
                     'description': description,
-                    'po_item_id': item.po_item_id,
-                    'sort_order': idx
+                    'sort_order': idx,
+                    'po_item_id': item.po_item_id
                 })
 
         invoice.total_amount = total_cents

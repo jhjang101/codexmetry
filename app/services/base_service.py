@@ -145,7 +145,8 @@ class BaseService:
                 'quantity': getattr(item, qty_attr), 
                 'unit_price': getattr(item, price_attr),
                 'description': item.description,
-                'sort_order': item.sort_order
+                'sort_order': item.sort_order,
+                'po_item_id': getattr(item, 'po_item_id', None)
             }
             for item in items_collection
         ]

@@ -333,7 +333,8 @@ class QuoteService(BaseService):
                     'quantity': qty, 
                     'unit_price': price,
                     'description': description,
-                    'sort_order': idx
+                    'sort_order': idx,
+                    'po_item_id': None # Added for audit symmetry
                 })
 
         # 3. Update the snapshot total on the header
