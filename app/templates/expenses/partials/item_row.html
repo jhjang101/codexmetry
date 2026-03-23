@@ -2,6 +2,9 @@
 <tr class="item-row group align-top">
     <input type="hidden" name="row_ids[]" value="{{ row_id }}">
 
+    <!-- NEW: CSS Driven Line Number Cell -->
+    <td class="py-3 pl-2 line-number text-center"></td>
+
     <td class="py-2 pr-2">
         {% if mode == 'view' %}
             <p class="block bg-gray-100 border rounded-lg p-2 text-sm">{{ item.catalog_number or '-' }}</p>
