@@ -91,7 +91,7 @@
         {% if mode == 'view' %}
             <p class="block bg-gray-100 border rounded-lg p-2 text-sm text-right">{{ item.quantity }}</p>
         {% else %}
-            <input type="number" name="quantities[]" value="{{ item.quantity if item else 1 }}" 
+            <input type="number" name="quantities[]" value="{{ item.quantity if item else 1 }}" max="{{ item.quantity if item else '' }}" min="0"
                     {% if is_system %}
                     readonly
                     class="block w-full bg-gray-100 border rounded-lg p-2 text-sm text-center outline-none"
