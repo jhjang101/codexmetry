@@ -422,9 +422,19 @@ def get_unit_price():
     product = ProductService.get_by_id(product_id)
     price = product.default_unit_price if product else 0
 
+    # Check if the current product is prepayment
+    is_prepayment = (product.catalog_number == 'PRE-PMT') if product else False
+
+    # We fetch products to support the re-render of the row in the OOB swap
+    products = ProductService.get_all_products(include_prepayment=True)
+
     return render_template('invoices/partials/unit_price_input.html',
                            row_id=row_id,
-                           price=price)
+                           price=price,
+                           is_prepayment=is_prepayment,
+                           product=product,
+                           products=products,
+                           mode='add') # mode='add' ensures inputs remain editable
 
 @bp.route('/calculate', methods=['POST'])
 def calculate():

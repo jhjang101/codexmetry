@@ -1,3 +1,4 @@
+{# 1. PRIMARY RESPONSE: Fills the targeted price cell #}
 <input type="text" name="unit_prices[]" 
        value="{{ price | usd if price is defined else (item.billed_unit_price | usd if item else '$0.00') }}"
        {% if is_system %}
@@ -12,3 +13,27 @@
        hx-target="#line-total-{{ row_id }}"
        hx-swap="innerHTML"
        hx-include="#invoice-main-form">
+
+{# 2. OOB: THE TABLE WIPE (Only if Prepayment is selected) #}
+{% if is_prepayment %}
+    <table class="hidden">
+       <tbody id="item-list" hx-swap-oob="true">
+              {# We manually construct a row object to pass to the partial #}
+              {% set item = {'product_id': product.id, 'product': product, 'quantity': 1, 'billed_unit_price': price} %}
+              {# Prevent recursion error #}
+              {% with is_oob_render=True %}
+              {% include 'invoices/partials/item_row.html' %}
+              {% endwith %}
+       </tbody>
+    </table>
+
+    {# 3. OOB: THE BUTTON LOCK #}
+    <div id="add-item-btn-container" hx-swap-oob="true">
+        <div class="bg-amber-50 border border-amber-200 rounded px-3 py-1 flex items-center gap-2">
+            <i class="fa-solid fa-lock text-amber-600 text-[10px]"></i>
+            <span class="text-amber-700 text-[10px] font-bold uppercase italic">
+                Deposit Request Mode: Single-item only
+            </span>
+        </div>
+    </div>
+{% endif %}
