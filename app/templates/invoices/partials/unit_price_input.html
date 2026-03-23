@@ -1,7 +1,7 @@
 {# 1. PRIMARY RESPONSE: Fills the targeted price cell #}
 <input type="text" name="unit_prices[]" 
        value="{{ price | usd if price is defined else (item.billed_unit_price | usd if item else '$0.00') }}"
-       {% if is_system %}
+       {% if is_system or po_item_id %}
        readonly
        class="block w-full bg-gray-100 border rounded-lg p-2 text-sm text-right outline-none"
        {% else %}
