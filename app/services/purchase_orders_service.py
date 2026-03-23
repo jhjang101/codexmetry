@@ -653,7 +653,7 @@ class PurchaseOrderService(BaseService):
         total_cents = 0
         fingerprint = []
 
-        for row in items_data:
+        for idx, row in enumerate(items_data, start=1):
             product_id = row.get('product_id')
             if product_id:
                 description = row.get('description', '').strip()
@@ -667,6 +667,7 @@ class PurchaseOrderService(BaseService):
                 item.quantity = qty
                 item.agreed_unit_price = price
                 item.description = description
+                item.sort_order = idx 
                 db.session.add(item)
 
                 # Generate fingerprint
@@ -676,9 +677,10 @@ class PurchaseOrderService(BaseService):
                     'product': product.name if product else "Unknown",
                     'quantity': qty, 
                     'unit_price': price,
-                    'description': description
+                    'description': description,
+                    'sort_order': idx
                 })
 
         po.total_amount = total_cents
 
-        return sorted(fingerprint, key=lambda x: x['product_id'])
+        return sorted(fingerprint, key=lambda x: x['sort_order'])

@@ -307,7 +307,7 @@ class QuoteService(BaseService):
         fingerprint = []
 
         # 2. Re-insert current list
-        for row in items_data:
+        for idx, row in enumerate(items_data, start=1):
             product_id = row.get('product_id')
             if product_id:
                 description = row.get('description', '').strip()
@@ -322,6 +322,7 @@ class QuoteService(BaseService):
                 item.quantity = qty
                 item.quoted_unit_price = price
                 item.description = description
+                item.sort_order = idx 
                 db.session.add(item)
 
                 # Generate fingerprint
@@ -331,10 +332,11 @@ class QuoteService(BaseService):
                     'product': product.name if product else "Unknown",
                     'quantity': qty, 
                     'unit_price': price,
-                    'description': description
+                    'description': description,
+                    'sort_order': idx
                 })
 
         # 3. Update the snapshot total on the header
         quote.total_amount = total_cents
 
-        return sorted(fingerprint, key=lambda x: x['product_id'])
+        return sorted(fingerprint, key=lambda x: x['sort_order'])

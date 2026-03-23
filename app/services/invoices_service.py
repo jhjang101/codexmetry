@@ -532,7 +532,7 @@ class InvoiceService(BaseService):
         total_cents = 0
         fingerprint = []
 
-        for row in items_data:
+        for idx, row in enumerate(items_data, start=1):
             product_id = row.get('product_id')
             if product_id:
                 description = row.get('description', '').strip()
@@ -548,6 +548,7 @@ class InvoiceService(BaseService):
                 item.billed_unit_price = price
                 item.description = description
                 item.po_item_id = row.get('po_item_id')
+                item.sort_order = idx 
                 db.session.add(item)
 
                 # Generate fingerprint
@@ -558,12 +559,13 @@ class InvoiceService(BaseService):
                     'quantity': qty, 
                     'unit_price': price,
                     'description': description,
-                    'po_item_id': item.po_item_id
+                    'po_item_id': item.po_item_id,
+                    'sort_order': idx
                 })
 
         invoice.total_amount = total_cents
 
-        return sorted(fingerprint, key=lambda x: x['product_id'])
+        return sorted(fingerprint, key=lambda x: x['sort_order'])
 
     @classmethod
     def _validate_deposit_usage(cls, po_id: int, items_data: list[dict], invoice_id: int | None = None):

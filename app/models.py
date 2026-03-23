@@ -365,7 +365,7 @@ class Quote(db.Model, AuditMixin):
     order: Mapped["OrderRegistry"] = relationship(back_populates="quote")
     purchase_order: Mapped["PurchaseOrder | None"] = relationship(back_populates="quote")
     client: Mapped["Client"] = relationship(back_populates="quotes")
-    items: Mapped[list["QuoteItem"]] = relationship(back_populates="quote", cascade="all, delete-orphan")
+    items: Mapped[list["QuoteItem"]] = relationship(back_populates="quote", cascade="all, delete-orphan", order_by="QuoteItem.sort_order.asc()")
     attachments: Mapped[list["Attachment"]] = relationship(
         primaryjoin="and_(Quote.id==Attachment.entity_id, Attachment.entity_type=='Quote')",
         foreign_keys="[Attachment.entity_id]",
@@ -397,7 +397,7 @@ class PurchaseOrder(db.Model, AuditMixin):
     expenses: Mapped[list["Expense"]] = relationship(back_populates="purchase_order")
     client: Mapped["Client"] = relationship(back_populates="purchase_orders", foreign_keys=[client_id])
     bill_to: Mapped["Client"] = relationship(back_populates="po_billings", foreign_keys=[bill_to_id])
-    items: Mapped[list["PoItem"]] = relationship(back_populates="po", cascade="all, delete-orphan")
+    items: Mapped[list["PoItem"]] = relationship(back_populates="po", cascade="all, delete-orphan", order_by="PoItem.sort_order.asc()")
     po_type: Mapped["PoType"] = relationship()
     attachments: Mapped[list["Attachment"]] = relationship(
         primaryjoin="and_(PurchaseOrder.id==Attachment.entity_id, Attachment.entity_type=='PurchaseOrder')",
@@ -495,7 +495,7 @@ class Invoice(db.Model, AuditMixin):
     client: Mapped["Client"] = relationship(back_populates="invoices", foreign_keys=[client_id])
     bill_to: Mapped["Client"] = relationship(back_populates="invoice_billings", foreign_keys=[bill_to_id])
     carrier: Mapped["Carrier"] = relationship()
-    items: Mapped[list["InvoiceItem"]] = relationship(back_populates="invoice", cascade="all, delete-orphan")
+    items: Mapped[list["InvoiceItem"]] = relationship(back_populates="invoice", cascade="all, delete-orphan", order_by="InvoiceItem.sort_order.asc()")
     attachments: Mapped[list["Attachment"]] = relationship(
         primaryjoin="and_(Invoice.id==Attachment.entity_id, Attachment.entity_type=='Invoice')",
         foreign_keys="[Attachment.entity_id]",
@@ -573,7 +573,7 @@ class Expense(db.Model, AuditMixin):
     purchase_order: Mapped["PurchaseOrder | None"] = relationship(back_populates="expenses")
     invoice: Mapped["Invoice | None"] = relationship(back_populates="expenses")
     category: Mapped["ExpenseCategory"] = relationship()
-    items: Mapped[list["ExpenseItem"]] = relationship(back_populates="expense", cascade="all, delete-orphan")
+    items: Mapped[list["ExpenseItem"]] = relationship(back_populates="expense", cascade="all, delete-orphan", order_by="ExpenseItem.sort_order.asc()")
     attachments: Mapped[list["Attachment"]] = relationship(
         primaryjoin="and_(Expense.id==Attachment.entity_id, Attachment.entity_type=='Expense')",
         foreign_keys="[Attachment.entity_id]",

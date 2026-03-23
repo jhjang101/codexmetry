@@ -144,11 +144,12 @@ class BaseService:
                 'product': item.product.name if item.product else "Unknown",
                 'quantity': getattr(item, qty_attr), 
                 'unit_price': getattr(item, price_attr),
-                'description': item.description
+                'description': item.description,
+                'sort_order': item.sort_order
             }
             for item in items_collection
         ]
-        return sorted(data, key=lambda x: x['product_id'])
+        return sorted(data, key=lambda x: x['sort_order'])
     
     @classmethod
     def _get_contacts_fingerprint(cls, contacts_collection):

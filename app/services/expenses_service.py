@@ -321,7 +321,7 @@ class ExpenseService(BaseService):
         fingerprint = []
 
         # 2. Re-insert current snapshot
-        for row in items_data:
+        for idx, row in enumerate(items_data, start=1):
             item_text = row.get('item', '').strip()
             if item_text:
                 description = row.get('description', '').strip()
@@ -338,6 +338,7 @@ class ExpenseService(BaseService):
                 item.quantity = qty
                 item.unit_price = price
                 item.description = description
+                item.sort_order = idx
                 db.session.add(item)
                 
                 # Generate fingerprint
@@ -346,7 +347,8 @@ class ExpenseService(BaseService):
                     'cat_no': catalog_number,
                     'quantity': qty, 
                     'unit_price': price,
-                    'description': description
+                    'description': description,
+                    'sort_order': idx
                 })
 
             else:
@@ -355,7 +357,7 @@ class ExpenseService(BaseService):
         # 3. Update the header total
         expense.total_amount = total_cents
 
-        return sorted(fingerprint, key=lambda x: (x['item'], x['cat_no'] or ''))
+        return sorted(fingerprint, key=lambda x: x['sort_order'])
     
 
 
@@ -371,9 +373,10 @@ class ExpenseService(BaseService):
                 'cat_no': item.catalog_number,
                 'quantity': item.quantity, 
                 'unit_price': item.unit_price,
-                'description': item.description
+                'description': item.description,
+                'sort_order': item.sort_order
             }
             for item in items_collection
         ]
         # Sort by item name so the audit log doesn't think the order change is a data change
-        return sorted(data, key=lambda x: (x['item'], x['cat_no'] or ''))
+        return sorted(data, key=lambda x: x['sort_order'])
