@@ -66,6 +66,8 @@ def add():
             header_data = {
                 'client_id': request.form.get('client_id'),
                 'invoice_number': request.form.get('invoice_number'),
+                'customer_po_number': request.form.get('customer_po_number'),
+                'net_days': request.form.get('net_days'),
                 'po_id': request.form.get('po_id'),
                 'bill_to_id': request.form.get('bill_to_id'),
                 'invoice_date': request.form.get('invoice_date'),
@@ -113,6 +115,8 @@ def add():
     client_id = request.args.get('client_id', type=int) # from Client
     po_id = request.args.get('po_id', type=int) # from PO
 
+    customer_po_prefill = ""
+    net_days_prefill = None
     payer_prefill_id = None
     po_total_prepayment = 0
     pos = []
@@ -143,6 +147,10 @@ def add():
             flash(f"PO {po.po_number or po.order.order_number} has already been fully invoiced.", "warning")
             return redirect(url_for('purchase_orders.view', id=po.id))
         
+        customer_po_prefill = po.customer_po_number if po.customer_po_number else ""
+        # Use PO override if it exists, else use global metadata default
+        metadata = db.session.get(SettingsMetadata, 1)
+        net_days_prefill = po.net_days if po.net_days is not None else (metadata.default_net_days if metadata else 30)
         client_id = po.client_id if po else None
         payer_prefill_id = po.bill_to_id if po else None
         po_total_prepayment = po.total_prepayment if po else 0 # type: ignore
@@ -176,6 +184,8 @@ def add():
                            products=products,
                            suggested_number=suggested_number,
                            carriers=carriers,
+                           customer_po_prefill=customer_po_prefill,
+                           net_days_prefill=net_days_prefill,
                            client_id=client_id,
                            po_id=po_id,
                            payer_prefill_id=payer_prefill_id,
@@ -240,6 +250,8 @@ def edit(id):
             header_data = {
                 'client_id': request.form.get('client_id'),
                 'invoice_number': request.form.get('invoice_number'),
+                'customer_po_number': request.form.get('customer_po_number'),
+                'net_days': request.form.get('net_days'),
                 'po_id': request.form.get('po_id'),
                 'status': request.form.get('status'),
                 'bill_to_id': request.form.get('bill_to_id'),
@@ -548,11 +560,10 @@ def update_client_cascades():
 def load_po_details():
     """OOB Teleportation: Prefills Bill-To, Pool Value, and Remaining Items when PO changes."""
     # 1. Extract IDs from the HTMX request
+    customer_po_prefill = ""
+    net_days_prefill = None
     invoice_id = request.args.get('invoice_id', type=int)
     po_id = request.args.get('po_id', type=int)
-
-    print('po_id:', po_id)
-    print('invoice_id:', invoice_id)
 
     # 2. Prefill Bill_To and remaining items from this PO
     payer_prefill_id = None 
@@ -560,7 +571,11 @@ def load_po_details():
     items = []
     if po_id:
         po = PurchaseOrderService.get_po_by_id(po_id, exclude_invoice_id=invoice_id)
-        payer_prefill_id = po.bill_to_id if po else None
+        if po:
+            customer_po_prefill = po.customer_po_number if po.customer_po_number else ""
+            metadata = db.session.get(SettingsMetadata, 1)
+            net_days_prefill = po.net_days if po.net_days is not None else (metadata.default_net_days if metadata else 30)
+            payer_prefill_id = po.bill_to_id if po else None
 
         # Prefill remaining items from this PO
         remaining = po.remaining_items # type: ignore # Already contains 'po_item_id' from Service
@@ -587,6 +602,8 @@ def load_po_details():
     # 5. Return the single unified OOB template
     resp = make_response(render_template(
         'invoices/partials/po_selection_oob.html',
+        customer_po_prefill=customer_po_prefill,
+        net_days_prefill=net_days_prefill,
         invoice_id=invoice_id,
         po_id=po_id,      # need for enable/disable dropdown
         payers=payers,

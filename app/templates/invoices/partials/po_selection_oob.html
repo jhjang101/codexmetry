@@ -1,10 +1,13 @@
+<!-- OOB Teleport for Bill To -->
 <div id="bill-to-select-container" hx-swap-oob="true">
     {% include 'invoices/partials/bill_to_select.html' %}
 </div>
 
+<!-- OOB Teleport for displaying "Remaining Credit" -->
 <input type="hidden" id="po_total_prepayment" name="po_total_prepayment" 
        value="{{ po_total_prepayment if po_id else 0 }}" hx-swap-oob="true">
 
+<!-- OOB Teleport for POitems -->
 <table class="hidden">
     <tbody id="item-list" hx-swap-oob="true">
         {% for item in items %}
@@ -13,3 +16,15 @@
         {% endfor %}
     </tbody>
 </table>
+
+<!-- OOB Teleport for Customer PO # -->
+<div id="customer-po-container" hx-swap-oob="true">
+    <input type="text" name="customer_po_number" value="{{ customer_po_prefill }}" 
+           class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">
+</div>
+
+<!-- OOB Teleport for Terms -->
+<div id="net-days-container" hx-swap-oob="true">
+    <input type="number" name="net_days" value="{{ net_days_prefill }}" 
+           class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">
+</div>

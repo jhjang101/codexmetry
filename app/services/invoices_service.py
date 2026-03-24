@@ -493,16 +493,37 @@ class InvoiceService(BaseService):
         if not po:
             raise ValueError("The selected Purchase Order does not exist.")
 
-        # Get TimeZone from metadata
+        # Get Defaults from metadata
         metadata = db.session.get(SettingsMetadata, 1)
         tz_name = metadata.timezone if metadata else 'America/Chicago'
+        default_net_days = metadata.default_net_days if metadata else 30
 
-        # Parse dates
+        # 1. Parse dates
         raw_date = data.get('invoice_date')
         if raw_date:
             invoice_date = datetime.strptime(raw_date, '%Y-%m-%d').date()
         else: 
             invoice_date = datetime.now(ZoneInfo(tz_name)).date()
+
+        # 2. Resolve Net Days (The Snapshot Rule)
+        raw_net = data.get('net_days')
+        if raw_net and str(raw_net).strip():
+            try:
+                net_days = int(raw_net)
+                if net_days < 0: raise ValueError
+            except (ValueError, TypeError):
+                raise ValueError("Payment Terms (Net Days) must be a valid positive number.")
+        elif po and po.net_days is not None:
+            # Fallback 1: Use terms snapshot from the PO
+            net_days = po.net_days
+        else:
+            # Fallback 2: Use global system default
+            net_days = default_net_days
+
+        # 3. Resolve Customer PO Number (Inheritance Rule)
+        customer_po = data.get('customer_po_number', '').strip()
+        if not customer_po and po:
+            customer_po = po.customer_po_number
 
         raw_ship_date = data.get('ship_date')
         carrier_id = data.get('carrier_id')
@@ -514,6 +535,8 @@ class InvoiceService(BaseService):
             'client_id': int(data.get('client_id', po.client_id)),
             'bill_to_id': int(data.get('bill_to_id', po.bill_to_id)),
             'invoice_number': data.get('invoice_number', '').strip(),
+            'customer_po_number': customer_po, # Resolved inheritance
+            'net_days': net_days, # Resolved snapshot
             'invoice_date': invoice_date,
             'ship_date': datetime.strptime(raw_ship_date, '%Y-%m-%d').date() if raw_ship_date else None,
             'carrier_id': int(carrier_id) if carrier_id else None,
