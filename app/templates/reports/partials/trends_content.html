@@ -3,7 +3,8 @@
     <section class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
         <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">5-Year Performance Trend (Accrual)</h3>
         <div class="h-[300px]">
-            <canvas id="performanceChart"></canvas>
+            <canvas id="performanceChart" 
+                    data-chart-values='{{ chart_json | safe }}'></canvas>
         </div>
     </section>
 
@@ -51,9 +52,14 @@
 <!-- 3. CHART INITIALIZATION -->
 <script>
     (function() {
-        const ctx = document.getElementById('performanceChart').getContext('2d');
-        const data = {{ chart_json | safe }};
+        const canvas = document.getElementById('performanceChart');
+        if (!canvas) return;
 
+        // Parse the data from the attribute
+        const data = JSON.parse(canvas.getAttribute('data-chart-values'));
+        const ctx = canvas.getContext('2d');
+
+        // Create the chart
         new Chart(ctx, {
             type: 'line',
             data: {
