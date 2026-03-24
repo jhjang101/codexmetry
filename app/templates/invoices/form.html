@@ -148,7 +148,7 @@
 
             </div>
 
-            <div class="grid grid-cols-10 gap-4">
+            <div class="grid grid-cols-11 gap-4">
                 <div class="col-span-4">
                     <label class="block text-sm font-medium text-gray-500">Client</label>
                     {% if mode == 'view' %}
@@ -237,7 +237,7 @@
                     {% endif %}
                 </div>
 
-                <div class="col-span-1">
+                <div class="col-span-2">
                     <label class="block text-sm font-medium text-gray-500">Status</label>
                     {% if mode == 'add' %}
                         <p class="p-2">
@@ -304,7 +304,7 @@
                 </div>
 
                 <!-- Net Days -->
-                <div class="col-span-1">
+                <div class="col-span-2">
                     <label class="block text-sm font-medium text-gray-500">Terms</label>
                     <div id="net-days-container">
                         {% if mode == 'view' %}
@@ -341,12 +341,14 @@
                     {% if mode == 'view' %}
                         <p class="mt-1 block bg-gray-100 border rounded-lg p-2 text-sm">{{ invoice.ship_date or '-' }}</p>
                     {% else %}
-                        <input type="date" name="ship_date" value="{{ invoice.ship_date if invoice and invoice.ship_date else invoice.invoice_date if invoice else now.strftime('%Y-%m-%d') }}" 
-                            class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">
+                        <input type="date" 
+                               name="ship_date" 
+                               class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none"
+                               value="{{ invoice.ship_date if invoice and invoice.ship_date else invoice.invoice_date if invoice else now.strftime('%Y-%m-%d') }}"> 
                     {% endif %}
                 </div>
 
-                <div class="col-span-3">
+                <div class="col-span-4">
                     <label class="block text-sm font-medium text-gray-500">Tracking Number</label>
                     {% if mode == 'view' %}
                     <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ invoice.tracking_number or '-' }}</p>
