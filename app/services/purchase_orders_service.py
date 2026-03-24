@@ -621,13 +621,26 @@ class PurchaseOrderService(BaseService):
         
         # Parse dates
         raw_date = data.get('po_date')
+        raw_net_days = data.get('net_days')
         # Get TimeZone from metadata
         metadata = db.session.get(SettingsMetadata, 1)
         tz_name = metadata.timezone if metadata else 'America/Chicago'
+
         if raw_date:
             po_date = datetime.strptime(raw_date, '%Y-%m-%d').date() 
         else:
             po_date = datetime.now(ZoneInfo(tz_name)).date()
+
+        if raw_net_days and str(raw_net_days).strip():
+            try:
+                net_days = int(raw_net_days)
+                if net_days < 0:
+                    raise ValueError
+            except (ValueError, TypeError):
+                raise ValueError("Payment Terms (Net Days) must be a valid positive number.")
+        else:
+            # Leave as None if blank to reflect the literal document received
+            net_days = None
         
         po_type_id = data.get('po_type_id')
         quote_id = data.get('quote_id')
@@ -636,9 +649,11 @@ class PurchaseOrderService(BaseService):
             'client_id': int(client_id),
             'bill_to_id': int(data.get('bill_to_id', client_id)),
             'po_number': data.get('po_number', '').strip(),
+            'customer_po_number': data.get('customer_po_number', '').strip(),
             'po_date': po_date,
             'po_type_id': int(po_type_id) if po_type_id else None,
             'quote_id': int(quote_id) if quote_id else None,
+            'net_days': net_days,
             'status': data.get('status', 'open'),
             'note': data.get('note', '').strip()
         }

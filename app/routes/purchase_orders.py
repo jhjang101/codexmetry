@@ -64,8 +64,10 @@ def add():
                 'client_id': request.form.get('client_id'),
                 'bill_to_id': request.form.get('bill_to_id'),
                 'po_number': request.form.get('po_number'), # Client reference
+                'customer_po_number': request.form.get('customer_po_number'), # Distributor reference
                 'po_date': request.form.get('po_date'),
                 'quote_id': request.form.get('quote_id'),
+                'net_days': request.form.get('net_days'),
                 'po_type_id': request.form.get('po_type_id'),
                 'note': request.form.get('note')
             }
@@ -222,8 +224,10 @@ def edit(id):
                 'client_id': request.form.get('client_id'),
                 'bill_to_id': request.form.get('bill_to_id'),
                 'po_number': request.form.get('po_number'),
+                'customer_po_number': request.form.get('customer_po_number'), # Distributor reference
                 'po_date': request.form.get('po_date'),
                 'quote_id': request.form.get('quote_id'),
+                'net_days': request.form.get('net_days'),
                 'po_type_id': request.form.get('po_type_id'),
                 'status': request.form.get('status'),
                 'note': request.form.get('note')

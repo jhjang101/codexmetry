@@ -190,12 +190,13 @@
                     {% endif %}
                 </div>
                 
-                <div class="col-span-3">
+                <div class="col-span-2">
                     <label class="block text-sm font-medium text-gray-500">PO Number</label>
                     {% if mode == 'view' %}
                         <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ po.po_number or '-'}}</p>
                     {% else %}
                         <input type="text" name="po_number" value="{{ po.po_number if po else '' }}" 
+                               placeholder="Client reference"
                                class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none transition-all">
                     {% endif %}
                 </div>
@@ -206,6 +207,18 @@
                         <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ po.po_date or '-' }}</p>
                     {% else %}
                         <input type="date" name="po_date" value="{{ po.po_date if po else now.strftime('%Y-%m-%d') }}" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">
+                    {% endif %}
+                </div>
+
+                <!-- Net Days Override -->
+                <div class="col-span-1">
+                    <label class="block text-sm font-medium text-gray-500">Terms</label>
+                    {% if mode == 'view' %}
+                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ po.net_days if po.net_days is not none else '-' }}</p>
+                    {% else %}
+                        <input type="number" name="net_days" value="{{ po.net_days if (po and po.net_days is not none) else '' }}" 
+                            placeholder="30"
+                            class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">
                     {% endif %}
                 </div>
 
@@ -297,6 +310,19 @@
                     </div>
                     {% endif %}
                 </div>
+
+                <!-- Secondary Ref (Distributor's Customer PO) -->
+                <div class="col-span-2">
+                    <label class="block text-sm font-medium text-gray-500">Customer PO #</label>
+                    {% if mode == 'view' %}
+                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ po.customer_po_number or '-' }}</p>
+                    {% else %}
+                        <input type="text" name="customer_po_number" value="{{ po.customer_po_number if po else '' }}" 
+                            placeholder="End-user reference"
+                            class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">
+                    {% endif %}
+                </div>
+
                 
             </div>
         </section>
