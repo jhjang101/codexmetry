@@ -287,9 +287,10 @@
                         {% if mode == 'view' %}
                             <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ invoice.customer_po_number or '-' }}</p>
                         {% else %}
-                            <input type="text" name="customer_po_number" 
-                                value="{{ invoice.customer_po_number if invoice else customer_po_prefill }}" 
-                                class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">
+                            <input type="text" 
+                                   name="customer_po_number" 
+                                   class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none"
+                                   value="{{ invoice.customer_po_number if invoice.customer_po_number else customer_po_prefill }}">
                         {% endif %}
                     </div>
                 </div>

@@ -147,7 +147,7 @@ def add():
             flash(f"PO {po.po_number or po.order.order_number} has already been fully invoiced.", "warning")
             return redirect(url_for('purchase_orders.view', id=po.id))
         
-        customer_po_prefill = po.customer_po_number if po.customer_po_number else ""
+        customer_po_prefill = po.customer_po_number if po.customer_po_number is not None else ""
         # Use PO override if it exists, else use global metadata default
         metadata = db.session.get(SettingsMetadata, 1)
         net_days_prefill = po.net_days if po.net_days is not None else (metadata.default_net_days if metadata else 30)
@@ -572,7 +572,7 @@ def load_po_details():
     if po_id:
         po = PurchaseOrderService.get_po_by_id(po_id, exclude_invoice_id=invoice_id)
         if po:
-            customer_po_prefill = po.customer_po_number if po.customer_po_number else ""
+            customer_po_prefill = po.customer_po_number if po.customer_po_number is not None else ""
             metadata = db.session.get(SettingsMetadata, 1)
             net_days_prefill = po.net_days if po.net_days is not None else (metadata.default_net_days if metadata else 30)
             payer_prefill_id = po.bill_to_id if po else None
