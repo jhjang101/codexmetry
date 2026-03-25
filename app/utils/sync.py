@@ -12,42 +12,39 @@ def sync_invoice_status(invoice, original_status: str | None = None, proposed_st
     Designed to be called in invoice and payment.
     Returns: {"before": str, "after": str}
     """
+    # 1. Standardize Inputs
     if not original_status:
         original_status = 'draft'
 
-    if not proposed_status:
-        proposed_status = original_status
-
     if not invoice or not invoice.is_active:
-        return {"before": original_status, "after": proposed_status}
-
-    # 1. Fetch Threshold for financial checks
-    settings = db.session.get(SettingsMetadata, 1)
-    threshold = settings.invoice_threshold if settings else 0
-    
-    # 2. Evaluate Payment  (In-memory checks)
-    is_fully_paid = invoice.balance <= threshold
-    has_payments = any(p.is_active for p in invoice.payments)
+        return {"before": original_status, "after": proposed_status or original_status}
 
     # RULE 1: Honor Manual User Override
-    # If the status from the form differs from what was in the database,
     # the user's intent is the highest authority.
     if proposed_status:
         new_status = proposed_status
 
-    # If the user did NOT override, apply automated logic:
-    
-    # RULE 2: If fully paid, move to completed.
-    elif is_fully_paid:
-        new_status = "completed"
-
-    # RULE 3: If not fully paid but has payments, move to open.
-    elif has_payments:
-        new_status = "open"
-
-    # RULE 4: Otherwise, switch back to draft state.
     else:
-        new_status = "draft"
+        # Fetch Threshold for financial checks
+        settings = db.session.get(SettingsMetadata, 1)
+        threshold = settings.invoice_threshold if settings else 0
+        
+        # Evaluate Payment  (In-memory checks)
+        is_fully_paid = invoice.balance <= threshold
+        has_payments = any(p.is_active for p in invoice.payments)
+
+        # If the user did NOT override, apply automated logic:
+        # RULE 2: If fully paid, move to completed.
+        if is_fully_paid:
+            new_status = "completed"
+
+        # RULE 3: If not fully paid but has payments, move to open.
+        elif has_payments:
+            new_status = "open"
+
+        # RULE 4: Otherwise, switch back to draft state.
+        else:
+            new_status = "draft"
     
     # Capture result and stage
     res = {"before": original_status, "after": new_status}
