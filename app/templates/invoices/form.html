@@ -321,13 +321,21 @@
                 <div class="col-span-4">
                     <label class="block text-sm font-medium text-gray-500">Shipping Carrier</label>
                     {% if mode == 'view' %}
-                        <p class="mt-1 block bg-gray-100 border rounded-lg p-2 text-sm">{{ invoice.carrier.type if invoice.carrier else 'Not Specified' }}</p>
+                        <p class="mt-1 block bg-gray-100 border rounded-lg p-2 text-sm">{{ invoice.carrier.type if invoice.carrier else '-' }}</p>
                     {% else %}
                         <div class="relative">
-                            <select name="carrier_id" class="mt-1 block w-full border rounded-lg p-2 text-sm appearance-none bg-transparent cursor-pointer pr-10 focus:ring-1 focus:ring-blue-300 outline-none">
+                            <select name="carrier_id" 
+                                    class="mt-1 block w-full border rounded-lg p-2 text-sm appearance-none bg-transparent cursor-pointer pr-10 focus:ring-1 focus:ring-blue-300 outline-none"
+                                    hx-get="{{ url_for('invoices.update_shipping_logic') }}"
+                                    hx-trigger="change"
+                                    hx-swap="innerHTML"
+                                    hx-target="#ship-date-container"
+                                    hx-include="[name='ship_date']">
                                 <option value="">Select Carrier...</option>
                                 {% for carrier in carriers %}
-                                    <option value="{{ carrier.id }}" {{ 'selected' if (invoice and invoice.carrier_id == carrier.id) else '' }}>{{ carrier.type }}</option>
+                                    <option value="{{ carrier.id }}" {{ 'selected' if (invoice and invoice.carrier_id == carrier.id) else '' }}>
+                                        {{ carrier.type }}
+                                    </option>
                                 {% endfor %}
                             </select>
                             <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-400">
@@ -339,14 +347,14 @@
 
                 <div class="col-span-3">
                     <label class="block text-sm font-medium text-gray-500">Ship Date</label>
-                    {% if mode == 'view' %}
-                        <p class="mt-1 block bg-gray-100 border rounded-lg p-2 text-sm">{{ invoice.ship_date or '-' }}</p>
-                    {% else %}
-                        <input type="date" 
-                               name="ship_date" 
-                               class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none"
-                               value="{{ invoice.ship_date if invoice and invoice.ship_date else invoice.invoice_date if invoice else now.strftime('%Y-%m-%d') }}"> 
-                    {% endif %}
+                    <div id="ship-date-container">
+                        {% if mode == 'view' %}
+                            <p class="mt-1 block bg-gray-100 border rounded-lg p-2 text-sm">{{ invoice.ship_date or '-' }}</p>
+                        {% else %}
+                            {% set ship_date = invoice.ship_date if (invoice and invoice.ship_date) else '' %}
+                            {% include 'invoices/partials/ship_date_input.html' %}
+                        {% endif %}
+                    </div>
                 </div>
 
                 <div class="col-span-4">

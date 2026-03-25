@@ -159,7 +159,7 @@ def add():
                                                      statuses=['open']) if client_id else []
         payers = ClientService.get_all()
 
-        print('po.remaining_items:', po.remaining_items) 
+        print('po.remaining_items:', po.remaining_items) # type: ignore
 
         # Prefill remaining items from this PO
         remaining = po.remaining_items # type: ignore
@@ -206,9 +206,9 @@ def view(id):
 
         print('invoice.total_amount:', invoice.total_amount)
         print('invoice.total_due:', invoice.total_due)
-        print('invoice.remaining_credit:', invoice.remaining_credit)
-        print('invoice.balance:', invoice.balance)
-        print('invoice.po_total_deposit:', invoice.po_total_prepayment)
+        print('invoice.remaining_credit:', invoice.remaining_credit) # type: ignore
+        print('invoice.balance:', invoice.balance) # type: ignore
+        print('invoice.po_total_deposit:', invoice.po_total_prepayment) # type: ignore
 
         # 2. Fetch the Order History (The Tree)
         # We only fetch this in 'view' mode to keep 'edit' and 'add' modes fast.
@@ -232,7 +232,7 @@ def edit(id):
     """Edit mode: handles header updates and item list synchronization."""
     invoice = InvoiceService.get_invoice_by_id(id)
 
-    print('invoice.po_total_prepayment:', invoice.po_total_prepayment)
+    print('invoice.po_total_prepayment:', invoice.po_total_prepayment) # type: ignore
 
 
     if not invoice:
@@ -372,7 +372,7 @@ def print_view(id):
     shipping_total = 0
     
     # 3. Sort items based on document_placement
-    for item in invoice.items:
+    for item in invoice.items: # type: ignore
         item_value = item.quantity * item.billed_unit_price
         placement = item.product.document_placement
 
@@ -387,7 +387,7 @@ def print_view(id):
     # 4. Calculate Payment Due Date
     metadata = db.session.get(SettingsMetadata, 1)
     net_days = metadata.default_net_days if metadata else 30
-    due_date = invoice.invoice_date + timedelta(days=net_days)
+    due_date = invoice.invoice_date + timedelta(days=net_days) # type: ignore
 
     # 5. Change invoice status to open
 
@@ -586,8 +586,8 @@ def load_po_details():
         po_total_prepayment = po.total_prepayment if po else 0 # type: ignore
 
 
-        print('po.total_prepayment:', po.total_prepayment)
-        print('po.remaining_credit:', po.remaining_credit)
+        print('po.total_prepayment:', po.total_prepayment) # type: ignore
+        print('po.remaining_credit:', po.remaining_credit) # type: ignore
 
 
     # 3. Populate payers from Clients for the Bill_To 
@@ -615,6 +615,30 @@ def load_po_details():
     # 6. Trigger math recalculation
     resp.headers['HX-Trigger-After-Swap'] = 'recalculate' # Trigger grand total
     return resp
+
+@bp.route('/update-shipping-logic')
+def update_shipping_logic():
+    """Messenger: Manages Ship Date state based on Carrier selection."""
+    carrier_id = request.args.get('carrier_id')
+    current_ship_date = request.args.get('ship_date')
+
+    print('carrier_id:', carrier_id)
+    print('current_ship_date:', current_ship_date)
+
+    # 1. State: Carrier Cleared
+    if not carrier_id:
+        ship_date = "" # Explicitly clear the field
+    
+    # 2. State: Carrier Selected, User already typed a date
+    elif current_ship_date and current_ship_date.strip():
+        ship_date = current_ship_date # Preserve user entry
+    
+    # 3. State: Carrier Selected, Date is empty
+    else:
+        ship_date = None # Signifies 'Trigger Fallback' in the template
+
+    return render_template('invoices/partials/ship_date_input.html', 
+                           ship_date=ship_date)
 
 # --- INTERNAL HELPERS ---
 

@@ -1,0 +1,8 @@
+<input type="date" 
+       class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none"
+       name="ship_date" 
+       {% if ship_date is none %}
+           value="{{ now.strftime('%Y-%m-%d') }}"
+       {% else %}
+           value="{{ ship_date }}"
+       {% endif %}>
