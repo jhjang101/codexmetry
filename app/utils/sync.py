@@ -32,7 +32,7 @@ def sync_invoice_status(invoice, original_status: str | None = None, proposed_st
     # RULE 1: Honor Manual User Override
     # If the status from the form differs from what was in the database,
     # the user's intent is the highest authority.
-    if proposed_status and proposed_status != original_status:
+    if proposed_status:
         new_status = proposed_status
 
     # If the user did NOT override, apply automated logic:
