@@ -137,11 +137,14 @@ class PurchaseOrderService(BaseService):
         stmt = (
             select(
                 cls.model,
-                (
-                    # (Commitment - Fulfillment) - (Clamped Credit Pool)
-                    (func.coalesce(po_commitment_sub.c.total_po_commitment, 0) - 
-                    func.coalesce(inv_fulfilled_sub.c.total_fulfilled_po_items, 0)) -
-                    clamped_credit_pool
+                case(
+                    (cls.model.status == 'open', 
+                        # (Commitment - Fulfillment) - (Clamped Credit Pool)
+                        (func.coalesce(po_commitment_sub.c.total_po_commitment, 0) - 
+                         func.coalesce(inv_fulfilled_sub.c.total_fulfilled_po_items, 0)) -
+                        clamped_credit_pool
+                    ),
+                    else_=0
                 ).label('to_be_invoiced')
             )
             .join(cls.model.order)
@@ -519,7 +522,10 @@ class PurchaseOrderService(BaseService):
         )
 
         # po.remaining_credit is already clamped at max(0, ...) in existing Step 6
-        po.to_be_invoiced = fulfillment_value - po.remaining_credit
+        to_be_invoiced = fulfillment_value - po.remaining_credit
+        
+        # Attach the attribute conditionally
+        po.to_be_invoiced = to_be_invoiced if po.status == 'open' else 0
 
         # 10. Check is po has active invoices or payment for locking edit.
         po.has_active_invoices = any(inv.is_active for inv in po.invoices)

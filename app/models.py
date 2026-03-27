@@ -420,6 +420,10 @@ class PurchaseOrder(db.Model, AuditMixin):
         Logic: (Total PO Commitment - Real Goods Billed) - max(0, Unapplied Credit Pool)
         This matches the precise backlog math used in the Service and List View.
         """
+        # If not open, no financial backlog exists.
+        if self.status != 'open':
+            return 0
+
         # 1. Total PO Commitment
         commitment = sum(item.quantity * item.agreed_unit_price for item in self.items)
 
