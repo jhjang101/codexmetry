@@ -437,7 +437,7 @@ class PurchaseOrder(db.Model, AuditMixin):
         invoiced_prepayments = 0
 
         for inv in self.invoices:
-            if not inv.is_active:
+            if not inv.is_active or inv.status == 'draft':
                 continue
 
             # Identify if this is a 'Prepayment' invoice

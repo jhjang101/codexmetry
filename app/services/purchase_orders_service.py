@@ -59,6 +59,7 @@ class PurchaseOrderService(BaseService):
             .join(InvoiceItem)
             .where(
                 Invoice.is_active == True,
+                Invoice.status != 'draft',  # NEW: Drafts do not fulfill the PO
                 InvoiceItem.po_item_id != None # Only count linked fulfillments
             )
             .group_by(Invoice.po_id)
@@ -473,6 +474,7 @@ class PurchaseOrderService(BaseService):
             .where(
                 Invoice.po_id == po.id,
                 Invoice.is_active == True,
+                Invoice.status != 'draft', # NEW: Ignore Drafts in the fulfillment map
                 Invoice.id != exclude_invoice_id,
                 InvoiceItem.po_item_id != None
             )

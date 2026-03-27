@@ -52,7 +52,7 @@ class DashboardService:
     def _get_total_ar(cls):
         """Calculates total unpaid balance from all draft and open invoices."""
         pagination = InvoiceService.get_all_with_search(page=1, per_page=1000)
-        return sum(inv.balance for inv in pagination.items if inv.status in ['draft', 'open'])
+        return sum(inv.balance for inv in pagination.items if inv.status in ['open'])
 
     @classmethod
     def _get_net_cash(cls, start_date, end_date):

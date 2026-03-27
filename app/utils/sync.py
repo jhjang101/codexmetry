@@ -78,7 +78,7 @@ def sync_po_status(po_id: int):
     else:
         # 3. Physical fulfillment complete -> Check Invoice Payment Status
         # Look for any active invoices that are still 'open'
-        open_invoices = [invoice for invoice in po.invoices if invoice.is_active and invoice.status != 'completed']
+        open_invoices = [invoice for invoice in po.invoices if invoice.is_active and invoice.status == 'open']
 
         if open_invoices:
             new_status = 'invoiced'
