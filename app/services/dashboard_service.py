@@ -86,14 +86,11 @@ class DashboardService:
     @classmethod
     def _get_dashboard_invoices(cls):
         """All 'draft/open' Invoices + Last 5 'completed'. Max 15."""
-        active_invs = InvoiceService.get_all_with_search(page=1, per_page=15).items
+        active_invs = InvoiceService.get_all_with_search(page=1, per_page=1000).items
         display = [inv for inv in active_invs if inv.status in ['draft', 'open']]
         if len(display) < 15:
-            completed = db.session.execute(
-                select(Invoice).where(Invoice.status == 'completed', Invoice.is_active == True)
-                .order_by(Invoice.invoice_date.desc())
-            ).scalars().all()
-            display.extend(completed)
+            completed = [inv for inv in active_invs if inv.status == 'completed']
+            display.extend(completed[:15])
         return display[:15]
 
     @classmethod
