@@ -11,11 +11,16 @@
         <div class="flex flex-col items-end text-xs">
             <div>
                 <span class="tracking-widest font-semibold text-sm">Client: </span> 
-                <span class="tracking-widest font-semibold text-sm">{{ tree.purchase_order.client.full_display }}</span>
+                <span class="tracking-widest font-semibold text-sm">
+                    {{ tree.purchase_order.client.full_display if tree.purchase_order else tree.quote.client.full_display }}
+                </span>
             </div>
             <div>
                 <span class="tracking-widest">PO Number: </span> 
-                <span class="tracking-widest">{{ tree.purchase_order.po_number }}</span>
+                <span class="tracking-widest {% if tree.purchase_order and not tree.purchase_order.is_active %}line-through text-gray-400{% endif %}">
+                    {{ tree.purchase_order.po_number }}
+                    {% if tree.purchase_order and not tree.purchase_order.is_active %}(Archived){% endif %}
+                </span>
             </div> 
             <div>
                 <span class="tracking-widest">Order Date: </span> 
@@ -52,7 +57,7 @@
 
     <div class="space-y-6">
         <!-- 3. QUOTE TABLE -->
-        {% if tree.quote %}
+        {% if tree.quote and tree.quote.is_active %}
         <div>
             <h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-2">
                 <i class="fa-solid fa-file-lines"></i> Quote Origin
@@ -92,7 +97,7 @@
         {% endif %}
 
         <!-- 4. PURCHASE ORDER TABLE -->
-        {% if tree.purchase_order %}
+        {% if tree.purchase_order and tree.purchase_order.is_active %}
         <div>
             <h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-2">
                 <i class="fa-solid fa-file-invoice-dollar"></i> Purchase Order

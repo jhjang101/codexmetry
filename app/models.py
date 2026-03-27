@@ -421,7 +421,7 @@ class PurchaseOrder(db.Model, AuditMixin):
         This matches the precise backlog math used in the Service and List View.
         """
         # If not open, no financial backlog exists.
-        if self.status != 'open':
+        if not self.is_active or self.status != 'open':
             return 0
 
         # 1. Total PO Commitment
