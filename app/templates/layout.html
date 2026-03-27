@@ -23,9 +23,30 @@
 
     <!-- Left Navigation Panel -->
     <aside class="w-64 bg-slate-900 text-white flex flex-col">
-        <div class="p-6 text-2xl font-bold border-b border-slate-800 flex items-center gap-3">
-            <a href="/">Codexmetry</a>
-        </div>
+        <div class="pl-8 p-4 border-b border-slate-800 bg-slate-950/30">
+        <a href="{{ url_for('dashboard.index') }}" class="flex flex-col items-center gap-3 group">
+            <!-- 1. The Logo Slot -->
+            <div class="w-full flex">
+                {% if metadata and metadata.company_logo %}
+                    <img src="{{ url_for('static', filename='uploads/logos/' + metadata.company_logo) }}" 
+                         class="max-h-8 w-auto object-contain transition-transform group-hover:scale-105" 
+                         alt="Logo">
+                {% else %}
+                    <!-- Ensure you save your provided image to app/static/images/logo_default.png -->
+                    <img src="{{ url_for('static', filename='images/logo_default.svg') }}" 
+                         class="max-h-10 w-auto object-contain transition-transform group-hover:scale-105" 
+                         alt="Codexmetry">
+                {% endif %}
+            </div>
+
+            <!-- 2. The Name Slot -->
+            <div class="overflow-hidden w-full">
+                <p class="text-md font-bold tracking-[0.25em] text-slate-400 group-hover:text-white transition-colors truncate px-2">
+                    {{ metadata.company_name if (metadata and metadata.company_name) else "Codexmetry" }}
+                </p>
+            </div>
+        </a>
+    </div>
         
         <nav class="flex-1 overflow-y-auto py-4">
             <ul class="space-y-1">
@@ -111,7 +132,7 @@
             <h1 class="text-xl font-semibold text-gray-800">{% block header %}{% endblock %}</h1>
             <div class="text-sm text-gray-500">
                 <i class="fa-regular fa-calendar-days mr-2"></i>
-                {{ now.strftime('%Y-%m-%d %-H:%M:%S') }}
+                {{ now.strftime('%Y-%m-%d') }}
             </div>
         </header>
       

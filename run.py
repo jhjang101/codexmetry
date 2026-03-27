@@ -14,7 +14,7 @@ if __name__ == '__main__':
         if not db.session.get(SettingsMetadata, 1):
             seed = SettingsMetadata()
             seed.id = 1
-            seed.company_name = "Codexmetry Corp"
+            seed.company_name = "CODEXMETRY"
             db.session.add(seed)
             db.session.commit()
             print("Database initialized: Tables created and Settings seeded successfully.")
