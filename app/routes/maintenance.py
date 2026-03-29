@@ -38,11 +38,18 @@ def vacuum():
 
 @bp.route('/backup/create', methods=['POST'])
 def create_backup():
-    """Messenger: Creates a new backup and returns the updated table via HTMX."""
+    """Messenger: Creates a new backup and triggers a list refresh."""
     try:
         filename = MaintenanceService.create_backup()
         flash(f"Backup created: {filename}", "success")
+        
+        # SUCCESS: Force a full refresh so the Flash appears and the list updates
+        response = make_response("", 200)
+        response.headers['HX-Redirect'] = url_for('maintenance.index')
+        return response
+
     except Exception as e:
+        # FAILURE: Rollback (if needed), Log, and show OOB error banner
         return handle_post_error(e, "maintenance.create_backup")
 
 @bp.route('/backup/download/<filename>')
