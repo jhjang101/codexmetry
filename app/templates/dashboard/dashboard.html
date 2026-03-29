@@ -7,38 +7,64 @@
 
     <!-- 1. KPI Pulse Bar -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <!-- Backlog -->
-        <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-amber-500 flex flex-col justify-between">
-            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Contractual Backlog</span>
-            <span class="text-2xl font-bold text-slate-800">{{ data.kpis.backlog | usd }}</span>
-            <span class="text-[10px] text-amber-600 font-medium mt-1">Unbilled PO Value</span>
+        <!-- To Be Invoiced -->
+        <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-amber-500 flex flex-col ">
+            <span class="text-[10px] font-bold text-gray-600 uppercase tracking-widest">To Be Invoiced</span>
+            <span class="text-2xl font-bold text-slate-800">{{ data.kpis.to_be_invoiced | usd }}</span>
+            <span class="text-[10px] text-amber-600 font-medium mt-1">Unbilled PO Balance</span>
         </div>
 
         <!-- Accounts Receivable -->
-        <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-blue-500 flex flex-col justify-between">
-            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Accounts Receivable</span>
-            <span class="text-2xl font-bold text-slate-800">{{ data.kpis.ar | usd }}</span>
-            <span class="text-[10px] text-blue-600 font-medium mt-1">Unpaid Invoices</span>
+        <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-blue-500 flex flex-col ">
+            <span class="text-[10px] font-bold text-gray-600 uppercase tracking-widest">To Be Received</span>
+            <span class="text-2xl font-bold text-slate-800">{{ data.kpis.balance | usd }}</span>
+            <span class="text-[10px] text-blue-600 font-medium mt-1">Unpaid Invoice Balance</span>
         </div>
 
-        <!-- MTD Cash Flow -->
-        <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 {{ 'border-green-500' if data.kpis.mtd_cash >= 0 else 'border-red-500' }} flex flex-col justify-between">
-            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">MTD Cash Flow</span>
-            <span class="text-2xl font-bold {{ 'text-green-700' if data.kpis.mtd_cash >= 0 else 'text-red-700' }}">
-                {{ data.kpis.mtd_cash | usd }}
+        <!-- MTD Cash Summary -->
+        <div class="bg-white p-4 pb-1 rounded-xl shadow-sm border-l-4 {{ 'border-green-500' if data.kpis.mtd.net >= 0 else 'border-red-500' }} flex flex-col ">
+            <div class="flex justify-between items-start">
+                <span class="text-[10px] font-bold text-gray-600 uppercase tracking-widest">Net Cash</span>
+                <span class="text-[10px] font-bold text-gray-600 uppercase">This Month</span>
+            </div>
+            <span class="text-2xl font-bold {{ 'text-green-700' if data.kpis.mtd.net >= 0 else 'text-red-700' }}">
+                {{ data.kpis.mtd.net | usd }}
             </span>
-            <span class="text-[10px] text-gray-500 font-medium mt-1">This Month (Received - Paid)</span>
+            <div class="grid grid-cols-2 mt-1 border-t border-gray-50">
+                <div class="flex flex-col">
+                    <span class="text-[9px] text-gray-400 uppercase font-bold">Payments Received</span>
+                    <span class="text-sm font-bold text-green-600">{{ data.kpis.mtd.received | usd }}</span>
+                </div>
+                <div class="flex flex-col text-right">
+                    <span class="text-[9px] text-gray-400 uppercase font-bold">Expenses Spent</span>
+                    <span class="text-sm font-bold text-red-600">{{ data.kpis.mtd.spent | usd }}</span>
+                </div>
+            </div>
         </div>
 
-        <!-- YTD Cash Flow -->
-        <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 {{ 'border-green-500' if data.kpis.ytd_cash >= 0 else 'border-red-500' }} flex flex-col justify-between">
-            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">YTD Cash Flow</span>
-            <span class="text-2xl font-bold {{ 'text-green-700' if data.kpis.ytd_cash >= 0 else 'text-red-700' }}">
-                {{ data.kpis.ytd_cash | usd }}
+        <!-- YTD Cash Summary -->
+        <div class="bg-white p-4 pb-1 rounded-xl shadow-sm border-l-4 {{ 'border-green-500' if data.kpis.ytd.net >= 0 else 'border-red-500' }} flex flex-col ">
+            <div class="flex justify-between items-start">
+                <span class="text-[10px] font-bold text-gray-600 uppercase tracking-widest">Net Cash</span>
+                <span class="text-[10px] font-bold text-gray-600 uppercase">This Year</span>
+            </div>
+            <span class="text-2xl font-bold {{ 'text-green-700' if data.kpis.ytd.net >= 0 else 'text-red-700' }}">
+                {{ data.kpis.ytd.net | usd }}
             </span>
-            <span class="text-[10px] text-gray-500 font-medium mt-1">This Year (Received - Paid)</span>
+            <div class="grid grid-cols-2 mt-1 border-t border-gray-50">
+                <div class="flex flex-col">
+                    <span class="text-[9px] text-gray-400 uppercase font-bold">Payments Received</span>
+                    <span class="text-sm font-bold text-green-600">{{ data.kpis.ytd.received | usd }}</span>
+                </div>
+                <div class="flex flex-col text-right">
+                    <span class="text-[9px] text-gray-400 uppercase font-bold">Expenses Spent</span>
+                    <span class="text-sm font-bold text-red-600">{{ data.kpis.ytd.spent | usd }}</span>
+                </div>
+            </div>
         </div>
+
     </div>
+
 
     <!-- 2. Operational Grid -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -49,7 +75,9 @@
             <!-- Table: Outstanding Purchase Orders -->
             <section class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 <div class="px-4 py-3 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-                    <h3 class="text-xs font-bold text-gray-600 uppercase tracking-wider">Outstanding POs</h3>
+                    <h3 class="text-xs font-bold text-gray-600 uppercase tracking-wider">
+                        <i class="fa-solid fa-file-invoice-dollar"></i> Outstanding POs
+                    </h3>
                     <a href="{{ url_for('purchase_orders.index') }}" class="text-[10px] font-bold text-blue-600 hover:underline">View All</a>
                 </div>
                 <table class="min-w-full divide-y divide-gray-100">
@@ -58,7 +86,7 @@
                             <th class="px-4 py-2">Status</th>
                             <th class="px-4 py-2">PO #</th>
                             <th class="px-4 py-2">Client</th>
-                            <th class="px-4 py-2 text-right">Backlog</th>
+                            <th class="px-4 py-2 text-right">To Be Invoiced</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-50">
@@ -77,7 +105,7 @@
                                     {{ po.status }}
                                 </span>
                             </td>
-                            <td class="px-4 py-2 font-mono font-medium text-gray-700">{{ po.po_number or po.order.order_number }}</td>
+                            <td class="px-4 py-2 text-gray-600">{{ po.po_number or po.order.order_number }}</td>
                             <td class="px-4 py-2 text-gray-600 truncate max-w-[150px]">{{ po.client.company_name }}</td>
                             <td class="px-4 py-2 text-right font-bold text-amber-600">{{ po.to_be_invoiced | usd if po.to_be_invoiced else '-'}}</td>
                         </tr>
@@ -89,7 +117,9 @@
             <!-- Table: Recent Expenses -->
             <section class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 <div class="px-4 py-3 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-                    <h3 class="text-xs font-bold text-gray-600 uppercase tracking-wider">Recent Expenses</h3>
+                    <h3 class="text-xs font-bold text-gray-600 uppercase tracking-wider">
+                        <i class="fa-solid fa-credit-card"></i> Recent Expenses
+                    </h3>
                     <a href="{{ url_for('expenses.index') }}" class="text-[10px] font-bold text-blue-600 hover:underline">View All</a>
                 </div>
                 <table class="min-w-full divide-y divide-gray-100">
@@ -97,8 +127,8 @@
                         <tr class="text-[10px] font-bold text-gray-400 uppercase text-left">
                             <th class="px-4 py-2">Vendor</th>
                             <th class="px-4 py-2">Category</th>
-                            <th class="px-4 py-2 text-right">Amount</th>
                             <th class="px-4 py-2">Date</th>
+                            <th class="px-4 py-2 text-right">Amount</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-50">
@@ -106,17 +136,14 @@
                         <tr class="hover:bg-blue-50/30 transition-colors cursor-pointer text-xs"
                             hx-get="{{ url_for('expenses.view', id=exp.id) }}" hx-target="body" hx-push-url="true">
                             <td class="px-4 py-2 font-medium text-gray-700 truncate max-w-[120px]">{{ exp.vendor.company_name }}</td>
-                            <td class="px-4 py-2 text-gray-500 text-[10px] uppercase font-bold">{{ exp.category.type if exp.category else '-' }}</td>
+                            <td class="px-4 py-2 text-gray-600">{{ exp.category.type if exp.category else '-' }}</td>
+                            <td class="px-4 py-2 text-gray-600">{{ exp.expense_date }}</td>
                             <td class="px-4 py-2 text-right font-bold text-red-600">{{ exp.total_amount | usd }}</td>
-                            <td class="px-4 py-2 text-gray-400 text-[10px]">{{ exp.expense_date }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </section>
-
-
-
 
         </div>
 
@@ -126,7 +153,9 @@
             <!-- Table: Unpaid Invoices -->
             <section class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 <div class="px-4 py-3 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-                    <h3 class="text-xs font-bold text-gray-600 uppercase tracking-wider">Outstanding Invoices</h3>
+                    <h3 class="text-xs font-bold text-gray-600 uppercase tracking-wider">
+                        <i class="fa-solid fa-file-invoice"></i> Outstanding Invoices
+                    </h3>
                     <a href="{{ url_for('invoices.index') }}" class="text-[10px] font-bold text-blue-600 hover:underline">View All</a>
                 </div>
                 <table class="min-w-full divide-y divide-gray-100">
@@ -148,7 +177,7 @@
                                     {{ inv.status }}
                                 </span>
                             </td>
-                            <td class="px-4 py-2 font-mono font-medium text-gray-700">{{ inv.invoice_number }}</td>
+                            <td class="px-4 py-2 text-gray-600">{{ inv.invoice_number }}</td>
                             <td class="px-4 py-2 text-gray-600 truncate max-w-[150px]">{{ inv.client.company_name }}</td>
                             <td class="px-4 py-2 text-right font-bold text-blue-700">{{ inv.balance | usd }}</td>
                         </tr>
@@ -161,14 +190,14 @@
 
             <!-- Table: Recent Activity (Forensic Feed) -->
             <section class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <div class="px-4 py-3 border-b border-gray-100 flex justify-between items-center bg-slate-900">
-                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                        <i class="fa-solid fa-clock-rotate-left"></i> Forensic Feed
+                <div class="px-4 py-3 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                    <h3 class="text-xs font-bold text-gray-600 uppercase tracking-wider flex items-center gap-2">
+                        <i class="fa-solid fa-clock-rotate-left"></i> Recent Activity
                     </h3>
-                    <span class="text-[9px] text-slate-500 font-bold uppercase tracking-tighter">Live Audit Trail</span>
+                    <span class="text-[10px] font-bold text-gray-400">Change History</span>
                 </div>
                 <table class="min-w-full divide-y divide-gray-100">
-                    <thead class="bg-gray-50/50">
+                    <thead class="bg-white">
                         <tr class="text-[10px] font-bold text-gray-400 uppercase text-left">
                             <th class="px-4 py-2">User</th>
                             <th class="px-4 py-2">Action</th>
@@ -180,13 +209,13 @@
                         {% for log in data.activity %}
                         <tr class="hover:bg-gray-50 transition-colors text-xs">
                             <!-- User -->
-                            <td class="px-4 py-2 font-bold text-slate-700">
+                            <td class="px-4 py-2 font-medium text-gray-700">
                                 {{ log.user.username if log.user else 'System' }}
                             </td>
 
                             <!-- Action -->
                             <td class="px-4 py-2">
-                                <span class="text-[9px] font-bold uppercase tracking-tighter
+                                <span class="text-[9px] leading-none font-medium uppercase tracking-tighter
                                     {% if log.action == 'CREATE' %}text-green-600
                                     {% elif log.action == 'ARCHIVE' %}text-red-600
                                     {% else %}text-blue-600{% endif %}">
@@ -196,12 +225,12 @@
 
                             <!-- Target: Type + Label -->
                             <td class="px-4 py-2 text-gray-600">
-                                <span class="text-gray-400 font-medium">{{ log.target_type }}:</span>
-                                <span class="font-bold text-blue-700">{{ log.target_label or log.target_id }}</span>
+                                <span class="">{{ log.target_type }}:</span>
+                                <span class="font-medium text-blue-700">{{ log.target_label or log.target_id }}</span>
                             </td>
 
                             <!-- Date -->
-                            <td class="px-4 py-2 text-right text-gray-400 font-mono text-[10px]">
+                            <td class="px-4 py-2 text-right text-gray-600">
                                 {{ (log.timestamp | localize).strftime('%m/%d %H:%M') }}
                             </td>
                         </tr>

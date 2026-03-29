@@ -24,10 +24,10 @@ class DashboardService:
 
         # 2. Fetch KPIs
         kpis = {
-            'backlog': cls._get_total_backlog(),
-            'ar': cls._get_total_ar(),
-            'mtd_cash': cls._get_net_cash(start_of_month, now),
-            'ytd_cash': cls._get_net_cash(start_of_year, now)
+            'to_be_invoiced': cls._get_total_to_be_invoiced(),
+            'balance': cls._get_total_balance(),
+            'mtd': cls._get_cash_summary(start_of_month, now),
+            'ytd': cls._get_cash_summary(start_of_year, now)
         }
 
         # 3. Fetch Operational Tables (Limited to 15 rows)
@@ -42,32 +42,36 @@ class DashboardService:
     # --- PRIVATE HELPERS: KPI MATH ---
 
     @classmethod
-    def _get_total_backlog(cls):
+    def _get_total_to_be_invoiced(cls):
         """Calculates total unbilled revenue from all open POs."""
         # We call the existing search logic but for all open items
         pagination = PurchaseOrderService.get_all_with_search(page=1, per_page=1000)
         return sum(po.to_be_invoiced for po in pagination.items if po.status == 'open')
 
     @classmethod
-    def _get_total_ar(cls):
+    def _get_total_balance(cls):
         """Calculates total unpaid balance from all draft and open invoices."""
         pagination = InvoiceService.get_all_with_search(page=1, per_page=1000)
         return sum(inv.balance for inv in pagination.items if inv.status in ['open'])
 
     @classmethod
-    def _get_net_cash(cls, start_date, end_date):
-        """Calculates Net Cash Flow: (Payments Received) - (Expenses Paid)."""
-        pay_sum = db.session.execute(
+    def _get_cash_summary(cls, start_date, end_date):
+        """Calculates Received, Paid, and Net for a given period."""
+        received = db.session.execute(
             select(func.sum(Payment.amount))
-            .where(Payment.is_active == True, Payment.payment_date >= start_date.date())
+            .where(Payment.is_active == True, Payment.payment_date.between(start_date.date(), end_date.date()))
         ).scalar() or 0
 
-        exp_sum = db.session.execute(
+        spent = db.session.execute(
             select(func.sum(Expense.total_amount))
-            .where(Expense.is_active == True, Expense.expense_date >= start_date.date())
+            .where(Expense.is_active == True, Expense.status == 'completed', Expense.expense_date.between(start_date.date(), end_date.date()))
         ).scalar() or 0
 
-        return pay_sum - exp_sum
+        return {
+            'received': received,
+            'spent': spent,
+            'net': received - spent
+        }
 
     # --- PRIVATE HELPERS: TABLE FETCHING ---
 
@@ -85,13 +89,21 @@ class DashboardService:
 
     @classmethod
     def _get_dashboard_invoices(cls):
-        """All 'draft/open' Invoices + Last 5 'completed'. Max 15."""
-        active_invs = InvoiceService.get_all_with_search(page=1, per_page=1000).items
-        display = [inv for inv in active_invs if inv.status in ['draft', 'open']]
-        if len(display) < 15:
-            completed = [inv for inv in active_invs if inv.status == 'completed']
-            display.extend(completed[:15])
-        return display[:15]
+        """Fetches exactly 15 Invoices. priority-sorted by Status (Open -> Draft -> Completed)."""
+        # active_invs = InvoiceService.get_all_with_search(page=1, per_page=1000).items
+        # display = [inv for inv in active_invs if inv.status in ['draft', 'open']]
+        # if len(display) < 15:
+        #     completed = [inv for inv in active_invs if inv.status == 'completed']
+        #     display.extend(completed[:15])
+        # return display[:15]
+        pagination = InvoiceService.get_all_with_search(
+            page=1, 
+            per_page=15, 
+            sort_by='status', 
+            direction='desc'
+        )
+        return pagination.items
+
 
     @classmethod
     def _get_recent_expenses(cls, limit=10):
