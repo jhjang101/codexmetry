@@ -79,18 +79,12 @@ def add():
 
 @bp.route('/view/<int:id>')
 def view(id):
-    try:
-        vendor = VendorService.get_by_id(id)
-        if not vendor:
-            flash("Vendor not found.", "error")
-            return redirect(url_for('vendors.index'))
-        
-        history = AuditLogService.get_for_entity('Vendor', id)
-        
-    except ValueError as e:
-        db.session.rollback()
-        flash(f"Error loading vendor: {str(e)}", 'error')
+    vendor = VendorService.get_by_id(id)
+    if not vendor:
+        flash("Vendor not found.", "error")
         return redirect(url_for('vendors.index'))
+    
+    history = AuditLogService.get_for_entity('Vendor', id)
     
     return render_template('vendors/form.html', mode='view', vendor=vendor, history=history)
 

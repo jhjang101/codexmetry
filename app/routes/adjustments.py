@@ -93,17 +93,12 @@ def add():
 
 @bp.route('/view/<int:id>')
 def view(id):
-    try:
-        adjustment = AdjustmentService.get_by_id(id)
-        if not adjustment:
-            flash("Adjustment not found.", "error")
-            return redirect(url_for('adjustments.index'))
-        
-        history = AuditLogService.get_for_entity('Adjustment', id)
-
-    except Exception as e:
-        flash(f"Error loading adjustment: {str(e)}", "error")
+    adjustment = AdjustmentService.get_by_id(id)
+    if not adjustment:
+        flash("Adjustment not found.", "error")
         return redirect(url_for('adjustments.index'))
+    
+    history = AuditLogService.get_for_entity('Adjustment', id)
 
     return render_template('adjustments/form.html', mode='view', adjustment=adjustment, history=history)
 

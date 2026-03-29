@@ -89,18 +89,12 @@ def add():
 
 @bp.route('/view/<int:id>')
 def view(id):
-    try:
-        product = ProductService.get_product_by_id(id)
-        if not product:
-            flash("Product not found.", "error")
-            return redirect(url_for('products.index'))
-        
-        history = AuditLogService.get_for_entity('Product', id)
-        
-    except ValueError as e:
-        db.session.rollback()
-        flash(f"Error loading product: {str(e)}", 'error')
+    product = ProductService.get_product_by_id(id)
+    if not product:
+        flash("Product not found.", "error")
         return redirect(url_for('products.index'))
+    
+    history = AuditLogService.get_for_entity('Product', id)
 
     return render_template('products/form.html', mode='view', product=product, history=history)
 

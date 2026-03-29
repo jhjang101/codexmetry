@@ -175,34 +175,26 @@ def add():
 @bp.route('/view/<int:id>')
 def view(id):
     # Use augmented fetcher to get calculated financial attributes
-    try:
-        po = PurchaseOrderService.get_po_by_id(id)
-        if not po:
-            flash("Purchase Order not found.", "error")
-            return redirect(url_for('purchase_orders.index'))
-
-        print('po.total_amount:', po.total_amount)
-        print('po.to_be_invoiced:', po.to_be_invoiced)
-        print('po.total_prepayment:', po.total_prepayment)
-        print('po.remaining_credit:', po.remaining_credit)
-        for item in po.items:
-            print('item.product.name:', item.product.name)
-            print('item.quantity:', item.quantity)
-            print('item.unit_price:', item.agreed_unit_price)
-
-        print('po.balance_tobe_invoiced:', po.balance_tobe_invoiced)
-
-
-        tree = OrderService.get_deal_tree(po.order_id)
-        history = AuditLogService.get_for_entity('PurchaseOrder', id)
-
-        return render_template('purchase_orders/form.html', mode='view', po=po, tree=tree, history=history)
-
-    except Exception as e:
-        db.session.rollback()
-        flash(f"Error loading purchase order: {str(e)}", "error")
+    po = PurchaseOrderService.get_po_by_id(id)
+    if not po:
+        flash("Purchase Order not found.", "error")
         return redirect(url_for('purchase_orders.index'))
 
+    print('po.total_amount:', po.total_amount)
+    print('po.to_be_invoiced:', po.to_be_invoiced)
+    print('po.total_prepayment:', po.total_prepayment)
+    print('po.remaining_credit:', po.remaining_credit)
+    for item in po.items:
+        print('item.product.name:', item.product.name)
+        print('item.quantity:', item.quantity)
+        print('item.unit_price:', item.agreed_unit_price)
+
+    print('po.balance_tobe_invoiced:', po.balance_tobe_invoiced)
+
+    tree = OrderService.get_deal_tree(po.order_id)
+    history = AuditLogService.get_for_entity('PurchaseOrder', id)
+
+    return render_template('purchase_orders/form.html', mode='view', po=po, tree=tree, history=history)
 
 @bp.route('/edit/<int:id>', methods=['GET', 'POST'])
 @role_required(['admin', 'user'])

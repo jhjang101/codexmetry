@@ -80,18 +80,12 @@ def add():
 
 @bp.route('/view/<int:id>')
 def view(id):
-    try:
-        client = ClientService.get_by_id(id)
-        if not client:
-            flash("Client not found.", "error")
-            return redirect(url_for('clients.index'))
-        
-        history = AuditLogService.get_for_entity('Client', id)
-        
-    except ValueError as e:
-        db.session.rollback()
-        flash(f"Error loading client: {str(e)}", 'error')
+    client = ClientService.get_by_id(id)
+    if not client:
+        flash("Client not found.", "error")
         return redirect(url_for('clients.index'))
+    
+    history = AuditLogService.get_for_entity('Client', id)
 
     return render_template('clients/form.html', mode='view', client=client, history=history)
 

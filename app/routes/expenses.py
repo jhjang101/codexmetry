@@ -179,18 +179,13 @@ def add():
 
 @bp.route('/view/<int:id>')
 def view(id):
-    try:
-        expense = ExpenseService.get_expense_by_id(id)
-        if not expense:
-            flash("Expense not found.", "error")
-            return redirect(url_for('expenses.index'))
-        
-        tree = OrderService.get_deal_tree(expense.order_id)
-        history = AuditLogService.get_for_entity('Expense', id)
-
-    except Exception as e:
-        flash(f"Error loading expense: {str(e)}", "error")
+    expense = ExpenseService.get_expense_by_id(id)
+    if not expense:
+        flash("Expense not found.", "error")
         return redirect(url_for('expenses.index'))
+    
+    tree = OrderService.get_deal_tree(expense.order_id)
+    history = AuditLogService.get_for_entity('Expense', id)
 
     return render_template('expenses/form.html', mode='view', expense=expense, tree=tree, history=history)
 

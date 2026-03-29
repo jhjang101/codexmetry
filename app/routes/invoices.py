@@ -196,35 +196,29 @@ def add():
 
 @bp.route('/view/<int:id>')
 def view(id):
-    try:
-        # 1. Fetch the primary Invoice record (Calculates specific balance/pool)
-        invoice = InvoiceService.get_invoice_by_id(id)
-        if not invoice:
-            flash("Invoice not found.", "error")
-            return redirect(url_for('invoices.index'))
-
-
-        print('invoice.total_amount:', invoice.total_amount)
-        print('invoice.total_due:', invoice.total_due)
-        print('invoice.remaining_credit:', invoice.remaining_credit) # type: ignore
-        print('invoice.balance:', invoice.balance) # type: ignore
-        print('invoice.po_total_deposit:', invoice.po_total_prepayment) # type: ignore
-
-        # 2. Fetch the Order History (The Tree)
-        # We only fetch this in 'view' mode to keep 'edit' and 'add' modes fast.
-        tree = OrderService.get_deal_tree(invoice.order_id)
-        history = AuditLogService.get_for_entity('Invoice', id)
-
-
-        return render_template('invoices/form.html', 
-                               mode='view', 
-                               invoice=invoice, 
-                               tree=tree,
-                               history=history)
-
-    except Exception as e:
-        flash(f"Error loading invoice: {str(e)}", "error")
+    # 1. Fetch the primary Invoice record (Calculates specific balance/pool)
+    invoice = InvoiceService.get_invoice_by_id(id)
+    if not invoice:
+        flash("Invoice not found.", "error")
         return redirect(url_for('invoices.index'))
+
+
+    print('invoice.total_amount:', invoice.total_amount)
+    print('invoice.total_due:', invoice.total_due)
+    print('invoice.remaining_credit:', invoice.remaining_credit) # type: ignore
+    print('invoice.balance:', invoice.balance) # type: ignore
+    print('invoice.po_total_deposit:', invoice.po_total_prepayment) # type: ignore
+
+    # 2. Fetch the Order History (The Tree)
+    # We only fetch this in 'view' mode to keep 'edit' and 'add' modes fast.
+    tree = OrderService.get_deal_tree(invoice.order_id)
+    history = AuditLogService.get_for_entity('Invoice', id)
+
+    return render_template('invoices/form.html', 
+                            mode='view', 
+                            invoice=invoice, 
+                            tree=tree,
+                            history=history)
 
 @bp.route('/edit/<int:id>', methods=['GET', 'POST'])
 @role_required(['admin', 'user'])

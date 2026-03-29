@@ -48,6 +48,7 @@ def index():
         direction=direction
     )
     
+    # if searches, HTMX only replace list template.
     if request.headers.get('HX-Request'):
         return render_template('quotes/partials/list.html', pagination=pagination)
     
@@ -136,21 +137,15 @@ def add():
 
 @bp.route('/view/<int:id>')
 def view(id):
-    try:
-        quote = QuoteService.get_quote_by_id(id)
-        if not quote:
-            flash("Quote not found.", "error")
-            return redirect(url_for('quotes.index'))
-        
-        tree = OrderService.get_deal_tree(quote.order_id)
-        history = AuditLogService.get_for_entity('Quote', id)
-
-        return render_template('quotes/form.html', mode='view', quote=quote, tree=tree, history=history)
-
-    except Exception as e:
-        flash(f"Error loading quote: {str(e)}", "error")
+    quote = QuoteService.get_quote_by_id(id)
+    if not quote:
+        flash("Quote not found.", "error")
         return redirect(url_for('quotes.index'))
+    
+    tree = OrderService.get_deal_tree(quote.order_id)
+    history = AuditLogService.get_for_entity('Quote', id)
 
+    return render_template('quotes/form.html', mode='view', quote=quote, tree=tree, history=history)
 
 @bp.route('/edit/<int:id>', methods=['GET', 'POST'])
 @role_required(['admin', 'user'])
@@ -172,6 +167,10 @@ def edit(id):
                 'note': request.form.get('note')
             }
 
+
+            print(client.company_name)
+
+
             # 2. Parse Items
             items = _parse_items_form(request.form)
 
@@ -188,8 +187,13 @@ def edit(id):
             response.headers['HX-Redirect'] = url_for('quotes.view', id=id)
             return response
         
-        except ValueError as e:
+        except Exception as e:
             db.session.rollback()
+
+
+            print(type(e).__name__)
+
+
             resp = make_response(render_template('partials/error_notification.html', message=str(e)), 200)
             resp.headers['HX-Reswap'] = 'none'
             return resp

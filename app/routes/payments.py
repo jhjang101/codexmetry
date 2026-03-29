@@ -208,34 +208,28 @@ def add():
 
 @bp.route('/view/<int:id>')
 def view(id):
-    try:
-        payment = PaymentService.get_payment_by_id(id)
-        if not payment:
-            flash("Payment not found.", "error")
-            return redirect(url_for('payments.index'))
-
-        # # Identifiers for title display
-        # if payment.invoice:
-        #     payment_number = f'{payment.invoice.invoice_number}'
-        # elif payment.purchase_order.po_number:
-        #     payment_number = f'{payment.purchase_order.po_number}'
-        # else:
-        #     payment_number = f'{payment.order.order_number}'
-
-        tree = OrderService.get_deal_tree(payment.order_id)
-        history = AuditLogService.get_for_entity('Payment', id)
-
-        return render_template('payments/form.html', 
-                            mode='view', 
-                            payment=payment,
-                            # payment_number=payment_number,
-                            tree=tree,
-                            history=history)
-
-    except Exception as e:
-        flash(f"Error loading payment: {str(e)}", "error")
+    payment = PaymentService.get_payment_by_id(id)
+    if not payment:
+        flash("Payment not found.", "error")
         return redirect(url_for('payments.index'))
 
+    # # Identifiers for title display
+    # if payment.invoice:
+    #     payment_number = f'{payment.invoice.invoice_number}'
+    # elif payment.purchase_order.po_number:
+    #     payment_number = f'{payment.purchase_order.po_number}'
+    # else:
+    #     payment_number = f'{payment.order.order_number}'
+
+    tree = OrderService.get_deal_tree(payment.order_id)
+    history = AuditLogService.get_for_entity('Payment', id)
+
+    return render_template('payments/form.html', 
+                        mode='view', 
+                        payment=payment,
+                        # payment_number=payment_number,
+                        tree=tree,
+                        history=history)
 
 @bp.route('/edit/<int:id>', methods=['GET', 'POST'])
 @role_required(['admin', 'user'])
