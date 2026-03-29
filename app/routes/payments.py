@@ -13,6 +13,7 @@ from ..utils.money import parse_to_cents
 from ..utils.docs import generate_doc_number
 from ..utils.sync import sync_invoice_status, sync_po_status
 from ..utils.auth import role_required
+from ..utils.errors import handle_post_error
 from ..extensions import db
 from datetime import datetime
 import time
@@ -96,13 +97,8 @@ def add():
             return response
         
         
-        except ValueError as e:
-            db.session.rollback()
-            # Return the OOB Error partial
-            resp = make_response(render_template('partials/error_notification.html', message=str(e)), 200)
-            # Tell HTMX NOT to swap the form, preserving all user input
-            resp.headers['HX-Reswap'] = 'none'
-            return resp
+        except Exception as e:
+            return handle_post_error(e, "payments.add")
         
     # GET: Prepare form data from PO or Invoice
     referrer = request.referrer
@@ -287,11 +283,8 @@ def edit(id):
             response.headers['HX-Redirect'] = url_for('payments.view', id=id)
             return response
         
-        except ValueError as e:
-            db.session.rollback()
-            resp = make_response(render_template('partials/error_notification.html', message=str(e)), 200)
-            resp.headers['HX-Reswap'] = 'none'
-            return resp
+        except Exception as e:
+            return handle_post_error(e, "payments.edit")
     
     # GET: Prepare Context
     clients = ClientService.get_all()
@@ -329,8 +322,7 @@ def archive(id):
         payment, invoice_status, po_status = PaymentService.archive_payment(id)
         
         if not payment:
-            flash(f'Payment not found.', 'error')
-            return redirect(url_for('payments.index'))
+            raise ValueError("Payment not found.")
         
         # 2. Success Flashes
         flash(f'Payment for {payment.payment_number} moved to archives.', 'warning')
@@ -340,13 +332,11 @@ def archive(id):
         if po_status and po_status['before'] != po_status['after']:
             po_name = payment.purchase_order.po_number or payment.order.order_number
             flash(f"Associated PO {po_name} status updated: {po_status['before'].upper()} → {po_status['after'].upper()}", "success")
-
-    except ValueError as e:
-        db.session.rollback()
-        flash(str(e), "error")
-        return redirect(url_for('payments.view', id=id))
-
-    return redirect(url_for('payments.index'))
+        
+        return redirect(url_for('payments.index'))
+    
+    except Exception as e:
+        return handle_post_error(e, "payments.archive")
 
 # --- HTMX CASCADE ROUTES ---
 

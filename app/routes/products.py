@@ -5,6 +5,7 @@ from ..services.settings_service import ProductCategoryService
 from ..services.audit_service import AuditLogService
 from ..utils.images import save_image
 from ..utils.auth import role_required
+from ..utils.errors import handle_post_error
 from ..extensions import db
 
 bp = Blueprint('products', __name__)
@@ -75,13 +76,8 @@ def add():
             response.headers['HX-Redirect'] = url_for('products.view', id=new_product.id)
             return response
         
-        except ValueError as e:
-            db.session.rollback()
-            # Return the OOB Error partial
-            resp = make_response(render_template('partials/error_notification.html', message=str(e)), 200)
-            # Tell HTMX NOT to swap the form, preserving all user input
-            resp.headers['HX-Reswap'] = 'none'
-            return resp
+        except Exception as e:
+            return handle_post_error(e, "products.add")
 
     # GET: Load categories for the dropdown
     categories = ProductCategoryService.get_all()
@@ -136,11 +132,8 @@ def edit(id):
             response.headers['HX-Redirect'] = url_for('products.view', id=id)
             return response
         
-        except ValueError as e:
-            db.session.rollback()
-            resp = make_response(render_template('partials/error_notification.html', message=str(e)), 200)
-            resp.headers['HX-Reswap'] = 'none'
-            return resp
+        except Exception as e:
+            return handle_post_error(e, "products.edit")
 
     # GET: Load categories for the dropdown
     categories = ProductCategoryService.get_all()
@@ -152,13 +145,10 @@ def archive(id):
     try:
         product = ProductService.archive_product(id)
         if not product:
-            flash("Product not found.", "error")
-            return redirect(url_for('products.index'))
+            raise ValueError("Product not found.")
         
         flash(f'Product {product.name} has been moved to archives.', 'warning')
-        
-    except ValueError as e:
-        db.session.rollback()
-        flash(str(e), 'error')
-
-    return redirect(url_for('products.index'))
+        return redirect(url_for('products.index'))
+    
+    except Exception as e:
+        return handle_post_error(e, "products.archive")

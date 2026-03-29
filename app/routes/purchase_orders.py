@@ -10,6 +10,7 @@ from ..services.attachment_service import AttachmentService
 from ..services.audit_service import AuditLogService
 from ..utils.money import parse_to_cents
 from ..utils.auth import role_required
+from ..utils.errors import handle_post_error
 from ..extensions import db
 from datetime import datetime
 import time 
@@ -91,13 +92,8 @@ def add():
             response.headers['HX-Redirect'] = url_for('purchase_orders.view', id=new_po.id)
             return response
         
-        except ValueError as e:
-            db.session.rollback()
-            # Return the OOB Error partial
-            resp = make_response(render_template('partials/error_notification.html', message=str(e)), 200)
-            # Tell HTMX NOT to swap the form, preserving all user input
-            resp.headers['HX-Reswap'] = 'none'
-            return resp
+        except Exception as e:
+            return handle_post_error(e, "purchase_orders.add")
 
     # GET: Prepare form data from Quote or Client
     referrer = request.referrer
@@ -254,11 +250,8 @@ def edit(id):
             response.headers['HX-Redirect'] = url_for('purchase_orders.view', id=id)
             return response
         
-        except ValueError as e:
-            db.session.rollback()
-            resp = make_response(render_template('partials/error_notification.html', message=str(e)), 200)
-            resp.headers['HX-Reswap'] = 'none'
-            return resp
+        except Exception as e:
+            return handle_post_error(e, "purchase_orders.edit")
 
     # GET: Prepare form data
     clients = ClientService.get_all()
@@ -279,24 +272,29 @@ def edit(id):
 @role_required(['admin']) # Only Admin can delete
 def archive(id):
     """Specialized archive for PO with dependency ripples."""
-    po, has_payments = PurchaseOrderService.archive_po(id)
+    try:
+        po, has_payments = PurchaseOrderService.archive_po(id)
 
-    if po:
-        # Use the CDX fallback for the flash message
-        po_name = po.po_number or po.order.order_number
-        flash(f'PO {po_name} and all linked Invoices have been archived.', 'warning')
+        if po:
+            # Use the CDX fallback for the flash message
+            po_name = po.po_number or po.order.order_number
+            flash(f'PO {po_name} and all linked Invoices have been archived.', 'warning')
 
-        # Free the Quote? Notify the user.
-        if po.quote:
-            flash(f"Quote {po.quote.quote_number} released and reverted to 'SENT' status.", 'success')
+            # Free the Quote? Notify the user.
+            if po.quote:
+                flash(f"Quote {po.quote.quote_number} released and reverted to 'SENT' status.", 'success')
 
-        # MONEY SAFETY WARNING
-        if has_payments:
-            flash(f'ATTENTION: Active payments exist for this PO. The pyayment records were NOT archived. Please manage them manually.', 'error')
+            # MONEY SAFETY WARNING
+            if has_payments:
+                flash(f'ATTENTION: Active payments exist for this PO. The pyayment records were NOT archived. Please manage them manually.', 'error')
 
-    else:
-        flash('PO not found.', 'error')
-    return redirect(url_for('purchase_orders.index'))
+        else:
+            raise ValueError("PO not found.")
+        
+        return redirect(url_for('purchase_orders.index'))
+    
+    except Exception as e:
+        return handle_post_error(e, "purchase_orders.archive")
 
 # --- HTMX Item-row and Calculation Routes ---
 
@@ -356,13 +354,8 @@ def calculate():
                             line_total=line_total, 
                             grand_total=grand_total)
     
-    except ValueError as e:
-        # Failure: Rollback (Safety first) and OOB Error
-        db.session.rollback()
-        resp = make_response(render_template('partials/error_notification.html', message=str(e)), 200)
-        # Tell HTMX not to clear the total or the input that caused the error
-        resp.headers['HX-Reswap'] = 'none'
-        return resp
+    except Exception as e:
+        return handle_post_error(e, "purchase_orders.calculate")
 
 # --- HTMX Client Cascade Routes ---
 

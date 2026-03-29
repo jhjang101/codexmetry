@@ -3,6 +3,7 @@ from flask_login import login_required
 from ..services.vendors_service import VendorService
 from ..services.audit_service import AuditLogService
 from ..utils.auth import role_required
+from ..utils.errors import handle_post_error
 from ..extensions import db
 
 bp = Blueprint('vendors', __name__)
@@ -67,13 +68,8 @@ def add():
             response.headers['HX-Redirect'] = url_for('vendors.view', id=new_vendor.id)
             return response
 
-        except ValueError as e:
-            db.session.rollback()
-            # Return the OOB Error partial
-            resp = make_response(render_template('partials/error_notification.html', message=str(e)), 200)
-            # Tell HTMX NOT to swap the form, preserving all user input
-            resp.headers['HX-Reswap'] = 'none'
-            return resp
+        except Exception as e:
+            return handle_post_error(e, "vendors.add")
 
     return render_template('vendors/form.html', mode='add', vendor=None)
 
@@ -115,11 +111,8 @@ def edit(id):
             response.headers['HX-Redirect'] = url_for('vendors.view', id=id)
             return response
         
-        except ValueError as e:
-            db.session.rollback()
-            resp = make_response(render_template('partials/error_notification.html', message=str(e)), 200)
-            resp.headers['HX-Reswap'] = 'none'
-            return resp
+        except Exception as e:
+            return handle_post_error(e, "vendors.edit")
 
     return render_template('vendors/form.html', mode='edit', vendor=vendor)
 
@@ -127,12 +120,16 @@ def edit(id):
 @role_required(['admin']) # Only Admin can delete
 def archive(id):
     """Soft delete the vendor."""
-    vendor = VendorService.archive(id)
-    if vendor:
-        flash(f'Vendor {vendor.company_name} moved to archives.', 'warning')
-    else:
-        flash('Vendor not found.', 'error')
-    return redirect(url_for('vendors.index'))
+    try:
+        vendor = VendorService.archive(id)
+        if vendor:
+            flash(f'Vendor {vendor.company_name} moved to archives.', 'warning')
+        else:
+            raise ValueError("Vendor not found.")
+        return redirect(url_for('vendors.index'))
+    
+    except Exception as e:
+        return handle_post_error(e, "vendors.archive")
 
 # --- HTMX PARTIALS ---
 

@@ -7,6 +7,7 @@ from ..services.attachment_service import AttachmentService
 from ..services.audit_service import AuditLogService
 from ..utils.auth import role_required
 from ..utils.docs import generate_doc_number
+from ..utils.errors import handle_post_error
 from ..extensions import db
 from datetime import datetime
 
@@ -74,13 +75,8 @@ def add():
             response.headers['HX-Redirect'] = url_for('adjustments.view', id=new_adjustment.id)
             return response
             
-        except ValueError as e:
-            db.session.rollback()
-            # Return the OOB Error partial
-            resp = make_response(render_template('partials/error_notification.html', message=str(e)), 200)
-            # Tell HTMX NOT to swap the form, preserving all user input
-            resp.headers['HX-Reswap'] = 'none'
-            return resp
+        except Exception as e:
+            return handle_post_error(e, "adjustments.add")
         
     # GET: Prepare form data
     categories = AdjustmentCategoryService.get_all()
@@ -136,11 +132,8 @@ def edit(id):
             response.headers['HX-Redirect'] = url_for('adjustments.view', id=id)
             return response
         
-        except ValueError as e:
-            db.session.rollback()
-            resp = make_response(render_template('partials/error_notification.html', message=str(e)), 200)
-            resp.headers['HX-Reswap'] = 'none'
-            return resp
+        except Exception as e:
+            return handle_post_error(e, "adjustments.edit")
 
     # GET: Populate dropdowns
     categories = AdjustmentCategoryService.get_all()
@@ -149,9 +142,13 @@ def edit(id):
 @bp.route('/archive/<int:id>', methods=['POST'])
 @role_required(['admin']) # Only Admin can delete
 def archive(id):
-    adjustment = AdjustmentService.archive(id)
-    if adjustment:
-        flash(f'Adjustment {adjustment.adjustment_number} moved to archives.', 'warning')
-    else:
-        flash('Adjustment not found.', 'error')
-    return redirect(url_for('adjustments.index'))
+    try:
+        adjustment = AdjustmentService.archive(id)
+        if adjustment:
+            flash(f'Adjustment {adjustment.adjustment_number} moved to archives.', 'warning')
+        else:
+            raise ValueError("Adjustment not found.")
+        return redirect(url_for('adjustments.index'))
+    
+    except Exception as e:
+        return handle_post_error(e, "adjustments.archive")

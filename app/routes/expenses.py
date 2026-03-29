@@ -13,6 +13,7 @@ from ..services.orders_service import OrderService
 from ..utils.money import parse_to_cents
 from ..utils.auth import role_required
 from ..utils.docs import generate_doc_number
+from ..utils.errors import handle_post_error
 from ..extensions import db
 from datetime import datetime
 import time
@@ -95,14 +96,8 @@ def add():
             response.headers['HX-Redirect'] = url_for('expenses.view', id=new_expense.id)
             return response
             
-        except ValueError as e:
-            # Rollback any partial database state (like the CDX registry increment)
-            db.session.rollback()
-            # Return the OOB Error partial
-            resp = make_response(render_template('partials/error_notification.html', message=str(e)), 200)
-            # Tell HTMX NOT to swap the form, preserving all user input
-            resp.headers['HX-Reswap'] = 'none'
-            return resp
+        except Exception as e:
+            return handle_post_error(e, "expenses.add")
         
     # GET: Prepare form data from Client, Vendor, PO, or Invoice
     referrer = request.referrer
@@ -229,12 +224,8 @@ def edit(id):
             response.headers['HX-Redirect'] = url_for('expenses.view', id=id)
             return response
             
-        except ValueError as e:
-            # Rollback to prevent partial updates
-            db.session.rollback()
-            resp = make_response(render_template('partials/error_notification.html', message=str(e)), 200)
-            resp.headers['HX-Reswap'] = 'none'
-            return resp
+        except Exception as e:
+            return handle_post_error(e, "expenses.edit")
 
     # GET: Populate dropdowns for the edit form
     vendors = VendorService.get_all()
@@ -269,13 +260,17 @@ def edit(id):
 @bp.route('/archive/<int:id>', methods=['POST'])
 @role_required(['admin']) # Only Admin can delete
 def archive(id):
-    expense = ExpenseService.archive(id)
-    if expense:
-        flash(f'Expense {expense.expense_number} moved to archives.', 'warning')
-    else:
-        flash('Expense not found.', 'error')
-    return redirect(url_for('expenses.index'))
+    try:
+        expense = ExpenseService.archive(id)
+        if expense:
+            flash(f'Expense {expense.expense_number} moved to archives.', 'warning')
+        else:
+            raise ValueError("Expense not found.")
+        return redirect(url_for('expenses.index'))
     
+    except Exception as e:
+        return handle_post_error(e, "expenses.archive")
+
 # --- PRINT ---
 
 @bp.route('/print/<int:id>')
@@ -340,13 +335,8 @@ def calculate():
                             line_total=line_total, 
                             grand_total=grand_total)
     
-    except ValueError as e:
-        # Failure: Rollback (Safety first) and OOB Error
-        db.session.rollback()
-        resp = make_response(render_template('partials/error_notification.html', message=str(e)), 200)
-        # Tell HTMX not to clear the total or the input that caused the error
-        resp.headers['HX-Reswap'] = 'none'
-        return resp
+    except Exception as e:
+        return handle_post_error(e, "expenses.calculate")
 
 # --- HTMX CASCADE ROUTES ---
 

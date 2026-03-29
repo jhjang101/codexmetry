@@ -10,6 +10,7 @@ from ..services.settings_service import SettingsMetadata
 from ..utils.money import parse_to_cents
 from ..utils.docs import generate_doc_number
 from ..utils.auth import role_required
+from ..utils.errors import handle_post_error
 from ..models import Quote
 from ..extensions import db
 from datetime import datetime, timedelta
@@ -89,13 +90,8 @@ def add():
             response.headers['HX-Redirect'] = url_for('quotes.view', id=new_quote.id)
             return response
 
-        except ValueError as e:
-            db.session.rollback()
-            # Return the OOB Error partial
-            resp = make_response(render_template('partials/error_notification.html', message=str(e)), 200)
-            # Tell HTMX NOT to swap the form, preserving all user input
-            resp.headers['HX-Reswap'] = 'none'
-            return resp
+        except Exception as e:
+            return handle_post_error(e, "quotes.add")
         
     # GET: Prepare form data from Client
     referrer = request.referrer
@@ -167,10 +163,6 @@ def edit(id):
                 'note': request.form.get('note')
             }
 
-
-            print(client.company_name)
-
-
             # 2. Parse Items
             items = _parse_items_form(request.form)
 
@@ -188,15 +180,7 @@ def edit(id):
             return response
         
         except Exception as e:
-            db.session.rollback()
-
-
-            print(type(e).__name__)
-
-
-            resp = make_response(render_template('partials/error_notification.html', message=str(e)), 200)
-            resp.headers['HX-Reswap'] = 'none'
-            return resp
+            return handle_post_error(e, "quotes.edit")
         
     # GET: Prepare form data
     clients = ClientService.get_all()
@@ -211,12 +195,16 @@ def edit(id):
 @role_required(['admin']) # Only Admin can delete
 def archive(id):
     """Soft delete the quote."""
-    quote = QuoteService.archive(id)
-    if quote:
+    try:
+        quote = QuoteService.archive(id)
+        if not quote:
+            raise ValueError("Quote not found.")
+
         flash(f'Quote {quote.quote_number} has been moved to archives.', 'warning')
-    else:
-        flash('Quote not found.', 'error')
-    return redirect(url_for('quotes.index'))
+        return redirect(url_for('quotes.index'))
+
+    except Exception as e:
+        return handle_post_error(e, "quotes.archive")
 
 # --- PRINT ---
 
@@ -321,13 +309,10 @@ def calculate():
                             line_total=line_total, 
                             grand_total=grand_total)
     
-    except ValueError as e:
-        # Failure: Rollback (Safety first) and OOB Error
-        db.session.rollback()
-        resp = make_response(render_template('partials/error_notification.html', message=str(e)), 200)
-        # Tell HTMX not to clear the total or the input that caused the error
-        resp.headers['HX-Reswap'] = 'none'
-        return resp
+    except Exception as e:
+        # Rollback, Log, and return OOB Error.
+        # HX-Reswap: none ensures the Total cell doesn't get overwritten with error text.
+        return handle_post_error(e, "quotes.calculate")
     
 # --- HTMX Quote Date Cascade Routes ---
 @bp.route('/calculate-expiry')

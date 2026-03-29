@@ -13,6 +13,7 @@ from ..utils.money import parse_to_cents
 from ..utils.docs import generate_doc_number
 from ..utils.sync import sync_invoice_status, sync_po_status
 from ..utils.auth import role_required
+from ..utils.errors import handle_post_error
 from ..models import Invoice, Product, SettingsMetadata
 from ..extensions import db
 from datetime import datetime, timedelta
@@ -98,12 +99,8 @@ def add():
             response.headers['HX-Redirect'] = url_for('invoices.view', id=new_invoice.id)
             return response
         
-        except ValueError as e:
-            db.session.rollback()
-            resp = make_response(render_template('partials/error_notification.html', message=str(e)), 200)
-            # Tell HTMX NOT to swap the form, preserving all user input
-            resp.headers['HX-Reswap'] = 'none'
-            return resp
+        except Exception as e:
+            return handle_post_error(e, "invoices.add")
     
     # GET: Prepare form data from Client or PO
     referrer = request.referrer
@@ -287,11 +284,8 @@ def edit(id):
             response.headers['HX-Redirect'] = url_for('invoices.view', id=id)
             return response
             
-        except ValueError as e:
-            db.session.rollback()
-            resp = make_response(render_template('partials/error_notification.html', message=str(e)), 200)
-            resp.headers['HX-Reswap'] = 'none'
-            return resp
+        except Exception as e:
+            return handle_post_error(e, "invoices.edit")
 
     # GET: Populate dropdowns for the edit form
     clients = ClientService.get_all()
@@ -314,27 +308,30 @@ def edit(id):
 @role_required(['admin']) # Only Admin can delete
 def archive(id):
     """Specialized archive for invoices with payment protection."""
-    # 1. Perform specialized archive
-    invoice, has_payments, po_status = InvoiceService.archive_invoice(id)
+    try:
+        # 1. Perform specialized archive
+        invoice, has_payments, po_status = InvoiceService.archive_invoice(id)
 
-    if not invoice:
-        flash(f'Invoice not found.', 'error')
+        if not invoice:
+            raise ValueError("Invoice not found.")
+
+        # 3. Flash Messages
+        flash(f'Invoice {invoice.invoice_number} moved to archives.', 'warning')
+
+        # MONEY SAFETY WARNING: Tell the user exactly where the money went
+        if has_payments:
+            po_name = invoice.purchase_order.po_number or invoice.order.order_number
+            flash(f'ATTENTION: This invoice had active payments. These funds are now sitting as a credit on PO {po_name}.', 'error')
+
+        # PO SYNC FEEDBACK
+        if po_status and po_status['before'] != po_status['after']:
+            po_name = invoice.purchase_order.po_number or invoice.order.order_number
+            flash(f"Previous PO {po_name} status reverted: {po_status['before'].upper()} → {po_status['after'].upper()}", "info")
+            
         return redirect(url_for('invoices.index'))
-
-    # 3. Flash Messages
-    flash(f'Invoice {invoice.invoice_number} moved to archives.', 'warning')
-
-    # MONEY SAFETY WARNING: Tell the user exactly where the money went
-    if has_payments:
-        po_name = invoice.purchase_order.po_number or invoice.order.order_number
-        flash(f'ATTENTION: This invoice had active payments. These funds are now sitting as a credit on PO {po_name}.', 'error')
-
-    # PO SYNC FEEDBACK
-    if po_status and po_status['before'] != po_status['after']:
-        po_name = invoice.purchase_order.po_number or invoice.order.order_number
-        flash(f"Previous PO {po_name} status reverted: {po_status['before'].upper()} → {po_status['after'].upper()}", "info")
-        
-    return redirect(url_for('invoices.index'))
+    
+    except Exception as e:
+        return handle_post_error(e, "invoices.archive")
 
 # --- PRINT ---
 
@@ -515,13 +512,8 @@ def calculate():
             has_prepayment=has_prepayment # OOB swap that hides the "Add Item" button if a prepayment is detected.
         )
     
-    except ValueError as e:
-        # Failure: Rollback (Safety first) and OOB Error
-        db.session.rollback()
-        resp = make_response(render_template('partials/error_notification.html', message=str(e)), 200)
-        # Tell HTMX not to clear the total or the input that caused the error
-        resp.headers['HX-Reswap'] = 'none'
-        return resp
+    except Exception as e:
+        return handle_post_error(e, "invoices.calculate")
 
 # --- HTMX CASCADE ROUTES ---
 

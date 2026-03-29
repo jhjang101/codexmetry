@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import login_required
 from ..services.maintenance_service import MaintenanceService
 from ..utils.auth import role_required
+from ..utils.errors import handle_post_error
 from ..extensions import db
 import os
 
@@ -27,11 +28,11 @@ def vacuum():
     try:
         MaintenanceService.perform_vacuum()
         flash("Database optimized successfully (VACUUM complete).", "success")
-    except ValueError as e:
-        flash(str(e), "error")
+        # Redirect to index to show flash
+        return redirect(url_for('maintenance.index'))
     
-    # Redirect to index to show flash
-    return redirect(url_for('maintenance.index'))
+    except Exception as e:
+        return handle_post_error(e, "maintenance.vacuum")
 
 # --- BACKUP MANAGEMENT ---
 
@@ -41,15 +42,8 @@ def create_backup():
     try:
         filename = MaintenanceService.create_backup()
         flash(f"Backup created: {filename}", "success")
-    except ValueError as e:
-        flash(str(e), "error")
-    
-    # The Safe Save Pattern:
-    # 1. We stay in HTMX to keep the indicator visible during the work
-    # 2. We send HX-Redirect to force a full refresh so the flash appears
-    response = make_response("", 200)
-    response.headers['HX-Redirect'] = url_for('maintenance.index')
-    return response
+    except Exception as e:
+        return handle_post_error(e, "maintenance.create_backup")
 
 @bp.route('/backup/download/<filename>')
 def download_backup(filename):
@@ -83,5 +77,4 @@ def export_data(target_type):
             headers={"Content-disposition": f"attachment; filename={filename}"}
         )
     except Exception as e:
-        flash(f"Export failed: {str(e)}", "error")
-        return redirect(url_for('maintenance.index'))
+        return handle_post_error(e, "maintenance.export_data")

@@ -4,6 +4,7 @@ from ..services.users_service import UserService
 from ..services.auth_service import AuthService
 from urllib.parse import urlparse
 from ..extensions import db
+from ..utils.errors import handle_post_error
 
 bp = Blueprint('auth', __name__)
 
@@ -77,9 +78,5 @@ def change_password():
         response.headers['HX-Redirect'] = url_for('dashboard.index')
         return response
 
-    except ValueError as e:
-        db.session.rollback()
-        # Return the pulse-red banner. The inputs in account_setup.html remain intact.
-        resp = make_response(render_template('partials/error_notification.html', message=str(e)), 200)
-        resp.headers['HX-Reswap'] = 'none'
-        return resp
+    except Exception as e:
+        return handle_post_error(e, "auth.change_password")

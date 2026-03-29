@@ -15,6 +15,7 @@ from ..services.settings_service import (
 from ..services.audit_service import AuditLogService
 from ..utils.images import save_image
 from ..utils.money import parse_to_cents
+from ..utils.errors import handle_post_error
 
 
 LOOKUPS = {
@@ -79,13 +80,8 @@ def update_metadata():
         response.headers['HX-Redirect'] = url_for('settings.index')
         return response
 
-    except ValueError as e:
-        # 5. Logic Failure Flow: Rollback and OOB Error
-        db.session.rollback()
-        # We return the error partial (OOB) and tell HTMX NOT to swap the form
-        resp = make_response(render_template('partials/error_notification.html', message=str(e)), 200)
-        resp.headers['HX-Reswap'] = 'none'
-        return resp
+    except Exception as e:
+        return handle_post_error(e, "settings.update_metadata")
 
 # --- USER MANAGEMENT HTMX ROUTES ---
 
@@ -100,14 +96,8 @@ def add_user():
         users = UserService.get_all()
         return render_template('settings/partials/user_table.html', users=users)
     
-    except ValueError as e:
-        db.session.rollback()
-        # 1. Prepare the error fragment
-        resp = make_response(render_template('partials/error_notification.html', message=str(e)), 200)
-        # 2. BRAIN: Tell HTMX NOT to swap the primary target (the table)
-        # This preserves the data already typed into the form rows
-        resp.headers['HX-Reswap'] = 'none'
-        return resp
+    except Exception as e:
+        return handle_post_error(e, "settings.add_user")
 
 @bp.route('/users/edit/<int:id>', methods=['GET'])
 def edit_user_row(id):
@@ -126,11 +116,8 @@ def update_user(id):
         user = UserService.get_by_id(id)
         return render_template('settings/partials/user_row_view.html', user=user)
     
-    except ValueError as e:
-        db.session.rollback()
-        resp = make_response(render_template('partials/error_notification.html', message=str(e)), 200)
-        resp.headers['HX-Reswap'] = 'none'
-        return resp
+    except Exception as e:
+        return handle_post_error(e, "settings.update_user")
 
 @bp.route('/users/toggle/<int:id>', methods=['POST'])
 def toggle_user_status(id):
@@ -138,11 +125,8 @@ def toggle_user_status(id):
     try:
         user = UserService.toggle_status(id)
         return render_template('settings/partials/user_row_view.html', user=user)
-    except ValueError as e:
-        db.session.rollback()
-        resp = make_response(render_template('partials/error_notification.html', message=str(e)), 200)
-        resp.headers['HX-Reswap'] = 'none'
-        return resp
+    except Exception as e:
+        return handle_post_error(e, "settings.toggle_user_status")
     
 @bp.route('/users/row/<int:id>', methods=['GET'])
 def view_user_row(id):
@@ -188,12 +172,8 @@ def add_lookup():
                                table_name=table_name, 
                                items=items)
 
-    except ValueError as e:
-        db.session.rollback()
-        # Failure: Return OOB Error and keep the "Add" input intact
-        resp = make_response(render_template('partials/error_notification.html', message=str(e)), 200)
-        resp.headers['HX-Reswap'] = 'none'
-        return resp
+    except Exception as e:
+        return handle_post_error(e, "settings.add_lookup")
     
 @bp.route('/lookup/toggle-cogs/<int:id>', methods=['POST'])
 def toggle_cogs(id):
@@ -208,11 +188,8 @@ def toggle_cogs(id):
                             items=[category],
                             toggle_only=True) 
 
-    except ValueError as e:
-        db.session.rollback()
-        resp = make_response(render_template('partials/error_notification.html', message=str(e)), 200)
-        resp.headers['HX-Reswap'] = 'none'
-        return resp
+    except Exception as e:
+        return handle_post_error(e, "settings.toggle_cogs")
     
 @bp.route('/lookup/toggle-revenue/<int:id>', methods=['POST'])
 def toggle_revenue(id):
@@ -227,11 +204,8 @@ def toggle_revenue(id):
                             items=[category],
                             toggle_only=True) 
 
-    except ValueError as e:
-        db.session.rollback()
-        resp = make_response(render_template('partials/error_notification.html', message=str(e)), 200)
-        resp.headers['HX-Reswap'] = 'none'
-        return resp
+    except Exception as e:
+        return handle_post_error(e, "settings.toggle_revenue")
 
 # --- HTMX Route to archive a lookup item ---
 @bp.route('/lookup/archive/<table_name>/<int:id>', methods=['POST'])
@@ -248,10 +222,6 @@ def archive_lookup(table_name, id):
         # Success: HTMX will remove the row on the frontend because we return empty
         return "" 
 
-    except ValueError as e:
-        db.session.rollback()
-        # Failure: Return OOB Error and prevent the row from disappearing
-        resp = make_response(render_template('partials/error_notification.html', message=str(e)), 200)
-        resp.headers['HX-Reswap'] = 'none'
-        return resp
+    except Exception as e:
+        return handle_post_error(e, "settings.archive_lookup")
 

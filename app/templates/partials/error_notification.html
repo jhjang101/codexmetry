@@ -1,12 +1,32 @@
 <div id="flash-container" hx-swap-oob="true">
     <div class="mb-2 p-1 pl-5 w-full text-sm 
-                flex justify-between items-center border-l-4
-                text-red-700 bg-red-100 border-red-400">
+                flex justify-between items-center border-l-4 shadow-md
+                {% if category == 'value' %}
+                    text-amber-700 bg-amber-50 border-amber-400
+                {% elif category == 'db' %}
+                    text-red-700 bg-red-50 border-red-500 animate-pulse
+                {% else %}
+                    text-slate-700 bg-slate-100 border-slate-600
+                {% endif %}">
+
         <div class="flex items-center">
-            <i class="fa-solid fa-triangle-exclamation mr-2"></i>
-            <span class="font-bold uppercase tracking-wider">Database Error:</span> 
+            {% if category == 'value' %}
+                <i class="fa-solid fa-triangle-exclamation mr-2"></i>
+            {% elif category == 'db' %}
+                <i class="fa-solid fa-database mr-2"></i>
+            {% else %}
+                <i class="fa-solid fa-microchip mr-2"></i>
+            {% endif %}
+
+            <span class="font-bold uppercase tracking-wider">
+                {% if category == 'value' %}Validation Error:
+                {% elif category == 'db' %}Database Error:
+                {% else %}System Error:{% endif %}
+            </span> 
+
             <span class="ml-2">{{ message }}</span>
         </div>    
+        
         <span class="px-4 cursor-pointer hover:text-gray-900" onclick="this.closest('.mb-2').remove()">
             <i class="fa-solid fa-xmark opacity-50 text-lg"></i>
         </span>

@@ -6,6 +6,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from datetime import datetime
 from zoneinfo import ZoneInfo
 from .extensions import db, csrf, login_manager,migrate
+from .utils.errors import humanize_error
 
 def create_app():
     load_dotenv()
@@ -104,7 +105,7 @@ def create_app():
         db.session.rollback()
         
         # 2. Log the full traceback for the developer
-        logging.error(f"SQLAlchemy Error: {str(error)}", exc_info=True)
+        logging.error(f"Database Error: {str(error)}", exc_info=True)
 
         message = "A database error occurred. Your changes were not saved."
 
@@ -112,11 +113,25 @@ def create_app():
         if request.headers.get('HX-Request'):
             # HTMX Response: Return an Out-of-Band (OOB) swap
             # This injects the error at the top of the form without refreshing the page
-            return render_template('partials/error_notification.html', message=message), 200
+            return render_template('partials/error_notification.html', message=message, category='db'), 200
         else:
             # Standard Response: Flash and redirect to a safe landing spot
             flash(message, "error")
             return redirect(url_for('dashboard.index'))
+        
+    @app.errorhandler(Exception)
+    def handle_generic_error(error):
+        db.session.rollback()
+        logging.error(f"System Error: {str(error)}", exc_info=True)
+
+        # Use the humanizer for the global net too
+        message, category = humanize_error(error)
+        
+        if request.headers.get('HX-Request'):
+            return render_template('partials/error_notification.html', message=message, category='system'), 200
+        
+        flash(message, "error")
+        return redirect(url_for('dashboard.index'))
     
     # 6. Global Context Processors (For now, and Metadata)
     @app.context_processor
