@@ -76,16 +76,15 @@
             <div class="justify-start items-start gap-2">
                 <div class="font-bold uppercase tracking-widest pr-4 mb-1">Bill To</div>
                 <div>
-                    <p class="pl-4">{{ invoice.bill_to.company_name }}</p>
-                    <p class="pl-4 text-gray-600 whitespace-pre-line">{{ invoice.bill_to.address }}</p>
+                    <p class="pl-4 text-gray-700 whitespace-pre-line">{{ invoice.bill_to.address }}</p>
                     {% if invoice.bill_to.primary_contact_name %}
-                    <p class="pl-4 text-gray-600">{{ invoice.bill_to.primary_contact_name }}</p>
-                    {% endif %}
-                    {% if invoice.bill_to.primary_contact_email %}
-                    <p class="pl-4 text-gray-600">{{ invoice.bill_to.primary_contact_email }}</p>
+                    <p class="pl-4 text-gray-700">{{ invoice.bill_to.primary_contact_name }}</p>
                     {% endif %}
                     {% if invoice.bill_to.primary_contact_phone %}
-                    <p class="pl-4 text-gray-600">{{ invoice.bill_to.primary_contact_phone }}</p>
+                    <p class="pl-4 text-gray-700">Phone: {{ invoice.bill_to.primary_contact_phone }}</p>
+                    {% endif %}
+                    {% if invoice.bill_to.primary_contact_email %}
+                    <p class="pl-4 text-gray-700">Email: {{ invoice.bill_to.primary_contact_email }}</p>
                     {% endif %}
                 </div>
             </div>
@@ -94,16 +93,15 @@
             <div class="justify-start items-start gap-2">
                 <div class="font-bold uppercase tracking-widest pr-4 mb-1">Ship To</div>
                 <div>
-                    <p class="pl-4">{{ invoice.client.company_name }}</p>
-                    <p class="pl-4 text-gray-600 whitespace-pre-line">{{ invoice.client.address }}</p>
+                    <p class="pl-4 text-gray-700 whitespace-pre-line">{{ invoice.client.address }}</p>
                     {% if invoice.client.primary_contact_name %}
-                    <p class="pl-4 text-gray-600">Attn. {{ invoice.client.primary_contact_name }}</p>
-                    {% endif %}
-                    {% if invoice.client.primary_contact_email %}
-                    <p class="pl-4 text-gray-600">Email: {{ invoice.client.primary_contact_email }}</p>
+                    <p class="pl-4 text-gray-700">Attn. {{ invoice.client.primary_contact_name }}</p>
                     {% endif %}
                     {% if invoice.client.primary_contact_phone %}
-                    <p class="pl-4 text-gray-600">Phone: {{ invoice.client.primary_contact_phone }}</p>
+                    <p class="pl-4 text-gray-700">Phone: {{ invoice.client.primary_contact_phone }}</p>
+                    {% endif %}
+                    {% if invoice.client.primary_contact_email %}
+                    <p class="pl-4 text-gray-700">Email: {{ invoice.client.primary_contact_email }}</p>
                     {% endif %}
                 </div>
             </div>

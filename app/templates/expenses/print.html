@@ -71,16 +71,15 @@
             <div class="justify-start items-start gap-2">
                 <div class="font-bold uppercase tracking-widest pr-4 mb-1">Vendor</div>
                 <div>
-                    <p class="pl-4">{{ expense.vendor.company_name }}</p>
                     <p class="pl-4 text-gray-600 whitespace-pre-line">{{ expense.vendor.address }}</p>
                     {% if expense.vendor.primary_contact_name %}
                     <p class="pl-4 text-gray-600">{{ expense.vendor.primary_contact_name }}</p>
                     {% endif %}
-                    {% if expense.vendor.primary_contact_email %}
-                    <p class="pl-4 text-gray-600">{{ expense.vendor.primary_contact_email }}</p>
-                    {% endif %}
                     {% if expense.vendor.primary_contact_phone %}
-                    <p class="pl-4 text-gray-600">{{ expense.vendor.primary_contact_phone }}</p>
+                    <p class="pl-4 text-gray-600">Phone: {{ expense.vendor.primary_contact_phone }}</p>
+                    {% endif %}
+                    {% if expense.vendor.primary_contact_email %}
+                    <p class="pl-4 text-gray-600">Email: {{ expense.vendor.primary_contact_email }}</p>
                     {% endif %}
                 </div>
             </div>
@@ -93,11 +92,11 @@
                     {% if expense.creator.full_name %}
                     <p class="pl-4 text-gray-600">Attn. {{ expense.creator.full_name }}</p>
                     {% endif %}
-                    {% if expense.creator.email %}
-                    <p class="pl-4 text-gray-600">Email: {{ expense.creator.email }}</p>
-                    {% endif %}
                     {% if expense.creator.phone_number %}
                     <p class="pl-4 text-gray-600">Phone: {{ expense.creator.phone_number }}</p>
+                    {% endif %}
+                    {% if expense.creator.email %}
+                    <p class="pl-4 text-gray-600">Email: {{ expense.creator.email }}</p>
                     {% endif %}
                 </div>
             </div>

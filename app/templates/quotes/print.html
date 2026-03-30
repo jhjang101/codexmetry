@@ -43,10 +43,13 @@
             <div class="col-span-3 text-gray-700">
                 <p class="whitespace-pre-line">{{ metadata.address or '' }}</p>
                 {% if metadata.company_phone %}
-                <p class="mt-1">Phone: {{ metadata.company_phone }}</p>
+                <p>Phone: {{ metadata.company_phone }}</p>
                 {% endif %}
                 {% if metadata.company_fax %}
                 <p>Fax: {{ metadata.company_fax }}</p>
+                {% endif %}
+                {% if metadata.company_email %}
+                <p>Email: {{ metadata.company_email }}</p>
                 {% endif %}
             </div>
 
@@ -72,15 +75,14 @@
                     {% if quote.client.primary_contact_name %}
                     <p>{{ quote.client.primary_contact_name }}</p>
                     {% endif %}
-                    <p>{{ quote.client.company_name }}</p>
                     {% if quote.client.address %}
                     <p class="text-gray-600 whitespace-pre-line">{{ quote.client.address }}</p>
                     {% endif %}
-                    {% if quote.client.primary_contact_email %}
-                    <p class="text-gray-600">{{ quote.client.primary_contact_email }}</p>
-                    {% endif %}
                     {% if quote.client.primary_contact_phone %}
-                    <p class="text-gray-600">{{ quote.client.primary_contact_phone }}</p>
+                    <p class="text-gray-600">Phone: {{ quote.client.primary_contact_phone }}</p>
+                    {% endif %}
+                    {% if quote.client.primary_contact_email %}
+                    <p class="text-gray-600">Enail: {{ quote.client.primary_contact_email }}</p>
                     {% endif %}
                 </div>
             </div>
@@ -213,8 +215,7 @@
             <div class="text-[10px] text-gray-600 space-y-1">
                 <p class="font-bold text-gray-800 underline">To proceed with this order:</p>
                 <p>Please submit a Purchase Order referencing this Quotation number, or return a signed copy of this document.</p>
-                
-                <p class="pt-1">If you have any questions, please contact <span class="font-medium">{{ quote.creator.full_name or quote.creator.username }}</span> at <span class="text-blue-600">{{ quote.creator.email }}</span>{% if quote.creator.phone_number %} or <span class="font-bold text-slate-900">{{ quote.creator.phone_number }}</span>{% elif metadata.company_phone %} or <span class="font-medium">{{ metadata.company_phone }}</span> {% endif %}.</p>
+                <p>If you have any questions, please contact <span class="font-medium">{{ quote.creator.full_name or quote.creator.username }}</span> at <span class="text-blue-600">{{ quote.creator.email }}</span>{% if quote.creator.phone_number %} or <span class="font-medium">{{ quote.creator.phone_number }}</span>{% elif metadata.company_phone %} or <span class="font-medium">{{ metadata.company_phone }}</span> {% endif %}.</p>
             </div>
         </div>
 
