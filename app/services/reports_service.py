@@ -69,8 +69,13 @@ class ReportService:
 
     @classmethod
     def _get_accrual_revenue(cls, start, end):
-        """Sums items where is_revenue is True using InvoiceItem anchor."""
-        stmt = (
+        """
+        Calculates Net Accrual Revenue.
+        (Total Revenue-flagged items) - (Residual balances on 'completed' invoices).
+        Treats threshold gaps as automated revenue write-offs.
+        """
+        # 1. Calculate Gross Revenue (Only items where is_revenue=True)
+        gross_stmt = (
             select(func.sum(InvoiceItem.quantity * InvoiceItem.billed_unit_price))
             .select_from(InvoiceItem)
             .join(Invoice).join(Product).join(ProductCategory)
@@ -81,7 +86,37 @@ class ReportService:
                 ProductCategory.is_revenue == True
             )
         )
-        return db.session.execute(stmt).scalar() or 0
+        gross_revenue = db.session.execute(gross_stmt).scalar() or 0
+
+        # 2. Calculate Write-offs (Residual unpaid balances of 'completed' invoices)
+        # We need a subquery for payments to find the balance
+        pay_sub = (
+            select(
+                Payment.invoice_id, 
+                func.sum(Payment.amount).label('total_paid')
+            )
+            .where(Payment.is_active == True)
+            .group_by(Payment.invoice_id)
+            .subquery()
+        )
+
+        writeoff_stmt = (
+            select(
+                func.sum(
+                case((Invoice.total_amount > 0, Invoice.total_amount), else_=0) - 
+                func.coalesce(pay_sub.c.total_paid, 0)
+            ))
+            .outerjoin(pay_sub, pay_sub.c.invoice_id == Invoice.id)
+            .where(
+                Invoice.is_active == True,
+                Invoice.status == 'completed',
+                Invoice.invoice_date.between(start, end)
+            )
+        )
+        total_writeoff = db.session.execute(writeoff_stmt).scalar() or 0
+
+        # 3. Final Net Result
+        return gross_revenue - total_writeoff
 
     @classmethod
     def _get_accrual_expenses(cls, start, end):
