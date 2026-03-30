@@ -34,7 +34,11 @@ class ProductService(BaseService):
             select(cls.model)
             .outerjoin(ProductCategory)
             .options(contains_eager(cls.model.category))
-            .where(cls.model.is_active == True, cls.model.is_system == False)
+            .where(
+                cls.model.is_active == True, 
+                cls.model.is_system == False, # Hide 'Applied Deposit'
+                cls.model.catalog_number != 'PRE-PMT' # Hide 'Prepayment' from list
+            )
         )
 
         # 2. Apply filters
