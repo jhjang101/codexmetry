@@ -37,7 +37,7 @@
                     </div>
                     <div class="col-span-2">
                         <label class="block text-xs font-medium text-gray-500">Email</label>
-                        <input type="email" name="company_email" value="{{ metadata.company_email or '' }}" class="mt-1 block w-full border rounded-lg p-2 text-sm outline-none focus:ring-1 focus:ring-blue-300" placeholder="billing@company.com">
+                        <input type="email" name="company_email" value="{{ metadata.company_email or '' }}" class="mt-1 block w-full border rounded-lg p-2 text-sm outline-none focus:ring-1 focus:ring-blue-300" placeholder="info@company.com">
                     </div>
                     <div class="col-span-2">
                         <label class="block text-xs font-medium text-gray-500">Phone</label>
@@ -60,15 +60,24 @@
                 <div class="grid grid-cols-3 gap-4">
                     <div>
                         <label class="block text-xs font-medium text-gray-500 text-amber-600">Office Address</label>
-                        <textarea name="address" rows="3" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">{{ metadata.address }}</textarea>
+                        <textarea name="address" 
+                                  rows="3" 
+                                  class="mt-1 block w-full border rounded-lg p-2 text-sm 
+                                        focus:ring-1 focus:ring-blue-300 outline-none">{{ metadata.address if metadata.address else ''}}</textarea>
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-gray-500">Payable Address</label>
-                        <textarea name="payable_address" rows="3" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">{{ metadata.payable_address }}</textarea>
+                        <textarea name="payable_address" 
+                                  rows="3" 
+                                  class="mt-1 block w-full border rounded-lg p-2 text-sm 
+                                        focus:ring-1 focus:ring-blue-300 outline-none">{{ metadata.payable_address if metadata.payable_address else ''}}</textarea>
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-gray-500">Shipping Address</label>
-                        <textarea name="shipping_address" rows="3" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">{{ metadata.shipping_address }}</textarea>
+                        <textarea name="shipping_address" 
+                                  rows="3" 
+                                  class="mt-1 block w-full border rounded-lg p-2 text-sm 
+                                        focus:ring-1 focus:ring-blue-300 outline-none">{{ metadata.shipping_address if metadata.shipping_address else ''}}</textarea>
                     </div>
                 </div>
             </section>
@@ -128,15 +137,24 @@
                 <div class="space-y-4">
                     <div>
                         <label class="block text-xs font-medium text-gray-500">Default Quote Terms</label>
-                        <textarea name="default_quote_terms" rows="3" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">{{ metadata.default_quote_terms }}</textarea>
+                        <textarea name="default_quote_terms" 
+                                  rows="3" 
+                                  class="mt-1 block w-full border rounded-lg p-2 text-sm 
+                                  focus:ring-1 focus:ring-blue-300 outline-none">{{ metadata.default_quote_terms or '' }}</textarea>
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-gray-500">Default Invoice Terms</label>
-                        <textarea name="default_invoice_terms" rows="3" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">{{ metadata.default_invoice_terms }}</textarea>
+                        <textarea name="default_invoice_terms" 
+                                  rows="3" 
+                                  class="mt-1 block w-full border rounded-lg p-2 text-sm 
+                                  focus:ring-1 focus:ring-blue-300 outline-none">{{ metadata.default_invoice_terms or ''}}</textarea>
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-gray-500">Default PO Terms</label>
-                        <textarea name="default_po_terms" rows="3" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">{{ metadata.default_po_terms }}</textarea>
+                        <textarea name="default_po_terms" 
+                                  rows="3" 
+                                  class="mt-1 block w-full border rounded-lg p-2 text-sm 
+                                        focus:ring-1 focus:ring-blue-300 outline-none">{{ metadata.default_po_terms or ''}}</textarea>
                     </div>
                 </div>
                 <div class="text-right mt-6">
