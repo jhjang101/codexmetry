@@ -63,6 +63,9 @@
                 <div class="font-bold">Invoice Date</div>
                 <div>{{ invoice.invoice_date.strftime('%B %d, %Y') }}</div>
 
+                <div class="font-bold">Terms</div>
+                <div>{{ 'Due on Receipt' if net_days == 0 else 'Net ' ~ net_days }}</div>
+
                 <div class="font-bold">Due Date</div>
                 <div>{{ due_date.strftime('%B %d, %Y') }}</div>
                 

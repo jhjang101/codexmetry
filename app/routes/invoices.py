@@ -377,7 +377,7 @@ def print_view(id):
 
     # 4. Calculate Payment Due Date
     metadata = db.session.get(SettingsMetadata, 1)
-    net_days = metadata.default_net_days if metadata else 30
+    net_days = invoice.net_days if invoice else (metadata.default_net_days if metadata else 30)
     due_date = invoice.invoice_date + timedelta(days=net_days) # type: ignore
 
     # 5. Change invoice status to open
@@ -390,7 +390,8 @@ def print_view(id):
                            subtotal=subtotal,
                            tax_total=tax_total,
                            shipping_total=shipping_total,
-                           due_date=due_date)
+                           due_date=due_date,
+                           net_days=net_days)
 
 # --- HTMX Item-row and Calculation Routes ---
 
