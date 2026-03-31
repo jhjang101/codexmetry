@@ -30,17 +30,17 @@
                 {% else %}
                 <div class="h-16 w-16 border-none flex items-center justify-center m-4 uppercase"></div>
                 {% endif %}
-                <h1 class="text-xl font-bold text-gray-900">{{ metadata.company_name }}</h1>
+                <h1 class="text-xl font-bold text-gray-800">{{ metadata.company_name }}</h1>
             </div>
             <div class="text-right">
-                <h2 class="text-3xl font-bold text-slate-800 tracking-wider uppercase opacity-90">Quotation</h2>
+                <h2 class="text-3xl font-bold text-gray-800 tracking-wider uppercase opacity-90">Quotation</h2>
             </div>
         </div>
 
         <!-- 2. COMPANY & DOCUMENT INFO GRID -->
         <div class="grid grid-cols-5 gap-12 mb-6 text-xs">
             <!-- Seller Info -->
-            <div class="col-span-3 text-gray-700">
+            <div class="col-span-3 text-gray-800">
                 <p class="whitespace-pre-line">{{ metadata.address or '' }}</p>
                 {% if metadata.company_phone %}
                 <p>Phone: {{ metadata.company_phone }}</p>
@@ -54,14 +54,14 @@
             </div>
 
             <!-- Doc Meta -->
-            <div class="col-span-2 content-start gap-y-1 p-1 grid grid-cols-2 bg-gray-100">
-                <div class="font-bold text-slate-800">Quotation NO.</div>
+            <div class="col-span-2 content-start gap-y-1 p-1 grid grid-cols-2 bg-gray-100 text-gray-800">
+                <div class="font-bold">Quotation NO.</div>
                 <div>{{ quote.quote_number }}</div>
                 
-                <div class="font-bold text-slate-800">Quotation Date</div>
+                <div class="font-bold">Quotation Date</div>
                 <div>{{ quote.quote_date.strftime('%B %d, %Y') }}</div>
                 
-                <div class="font-bold text-slate-800">Expiration</div>
+                <div class="font-bold">Expiration</div>
                 <div>{{ quote.expiration_date.strftime('%B %d, %Y') if quote.expiration_date else '-' }}</div>
             </div>
         </div>
@@ -71,18 +71,18 @@
             <!-- TO: Client -->
             <div class="flex justify-start items-start gap-2">
                 <div class="font-bold uppercase tracking-widest pr-4">TO</div>
-                <div>
+                <div class="text-gray-800">
                     {% if quote.client.primary_contact_name %}
-                    <p>{{ quote.client.primary_contact_name }}</p>
+                    <p class="text-gray-950">{{ quote.client.primary_contact_name }}</p>
                     {% endif %}
                     {% if quote.client.address %}
-                    <p class="text-gray-600 whitespace-pre-line">{{ quote.client.address }}</p>
+                    <p class="whitespace-pre-line">{{ quote.client.address }}</p>
                     {% endif %}
                     {% if quote.client.primary_contact_phone %}
-                    <p class="text-gray-600">Phone: {{ quote.client.primary_contact_phone }}</p>
+                    <p>Phone: {{ quote.client.primary_contact_phone }}</p>
                     {% endif %}
                     {% if quote.client.primary_contact_email %}
-                    <p class="text-gray-600">Enail: {{ quote.client.primary_contact_email }}</p>
+                    <p>Enail: {{ quote.client.primary_contact_email }}</p>
                     {% endif %}
                 </div>
             </div>
@@ -95,7 +95,7 @@
                 <div class="col-span-2 text-blue-600">{{ quote.creator.email }}</div>
                 {% if quote.creator.phone_number or metadata.company_phone %}
                 <div class="font-bold pr-4">Phone</div>
-                <div class="col-span-2 text-gray-600">
+                <div class="col-span-2 text-gray-800">
                     {% if quote.creator.phone_number %}
                         {{ quote.creator.phone_number }}
                     {% else %}
@@ -119,22 +119,22 @@
                         <th class="py-1 px-1 pr-2 text-right w-24">Line Total</th>
                     </tr>
                 </thead>
-                <tbody class="text-[10px]">
+                <tbody class="text-[10px] text-gray-800">
                     {% for item in line_display_items %}
                     <tr class="align-top border-b border-gray-200">
-                        <td class="px-1 py-1 text-center text-gray-500">{{ loop.index }}</td>
-                        <td class="px-1 py-1 text-center text-gray-500">{{ item.product.catalog_number or '-' }}</td>
+                        <td class="px-1 py-1 text-center">{{ loop.index }}</td>
+                        <td class="px-1 py-1 text-center">{{ item.product.catalog_number or '-' }}</td>
                         <td class="px-1 py-1">
-                            <p class="font-medium text-gray-900">{{ item.product.name }}</p>
+                            <p class="font-medium">{{ item.product.name }}</p>
                             {% if item.description %}
-                                <p class="text-gray-500 italic">{{ item.description }}</p>
+                                <p class="text-gray-600 italic">{{ item.description }}</p>
                             {% else %}
-                                <p class="text-gray-500 italic">&nbsp;</p>
+                                <p class="text-gray-600 italic">&nbsp;</p>
                             {% endif %}
                         </td>
                         <td class="px-1 py-1 text-center">{{ item.quantity }}</td>
                         <td class="px-1 text-right">{{ item.quoted_unit_price | usd }}</td>
-                        <td class="px-1 pr-2 text-right font-medium text-gray-900">
+                        <td class="px-1 pr-2 text-right font-medium">
                             {{ (item.quantity * item.quoted_unit_price) | usd }}
                         </td>
                     </tr>
@@ -159,7 +159,7 @@
                 <label class="no-print block text-[9px] font-bold text-blue-500 uppercase mb-1">
                     Editable Terms & Notes (Transient):
                 </label>
-                <textarea class="print-notes w-full text-[10px] leading-relaxed text-gray-700 bg-gray-50 p-2 
+                <textarea class="print-notes w-full text-[10px] leading-relaxed text-gray-800 bg-gray-50 p-2 
                                  border border-dashed border-gray-300 rounded outline-none focus:bg-white 
                                  focus:border-blue-400 transition-all resize-none overflow-hidden"
                         style="height: 80px;"
@@ -169,22 +169,22 @@
 
             <!-- Financials (Right) -->
             <div class="w-1/4">
-                <table class="w-full text-[10px]">
+                <table class="w-full text-[10px] text-gray-800">
                     <tr class="border-b border-gray-200">
-                        <td class="py-1 px-2 font-bold text-gray-800 uppercase">Subtotal</td>
+                        <td class="py-1 px-2 font-bold uppercase">Subtotal</td>
                         <td class="py-1 px-2 text-right">{{ subtotal | usd }}</td>
                     </tr>
                     <tr class="border-b border-gray-200">
-                        <td class="py-1 px-2 font-bold text-gray-800 uppercase">Sales Tax</td>
+                        <td class="py-1 px-2 font-bold uppercase">Sales Tax</td>
                         <td class="py-1 px-2 text-right">{{ tax_total | usd }}</td>
                     </tr>
                     <tr class="border-b border-gray-200">
-                        <td class="py-1 px-2 font-bold text-gray-800 uppercase">Shipping</td>
+                        <td class="py-1 px-2 font-bold uppercase">Shipping</td>
                         <td class="py-1 px-2 text-right">{{ shipping_total | usd }}</td>
                     </tr>
                     <tr class="bg-gray-100 border-b border-gray-500">
-                        <td class="py-1.5 px-2 font-bold text-gray-800 text-xs uppercase">TOTAL</td>
-                        <td class="py-1.5 px-2 text-right font-bold text-xs text-gray-800">{{ quote.total_amount | usd }}</td>
+                        <td class="py-1.5 px-2 font-bold text-xs uppercase">TOTAL</td>
+                        <td class="py-1.5 px-2 text-right font-bold text-xs">{{ quote.total_amount | usd }}</td>
                     </tr>
                 </table>
             </div>
@@ -197,22 +197,22 @@
                 <div class="col-span-4">
                     <p class="text-[10px] font-bold text-gray-800 underline mb-6">Customer Acceptance (Submit PO or sign below)</p>
                     <div class="sig-line mb-1"></div>
-                    <p class="text-[9px] text-gray-500 ">Name & Title</p>
+                    <p class="text-[9px] text-gray-800 ">Name & Title</p>
                 </div>
                 <div class="col-span-4">
                     <p class="text-[10px] mb-6">&nbsp;</p>
                     <div class="sig-line mb-1"></div>
-                    <p class="text-[9px] text-gray-500 ">Signature</p>
+                    <p class="text-[9px] text-gray-800 ">Signature</p>
                 </div>
                 <div class="col-span-2">
                     <p class="text-[10px] mb-6">&nbsp;</p>
                     <div class="sig-line mb-1"></div>
-                    <p class="text-[9px] text-gray-500 ">Date</p>
+                    <p class="text-[9px] text-gray-800 ">Date</p>
                 </div>
             </div>
 
             <!-- Call to Action & Contact -->
-            <div class="text-[10px] text-gray-600 space-y-1">
+            <div class="text-[10px] text-gray-800 space-y-1">
                 <p class="font-bold text-gray-800 underline">To proceed with this order:</p>
                 <p>Please submit a Purchase Order referencing this Quotation number, or return a signed copy of this document.</p>
                 <p>If you have any questions, please contact <span class="font-medium">{{ quote.creator.full_name or quote.creator.username }}</span> at <span class="text-blue-600">{{ quote.creator.email }}</span>{% if quote.creator.phone_number %} or <span class="font-medium">{{ quote.creator.phone_number }}</span>{% elif metadata.company_phone %} or <span class="font-medium">{{ metadata.company_phone }}</span> {% endif %}.</p>

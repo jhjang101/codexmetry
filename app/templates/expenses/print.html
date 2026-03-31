@@ -30,10 +30,10 @@
                 {% else %}
                 <div class="h-16 w-16 border-none flex items-center justify-center m-4 uppercase"></div>
                 {% endif %}
-                <h1 class="text-xl font-bold text-gray-900">{{ metadata.company_name }}</h1>
+                <h1 class="text-xl font-bold text-gray-800">{{ metadata.company_name }}</h1>
             </div>
             <div class="text-right">
-                <h2 class="text-3xl font-bold text-slate-800 tracking-wider uppercase opacity-90">Purchase Order</h2>
+                <h2 class="text-3xl font-bold text-gray-800 tracking-wider uppercase opacity-90">Purchase Order</h2>
             </div>
 
         </div>
@@ -41,7 +41,7 @@
         <!-- 2. COMPANY & DOCUMENT INFO GRID -->
         <div class="grid grid-cols-6 gap-12 mb-6 text-xs">
             <!-- Seller Info -->
-            <div class="col-span-4 text-gray-700">
+            <div class="col-span-4 text-gray-800">
                 <p class="whitespace-pre-line">{{ metadata.address or '' }}</p>
                 {% if metadata.company_phone %}
                 <p>Phone: {{ metadata.company_phone }}</p>
@@ -70,16 +70,16 @@
             <!-- Bill TO: -->
             <div class="justify-start items-start gap-2">
                 <div class="font-bold uppercase tracking-widest pr-4 mb-1">Vendor</div>
-                <div>
-                    <p class="pl-4 text-gray-600 whitespace-pre-line">{{ expense.vendor.address }}</p>
+                <div class=" pl-4 text-gray-800">
+                    <p class="whitespace-pre-line">{{ expense.vendor.address }}</p>
                     {% if expense.vendor.primary_contact_name %}
-                    <p class="pl-4 text-gray-600">{{ expense.vendor.primary_contact_name }}</p>
+                    <p>{{ expense.vendor.primary_contact_name }}</p>
                     {% endif %}
                     {% if expense.vendor.primary_contact_phone %}
-                    <p class="pl-4 text-gray-600">Phone: {{ expense.vendor.primary_contact_phone }}</p>
+                    <p>Phone: {{ expense.vendor.primary_contact_phone }}</p>
                     {% endif %}
                     {% if expense.vendor.primary_contact_email %}
-                    <p class="pl-4 text-gray-600">Email: {{ expense.vendor.primary_contact_email }}</p>
+                    <p>Email: {{ expense.vendor.primary_contact_email }}</p>
                     {% endif %}
                 </div>
             </div>
@@ -87,16 +87,16 @@
             <!-- Ship TO:-->
             <div class="justify-start items-start gap-2">
                 <div class="font-bold uppercase tracking-widest pr-4 mb-1">Ship To</div>
-                <div>
-                    <p class="pl-4 text-gray-600 whitespace-pre-line">{{ metadata.shipping_address }}</p>
+                <div class="pl-4 text-gray-800">
+                    <p class="whitespace-pre-line">{{ metadata.shipping_address }}</p>
                     {% if expense.creator.full_name %}
-                    <p class="pl-4 text-gray-600">Attn. {{ expense.creator.full_name }}</p>
+                    <p >Attn. {{ expense.creator.full_name }}</p>
                     {% endif %}
                     {% if expense.creator.phone_number %}
-                    <p class="pl-4 text-gray-600">Phone: {{ expense.creator.phone_number }}</p>
+                    <p>Phone: {{ expense.creator.phone_number }}</p>
                     {% endif %}
                     {% if expense.creator.email %}
-                    <p class="pl-4 text-gray-600">Email: {{ expense.creator.email }}</p>
+                    <p>Email: {{ expense.creator.email }}</p>
                     {% endif %}
                 </div>
             </div>
@@ -115,22 +115,22 @@
                         <th class="py-1 px-1 pr-2 text-right w-24">Line Total</th>
                     </tr>
                 </thead>
-                <tbody class="text-[10px]">
+                <tbody class="text-[10px] text-gray-800">
                     {% for item in expense.items %}
                     <tr class="align-top border-b border-gray-200">
-                        <td class="px-1 py-1 text-center text-gray-500">{{ loop.index }}</td>
-                        <td class="px-1 py-1 text-center text-gray-500">{{ item.catalog_number or '-' }}</td>
+                        <td class="px-1 py-1 text-center">{{ loop.index }}</td>
+                        <td class="px-1 py-1 text-center">{{ item.catalog_number or '-' }}</td>
                         <td class="px-1 py-1">
-                            <p class="font-medium text-gray-900">{{ item.item }}</p>
+                            <p class="font-medium">{{ item.item }}</p>
                             {% if item.description %}
-                                <p class="text-gray-500 italic">{{ item.description }}</p>
+                                <p class="text-gray-600 italic">{{ item.description }}</p>
                             {% else %}
-                                <p class="text-gray-500 italic">&nbsp;</p>
+                                <p class="text-gray-600 italic">&nbsp;</p>
                             {% endif %}
                         </td>
                         <td class="px-1 py-1 text-center">{{ item.quantity }}</td>
                         <td class="px-1 text-right">{{ item.unit_price | usd }}</td>
-                        <td class="px-1 pr-2 text-right font-medium text-gray-900">
+                        <td class="px-1 pr-2 text-right font-medium">
                             {{ (item.quantity * item.unit_price) | usd }}
                         </td>
                     </tr>
@@ -155,7 +155,7 @@
                 <label class="no-print block text-[9px] font-bold text-blue-500 uppercase mb-1">
                     Editable Terms & Notes (Transient):
                 </label>
-                <textarea class="print-notes w-full text-[10px] leading-relaxed text-gray-700 bg-gray-50 p-2 
+                <textarea class="print-notes w-full text-[10px] leading-relaxed text-gray-800 bg-gray-50 p-2 
                                  border border-dashed border-gray-300 rounded outline-none focus:bg-white 
                                  focus:border-blue-400 transition-all resize-none overflow-hidden"
                         style="height: 80px;"
