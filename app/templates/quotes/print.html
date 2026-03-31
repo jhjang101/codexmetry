@@ -26,11 +26,11 @@
         <div class="flex justify-between items-start mb-1">
             <div>
                 {% if metadata.company_logo %}
-                <img src="{{ url_for('static', filename='uploads/logos/' + metadata.company_logo) }}" class="h-16 mb-4">
+                <img src="{{ url_for('static', filename='uploads/logos/' + metadata.company_logo) }}" class="h-16 mb-1">
                 {% else %}
-                <div class="h-16 w-16 border-none flex items-center justify-center m-4 uppercase"></div>
+                <div class="h-16 w-16 border-none flex items-center justify-center mb-1 uppercase"></div>
                 {% endif %}
-                <h1 class="text-xl font-bold text-gray-800">{{ metadata.company_name }}</h1>
+                
             </div>
             <div class="text-right">
                 <h2 class="text-3xl font-bold text-gray-800 tracking-wider uppercase opacity-90">Quotation</h2>
@@ -38,9 +38,10 @@
         </div>
 
         <!-- 2. COMPANY & DOCUMENT INFO GRID -->
-        <div class="grid grid-cols-5 gap-12 mb-6 text-xs">
+        <div class="grid grid-cols-5 gap-12 mb-4 text-xs items-start">
             <!-- Seller Info -->
             <div class="col-span-3 text-gray-800">
+                <h1 class="text-xl font-bold text-gray-800 mb-1">{{ metadata.company_name }}</h1>
                 <p class="whitespace-pre-line">{{ metadata.address or '' }}</p>
                 {% if metadata.company_phone %}
                 <p>Phone: {{ metadata.company_phone }}</p>
