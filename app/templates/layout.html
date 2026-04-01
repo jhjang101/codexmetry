@@ -73,7 +73,7 @@
                         {# Determine color based on active state and role restriction #}
                         {% if is_active %}
                             {% set text_color = 'text-white bg-blue-600 font-bold' %}
-                        {% elif label == 'Settings' and current_user.role != 'admin' %}
+                        {% elif label in ['Settings', 'Maintenance'] and current_user.role != 'admin' %}
                             {% set text_color = 'text-slate-600 cursor-not-allowed' %}
                         {% else %}
                             {% set text_color = 'text-slate-300 hover:bg-slate-800' %}
@@ -83,7 +83,7 @@
                         class="flex items-center gap-3 px-6 py-3 transition-colors {{ text_color }}">
                             <i class="fa-solid {{ icon }} w-5"></i>
                             {{ label }}
-                            {% if label == 'Settings' and current_user.role != 'admin' %}
+                            {% if label in ['Settings', 'Maintenance']  and current_user.role != 'admin' %}
                                 <i class="fa-solid fa-lock text-[10px] ml-auto"></i>
                             {% endif %}
                         </a>
