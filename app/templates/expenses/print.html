@@ -20,7 +20,7 @@
     </div>
 
     <!-- MAIN PAGE CONTAINER -->
-    <div class="max-w-[800px] mx-auto bg-white p-14 shadow-sm border border-gray-200 min-h-[900px] relative">
+    <div class="print-container max-w-[800px] mx-auto bg-white p-14 shadow-sm border border-gray-200 min-h-[900px] relative">
         
         <!-- 1. HEADER SECTION -->
         <div class="flex justify-between items-start mb-1">
@@ -140,7 +140,7 @@
                     {# Visual Spacer Rows #}
                     {% if line_display_items | length < 5 %}
                         {% for i in range(5 - (line_display_items | length)) %}
-                        <tr class="border-b border-gray-100">
+                        <tr class="border-b border-gray-200">
                             <td class="py-1" colspan="6">&nbsp;<p>&nbsp;</p></td>
                         </tr>
                         {% endfor %}

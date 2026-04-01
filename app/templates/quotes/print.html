@@ -20,7 +20,7 @@
     </div>
 
     <!-- MAIN PAGE CONTAINER -->
-    <div class="max-w-[800px] mx-auto bg-white p-14 shadow-sm border border-gray-200 min-h-[900px] relative">
+    <div class="print-container max-w-[800px] mx-auto bg-white p-14 shadow-sm border border-gray-200 min-h-[900px] relative">
         
         <!-- 1. HEADER SECTION -->
         <div class="flex justify-between items-start mb-1">
@@ -108,7 +108,7 @@
         </div>
 
         <!-- 4. ITEMS TABLE -->
-        <div class="mb-4">
+        <div class="mb-1">
             <table class="w-full border-collapse table-auto">
                 <thead>
                     <tr class="bg-gray-100 text-gray-800 text-[10px] uppercase font-bold border-y border-gray-500">
@@ -144,7 +144,7 @@
                     {# Visual Spacer Rows #}
                     {% if line_display_items | length < 5 %}
                         {% for i in range(5 - (line_display_items | length)) %}
-                        <tr class="border-b border-gray-100">
+                        <tr class="border-b border-gray-200">
                             <td class="py-1" colspan="6">&nbsp;<p>&nbsp;</p></td>
                         </tr>
                         {% endfor %}
@@ -154,9 +154,9 @@
         </div>
 
         <!-- 5. SUMMARY SECTION -->
-        <div class="flex justify-between items-start mb-6">
+        <div class="flex justify-between items-start mb-4">
             <!-- Terms Notes (Left) -->
-            <div class="w-3/5">
+            <div class="w-3/5 mt-3">
                 <label class="no-print block text-[9px] font-bold text-blue-500 uppercase mb-1">
                     Editable Terms & Notes (Transient):
                 </label>
@@ -194,7 +194,7 @@
         <!-- 6. SIGNATURE & CTA SECTION (FOOTER) -->
         <div class="mt-auto">
             <!-- Customer Acceptance Block -->
-            <div class="grid grid-cols-10 gap-6 mb-8">
+            <div class="grid grid-cols-10 gap-6 mb-6">
                 <div class="col-span-4">
                     <p class="text-[10px] font-bold text-gray-800 underline mb-6">Customer Acceptance (Submit PO or sign below)</p>
                     <div class="sig-line mb-1"></div>

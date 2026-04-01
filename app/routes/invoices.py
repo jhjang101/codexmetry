@@ -375,21 +375,33 @@ def print_view(id):
             line_display_items.append(item)
             subtotal += item_value
 
-    # 4. Calculate Payment Due Date
+    # 4. Financial Snapshot (The Ledger Data)
+    active_payments = [payment for payment in invoice.payments if payment.is_active]
+    total_received = sum(payment.amount for payment in active_payments)
+
+    # invoice.total_due is the grand total of all items (clamped at 0)
+    # invoice.balance is (total_due - total_received)
+
+    # 5. Calculate Payment Due Date
     metadata = db.session.get(SettingsMetadata, 1)
     net_days = invoice.net_days if invoice else (metadata.default_net_days if metadata else 30)
     due_date = invoice.invoice_date + timedelta(days=net_days) # type: ignore
 
-    # 5. Change invoice status to open
+    # 6. Template Selection
+    if invoice.status == 'completed':
+        template = 'invoices/print_paid.html'
+    else:
+        template = 'invoices/print.html'
 
-
-    # 6. Pass pre-calculated values to the template
-    return render_template('invoices/print.html', 
+    # 7. Pass pre-calculated values to the template
+    return render_template(template, 
                            invoice=invoice, 
                            line_display_items=line_display_items,
                            subtotal=subtotal,
                            tax_total=tax_total,
                            shipping_total=shipping_total,
+                           total_received=total_received,
+                           active_payments=active_payments,
                            due_date=due_date,
                            net_days=net_days)
 
