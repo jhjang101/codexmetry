@@ -105,6 +105,8 @@ class UserService(BaseService):
         
         # 3. Identity Check: Fetch the user
         user = cls.get_by_id(user_id)
+        if user.is_root:
+            raise ValueError("The Root Administrator password is system-protected and cannot be changed via the application.")
 
         # 4. Security Guard: Verify the existing password
         # This prevents someone from changing a password on a left-open session

@@ -11,6 +11,17 @@
                 <p class="text-sm text-gray-500">Update your account password</p>
             </div>
 
+            {% if current_user.is_root %}
+            <!-- Root Protection Banner -->
+            <div class="mb-6 p-3 bg-slate-50 border border-slate-200 rounded-lg flex items-center gap-3">
+                <i class="fa-solid fa-shield-halved text-slate-400 text-lg"></i>
+                <p class="text-xs text-slate-600 leading-tight">
+                    <span class="font-bold uppercase block text-gray-800 mb-0.5">System Protected</span>
+                    As the Root Administrator, your credentials are managed via environment configuration and cannot be modified here.
+                </p>
+            </div>
+            {% endif %}
+
             <form id="password-change-form">
                 <!-- Current Password -->
                 <div class="mb-4">
