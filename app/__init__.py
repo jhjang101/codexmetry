@@ -56,10 +56,13 @@ def create_app():
         # 3. Contextual Redirect for everything else
         flash("Please log in to access this page.", "info")
         return redirect(url_for('auth.login', next=request.full_path))
+    
+    # 3. Register CLI Commands
+    from .utils.cli import seed_db_command
+    app.cli.add_command(seed_db_command)
 
+    # 4. Register Blueprints
     from . import models
-
-    # 3. Register Blueprints
     from .routes import (dashboard, quotes, purchase_orders, invoices, 
                          payments, expenses, clients, products, vendors, 
                          adjustments, reports, settings, maintenance ,auth
@@ -79,7 +82,7 @@ def create_app():
     app.register_blueprint(maintenance.bp, url_prefix='/maintenance')
     app.register_blueprint(auth.bp, url_prefix='/auth')
 
-    # 4. Register Jinja Filter
+    # 5. Register Jinja Filter
     from .utils.money import format_usd
     @app.template_filter('usd')
     def usd_filter(cents):
@@ -98,7 +101,7 @@ def create_app():
         # Ensure the naive datetime from DB is treated as UTC, then convert
         return dt.replace(tzinfo=ZoneInfo('UTC')).astimezone(ZoneInfo(tz_name))
 
-    # 5. Error Handling
+    # 6. Error Handling
     @app.errorhandler(SQLAlchemyError)
     def handle_db_error(error):
         # 1. Atomic Safeguard
@@ -134,7 +137,7 @@ def create_app():
         flash(message, "error")
         return redirect(url_for('dashboard.index'))
     
-    # 6. Global Context Processors (For now, and Metadata)
+    # 7. Global Context Processors (For now, and Metadata)
     @app.context_processor
     def inject_metadata():
         from .services.settings_service import MetadataService as Metadata
