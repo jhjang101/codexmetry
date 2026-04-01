@@ -17,7 +17,7 @@ def create_app():
     INSTANCE_FOLDER = os.path.join(app.root_path, 'instance')
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)
     os.makedirs(INSTANCE_FOLDER, exist_ok=True)
-    app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-key-for-local-only')
+    app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'generate-a-long-random-string-here')
     app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{INSTANCE_FOLDER}/codexmetry.db'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['INSTANCE_FOLDER'] = INSTANCE_FOLDER
