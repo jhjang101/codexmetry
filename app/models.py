@@ -669,7 +669,7 @@ class Attachment(db.Model, AuditMixin):
     file_path: Mapped[str] = mapped_column(String(255), nullable=False)
     file_name: Mapped[str] = mapped_column(String(255), nullable=False)
     uploaded_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.current_timestamp())
-    is_generated: Mapped[bool] = mapped_column(Boolean, default=False, server_default='0') # PDF Snapshot flag
+    is_generated: Mapped[bool] = mapped_column(Boolean, default=False, server_default='false') # PDF Snapshot flag
 
 # --- 8. AUDIT EVENT LISTENERS ---
 
