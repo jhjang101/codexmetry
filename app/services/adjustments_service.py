@@ -22,7 +22,6 @@ class AdjustmentService(BaseService):
         'date': model.adjustment_date,
     }
 
-
     @classmethod
     def get_all_with_search(cls, 
                             search_term: str | None = None, 
@@ -142,6 +141,107 @@ class AdjustmentService(BaseService):
 
         db.session.commit()
         return adjustment
+    
+    # --- Auto Create Write-off for Underpayment---
+    @classmethod
+    def reconcile_writeoff(cls, invoice):
+        """
+        Brain: Automates the creation/deletion of threshold write-offs.
+        Ensures Net Income is corrected by the underpayment gap.
+        """
+        # 1. Fetch the System Category
+        category = db.session.execute(
+            select(AdjustmentCategory).filter_by(is_system=True, type='Write-off')
+        ).scalar_one_or_none()
+        
+        if not category:
+            raise ValueError("'Write-off' category not found. Run seed-db.")
+
+        # 2. Find any existing linked adjustment
+        existing_adj = db.session.execute(
+            select(Adjustment).filter_by(invoice_id=invoice.id, is_system=True)
+        ).scalar_one_or_none()
+
+        # 3. Audit_logs snapshot
+        old_snapshot = cls._get_snapshot(existing_adj) if existing_adj else {}
+
+        # 4. Initialize result packet
+        result = None
+
+        # 4. Logic Branch: Is the invoice completed?
+        if invoice.status == 'completed':
+            # Calculate the Gap (Receipts - Billed Amount)
+            # Example: $998 received - $1000 billed = -$2 write-off
+            total_paid = sum(p.amount for p in invoice.payments if p.is_active)
+            gap = total_paid - invoice.total_amount
+
+            # A: If gap exists, create or update
+            if gap != 0:
+                if existing_adj:
+                    # Update
+                    existing_adj.description = f"Write-off for Invoice {invoice.invoice_number}"
+                    existing_adj.amount = gap
+                    existing_adj.adjustment_date = invoice.invoice_date
+
+                    # Capture for audit
+                    new_data = {'description': existing_adj.description, 
+                                'amount': gap, 
+                                'adjustment_date': invoice.invoice_date}
+
+                    # Check for ANY change (Amount or Date)
+                    if (old_snapshot.get('amount') != gap or 
+                        old_snapshot.get('adjustment_date') != invoice.invoice_date):
+                        AuditLogService.record(existing_adj.id,
+                                               cls.model.__name__,  
+                                               'UPDATE', 
+                                               old_data=old_snapshot, 
+                                               new_data=new_data)
+                        result = {'action': 'UPDATE', 'amount': gap}
+                        
+                else:
+                    new_adj = Adjustment()
+                    new_adj.adjustment_number = generate_doc_number('A', Adjustment, 'adjustment_number')
+                    new_adj.description = f"Write-off for Invoice {invoice.invoice_number}"
+                    new_adj.amount = gap
+                    new_adj.adjustment_date = invoice.invoice_date
+                    new_adj.category_id = category.id
+                    new_adj.invoice_id = invoice.id
+                    new_adj.order_id = invoice.order_id
+                    new_adj.is_system = True
+                    new_adj.is_active = True
+                    
+                    db.session.add(new_adj)
+                    db.session.flush() # Get ID for audit
+
+                    # Capture for audit
+                    new_snapshot = cls._get_snapshot(new_adj)
+                    AuditLogService.record(new_adj.id, 
+                                           cls.model.__name__,  
+                                           'CREATE',
+                                           new_data=new_snapshot)
+                    result = {'action': 'CREATE', 'amount': gap}
+            
+            # B: If gap is 0 but record exists (e.g. they paid the final cent), delete it
+            elif existing_adj:
+                AuditLogService.record(existing_adj.id, 
+                                       cls.model.__name__, 
+                                       'DELETE',
+                                       old_data=old_snapshot)
+                db.session.delete(existing_adj)
+                result = {'action': 'DELETE'}
+
+        # 4. Logic Branch: If NOT completed, ensure no write-off exists
+        else:
+            if existing_adj:
+                AuditLogService.record(existing_adj.id, 
+                                       cls.model.__name__, 
+                                       'DELETE',
+                                       old_data=old_snapshot)
+                db.session.delete(existing_adj)
+                result = {'action': 'DELETE'}
+        
+        return result
+
 
     # --- INTERNAL HELPERS ---
 

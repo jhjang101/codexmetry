@@ -34,7 +34,7 @@ class AuditLog(db.Model):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     timestamp: Mapped[datetime] = mapped_column(DateTime, server_default=func.current_timestamp())
     user_id: Mapped[int | None] = mapped_column(ForeignKey('users.id'))
-    action: Mapped[str] = mapped_column(String(20)) # CREATE, UPDATE, ARCHIVE
+    action: Mapped[str] = mapped_column(String(20)) # CREATE, UPDATE, ARCHIVE, DELETE
     target_type: Mapped[str] = mapped_column(String(50)) # 'Invoice', 'Product', etc.
     target_id: Mapped[int] = mapped_column(Integer)
     target_label: Mapped[str | None] = mapped_column(String(255))

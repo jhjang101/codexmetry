@@ -2,6 +2,7 @@ from ..extensions import db
 from ..models import SettingsMetadata
 from ..services.purchase_orders_service import PurchaseOrderService
 from ..services.audit_service import AuditLogService
+from ..services.adjustments_service import AdjustmentService
 
 def sync_invoice_status(invoice, original_status: str | None = None, proposed_status: str | None = None):
     """
@@ -47,9 +48,16 @@ def sync_invoice_status(invoice, original_status: str | None = None, proposed_st
             new_status = "draft"
     
     # Capture result and stage
-    res = {"before": original_status, "after": new_status}
     if invoice.status != new_status:
         invoice.status = new_status
+
+    # Wite-off Adjustment Reconciliation
+    # This ensures that whenever a status is evaluated, the write-off matches the reality
+    adjustment_result = AdjustmentService.reconcile_writeoff(invoice)
+
+    res = {"before": original_status, 
+           "after": new_status,
+           "adjustment": adjustment_result}
 
     return res
 
