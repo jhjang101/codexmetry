@@ -293,6 +293,7 @@ class OrderRegistry(db.Model, AuditMixin):
     invoices: Mapped[list["Invoice"]] = relationship(back_populates="order")
     payments: Mapped[list["Payment"]] = relationship(back_populates="order")
     expenses: Mapped[list["Expense"]] = relationship(back_populates="order")
+    adjustments: Mapped[list["Adjustment"]] = relationship(back_populates="order")
 
     @property
     def total_paid(self):
@@ -496,6 +497,7 @@ class Invoice(db.Model, AuditMixin):
     purchase_order: Mapped["PurchaseOrder"] = relationship(back_populates="invoices")
     payments: Mapped[list["Payment"]] = relationship(back_populates="invoice")
     expenses: Mapped[list["Expense"]] = relationship(back_populates="invoice")
+    adjustments: Mapped[list["Adjustment"]] = relationship(back_populates="invoice", cascade="all, delete-orphan")
     client: Mapped["Client"] = relationship(back_populates="invoices", foreign_keys=[client_id])
     bill_to: Mapped["Client"] = relationship(back_populates="invoice_billings", foreign_keys=[bill_to_id])
     carrier: Mapped["Carrier"] = relationship()
@@ -593,10 +595,15 @@ class Adjustment(db.Model, AuditMixin):
     amount: Mapped[int] = mapped_column(Integer, nullable=False)
     adjustment_date: Mapped[date] = mapped_column(Date, server_default=func.current_date())
     category_id: Mapped[int | None] = mapped_column(ForeignKey('adjustment_categories.id'))
+    order_id: Mapped[int | None] = mapped_column(ForeignKey('orders.id')) # Link for Automated Write-off underpayments
+    invoice_id: Mapped[int | None] = mapped_column(ForeignKey('invoices.id')) # Link for Automated Write-off underpayments
     note: Mapped[str | None] = mapped_column(Text)
+    is_system: Mapped[bool] = mapped_column(Boolean, default=False, server_default='false') # System Lock
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
     category: Mapped["AdjustmentCategory"] = relationship()
+    order: Mapped["OrderRegistry | None"] = relationship(back_populates="adjustments")
+    invoice: Mapped["Invoice | None"] = relationship(back_populates="adjustments")
     attachments: Mapped[list["Attachment"]] = relationship(
         primaryjoin="and_(Adjustment.id==Attachment.entity_id, Attachment.entity_type=='Adjustment')",
         foreign_keys="[Attachment.entity_id]",
