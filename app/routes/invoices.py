@@ -86,7 +86,7 @@ def add():
             new_files = request.files.getlist('attachments')
 
             # 4. Save Invoice and Line Items
-            new_invoice, po_status = InvoiceService.add_invoice(header_data, items, new_files=new_files)
+            new_invoice, invoice_status, po_status = InvoiceService.add_invoice(header_data, items, new_files=new_files)
 
             # 5. Flash Messages
             flash(f"Invoice {new_invoice.invoice_number} created!", "success")
@@ -94,6 +94,21 @@ def add():
             if po_status and po_status['before'] != po_status['after']:
                 po_name = new_invoice.purchase_order.po_number or new_invoice.order.order_number
                 flash(f"Associated PO {po_name} status updated: {po_status['before'].upper()} → {po_status['after'].upper()}", "success")
+
+            # Adjustment Ripple Flash (The hardened Pylance-safe logic)
+            adjustment_status = invoice_status.get('adjustment')
+            if isinstance(adjustment_status, dict):
+                action = adjustment_status.get('action')
+                raw_amount = adjustment_status.get('amount', 0)
+                amount = int(raw_amount) if raw_amount is not None else 0
+                amount_str = format_usd(amount)
+                
+                if action == 'CREATE':
+                    flash(f"Threshold gap of {amount_str} auto-recorded as a Write-off Adjustment.", "info")
+                elif action == 'UPDATE':
+                    flash(f"System Write-off Adjustment updated to match new {amount_str} gap.", "info")
+                elif action == 'DELETE':
+                    flash("System Write-off Adjustment removed (Invoice settled or re-opened).", "info")
 
             # The Safe Save Redirect: Forces a clean page load to 'View' mode
             response = make_response("", 200)

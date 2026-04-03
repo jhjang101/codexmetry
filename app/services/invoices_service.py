@@ -162,7 +162,7 @@ class InvoiceService(BaseService):
         cls.get_invoice_by_id(invoice.id)
 
         # 7. Update Invoice Status
-        sync_invoice_status(invoice)
+        invoice_status = sync_invoice_status(invoice)
 
         # 8. Prepare the Snapshot for the log
         new_snapshot = clean_data.copy()
@@ -183,7 +183,7 @@ class InvoiceService(BaseService):
         po_status = sync_po_status(invoice.po_id)
         
         db.session.commit()
-        return invoice, po_status
+        return invoice, invoice_status, po_status
     
     @classmethod
     def edit_invoice(cls, 
