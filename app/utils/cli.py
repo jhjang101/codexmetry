@@ -2,7 +2,7 @@ import click
 import os
 from flask.cli import with_appcontext
 from ..extensions import db
-from ..models import SettingsMetadata, ProductCategory, Product, User
+from ..models import SettingsMetadata, ProductCategory, Product, AdjustmentCategory, User
 from sqlalchemy import select
 
 @click.command('seed-db')
@@ -71,8 +71,22 @@ def seed_db_command():
 
         db.session.add(prepayment)
         click.echo("Default Product 'Prepayment' seeded successfully.")
+    
+    # 5. Seed Adjustment Category: "Write-off" Underpayment within threshhold 
+    # Search by is_system flag or specific type
+    writeoff_category = db.session.execute(
+        select(AdjustmentCategory).filter_by(type='Write-off')
+    ).scalar_one_or_none()
 
-    # 5. Seed Root Admin User from .env
+    if not writeoff_category:
+        writeoff_category = AdjustmentCategory()
+        writeoff_category.type = 'Write-off'
+        writeoff_category.is_active = True
+        writeoff_category.is_system = True
+        db.session.add(writeoff_category)
+        click.echo("Seeded System Adjustment Category 'Write-off'.")
+
+    # 6. Seed Root Admin User from .env
     admin_user = db.session.execute(
         select(User).filter_by(is_root=True)
     ).scalar_one_or_none()
