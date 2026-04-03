@@ -342,7 +342,7 @@ def archive(id):
     """Specialized archive for invoices with payment protection."""
     try:
         # 1. Perform specialized archive
-        invoice, has_payments, po_status = InvoiceService.archive_invoice(id)
+        invoice, has_payments, adjustment_status, po_status = InvoiceService.archive_invoice(id)
 
         if not invoice:
             raise ValueError("Invoice not found.")
@@ -353,12 +353,19 @@ def archive(id):
         # MONEY SAFETY WARNING: Tell the user exactly where the money went
         if has_payments:
             po_name = invoice.purchase_order.po_number or invoice.order.order_number
-            flash(f'ATTENTION: This invoice had active payments. These funds are now sitting as a credit on PO {po_name}.', 'error')
+            flash(f'ACTION REQUIRED: This invoice had active payments. These funds are now sitting as a credit on PO {po_name}.', 'error')
 
         # PO SYNC FEEDBACK
         if po_status and po_status['before'] != po_status['after']:
             po_name = invoice.purchase_order.po_number or invoice.order.order_number
             flash(f"Previous PO {po_name} status reverted: {po_status['before'].upper()} → {po_status['after'].upper()}", "info")
+
+        # Adjustment Ripple Flash
+        if isinstance(adjustment_status, dict):
+            action = adjustment_status.get('action')
+            # On archive, we generally only expect DELETE
+            if action == 'DELETE':
+                flash("System Write-off Adjustment removed (Invoice archived).", "info")
             
         return redirect(url_for('invoices.index'))
     

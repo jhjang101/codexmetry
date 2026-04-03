@@ -169,7 +169,7 @@ class AdjustmentService(BaseService):
         result = None
 
         # 4. Logic Branch: Is the invoice completed?
-        if invoice.status == 'completed':
+        if invoice.status == 'completed' and invoice.is_active:
             # Calculate the Gap (Receipts - Billed Amount)
             # Example: $998 received - $1000 billed = -$2 write-off
             total_paid = sum(p.amount for p in invoice.payments if p.is_active)

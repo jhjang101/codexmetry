@@ -2,6 +2,7 @@ from .base_service import BaseService
 from ..models import Invoice, InvoiceItem, PurchaseOrder, OrderRegistry, Client, Payment, Product, SettingsMetadata
 from .audit_service import AuditLogService
 from .attachment_service import AttachmentService
+from .adjustments_service import AdjustmentService
 from ..extensions import db
 from ..utils.money import parse_to_cents, format_usd
 from ..utils.manual_pagination import ManualPagination
@@ -350,7 +351,7 @@ class InvoiceService(BaseService):
         """
         invoice = cls.get_invoice_by_id(id)
         if not invoice:
-            return None, False, None
+            return None, False, None, None # Added a 4th slot for adjustment_status
 
         # Check for active payments specifically linked to this invoice
         has_payments = any(p.is_active for p in invoice.payments)
@@ -367,13 +368,17 @@ class InvoiceService(BaseService):
         # Soft delete
         invoice.is_active = False
 
+        # 2. SURGICAL STRIKE: Call the brain directly to clean up the adjustment
+        # Because is_active is now False, it will hit the 'else' block and DELETE
+        adjustment_status = AdjustmentService.reconcile_writeoff(invoice) # Use AdjustmentService.reconcile_writeoff
+
         # PO Status Ripple
         po_status = sync_po_status(invoice.po_id)
 
         # Commit
         db.session.commit()
 
-        return invoice, has_payments, po_status
+        return invoice, has_payments, adjustment_status, po_status
     
     @classmethod
     def get_invoices_by_po(cls, 
