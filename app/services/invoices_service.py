@@ -419,15 +419,16 @@ class InvoiceService(BaseService):
             # 1. Ask the sync logic for the 'Financial Reality'
             # We pass proposed_status=None to ignore manual overrides
             from ..utils.sync import sync_invoice_status
-            res = sync_invoice_status(invoice, original_status='draft', proposed_status=None)
+            invoice_status = sync_invoice_status(invoice, original_status='draft', proposed_status=None)
             
-            target = res['after']
+            target = invoice_status['after']
             
             # 2. Apply the "Issuance Floor" 
             # If no money exists, sync_invoice_status returns 'draft'. 
             # We must promote to 'open' because it's being printed.
             if target == 'draft':
                 target = 'open'
+                invoice_status['after'] = 'open'
 
             # 3. Finalize state
             invoice.status = target
@@ -450,7 +451,7 @@ class InvoiceService(BaseService):
 
             db.session.commit()
         
-        return invoice, {"before": before, "after": invoice.status}, po_status
+        return invoice, invoice_status, po_status
     
     @classmethod
     def _validate_pure_prepayment(cls, items_data: list[dict]) -> bool:
