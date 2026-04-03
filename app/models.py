@@ -101,6 +101,7 @@ class AdjustmentCategory(db.Model):
     __tablename__ = 'adjustment_categories'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     type: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
+    is_system: Mapped[bool] = mapped_column(Boolean, default=False, server_default='false')
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
 class Carrier(db.Model):
