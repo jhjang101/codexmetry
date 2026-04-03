@@ -14,6 +14,7 @@ from ..utils.docs import generate_doc_number
 from ..utils.sync import sync_invoice_status, sync_po_status
 from ..utils.auth import role_required
 from ..utils.errors import handle_post_error
+from ..utils.money import format_usd
 from ..models import Invoice, Product, SettingsMetadata
 from ..extensions import db
 from datetime import datetime, timedelta
@@ -278,6 +279,22 @@ def edit(id):
             if old_po_status and old_po_status['before'] != old_po_status['after']:
                 # Fetch old name for forensic clarity in the UI
                 flash(f"Previous PO {old_po_name} status reverted: {old_po_status['before'].upper()} → {old_po_status['after'].upper()}", "info")
+            # Adjustment Ripple Flash
+            adjustment_status = invoice_status.get('adjustment')
+
+            if isinstance(adjustment_status, dict):
+                action = adjustment_status.get('action')
+                # Use adj.get('amount', 0) to ensure Pylance sees an int
+                raw_amount = adjustment_status.get('amount', 0)
+                amount = int(raw_amount) if raw_amount is not None else 0
+
+                amount_str = format_usd(amount)
+                if action == 'CREATE':
+                    flash(f"Threshold gap of {amount_str} auto-recorded as a Write-off Adjustment.", "info")
+                elif action == 'UPDATE':
+                    flash(f"System Write-off Adjustment updated to match new {amount_str} gap.", "info")
+                elif action == 'DELETE':
+                    flash("System Write-off Adjustment removed (Invoice settled or re-opened).", "info")
 
             # The Safe Save Redirect: Forces a clean page load to 'View' mode
             response = make_response("", 200)
