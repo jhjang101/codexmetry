@@ -139,7 +139,7 @@ class AuditLogService:
                 changes[key] = [norm_old, norm_new]
 
         # 4. Save entry if there's a delta or it's a lifecycle event
-        if changes or action in ['CREATE', 'ARCHIVE']:
+        if changes or action in ['CREATE', 'ARCHIVE', 'DELETE']:
             user_id = int(current_user.get_id()) if (has_request_context() and current_user.is_authenticated) else None
 
             # 1. GENERATE THE TARGET LABEL
