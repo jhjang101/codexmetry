@@ -9,11 +9,12 @@ from ..services.clients_service import ClientService
 from ..services.settings_service import PaymentTypeService
 from ..services.attachment_service import AttachmentService
 from ..services.audit_service import AuditLogService
-from ..utils.money import parse_to_cents
 from ..utils.docs import generate_doc_number
 from ..utils.sync import sync_invoice_status, sync_po_status
 from ..utils.auth import role_required
 from ..utils.errors import handle_post_error
+from ..utils.money import format_usd
+from ..models import Payment
 from ..extensions import db
 from datetime import datetime
 import time
@@ -90,6 +91,23 @@ def add():
             if po_status and po_status['before'] != po_status['after']:
                 po_name = new_payment.purchase_order.po_number or new_payment.order.order_number
                 flash(f"Associated PO {po_name} status updated: {po_status['before'].upper()} → {po_status['after'].upper()}", "success")
+            
+            # Adjustment Ripple Flash
+            # We look specifically inside the invoice_status for the adjustment packet
+            if invoice_status:
+                adjustment_status = invoice_status.get('adjustment')
+                if isinstance(adjustment_status, dict):
+                    action = adjustment_status.get('action')
+                    raw_amount = adjustment_status.get('amount', 0)
+                    amount = int(raw_amount) if raw_amount is not None else 0
+                    amount_str = format_usd(amount)
+                    
+                    if action == 'CREATE':
+                        flash(f"Threshold gap of {amount_str} auto-recorded as a Write-off Adjustment.", "info")
+                    elif action == 'UPDATE':
+                        flash(f"System Write-off Adjustment updated to match new {amount_str} gap.", "info")
+                    elif action == 'DELETE':
+                        flash("System Write-off Adjustment removed (Invoice settled or re-opened).", "info")
 
             # The Safe Save Redirect: Forces a clean page load to 'View' mode
             response = make_response("", 200)
@@ -278,7 +296,27 @@ def edit(id):
             # Old PO Flash
             if old_po_status and old_po_status['before'] != old_po_status['after']:
                 flash(f"Previous PO {old_invoice_name} reverted: {old_po_status['before'].upper()} → {old_po_status['after'].upper()}", "info")
+            # The Dual Adjustment Ripple Flash
+            # We loop through both old and new invoice results
+            for status in [old_invoice_status, new_invoice_status]:
+                if not status: continue
                 
+                adjustment_status = status.get('adjustment')
+                if isinstance(adjustment_status, dict):
+                    action = adjustment_status.get('action')
+                    raw_amt = adjustment_status.get('amount', 0)
+                    amount = int(raw_amt) if raw_amt is not None else 0
+                    amt_str = format_usd(amount)
+
+                    # Note: We keep the message generic because the user just 
+                    # performed the action and knows which invoices are involved.
+                    if action == 'CREATE':
+                        flash(f"Threshold gap of {amt_str} auto-recorded as a Write-off Adjustment.", "info")
+                    elif action == 'UPDATE':
+                        flash(f"System Write-off Adjustment updated to match new {amt_str} gap.", "info")
+                    elif action == 'DELETE':
+                        flash("System Write-off Adjustment removed (Invoice re-opened or settled).", "info")
+
             response = make_response("", 200)
             response.headers['HX-Redirect'] = url_for('payments.view', id=id)
             return response
@@ -332,7 +370,23 @@ def archive(id):
         if po_status and po_status['before'] != po_status['after']:
             po_name = payment.purchase_order.po_number or payment.order.order_number
             flash(f"Associated PO {po_name} status updated: {po_status['before'].upper()} → {po_status['after'].upper()}", "success")
-        
+        # Adjustment Ripple Flash
+        # We look specifically inside the invoice_status for the adjustment packet
+        if invoice_status:
+            adjustment_status = invoice_status.get('adjustment')
+            if isinstance(adjustment_status, dict):
+                action = adjustment_status.get('action')
+                raw_amount = adjustment_status.get('amount', 0)
+                amount = int(raw_amount) if raw_amount is not None else 0
+                amount_str = format_usd(amount)
+                
+                if action == 'CREATE':
+                    flash(f"Threshold gap of {amount_str} auto-recorded as a Write-off Adjustment.", "info")
+                elif action == 'UPDATE':
+                    flash(f"System Write-off Adjustment updated to match new {amount_str} gap.", "info")
+                elif action == 'DELETE':
+                    flash("System Write-off Adjustment removed (Invoice settled or re-opened).", "info")
+                    
         return redirect(url_for('payments.index'))
     
     except Exception as e:
