@@ -1,0 +1,33 @@
+<div class="relative" id="po-select-container">
+
+    <select name="po_id" 
+            {% if not client_id and not adjustment %}
+            disabled
+            {% endif %}
+            class="mt-1 block w-full border rounded-lg p-2 text-sm 
+            focus:ring-1 focus:ring-blue-300 outline-none appearance-none pr-10
+            {% if not client_id and not adjustment %} bg-gray-100 text-gray-400 cursor-not-allowed
+            {% else %} bg-transparent cursor-pointer
+            {% endif %}">
+        
+        <option value="">
+            {% if not client_id and not adjustment %}Select Client first...
+            {% else %}No PO Link
+            {% endif %}
+        </option>
+        
+        {% for po in pos %}
+            <option value="{{ po.id }}" 
+                           {% if adjustment and po.id == adjustment.po_id %}
+                           selected
+                           {% elif not adjustment and po.id == po_id %}
+                           selected
+                           {% endif %}>
+                {{ po.order.order_number }} ({{ po.po_number if po.po_number else 'No Ref' }})
+            </option>
+        {% endfor %}
+    </select>
+    <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-400">
+        <i class="fa-solid fa-chevron-down text-[10px]"></i>
+    </div>
+</div>

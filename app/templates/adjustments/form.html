@@ -66,15 +66,24 @@
         </div>
     </div>
 
+    <!-- Main Form -->
     <form id="adjustment-main-form" 
           hx-post="{{ url_for('adjustments.add') if mode == 'add' else url_for('adjustments.edit', id=adjustment.id) }}" 
           hx-encoding="multipart/form-data"
           hx-swap = "none">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
+        <!-- Header Information -->
         <section class="bg-white p-6 rounded-lg shadow mb-2">
             <div class="flex justify-between items-end border-b pb-2 mb-2">
-                <h2 class="text-xl font-semibold">Financial Details</h2>
+                <div class="flex flex-col">
+                    <h2 class="text-xl font-semibold">Adjustment Details</h2>
+                    {% if adjustment and adjustment.order_id %}
+                    <span class="text-xs text-gray-500">Order Ref: {{ adjustment.order.order_number }}</span>
+                    {% else %}
+                    <span class="text-xs text-gray-500"></span>
+                    {% endif %}
+                </div>
 
                 {# Include the audit info, passing the current object as 'record' #}
                 {% if mode == 'view' %} 
@@ -86,7 +95,7 @@
             </div>
 
             <div class="grid grid-cols-4 gap-4">
-                <div class="col-span-2">
+                <div class="col-span-3">
                     <label class="block text-sm font-medium text-gray-500">Description</label>
                     {% if mode == 'view' %}
                         <p class="mt-1 block bg-gray-100 border rounded-lg p-2 text-sm">{{ adjustment.description }}</p>
@@ -107,21 +116,6 @@
                     {% else %}
                         <input type="text" name="adjustment_number" value="{{ adjustment.adjustment_number if adjustment else suggested_number }}" 
                                class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none transition-all" required>
-                    {% endif %}
-                </div>
-
-                <div class="col-span-1">
-                    <label class="block text-sm font-medium text-gray-500">Amount</label>
-                    {% if mode == 'view' %}
-                        <p class="mt-1 block bg-gray-100 border rounded-lg p-2 text-sm {{ 'text-green-700' if adjustment.amount >= 0 else 'text-red-600' }}">
-                            {{ adjustment.amount | usd }}
-                        </p>
-                    {% else %}
-                        <input type="text" 
-                               name="amount" 
-                               value="{{ adjustment.amount | usd if adjustment else '$0.00' }}" 
-                               required
-                               class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300">
                     {% endif %}
                 </div>
 
@@ -148,6 +142,21 @@
                 </div>
 
                 <div class="col-span-1">
+                    <label class="block text-sm font-medium text-gray-500">Amount</label>
+                    {% if mode == 'view' %}
+                        <p class="mt-1 block bg-gray-100 border rounded-lg p-2 text-sm {{ 'text-green-700' if adjustment.amount >= 0 else 'text-red-600' }}">
+                            {{ adjustment.amount | usd }}
+                        </p>
+                    {% else %}
+                        <input type="text" 
+                               name="amount" 
+                               value="{{ adjustment.amount | usd if adjustment else '$0.00' }}" 
+                               required
+                               class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300">
+                    {% endif %}
+                </div>
+
+                <div class="col-span-1">
                     <label class="block text-sm font-medium text-gray-500">Date</label>
                     {% if mode == 'view' %}
                         <p class="mt-1 block bg-gray-100 border rounded-lg p-2 text-sm">{{ adjustment.adjustment_date }}</p>
@@ -156,6 +165,60 @@
                                class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300">
                     {% endif %}
                 </div>
+
+
+
+                <div class="col-span-2">
+                    <label class="block text-sm font-medium text-gray-500">Link to Client (Optional)</label>
+                    {% if mode == 'view' %}
+                        <p class="mt-1 block bg-gray-100 border rounded-lg p-2 text-sm">{{ adjustment.client.full_display if (adjustment and adjustment.client) else 'Independent Adjustment' }}</p>
+                        {% if mode != 'view' %}<input type="hidden" name="client_id" value="{{ adjustment.client_id or '' }}">{% endif %}
+                    {% else %}
+                        <div class="relative">
+                            <!-- Triggers HTMX Cascade to find POs -->
+                            <select name="client_id" 
+                                    class="mt-1 block w-full border rounded-lg p-2 text-sm 
+                                          appearance-none bg-transparent cursor-pointer pr-10 
+                                          focus:ring-1 focus:ring-blue-300 outline-none"
+                                    hx-get="{{ url_for('adjustments.update_client_cascades', adjustment_id=adjustment.id if adjustment else '') }}"
+                                    hx-trigger="change"
+                                    hx-swap="none">
+                                <option value="">Independent Adjustment</option>
+                                {% for client in clients %}
+                                    <option value="{{ client.id }}"
+                                             {% if adjustment and adjustment.client_id == client.id %}
+                                             selected
+                                             {% elif not adjustment and client.id == client_id %}
+                                             selected
+                                             {% endif %}>
+                                        {{ client.full_display }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-400">
+                                <i class="fa-solid fa-chevron-down text-[10px]"></i></div>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="col-span-2">
+                    <label class="block text-sm font-medium text-gray-500">Link to PO (Optional)</label>
+                    <div id="po-select-container">
+                        {% if mode == 'view' %}
+                            <p class="mt-1 block bg-gray-100 border rounded-lg p-2 text-sm">
+                                {% if adjustment.purchase_order %} 
+                                    {{ adjustment.order.order_number }} ({{ adjustment.purchase_order.po_number }})
+                                {% else %}-
+                                {% endif %}
+                            </p>
+                        {% else %}
+                            <!-- Handled by partial: adjustments/partials/po_select.html -->
+                            {% include 'adjustments/partials/po_select.html' with context %}
+                        {% endif %}
+                    </div>
+                </div>
+
+
 
             </div>
         </section>

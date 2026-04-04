@@ -134,7 +134,10 @@ def view(id):
     
     history = AuditLogService.get_for_entity('Adjustment', id)
 
-    return render_template('adjustments/form.html', mode='view', adjustment=adjustment, history=history)
+    return render_template('adjustments/form.html', 
+                           mode='view', 
+                           adjustment=adjustment, 
+                           history=history)
 
 @bp.route('/edit/<int:id>', methods=['GET', 'POST'])
 @role_required(['admin', 'user'])
