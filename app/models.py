@@ -158,6 +158,8 @@ class Client(db.Model, AuditMixin):
     payments: Mapped[list["Payment"]] = relationship(back_populates="client", foreign_keys="[Payment.client_id]")
     paid_from_payments: Mapped[list["Payment"]] = relationship(back_populates="paid_from", foreign_keys="[Payment.paid_from_id]")
     expenses: Mapped[list["Expense"]] = relationship(back_populates="client")
+    adjustments: Mapped[list["Adjustment"]] = relationship(back_populates="client")
+
 
     @property
     def primary_contact(self):
@@ -397,6 +399,7 @@ class PurchaseOrder(db.Model, AuditMixin):
     invoices: Mapped[list["Invoice"]] = relationship(back_populates="purchase_order")
     payments: Mapped[list["Payment"]] = relationship(back_populates="purchase_order")
     expenses: Mapped[list["Expense"]] = relationship(back_populates="purchase_order")
+    adjustments: Mapped[list["Adjustment"]] = relationship(back_populates="purchase_order")
     client: Mapped["Client"] = relationship(back_populates="purchase_orders", foreign_keys=[client_id])
     bill_to: Mapped["Client"] = relationship(back_populates="po_billings", foreign_keys=[bill_to_id])
     items: Mapped[list["PoItem"]] = relationship(back_populates="po", cascade="all, delete-orphan", order_by="PoItem.sort_order.asc()")
@@ -596,14 +599,18 @@ class Adjustment(db.Model, AuditMixin):
     amount: Mapped[int] = mapped_column(Integer, nullable=False)
     adjustment_date: Mapped[date] = mapped_column(Date, server_default=func.current_date())
     category_id: Mapped[int | None] = mapped_column(ForeignKey('adjustment_categories.id'))
+    client_id: Mapped[int | None] = mapped_column(ForeignKey('clients.id'))
     order_id: Mapped[int | None] = mapped_column(ForeignKey('orders.id')) # Link for Automated Write-off underpayments
+    po_id: Mapped[int | None] = mapped_column(ForeignKey('purchase_orders.id')) 
     invoice_id: Mapped[int | None] = mapped_column(ForeignKey('invoices.id')) # Link for Automated Write-off underpayments
     note: Mapped[str | None] = mapped_column(Text)
     is_system: Mapped[bool] = mapped_column(Boolean, default=False, server_default='false') # System Lock
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
     category: Mapped["AdjustmentCategory"] = relationship()
+    client: Mapped["Client | None"] = relationship(back_populates="adjustments")
     order: Mapped["OrderRegistry | None"] = relationship(back_populates="adjustments")
+    purchase_order: Mapped["PurchaseOrder | None"] = relationship(back_populates="adjustments")
     invoice: Mapped["Invoice | None"] = relationship(back_populates="adjustments")
     attachments: Mapped[list["Attachment"]] = relationship(
         primaryjoin="and_(Adjustment.id==Attachment.entity_id, Attachment.entity_type=='Adjustment')",
