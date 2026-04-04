@@ -44,6 +44,15 @@ class PaymentTypeService(BaseService):
 class AdjustmentCategoryService(BaseService):
     model = AdjustmentCategory
 
+    @classmethod
+    def get_all(cls):
+        """Override: Hide system/automation categories from the UI."""
+        stmt = select(cls.model).where(
+            cls.model.is_active == True,
+            cls.model.is_system == False # NEW: Guard
+        ).order_by(cls.model.type.asc())
+        return db.session.execute(stmt).scalars().all()
+
 class ExpenseCategoryService(BaseService):
     model = ExpenseCategory
 
