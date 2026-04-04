@@ -1,5 +1,5 @@
 from .base_service import BaseService
-from ..models import Adjustment, AdjustmentCategory, SettingsMetadata
+from ..models import Adjustment, AdjustmentCategory, SettingsMetadata, OrderRegistry
 from .audit_service import AuditLogService
 from .attachment_service import AttachmentService
 from ..extensions import db
@@ -36,6 +36,7 @@ class AdjustmentService(BaseService):
         stmt = (
             select(cls.model)
             .outerjoin(AdjustmentCategory)
+            .outerjoin(OrderRegistry) # NEW: Join to search by CDX number
             .options(contains_eager(cls.model.category))
             .where(cls.model.is_active == True)
         )
@@ -46,7 +47,8 @@ class AdjustmentService(BaseService):
                 or_(
                     cls.model.adjustment_number.icontains(search_term),
                     cls.model.description.icontains(search_term),
-                    AdjustmentCategory.type.icontains(search_term)
+                    AdjustmentCategory.type.icontains(search_term),
+                    OrderRegistry.order_number.icontains(search_term)
                 )
             )
 
@@ -179,13 +181,11 @@ class AdjustmentService(BaseService):
             if gap != 0:
                 if existing_adj:
                     # Update
-                    existing_adj.description = f"Write-off for Invoice {invoice.invoice_number}"
                     existing_adj.amount = gap
                     existing_adj.adjustment_date = invoice.invoice_date
 
                     # Capture for audit
-                    new_data = {'description': existing_adj.description, 
-                                'amount': gap, 
+                    new_data = {'amount': gap, 
                                 'adjustment_date': invoice.invoice_date}
 
                     # Check for ANY change (Amount or Date)
@@ -246,12 +246,16 @@ class AdjustmentService(BaseService):
     # --- INTERNAL HELPERS ---
 
     @classmethod
-    def _validate_and_transform(cls, data: dict) -> dict:
+    def _validate_and_transform(cls, data: dict, adjustment=None) -> dict:
         """Handles validation and type conversion."""
         description = data.get('description', '').strip()
         adjustment_number = data.get('adjustment_number', '').strip()
+        order_id = data.get('order_id') # Manual link to Order
         category_id = data.get('category_id')
         amount_raw = data.get('amount', '0')
+        raw_date = data.get('adjustment_date')
+        note = data.get('note', '').strip()
+        is_system = adjustment.is_system if adjustment else False
         
         if not description:
             raise ValueError("Adjustment Description is required.")
@@ -263,7 +267,6 @@ class AdjustmentService(BaseService):
             raise ValueError("Amount is required.")
 
         # Parse Date
-        raw_date = data.get('adjustment_date')
         # Get TimeZone from metadata
         metadata = db.session.get(SettingsMetadata, 1)
         tz_name = metadata.timezone if metadata else 'America/Chicago'
@@ -273,13 +276,18 @@ class AdjustmentService(BaseService):
         else:
             adjustment_date = datetime.now(ZoneInfo(tz_name)).date()
 
+        # 1. Fields that are ALWAYS editable (even is_system)
         clean_data = {
             'description': description,
-            'adjustment_number': adjustment_number,
-            'amount': parse_to_cents(str(amount_raw)),
-            'adjustment_date': adjustment_date,
             'category_id': int(category_id),
-            'note': data.get('note', '').strip()
+            'note': note
         }
+
+        # 2. Only allow if NOT a system record
+        if not is_system:
+            clean_data['adjustment_number'] = adjustment_number
+            clean_data['order_id'] = int(order_id) if order_id else None
+            clean_data['adjustment_date'] = adjustment_date
+            clean_data['amount'] = parse_to_cents(amount_raw)
 
         return clean_data
