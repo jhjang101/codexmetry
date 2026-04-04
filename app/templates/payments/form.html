@@ -46,6 +46,20 @@
                             </a>
                         </div>
 
+                        <div class="border-t border-gray-100 my-1">
+                        </div>
+                        <div class="py-1">
+                            {# 2. Shortcuts #}
+                            <p class="px-4 py-1 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Generate New</p>
+
+                            <a href="{{ url_for('adjustments.add', po_id=payment.po_id if payment.po_id else '') }}" 
+                                class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors">
+                                <i class="fa-solid fa-money-check w-2"></i>
+                                Adjustment
+                            </a>
+
+                        </div>
+
                         {% if current_user.role in ['admin'] %}
                             <div class="border-t border-gray-100 my-1"></div>
                             <div class="py-1">

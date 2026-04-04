@@ -46,37 +46,40 @@
                             </a>
                         </div>
 
-                        {% if po.status in ['open', 'invoiced'] %}
-                            <div class="border-t border-gray-100 my-1">
-                            </div>
-                            <div class="py-1">
-                                {# 2. Shortcuts #}
-                                <p class="px-4 py-1 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Generate New</p>
-                                
-                                {% if po.status in ['open'] %}
-                                <a href="{{ url_for('invoices.add', po_id=po.id) }}" 
+                        <div class="border-t border-gray-100 my-1">
+                        </div>
+                        <div class="py-1">
+                            {# 2. Shortcuts #}
+                            <p class="px-4 py-1 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Generate New</p>
+                            
+                            {% if po.status in ['open'] %}
+                            <a href="{{ url_for('invoices.add', po_id=po.id) }}" 
+                            class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors">
+                                <i class="fa-solid fa-file-invoice w-2"></i>
+                                Invoice
+                            </a>
+                            {% endif %}
+
+                            {% if po.status in ['open', 'invoiced'] %}
+                            <a href="{{ url_for('payments.add', po_id=po.id) }}" 
+                            class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors">
+                                <i class="fa-solid fa-money-check-dollar w-2"></i>
+                                Payment
+                            </a>
+                            {% endif %}
+
+                            <a href="{{ url_for('expenses.add', po_id=po.id) }}" 
                                 class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors">
-                                    <i class="fa-solid fa-file-invoice w-2"></i>
-                                    Invoice
-                                </a>
-                                {% endif %}
+                                <i class="fa-solid fa-credit-card w-2"></i>
+                                Expense
+                            </a>
 
-                                {% if po.status in ['open', 'invoiced'] %}
-                                <a href="{{ url_for('payments.add', po_id=po.id) }}" 
+                            <a href="{{ url_for('adjustments.add', po_id=po.id) }}" 
                                 class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors">
-                                    <i class="fa-solid fa-money-check-dollar w-2"></i>
-                                    Payment
-                                </a>
-                                {% endif %}
-
-                                <a href="{{ url_for('expenses.add', po_id=po.id) }}" 
-                                   class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors">
-                                    <i class="fa-solid fa-credit-card w-2"></i>
-                                    Expense
-                                </a>
-                            </div>
-                        {% endif %}
-
+                                <i class="fa-solid fa-money-check w-2"></i>
+                                Adjustment
+                            </a>
+                        </div>
 
                         {% if current_user.role in ['admin'] %}
                             <div class="border-t border-gray-100 my-1"></div>

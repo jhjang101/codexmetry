@@ -81,6 +81,12 @@
                                 <i class="fa-solid fa-credit-card w-2"></i>
                                 Expense
                             </a>
+
+                            <a href="{{ url_for('adjustments.add', client_id=client.id) }}" 
+                                class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors">
+                                <i class="fa-solid fa-money-check w-2"></i>
+                                Adjustment
+                            </a>
                         </div>
 
                         {% if current_user.role in ['admin'] %}
