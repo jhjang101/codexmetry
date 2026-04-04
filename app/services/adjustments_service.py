@@ -1,5 +1,7 @@
 from .base_service import BaseService
-from ..models import Adjustment, AdjustmentCategory, SettingsMetadata, OrderRegistry
+from ..models import (Adjustment, AdjustmentCategory, 
+                      Client, Invoice, SettingsMetadata, 
+                      OrderRegistry, PurchaseOrder)
 from .audit_service import AuditLogService
 from .attachment_service import AttachmentService
 from ..extensions import db
@@ -36,8 +38,17 @@ class AdjustmentService(BaseService):
         stmt = (
             select(cls.model)
             .outerjoin(AdjustmentCategory)
-            .outerjoin(OrderRegistry) # NEW: Join to search by CDX number
-            .options(contains_eager(cls.model.category))
+            .outerjoin(Client)        # Join for display/search
+            .outerjoin(OrderRegistry) # Join to search by CDX number
+            .outerjoin(PurchaseOrder) # Join to search by PO number
+            .outerjoin(Invoice)       # Join to search by Invoice number
+            .options(
+                contains_eager(cls.model.category),
+                contains_eager(cls.model.client),
+                contains_eager(cls.model.order),
+                contains_eager(cls.model.purchase_order),
+                contains_eager(cls.model.invoice)
+                )
             .where(cls.model.is_active == True)
         )
 
@@ -48,11 +59,17 @@ class AdjustmentService(BaseService):
                     cls.model.adjustment_number.icontains(search_term),
                     cls.model.description.icontains(search_term),
                     AdjustmentCategory.type.icontains(search_term),
+                    Client.company_name.icontains(search_term),
+                    PurchaseOrder.po_number.icontains(search_term),
+                    Invoice.invoice_number.icontains(search_term),
                     OrderRegistry.order_number.icontains(search_term)
                 )
             )
 
-        # 3. Apply Sorting
+        # 3. Add .distinct() to collapse duplicate rows caused by joins
+        stmt = stmt.distinct()
+
+        # 4. Apply Sorting
         stmt = cls.apply_sorting(
             stmt=stmt,
             sort_by=sort_by,
@@ -179,14 +196,20 @@ class AdjustmentService(BaseService):
 
             # A: If gap exists, create or update
             if gap != 0:
-                if existing_adj:
-                    # Update
+                if existing_adj: # Update 
                     existing_adj.amount = gap
                     existing_adj.adjustment_date = invoice.invoice_date
+                    # Ensure links are correct (In case of a PO swap on the invoice)
+                    existing_adj.client_id = invoice.client_id
+                    existing_adj.po_id = invoice.po_id
+                    existing_adj.order_id = invoice.order_id
 
                     # Capture for audit
                     new_data = {'amount': gap, 
-                                'adjustment_date': invoice.invoice_date}
+                                'adjustment_date': invoice.invoice_date,
+                                'client_id': invoice.client_id,
+                                'po_id': invoice.po_id,
+                                'order_id': invoice.order_id}
 
                     # Check for ANY change (Amount or Date)
                     if (old_snapshot.get('amount') != gap or 
@@ -198,7 +221,7 @@ class AdjustmentService(BaseService):
                                                new_data=new_data)
                         result = {'action': 'UPDATE', 'amount': gap}
                         
-                else:
+                else: # Create 
                     new_adj = Adjustment()
                     new_adj.adjustment_number = generate_doc_number('A', Adjustment, 'adjustment_number')
                     new_adj.description = f"Write-off for Invoice {invoice.invoice_number}"
@@ -206,6 +229,8 @@ class AdjustmentService(BaseService):
                     new_adj.adjustment_date = invoice.invoice_date
                     new_adj.category_id = category.id
                     new_adj.invoice_id = invoice.id
+                    new_adj.client_id = invoice.client_id
+                    new_adj.po_id = invoice.po_id
                     new_adj.order_id = invoice.order_id
                     new_adj.is_system = True
                     new_adj.is_active = True
@@ -248,35 +273,18 @@ class AdjustmentService(BaseService):
     @classmethod
     def _validate_and_transform(cls, data: dict, adjustment=None) -> dict:
         """Handles validation and type conversion."""
-        description = data.get('description', '').strip()
-        adjustment_number = data.get('adjustment_number', '').strip()
-        order_id = data.get('order_id') # Manual link to Order
-        category_id = data.get('category_id')
-        amount_raw = data.get('amount', '0')
-        raw_date = data.get('adjustment_date')
-        note = data.get('note', '').strip()
         is_system = adjustment.is_system if adjustment else False
-        
-        if not description:
-            raise ValueError("Adjustment Description is required.")
-        if not adjustment_number:
-            raise ValueError("Adjustment Number is required.")
-        if not category_id:
-            raise ValueError("Adjustment Category is required.")
-        if not amount_raw:
-            raise ValueError("Amount is required.")
-
-        # Parse Date
-        # Get TimeZone from metadata
-        metadata = db.session.get(SettingsMetadata, 1)
-        tz_name = metadata.timezone if metadata else 'America/Chicago'
-
-        if raw_date:
-            adjustment_date = datetime.strptime(raw_date, '%Y-%m-%d').date()
-        else:
-            adjustment_date = datetime.now(ZoneInfo(tz_name)).date()
 
         # 1. Fields that are ALWAYS editable (even is_system)
+        description = data.get('description', '').strip()
+        category_id = data.get('category_id')
+        note = data.get('note', '').strip()
+
+        if not description:
+            raise ValueError("Adjustment Description is required.")
+        if not category_id:
+            raise ValueError("Adjustment Category is required.")
+        
         clean_data = {
             'description': description,
             'category_id': int(category_id),
@@ -285,9 +293,44 @@ class AdjustmentService(BaseService):
 
         # 2. Only allow if NOT a system record
         if not is_system:
+            adjustment_number = data.get('adjustment_number', '').strip()
+            amount_raw = data.get('amount', '0')
+            
+            if not adjustment_number:
+                raise ValueError("Adjustment Number is required.")
+            if not amount_raw:
+                raise ValueError("Amount is required.")
+
+            # Parse Date
+            raw_date = data.get('adjustment_date')
+            # Get TimeZone from metadata
+            metadata = db.session.get(SettingsMetadata, 1)
+            tz_name = metadata.timezone if metadata else 'America/Chicago'
+
+            if raw_date:
+                adjustment_date = datetime.strptime(raw_date, '%Y-%m-%d').date()
+            else:
+                adjustment_date = datetime.now(ZoneInfo(tz_name)).date()
+
+            # Handle Optional Client -> PO -> Order inheritance
+            client_id = data.get('client_id')
+            po_id = data.get('po_id')
+            order_id = None # Inherit from po
+
+            if po_id:
+                # If a PO is chosen, it overrides the client selection to ensure deal integrity
+                po = db.session.get(PurchaseOrder, int(po_id))
+                if po:
+                    client_id = po.client_id
+                    order_id = po.order_id
+            # Note: If only client_id was provided, it remains as captured from data.get
+        
+            # Add Data
             clean_data['adjustment_number'] = adjustment_number
-            clean_data['order_id'] = int(order_id) if order_id else None
-            clean_data['adjustment_date'] = adjustment_date
             clean_data['amount'] = parse_to_cents(amount_raw)
+            clean_data['adjustment_date'] = adjustment_date
+            clean_data['client_id'] = int(client_id) if client_id else None
+            clean_data['po_id'] = int(po_id) if po_id else None
+            clean_data['order_id'] = order_id
 
         return clean_data
