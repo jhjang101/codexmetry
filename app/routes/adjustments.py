@@ -5,6 +5,8 @@ from ..services.adjustments_service import AdjustmentService
 from ..services.settings_service import AdjustmentCategoryService
 from ..services.attachment_service import AttachmentService
 from ..services.audit_service import AuditLogService
+from ..services.purchase_orders_service import PurchaseOrderService
+from ..services.clients_service import ClientService
 from ..utils.auth import role_required
 from ..utils.docs import generate_doc_number
 from ..utils.errors import handle_post_error
@@ -60,6 +62,8 @@ def add():
                 'amount': request.form.get('amount'),
                 'adjustment_date': request.form.get('adjustment_date'),
                 'category_id': request.form.get('category_id'),
+                'client_id': request.form.get('client_id'),
+                'po_id': request.form.get('po_id'),
                 'note': request.form.get('note')
             }
 
@@ -78,14 +82,48 @@ def add():
         except Exception as e:
             return handle_post_error(e, "adjustments.add")
         
-    # GET: Prepare form data
+    # GET: Prepare form data from Client, or PO
+    referrer = request.referrer
+    # Only use referrer if it's not the 'add' page itself
+    cancel_url = url_for('adjustments.index')
+    if referrer and url_for('adjustments.add') not in referrer:
+        cancel_url = referrer
+    
+    # Extract all possible shortcut IDs
+    client_id = request.args.get('client_id', type=int)
+    po_id = request.args.get('po_id', type=int)
+
+    pos = []
+
+    # CASE A: From PO Shortcut
+    if po_id:
+        po = PurchaseOrderService.get_po_by_id(po_id)
+        if po and po.is_active:
+            client_id = po.client_id
+            pos = PurchaseOrderService.get_pos_by_client(client_id,
+                                                         statuses=['open', 'invoiced', 'completed'])
+    # CASE B: From Client View
+    elif client_id:
+        client = ClientService.get_by_id(client_id)
+        if client and client.is_active:
+            pos = PurchaseOrderService.get_pos_by_client(client_id, 
+                                                         statuses=['open', 'invoiced', 'completed'])
+    
+    # GET: Prepare form data for the initial render
     categories = AdjustmentCategoryService.get_all()
     suggested_number = generate_doc_number(prefix='A', model=Adjustment, column_name='adjustment_number')
+    clients = ClientService.get_all()
+
     return render_template('adjustments/form.html', 
                            mode='add', 
                            adjustment=None, 
+                           clients=clients, 
+                           pos=pos,
                            categories=categories,
-                           suggested_number=suggested_number)
+                           suggested_number=suggested_number,
+                           client_id=client_id,
+                           po_id=po_id,
+                           cancel_url=cancel_url)
 
 @bp.route('/view/<int:id>')
 def view(id):
@@ -115,6 +153,8 @@ def edit(id):
                 'amount': request.form.get('amount'),
                 'adjustment_date': request.form.get('adjustment_date'),
                 'category_id': request.form.get('category_id'),
+                'client_id': request.form.get('client_id'),
+                'po_id': request.form.get('po_id'),
                 'note': request.form.get('note')
             }
 
@@ -136,8 +176,24 @@ def edit(id):
             return handle_post_error(e, "adjustments.edit")
 
     # GET: Populate dropdowns
+    clients = ClientService.get_all()
     categories = AdjustmentCategoryService.get_all()
-    return render_template('adjustments/form.html', mode='edit', adjustment=adjustment, categories=categories)
+
+    # Use include_id and allow 'completed' projects for historical job costing
+    pos = []
+    if adjustment.client_id:
+        pos = PurchaseOrderService.get_pos_by_client(
+            adjustment.client_id, 
+            include_id=adjustment.po_id, 
+            statuses=['open', 'invoiced', 'completed']
+        )
+
+    return render_template('adjustments/form.html', 
+                           mode='edit', 
+                           adjustment=adjustment, 
+                           clients=clients, 
+                           pos=pos,
+                           categories=categories)
 
 @bp.route('/archive/<int:id>', methods=['POST'])
 @role_required(['admin']) # Only Admin can delete
@@ -152,3 +208,34 @@ def archive(id):
     
     except Exception as e:
         return handle_post_error(e, "adjustments.archive")
+    
+# --- HTMX CASCADE ROUTES ---
+
+@bp.route('/update-client-cascades')
+def update_client_cascades():
+    """
+    Triggered by Client select. 
+    Updates PO list and handles Invoice 'Return Home'.
+    """
+    # Read data
+    adjustment_id = request.args.get('adjustment_id', type=int)
+    client_id = request.args.get('client_id', type=int)
+
+    po_id = None # add
+    if adjustment_id: # edit
+        adjustment = AdjustmentService.get_by_id(adjustment_id)
+        po_id = adjustment.po_id if adjustment else None
+
+    # Fetch POs for the selected client
+    pos = PurchaseOrderService.get_pos_by_client(
+        client_id, 
+        include_id=po_id,   # includes current po in edit
+        statuses=['open', 'invoiced', 'completed']  # includes all POs.
+        ) if client_id else []
+
+    return render_template('adjustments/partials/client_cascades.html', 
+                           adjustment_id=adjustment_id,   # Add if none else Edit
+                           client_id=client_id,     # need for enable/disable dropdown
+                           pos=pos)
+
+ 
