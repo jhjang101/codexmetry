@@ -418,27 +418,30 @@ class InvoiceService(BaseService):
         invoice = cls.get_invoice_by_id(id) # Hydrated with .balance
         if not invoice or not invoice.is_active:
             return None, None, None
-
+        
+        # 1. INITIALIZE
+        invoice_status = None
+        po_status = None
         before = invoice.status
+
         if before == 'draft':
-            # 1. Ask the sync logic for the 'Financial Reality'
+            # 2. Ask the sync logic for the 'Financial Reality'
             # We pass proposed_status=None to ignore manual overrides
-            from ..utils.sync import sync_invoice_status
             invoice_status = sync_invoice_status(invoice, original_status='draft', proposed_status=None)
             
             target = invoice_status['after']
             
-            # 2. Apply the "Issuance Floor" 
+            # 3. Apply the "Issuance Floor" 
             # If no money exists, sync_invoice_status returns 'draft'. 
             # We must promote to 'open' because it's being printed.
             if target == 'draft':
                 target = 'open'
                 invoice_status['after'] = 'open'
 
-            # 3. Finalize state
+            # 4. Finalize state
             invoice.status = target
 
-            # 4. Forensic Record (One log for the transition)
+            # 5. Forensic Record (One log for the transition)
             AuditLogService.record(
                 target_id=id,
                 target_type='Invoice',
@@ -447,7 +450,7 @@ class InvoiceService(BaseService):
                 new_data={'status': target}
             )
 
-        # 5. PO Status Ripple
+        # 6. PO Status Ripple
         # If the invoice jumped straight to 'completed' (or even 'open'), 
         # the PO needs to re-evaluate its lifecycle.
         po_status = None
