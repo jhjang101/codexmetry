@@ -7,6 +7,7 @@ from ..services.attachment_service import AttachmentService
 from ..services.audit_service import AuditLogService
 from ..services.purchase_orders_service import PurchaseOrderService
 from ..services.clients_service import ClientService
+from ..services.orders_service import OrderService
 from ..utils.auth import role_required
 from ..utils.docs import generate_doc_number
 from ..utils.errors import handle_post_error
@@ -132,11 +133,13 @@ def view(id):
         flash("Adjustment not found.", "error")
         return redirect(url_for('adjustments.index'))
     
+    tree = OrderService.get_deal_tree(adjustment.order_id)
     history = AuditLogService.get_for_entity('Adjustment', id)
 
     return render_template('adjustments/form.html', 
                            mode='view', 
                            adjustment=adjustment, 
+                           tree=tree,
                            history=history)
 
 @bp.route('/edit/<int:id>', methods=['GET', 'POST'])
