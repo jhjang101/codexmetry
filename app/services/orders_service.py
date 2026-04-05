@@ -1,6 +1,6 @@
 from sqlalchemy import select
 from sqlalchemy.orm import joinedload, selectinload
-from ..models import OrderRegistry, Quote, PurchaseOrder, Invoice, Payment, Expense, Client
+from ..models import OrderRegistry, Quote, PurchaseOrder, Invoice, Payment, Expense, Adjustment
 from ..extensions import db
 
 class OrderService:
@@ -38,7 +38,11 @@ class OrderService:
 
                 # 4. Child Expenses + their Vendors (1:N)
                 selectinload(cls.model.expenses.and_(Expense.is_active == True))
-                    .joinedload(Expense.vendor)
+                    .joinedload(Expense.vendor),
+                
+                # 5. Child Adjustments + their Categories (1:N)
+                selectinload(cls.model.adjustments.and_(Adjustment.is_active == True))
+                    .joinedload(Adjustment.category)
             )
             .where(cls.model.id == order_id)
         )

@@ -142,33 +142,41 @@ class AuditLogService:
         if changes or action in ['CREATE', 'ARCHIVE', 'DELETE']:
             user_id = int(current_user.get_id()) if (has_request_context() and current_user.is_authenticated) else None
 
-            # 1. GENERATE THE TARGET LABEL
-            target_label = f"{target_type} #{target_id}" # Default fallback
-
+            # Fetch the object to get the Label and the Order ID
             model_class = cls.MODEL_MAP.get(target_type)
             label_attr = cls.TARGET_MAP.get(target_type)
+            obj = db.session.get(model_class, target_id) if model_class else None
 
-            if model_class and label_attr:
-                # Use the session to find the object
-                obj = db.session.get(model_class, target_id)
-                if obj:
-                    val = getattr(obj, label_attr, None)
+            # 1. RESOLVE ORDER ID (The Order Anchor)
+            # If the target is the OrderRegistry itself, its own ID is the anchor.
+            # Otherwise, check for the order_id attribute.
+            found_order_id = None
+            if obj:
+                if target_type == 'OrderRegistry':
+                    found_order_id = obj.id
+                else:
+                    found_order_id = getattr(obj, 'order_id', None)
+
+            # 2. GENERATE THE TARGET LABEL
+            target_label = f"{target_type} #{target_id}" # Default fallback
+
+            if obj and label_attr:
+                val = getattr(obj, label_attr, None)
                     
-                    # SPECIAL CASE: PO Number Fallback
-                    if target_type == 'PurchaseOrder' and not val:
-                        # Re-use the CDX number if client PO ref is blank
-                        val = obj.order.order_number if obj.order else f"#{target_id}"
-                    
-                    if val:
-                        target_label = str(val)
+                # SPECIAL CASE: PO Number Fallback
+                # If client PO ref is blank, use the CDX number for historical clarity
+                if target_type == 'PurchaseOrder' and not val:
+                    val = obj.order.order_number if obj.order else f"#{target_id}"
+                
+                if val:
+                    target_label = str(val)
             
 
-            # Forensic Print for Debugging
+            # 3. Forensic Print for Debugging
             import pprint
-            user_name = current_user.username if current_user.is_authenticated else 'Anonymous'
-            print(f"--- AUDIT LOG: {action} on {target_type} id# {target_id} {target_label} by User id# {user_id} {user_name} ---")
-            print("--- Changes: ---")
-            pprint.pprint(changes, indent=4)
+            user_name = current_user.username if (has_request_context() and current_user.is_authenticated) else 'Anonymous'
+            print(f"--- AUDIT LOG: {action} on {target_type} [{target_label}] by User {user_name} ---")
+            if changes: pprint.pprint(changes, indent=4)
             print("----------------")
 
             log = AuditLog()
@@ -178,6 +186,7 @@ class AuditLogService:
             log.target_id = target_id
             log.target_label = target_label
             log.changes = changes if changes else None
+            log.order_id = found_order_id
             db.session.add(log)
             # We do NOT commit here. The calling service handles the transaction.
 
@@ -191,6 +200,20 @@ class AuditLogService:
                 AuditLog.target_type == target_type,
                 AuditLog.target_id == target_id
             )
+            .order_by(AuditLog.timestamp.desc())
+        )
+        return db.session.execute(stmt).scalars().all()
+    
+    @classmethod
+    def get_for_order(cls, order_id: int):
+        """
+        Brain: Fetches every log entry tagged with this order_id.
+        Used for order-tree
+        """
+        stmt = (
+            select(AuditLog)
+            .options(joinedload(AuditLog.user))
+            .where(AuditLog.order_id == order_id)
             .order_by(AuditLog.timestamp.desc())
         )
         return db.session.execute(stmt).scalars().all()

@@ -32,6 +32,7 @@ class AuditMixin:
 class AuditLog(db.Model):
     __tablename__ = 'audit_logs'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    order_id: Mapped[int | None] = mapped_column(ForeignKey('orders.id'))
     timestamp: Mapped[datetime] = mapped_column(DateTime, server_default=func.current_timestamp())
     user_id: Mapped[int | None] = mapped_column(ForeignKey('users.id'))
     action: Mapped[str] = mapped_column(String(20)) # CREATE, UPDATE, ARCHIVE, DELETE
@@ -43,6 +44,7 @@ class AuditLog(db.Model):
     changes: Mapped[dict | None] = mapped_column(JSON) 
 
     user: Mapped["User"] = relationship()
+    order: Mapped["OrderRegistry | None"] = relationship(back_populates="audit_logs")
 
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
@@ -297,6 +299,7 @@ class OrderRegistry(db.Model, AuditMixin):
     payments: Mapped[list["Payment"]] = relationship(back_populates="order")
     expenses: Mapped[list["Expense"]] = relationship(back_populates="order")
     adjustments: Mapped[list["Adjustment"]] = relationship(back_populates="order")
+    audit_logs: Mapped[list["AuditLog"]] = relationship(back_populates="order")
 
     @property
     def total_paid(self):
@@ -351,7 +354,13 @@ class OrderRegistry(db.Model, AuditMixin):
                     if all(item.product.catalog_number == 'PRE-PMT' for item in p.invoice.items):
                         total += p.amount
         return total
-
+    
+    @property
+    def total_adjustments(self):
+        """Sum of all active adjustments linked to this deal."""
+        if 'adjustments' in self.__dict__:
+            return sum(adj.amount for adj in self.adjustments if adj.is_active)
+        return 0
 
 class Quote(db.Model, AuditMixin):
     __tablename__ = 'quotes'
