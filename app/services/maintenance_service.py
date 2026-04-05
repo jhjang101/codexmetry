@@ -1,4 +1,7 @@
 import os
+import logging
+import subprocess
+from urllib.parse import urlparse
 import shutil
 import csv
 import io
@@ -14,45 +17,77 @@ class MaintenanceService:
 
     @classmethod
     def perform_vacuum(cls):
-        """Brain: Reclaims space using an autocommit connection to bypass transaction locks."""
+        """Brain: Reclaims space and updates query statistics for PostgreSQL."""
         try:
-            # 1. First, check integrity using the standard session (Safe)
-            integrity = db.session.execute(text("PRAGMA integrity_check")).scalar()
-            if integrity != "ok":
-                raise ValueError(f"Database Integrity Check Failed: {integrity}")
-
-            # 2. Open a raw connection specifically for the VACUUM
-            # We use isolation_level="AUTOCOMMIT" because VACUUM cannot run in a transaction
+            # 1. Use an AUTOCOMMIT connection to bypass transaction locks
             with db.engine.connect().execution_options(isolation_level="AUTOCOMMIT") as connection:
-                connection.execute(text("VACUUM"))
+                # 2. Perform VACUUM ANALYZE
+                # 'VACUUM' reclaims space; 'ANALYZE' updates the query planner's stats.
+                connection.execute(text("VACUUM ANALYZE"))
             
             return True
         except Exception as e:
-            # Log the error for the developer
-            print(f"VACUUM ERROR: {str(e)}")
-            raise ValueError(f"Maintenance Error: {str(e)}")
+            # Forensic logging for the developer
+            print(f"PostgreSQL Maintenance Error: {str(e)}")
+            raise ValueError(f"Database optimization failed: {str(e)}")
 
     # --- 2. BACKUP & RESTORE ---
 
     @classmethod
     def get_backup_dir(cls):
         """Ensures the instance/backups directory exists."""
-        path = os.path.join(current_app.config['INSTANCE_FOLDER'], 'backups')
+        path = os.path.join(current_app.config['BACKUP_FOLDER'])
         os.makedirs(path, exist_ok=True)
         return path
 
     @classmethod
     def create_backup(cls):
-        """Brain: Creates a timestamped copy of the active database file."""
-        source = os.path.join(current_app.config['INSTANCE_FOLDER'], 'codexmetry.db')
+        """Brain: Generates a 'Self-Healing' SQL snapshot using pg_dump."""
+        # 1. Parse connection string from environment
+        db_url = os.getenv('DATABASE_URL')
+        if not db_url:
+            raise ValueError("DATABASE_URL not found in environment.")
+            
+        uri = urlparse(db_url)
+        db_user = uri.username
+        db_password = uri.password
+        db_host = uri.hostname
+        db_name = uri.path.lstrip('/')
+        db_port = uri.port or 5432
+        
+        # 2. Setup File Identity
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        filename = f"codexmetry_backup_{timestamp}.db"
-        target = os.path.join(cls.get_backup_dir(), filename)
+        filename = f"codexmetry_backup_{timestamp}.sql"
+        target_path = os.path.join(cls.get_backup_dir(), filename)
 
         try:
-            shutil.copy2(source, target)
+            # 3. Execute pg_dump
+            # PGPASSWORD ensures the process doesn't hang waiting for input
+            env = os.environ.copy()
+            env['PGPASSWORD'] = db_password or ""
+            
+            command = [
+                'pg_dump',
+                '-h', str(db_host),
+                '-p', str(db_port),
+                '-U', str(db_user),
+                '-d', str(db_name),
+                '--clean',      # Drops objects before creating
+                '--if-exists',  # Prevents errors during drop
+                '--no-owner',   # Makes the file portable across different users/PCs
+                '-f', target_path
+            ]
+
+            result = subprocess.run(command, env=env, capture_output=True, text=True)
+
+            if result.returncode != 0:
+                logging.error(f"pg_dump error: {result.stderr}")
+                raise ValueError(f"Database dump failed: {result.stderr}")
+
             return filename
-        except IOError as e:
+
+        except Exception as e:
+            logging.error(f"Postgres Backup Failure: {str(e)}", exc_info=True)
             raise ValueError(f"Backup failed: {str(e)}")
 
     @classmethod
@@ -61,7 +96,7 @@ class MaintenanceService:
         directory = cls.get_backup_dir()
         files = []
         for f in os.listdir(directory):
-            if f.endswith('.db'):
+            if f.endswith('.sql'):
                 path = os.path.join(directory, f)
                 stats = os.stat(path)
                 files.append({

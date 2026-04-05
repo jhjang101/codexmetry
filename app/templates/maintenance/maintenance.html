@@ -16,13 +16,14 @@
             </div>
             <div class="p-6 flex-1 flex flex-col justify-center">
                 <p class="text-xs text-gray-500 mb-6 leading-relaxed">
-                    Optimize the SQLite database engine by reclaiming unused space and defragmenting the file. This ensures high-speed query performance.
+                    Optimize the PostgreSQL database engine by reclaiming storage space from deleted records and updating query planner statistics. This ensures high-speed query performance.
                 </p>
-                <form action="{{ url_for('maintenance.vacuum') }}" method="POST" 
-                      onsubmit="return confirm('OPTIMIZATION WARNING:\n\nThis will temporarily lock the database while reclaiming space. This is best performed when no other users are active.\n\nProceed with VACUUM?')">
+                <form action="{{ url_for('maintenance.vacuum') }}" 
+                      method="POST" 
+                      onsubmit="return confirm('OPTIMIZATION WARNING:\n\nThis will perform a VACUUM ANALYZE. While the system remains active, this operation is best performed during low-activity periods.\n\nProceed with Optimization?')">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg text-xs uppercase tracking-widest shadow-md transition-all active:scale-[0.98]">
-                        Run Database Optimization (VACUUM)
+                        Run Database Optimization
                     </button>
                 </form>
             </div>
@@ -62,14 +63,21 @@
         <section class="md:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <div class="px-4 py-3 border-b border-gray-200 flex justify-between items-center bg-slate-50">
                 <h3 class="text-xs font-bold text-slate-700 uppercase tracking-widest flex items-center gap-2">
-                    <i class="fa-solid fa-database"></i> Database Backups (Physical Snapshots)
+                    <i class="fa-solid fa-database"></i> Database Backups (SQL Dumps)
                 </h3>
                 <button hx-post="{{ url_for('maintenance.create_backup') }}"
                         hx-target="#backup-table-container"
                         hx-indicator="#backup-indicator"
                         class="bg-green-600 hover:bg-green-700 text-white px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest shadow-sm transition-all">
-                    <i class="fa-solid fa-plus mr-1"></i> Create Snapshot
+                    <i class="fa-solid fa-plus mr-1"></i> Create New Snapshot
                 </button>
+            </div>
+
+            <!-- Redundancy Policy Helper -->
+            <div class="px-6 py-4 bg-blue-50/30 border-b border-gray-100">
+                <p class="text-[11px] text-slate-600 leading-relaxed">
+                    Snapshots are <b>Self-Healing SQL files</b> generated via <code>pg_dump</code>. They contain the complete structure, data, and sequences required to rebuild the "Financial Fortress" on a standby server (PC-2).
+                </p>
             </div>
             
             <div id="backup-table-container" class="min-h-[200px]">
@@ -78,7 +86,7 @@
 
             <!-- Loading Indicator for Backups -->
             <div id="backup-indicator" class="htmx-indicator p-4 text-center text-blue-600 text-xs font-bold italic animate-pulse">
-                <i class="fa-solid fa-spinner fa-spin mr-2"></i> Capturing database state...
+                <i class="fa-solid fa-spinner fa-spin mr-2"></i> Initializing Snapshot Engine...
             </div>
         </section>
 

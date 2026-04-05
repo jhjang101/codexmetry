@@ -14,14 +14,14 @@ def create_app():
 
     # 1. Configuration
     UPLOAD_FOLDER = os.path.join(app.root_path, 'static', 'uploads')
-    INSTANCE_FOLDER = os.path.join(app.root_path, 'instance')
+    BACKUP_FOLDER = os.path.join(app.root_path, 'backups')
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-    os.makedirs(INSTANCE_FOLDER, exist_ok=True)
+    os.makedirs(BACKUP_FOLDER, exist_ok=True)
     app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'generate-a-long-random-string-here')
     default_db = 'postgresql+psycopg://admin:password@localhost:5432/codexmetry'
     app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', default_db)
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['INSTANCE_FOLDER'] = INSTANCE_FOLDER  # TODO: No longer needed remove this after update maintenance module.
+    app.config['BACKUP_FOLDER'] = BACKUP_FOLDER 
     app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
     # 2. Initialize extensions

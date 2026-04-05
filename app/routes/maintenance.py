@@ -54,7 +54,7 @@ def create_backup():
 
 @bp.route('/backup/download/<filename>')
 def download_backup(filename):
-    """Messenger: Securely streams the .db file to the browser."""
+    """Messenger: Securely streams the .sql file to the browser."""
     directory = MaintenanceService.get_backup_dir()
     return send_from_directory(directory, filename, as_attachment=True)
 
