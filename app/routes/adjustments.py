@@ -180,7 +180,7 @@ def edit(id):
 
     # GET: Populate dropdowns
     clients = ClientService.get_all()
-    categories = AdjustmentCategoryService.get_all()
+    categories = AdjustmentCategoryService.get_all(include_id=adjustment.category_id)
 
     # Use include_id and allow 'completed' projects for historical job costing
     pos = []

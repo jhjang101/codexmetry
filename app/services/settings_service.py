@@ -7,7 +7,7 @@ from ..models import (
 from .audit_service import AuditLogService
 from ..extensions import db
 from ..utils.money import parse_to_cents
-from sqlalchemy import select
+from sqlalchemy import select, or_
 
 class CarrierService(BaseService):
     model = Carrier
@@ -45,11 +45,14 @@ class AdjustmentCategoryService(BaseService):
     model = AdjustmentCategory
 
     @classmethod
-    def get_all(cls):
-        """Override: Hide system/automation categories from the UI."""
+    def get_all(cls, include_id=None):
+        """Override: Hide system categories UNLESS explicitly requested (e.g. for Edit)."""
         stmt = select(cls.model).where(
             cls.model.is_active == True,
-            cls.model.is_system == False # NEW: Guard
+            or_(
+                cls.model.is_system == False,
+                cls.model.id == include_id # NEW: Specific bypass
+            )
         ).order_by(cls.model.type.asc())
         return db.session.execute(stmt).scalars().all()
 

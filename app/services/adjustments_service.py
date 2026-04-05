@@ -130,7 +130,7 @@ class AdjustmentService(BaseService):
             raise ValueError("Adjustment not found.")
 
         # 2. Validate & transform
-        clean_data = cls._validate_and_transform(data)
+        clean_data = cls._validate_and_transform(data, adjustment)
 
         # 3. Audit_logs snapshot
         old_snapshot = cls._get_snapshot(adjustment)
@@ -232,6 +232,7 @@ class AdjustmentService(BaseService):
                     new_adj.client_id = invoice.client_id
                     new_adj.po_id = invoice.po_id
                     new_adj.order_id = invoice.order_id
+                    new_adj.note = f"Write-off for Invoice {invoice.invoice_number}"
                     new_adj.is_system = True
                     new_adj.is_active = True
                     

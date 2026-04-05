@@ -113,6 +113,24 @@
                     <label class="block text-sm font-medium text-gray-500">Adjustment Number</label>
                     {% if mode == 'view' %}
                         <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ adjustment.adjustment_number }}</p>
+
+                    {% elif mode == 'edit' and adjustment.is_system %}
+                        {# LOCK FOR EDIT MODE #}
+                        <div class="relative group mt-1">
+                            <p class="block bg-gray-100 w-full border rounded-lg p-2 
+                                     text-sm text-gray-500 flex justify-between items-center">
+                                <span>{{ adjustment.adjustment_number }}</span>
+                                <i class="fa-solid fa-lock text-[10px] opacity-40"></i>
+                            </p>
+                            <!-- Keep the value for the POST request -->
+                            <input type="hidden" name="adjustment_number" value="{{ adjustment.adjustment_number }}">
+                            
+                            <div class="invisible group-hover:visible absolute bottom-full left-0 mb-1 w-48 p-2 
+                                        bg-slate-700 text-white text-[10px] rounded shadow-xl z-10">
+                                System Protected: Automated threshold write-off.
+                            </div>
+                        </div>
+
                     {% else %}
                         <input type="text" name="adjustment_number" value="{{ adjustment.adjustment_number if adjustment else suggested_number }}" 
                                class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none transition-all" required>
@@ -147,6 +165,24 @@
                         <p class="mt-1 block bg-gray-100 border rounded-lg p-2 text-sm {{ 'text-green-700' if adjustment.amount >= 0 else 'text-red-600' }}">
                             {{ adjustment.amount | usd }}
                         </p>
+
+                    {% elif mode == 'edit' and adjustment.is_system %}
+                        {# LOCK FOR EDIT MODE #}
+                        <div class="relative group mt-1">
+                            <p class="block bg-gray-100 w-full border rounded-lg p-2 text-sm 
+                                    text-gray-500 flex justify-between items-center">
+                                <span>{{ adjustment.amount | usd }}</span>
+                                <i class="fa-solid fa-lock text-[10px] opacity-40"></i>
+                            </p>
+                            <!-- Keep the value for the POST request -->
+                            <input type="hidden" name="amount" value="{{ adjustment.amount | usd }}">
+                            
+                            <div class="invisible group-hover:visible absolute bottom-full left-0 mb-1 w-48 
+                                        p-2 bg-slate-700 text-white text-[10px] rounded shadow-xl z-10">
+                                System Protected: Automated threshold write-off.
+                            </div>
+                        </div>
+
                     {% else %}
                         <input type="text" 
                                name="amount" 
@@ -160,19 +196,52 @@
                     <label class="block text-sm font-medium text-gray-500">Date</label>
                     {% if mode == 'view' %}
                         <p class="mt-1 block bg-gray-100 border rounded-lg p-2 text-sm">{{ adjustment.adjustment_date }}</p>
+                    
+                    {% elif mode == 'edit' and adjustment.is_system %}
+                        {# LOCK FOR EDIT MODE #}
+                        <div class="relative group mt-1">
+                            <p class="block bg-gray-100 w-full border rounded-lg p-2 text-sm 
+                                    text-gray-500 flex justify-between items-center">
+                                <span>{{ adjustment.adjustment_date }}</span>
+                                <i class="fa-solid fa-lock text-[10px] opacity-40"></i>
+                            </p>
+                            <!-- Keep the value for the POST request -->
+                            <input type="hidden" name="adjustment_date" value="{{ adjustment.adjustment_date }}">
+                            
+                            <div class="invisible group-hover:visible absolute bottom-full left-0 mb-1 w-48 
+                                        p-2 bg-slate-700 text-white text-[10px] rounded shadow-xl z-10">
+                                System Protected: Automated threshold write-off.
+                            </div>
+                        </div>
+
                     {% else %}
                         <input type="date" name="adjustment_date" value="{{ adjustment.adjustment_date if adjustment else now.strftime('%Y-%m-%d') }}" 
                                class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300">
                     {% endif %}
                 </div>
 
-
-
                 <div class="col-span-2">
                     <label class="block text-sm font-medium text-gray-500">Link to Client (Optional)</label>
                     {% if mode == 'view' %}
                         <p class="mt-1 block bg-gray-100 border rounded-lg p-2 text-sm">{{ adjustment.client.full_display if (adjustment and adjustment.client) else 'Independent Adjustment' }}</p>
-                        {% if mode != 'view' %}<input type="hidden" name="client_id" value="{{ adjustment.client_id or '' }}">{% endif %}
+                    
+                    {% elif mode == 'edit' and adjustment.is_system %}
+                        {# LOCK FOR EDIT MODE #}
+                        <div class="relative group mt-1">
+                            <p class="block bg-gray-100 w-full border rounded-lg p-2 text-sm 
+                                    text-gray-500 flex justify-between items-center">
+                                <span>{{ adjustment.client.full_display }}</span>
+                                <i class="fa-solid fa-lock text-[10px] opacity-40"></i>
+                            </p>
+                            <!-- Keep the value for the POST request -->
+                            <input type="hidden" name="client_id" value="{{ adjustment.client_id}}">
+                            
+                            <div class="invisible group-hover:visible absolute bottom-full left-0 mb-1 w-48 
+                                        p-2 bg-slate-700 text-white text-[10px] rounded shadow-xl z-10">
+                                System Protected: Automated threshold write-off.
+                            </div>
+                        </div>
+                    
                     {% else %}
                         <div class="relative">
                             <!-- Triggers HTMX Cascade to find POs -->
@@ -211,6 +280,27 @@
                                 {% else %}-
                                 {% endif %}
                             </p>
+
+                        {% elif mode == 'edit' and adjustment.is_system %}
+                            {# LOCK FOR EDIT MODE #}
+                            <div class="relative group mt-1">
+                                <p class="block bg-gray-100 w-full border rounded-lg p-2 text-sm 
+                                        text-gray-500 flex justify-between items-center">
+                                    <span>{{ adjustment.order.order_number }} ({{ adjustment.purchase_order.po_number }})</span>
+                                    <i class="fa-solid fa-lock text-[10px] opacity-40"></i>
+                                </p>
+                                <!-- Keep the value for the POST request -->
+                                <input type="hidden" name="po_id" value="{{ adjustment.po_id}}">
+                                
+                                <div class="invisible group-hover:visible absolute bottom-full left-0 mb-1 w-48 
+                                            p-2 bg-slate-700 text-white text-[10px] rounded shadow-xl z-10">
+                                    System Protected: Automated threshold write-off.
+                                </div>
+                            </div>
+
+
+                        
+
                         {% else %}
                             <!-- Handled by partial: adjustments/partials/po_select.html -->
                             {% include 'adjustments/partials/po_select.html' with context %}
