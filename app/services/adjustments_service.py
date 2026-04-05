@@ -234,7 +234,6 @@ class AdjustmentService(BaseService):
                     new_adj.order_id = invoice.order_id
                     new_adj.note = f"Write-off for Invoice {invoice.invoice_number}"
                     new_adj.is_system = True
-                    new_adj.is_active = True
                     
                     db.session.add(new_adj)
                     db.session.flush() # Get ID for audit
