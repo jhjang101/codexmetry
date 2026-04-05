@@ -341,7 +341,9 @@ class ReportService:
             if key in timeline: timeline[key]['cash']['income'] = total or 0
 
         # --- BUCKET D: Cash Outgoings (Completed Expenses) ---
-        # Re-use y_ext/m_ext for Expense.expense_date
+        y_ext = extract('year', Expense.expense_date)
+        m_ext = extract('month', Expense.expense_date)
+
         cash_out_stmt = (
             select(y_ext, m_ext, ExpenseCategory.is_cogs, func.sum(Expense.total_amount))
             .join(ExpenseCategory).where(Expense.is_active == True, Expense.status == 'completed',
