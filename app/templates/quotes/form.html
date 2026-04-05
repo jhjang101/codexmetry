@@ -15,15 +15,17 @@
 {% endblock %}
 
 {% block content %}
-<div class="max-w-5xl mx-auto"
+<div class="max-w-5xl mx-auto">
+
      {# 1. ONLY enable focus-sync if we are viewing a DRAFT quote #}
      {% if mode == 'view' and quote.status == 'draft' %}
-        hx-get="{{ url_for('quotes.view', id=quote.id) }}"
-        hx-trigger="focus from:window"
-        hx-target="#main-content-area"
-        hx-select="#main-content-area"
-        hx-swap="innerHTML"
-     {% endif %}>
+        <div hx-get="{{ url_for('quotes.view', id=quote.id) }}"
+             hx-trigger="focus from:window"
+             hx-target="#main-content-area"
+             hx-select="#main-content-area"
+             hx-swap="innerHTML">
+        </div>
+     {% endif %}
     
     <!-- 1. HEADER ACTION BAR -->
     <div class="flex justify-between items-center mb-2">
