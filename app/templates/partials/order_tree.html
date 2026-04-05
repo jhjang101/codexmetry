@@ -30,31 +30,31 @@
     </div>
 
     <!-- 2. ORDER SUMMARY DASHBOARD -->
-    <div class="grid grid-cols-6 gap-4 mb-8">
-        <div class="bg-gray-50 p-3 rounded-lg border border-gray-100">
+    <div class="grid grid-cols-3 gap-2 mb-4">
+        <div class="bg-gray-50 px-3 py-1 rounded-lg border border-gray-100">
             <p class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-1">PO Value</p>
             <p class="text-sm font-bold text-gray-700">{{ tree.purchase_order.total_amount | usd if tree.purchase_order else '$0.00' }}</p>
         </div>
-        <div class="bg-gray-50 p-3 rounded-lg border border-gray-100">
+        <div class="bg-gray-50 px-3 py-1 rounded-lg border border-gray-100">
             <p class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-1">To Be Invoiced</p>
             <p class="text-sm font-bold text-amber-600">
                 {{ tree.purchase_order.balance_tobe_invoiced | usd if tree.purchase_order else '$0.00' }}
             </p>
         </div>
-        <div class="bg-gray-50 p-3 rounded-lg border border-gray-100">
+        <div class="bg-gray-50 px-3 py-1 rounded-lg border border-gray-100">
             <p class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-1">Total Invoiced (Balance)</p>
             <p class="text-sm font-bold text-blue-700">{{ tree.total_invoiced_due | usd }} ({{ tree.total_contextual_balance | usd }})</p>
         </div>
-        <div class="bg-gray-50 p-3 rounded-lg border border-gray-100">
+        <div class="bg-gray-50 px-3 py-1 rounded-lg border border-gray-100">
             <p class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-1">Total Received</p>
             <p class="text-sm font-bold text-green-700">{{ tree.total_paid | usd }}</p>
         </div>
-        <div class="bg-gray-50 p-3 rounded-lg border border-gray-100">
-            <p class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-1">Linked Expenses</p>
+        <div class="bg-gray-50 px-3 py-1 rounded-lg border border-gray-100">
+            <p class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-1">Total Linked Expenses</p>
             <p class="text-sm font-bold text-red-600">{{ tree.total_expenses | usd }}</p>
         </div>
-        <div class="bg-gray-50 p-3 rounded-lg border border-gray-100">
-            <p class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-1">Linked Adjustments</p>
+        <div class="bg-gray-50 px-3 py-1 rounded-lg border border-gray-100">
+            <p class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-1">Total Linked Adjustments</p>
             <p class="text-sm font-bold {{ 'text-red-600' if tree.total_adjustments < 0 else 'text-green-700' }}">
                 {{ tree.total_adjustments | usd }}
             </p>
