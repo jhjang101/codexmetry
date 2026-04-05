@@ -13,7 +13,14 @@ from ..models import (
 
 class AuditLogService:
     # Fields to ignore globally
-    BLACKLIST = {'csrf_token', 'updated_at', 'created_at', 'password_hash', 'old_image'}
+    BLACKLIST = {
+        'csrf_token', 'updated_at', 'created_at', 'password_hash', 'old_image',
+        'id',               # Hide primary keys
+        'created_by_id',    # Hide metadata link
+        'updated_by_id',    # Hide metadata link
+        'is_active',        # Handled by ARCHIVE action
+        'is_system'         # Internal logic flag
+    }
 
     # Maps foreign key fields to their Model and identifying Label
     RELATION_MAP = {
@@ -32,6 +39,8 @@ class AuditLogService:
         'payment_type_id': (PaymentType, 'type'),
         'adjustment_category_id': (AdjustmentCategory, 'type'),
         'carrier_id': (Carrier, 'type'),
+        'created_by_id': (User, 'username'),
+        'updated_by_id': (User, 'username')
     }
 
     # Maps target_type string to the imported Model Class
@@ -65,7 +74,7 @@ class AuditLogService:
         'Product': 'name',
         'User': 'username',
         'SettingsMetadata': 'company_name'
-    }
+    }    
 
     @classmethod
     def _resolve_label(cls, field: str, val, target_type: str):
