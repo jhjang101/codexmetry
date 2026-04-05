@@ -30,7 +30,7 @@
     </div>
 
     <!-- 2. ORDER SUMMARY DASHBOARD -->
-    <div class="grid grid-cols-5 gap-4 mb-8">
+    <div class="grid grid-cols-6 gap-4 mb-8">
         <div class="bg-gray-50 p-3 rounded-lg border border-gray-100">
             <p class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-1">PO Value</p>
             <p class="text-sm font-bold text-gray-700">{{ tree.purchase_order.total_amount | usd if tree.purchase_order else '$0.00' }}</p>
@@ -52,6 +52,12 @@
         <div class="bg-gray-50 p-3 rounded-lg border border-gray-100">
             <p class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-1">Linked Expenses</p>
             <p class="text-sm font-bold text-red-600">{{ tree.total_expenses | usd }}</p>
+        </div>
+        <div class="bg-gray-50 p-3 rounded-lg border border-gray-100">
+            <p class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-1">Linked Adjustments</p>
+            <p class="text-sm font-bold {{ 'text-red-600' if tree.total_adjustments < 0 else 'text-green-700' }}">
+                {{ tree.total_adjustments | usd }}
+            </p>
         </div>
     </div>
 
@@ -279,6 +285,95 @@
             </div>
         </div>
         {% endif %}
+
+        <!-- 8. ADJUSTMENTS TABLE -->
+        {% if tree.adjustments %}
+        <div>
+            <h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-2">
+                <i class="fa-solid fa-money-check"></i> Deal Adjustments
+            </h4>
+            <div class="border border-gray-200 rounded-lg overflow-hidden">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr class="text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
+                            <th class="px-6 py-3 w-[25ch] text-left">Adj #</th>
+                            <th class="px-6 py-3 w-[25ch] text-left">Date</th>
+                            <th class="px-6 py-3 text-left">Category</th>
+                            <th class="px-6 py-3 text-right">Amount</th>
+                            <th class="px-6 py-3 w-[16ch] text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-100">
+                        {% for adj in tree.adjustments %}
+                        <tr class="hover:bg-blue-50/40 transition-colors text-xs">
+                            <td class="px-6 py-2 font-bold text-blue-700">{{ adj.adjustment_number }}</td>
+                            <td class="px-6 py-2 text-gray-700">{{ adj.adjustment_date }}</td>
+                            <td class="px-6 py-2 text-gray-700">{{ adj.category.type }}</td>
+                            <td class="px-6 py-2 text-right font-bold {{ 'text-green-700' if adj.amount >= 0 else 'text-red-600' }}">
+                                {{ adj.amount | usd }}
+                            </td>
+                            <td class="px-6 py-2 text-right">
+                                <span class="text-gray-400 hover:text-blue-600 cursor-pointer" 
+                                    hx-get="{{ url_for('adjustments.view', id=adj.id) }}" hx-target="body" hx-push-url="true">
+                                    <i class="fa-regular fa-eye"></i>
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+
+
+        <div class="mt-8 pt-8 border-t border-gray-200">
+            <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-timeline"></i> Full Order Timeline
+            </h3>
+            <div class="space-y-4">
+                {% for log in tree.timeline %}
+                <div class="flex items-start gap-4 text-xs group relative pl-4 border-l-2 border-slate-100">
+                    <!-- Timeline Dot -->
+                    <div class="absolute -left-[5px] top-1 w-2 h-2 rounded-full bg-slate-200 group-hover:bg-blue-400 transition-colors"></div>
+                    
+                    <div class="w-32 flex-shrink-0 text-gray-400 font-mono">
+                        {{ (log.timestamp | localize).strftime('%Y-%m-%d %H:%M') }}
+                    </div>
+                    <div class="bg-gray-50 rounded w-24 flex-shrink-0 truncate">
+                        {{ log.user.username if log.user else 'System' }}
+                    </div>
+                    <div class="flex-1">
+                        <span class="font-bold uppercase text-[10px] mr-2 
+                            {% if log.action == 'CREATE' %}text-green-600
+                            {% elif log.action == 'ARCHIVE' %}text-red-500
+                            {% elif log.action == 'DELETE' %}text-red-900 
+                            {% else %}text-blue-600{% endif %}">
+                            {{ log.action }}
+                        </span>
+                        <span class="text-[11px] font-medium text-gray-700">
+                            <span class="text-gray-500">{{ log.target_type }}</span>: {{ log.target_label }}
+                        </span>
+                        
+                        {% if log.changes %}
+                            <div class="mt-1 text-[10px] text-gray-500 bg-gray-50">
+                                {% for field, values in log.changes.items() %}
+                                    {{ field | replace('_id', '') | replace('_', ' ') | capitalize }}:
+                                    <span class="text-gray-600 font-medium">
+                                        {{ values[1] | usd if ('amount' in field or 'price' in field) else values[1] }}
+                                    </span>{{ ", " if not loop.last }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+
+
+
     </div>
 </section>
 {% endif %}

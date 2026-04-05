@@ -46,5 +46,11 @@ class OrderService:
             )
             .where(cls.model.id == order_id)
         )
+        tree = db.session.execute(stmt).scalar_one_or_none()
+
+        if tree:
+            # 2. Attach the Deal Timeline (The "Black Box" data)
+            from .audit_service import AuditLogService
+            tree.timeline = AuditLogService.get_for_order(tree.id) # type: ignore
         
-        return db.session.execute(stmt).scalar_one_or_none()
+        return tree
