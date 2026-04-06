@@ -33,7 +33,7 @@
             </td>
 
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-            {{ invoice.purchase_order.po_number if invoice.purchase_order else '-' }}
+            {{ invoice.purchase_order.po_number or invoice.order.order_number }}
             </td>
 
             <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-blue-700 max-w-[220px] truncate">
