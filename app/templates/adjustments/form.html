@@ -1,9 +1,16 @@
 {% extends 'layout.html' %}
-{% block title %}{{ 'New Adjustment' if mode == 'add' else 'Adjustment ' + adjustment.adjustment_number }}{% endblock %}
+
+{% block title %}
+    {% if mode == 'add' %}New Adjustment
+    {% elif mode == 'edit' %}Edit Adjustment - {{ adjustment.order.order_number if adjustment.order else adjustment.adjustment_number }}
+    {% else %}Adjustment - {{ adjustment.order.order_number if adjustment.order else adjustment.adjustment_number }}
+    {% endif %}
+{% endblock %}
 
 {% block header %}
     {% if mode == 'add' %}New Adjustment
-    {% else %}<span class="text-gray-400">{{ 'Edit' if mode == 'edit' else 'View' }} Adjustment - </span>{{ adjustment.adjustment_number }}
+    {% elif mode == 'edit' %}<span class = "text-gray-400">Edit Adjustment - </span>{{ adjustment.order.order_number if adjustment.order else adjustment.adjustment_number }}
+    {% else %}<span class = "text-gray-400">Adjustment - </span>{{ adjustment.order.order_number if adjustment.order else adjustment.adjustment_number }}
     {% endif %}
 {% endblock %}
 

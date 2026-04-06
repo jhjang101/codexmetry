@@ -1,9 +1,15 @@
 {% extends 'layout.html' %}
-{% block title %}{{ 'New Expense' if mode == 'add' else 'Expense ' + expense.expense_number }}{% endblock %}
+{% block title %}
+    {% if mode == 'add' %}New Expense
+    {% elif mode == 'edit' %}Edit Expense - {{expense.order.order_number if expense.order else expense.expense_number }}
+    {% else %}Expense - {{expense.order.order_number if expense.order else expense.expense_number }}
+    {% endif %}
+{% endblock %}
 
 {% block header %}
     {% if mode == 'add' %}New Expense
-    {% else %}<span class="text-gray-400">{{ 'Edit' if mode == 'edit' else 'View' }} Expense - </span>{{ expense.expense_number }}
+    {% elif mode == 'edit' %}<span class = "text-gray-400">Edit Expense - </span>{{expense.order.order_number if expense.order else expense.expense_number }}
+    {% else %}<span class="text-gray-400">Expense - </span>{{expense.order.order_number if expense.order else expense.expense_number }}
     {% endif %}
 {% endblock %}
 

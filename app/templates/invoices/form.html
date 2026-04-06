@@ -10,7 +10,7 @@
 {% block header %}
     {% if mode == 'add' %}New Invoice
     {% elif mode == 'edit' %}<span class = "text-gray-400">Edit Invoice - </span>{{invoice.order.order_number if invoice.order else invoice.invoice_number }}
-    {% else %}<span class = "text-gray-400">invoice - </span>{{invoice.order.order_number if invoice.order else invoice.invoice_number }}
+    {% else %}<span class = "text-gray-400">Invoice - </span>{{invoice.order.order_number if invoice.order else invoice.invoice_number }}
     {% endif %}
 {% endblock %}
 

@@ -2,15 +2,15 @@
 
 {% block title %}
     {% if mode == 'add' %}New Payment
-    {% elif mode == 'edit' %}Edit Payment - {{ payment.payment_number }}
-    {% else %}Payment - {{ payment.payment_number }}
+    {% elif mode == 'edit' %}Edit Payment - {{payment.order.order_number if payment.order else payment.payment_number }}
+    {% else %}Payment - {{payment.order.order_number if payment.order else payment.payment_number }}
     {% endif %}
 {% endblock %}
 
 {% block header %}
     {% if mode == 'add' %}New Payment
-    {% elif mode == 'edit' %}<span class = "text-gray-400">Edit Payment - </span>{{ payment.payment_number }}
-    {% else %}<span class = "text-gray-400">Payments - </span>{{ payment.payment_number }}
+    {% elif mode == 'edit' %}<span class = "text-gray-400">Edit Payment - </span>{{payment.order.order_number if payment.order else payment.payment_number }}
+    {% else %}<span class = "text-gray-400">Payments - </span>{{payment.order.order_number if payment.order else payment.payment_number }}
     {% endif %}
 {% endblock %}
 
