@@ -8,14 +8,30 @@ def format_usd(cents: int) -> str:
     return f"${usd:,.2f}"
 
 def parse_to_cents(usd_string: str) -> int:
-    """Converts string 1,234.56 to integer cents"""
+    """
+    Converts string 1,234.56 to integer cents
+    handling negatives and parentheses.
+    """
     if not usd_string:
         return 0
     try:
-        # Remove $ and commas
+        # 1. Clean the string
         clean_str = str(usd_string).replace('$', '').replace(',', '').strip()
+
+        # 2. Handle Accounting Parentheses: (100.00) -> -100.00
+        if clean_str.startswith('('):
+            clean_str = '-' + clean_str[1:-1]
+
+        # 3. GUARD: Incomplete Entry Check (Crucial for HTMX triggers)
+        # If the user has only typed the negative sign or start of parenthesis, 
+        # return 0 so the calculation doesn't crash while they type.
+        if clean_str in ["-", "(", "()", "($", "-$"]:
+            return 0
+
+        # 4. Convert to cents
         dollars = float(clean_str)
         cents = int(round(dollars * 100))
         return cents
+    
     except (ValueError, TypeError):
-        raise ValueError(f"Invalid number format in one of the items.")
+        raise ValueError(f"Invalid number format: {usd_string}")
