@@ -128,7 +128,7 @@ def add():
 
 @bp.route('/view/<int:id>')
 def view(id):
-    adjustment = AdjustmentService.get_by_id(id)
+    adjustment = AdjustmentService.get_adjustment_by_id(id)
     if not adjustment:
         flash("Adjustment not found.", "error")
         return redirect(url_for('adjustments.index'))
@@ -145,7 +145,7 @@ def view(id):
 @bp.route('/edit/<int:id>', methods=['GET', 'POST'])
 @role_required(['admin', 'user'])
 def edit(id):
-    adjustment = AdjustmentService.get_by_id(id)
+    adjustment = AdjustmentService.get_adjustment_by_id(id)
     if not adjustment:
         flash("Adjustment not found.", "error")
         return redirect(url_for('adjustments.index'))

@@ -8,7 +8,7 @@ from ..extensions import db
 from ..utils.docs import generate_doc_number
 from ..utils.money import parse_to_cents
 from sqlalchemy import select, or_
-from sqlalchemy.orm import contains_eager
+from sqlalchemy.orm import contains_eager, joinedload
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
@@ -37,11 +37,11 @@ class AdjustmentService(BaseService):
         # 1. Base statement with eager category loading
         stmt = (
             select(cls.model)
-            .outerjoin(AdjustmentCategory)
-            .outerjoin(Client)        # Join for display/search
-            .outerjoin(OrderRegistry) # Join to search by CDX number
-            .outerjoin(PurchaseOrder) # Join to search by PO number
-            .outerjoin(Invoice)       # Join to search by Invoice number
+            .outerjoin(cls.model.category)
+            .outerjoin(cls.model.client)        # Join for display/search
+            .outerjoin(cls.model.order) # Join to search by CDX number
+            .outerjoin(cls.model.purchase_order) # Join to search by PO number
+            .outerjoin(cls.model.invoice)       # Join to search by Invoice number
             .options(
                 contains_eager(cls.model.category),
                 contains_eager(cls.model.client),
@@ -160,6 +160,26 @@ class AdjustmentService(BaseService):
 
         db.session.commit()
         return adjustment
+    
+    @classmethod
+    def get_adjustment_by_id(cls, id: int) -> Adjustment | None:
+        """
+        Fetcher: Returns Adjustment with full deal and category context.
+        Prevents N+1 queries during View/Edit mode rendering.
+        """
+        stmt = (
+            select(cls.model)
+            .options(
+                joinedload(cls.model.category),
+                joinedload(cls.model.client),
+                joinedload(cls.model.purchase_order),
+                joinedload(cls.model.order),
+                joinedload(cls.model.invoice),
+                joinedload(cls.model.creator)
+            )
+            .where(cls.model.id == id)
+        )
+        return db.session.execute(stmt).scalar_one_or_none()
     
     # --- Auto Create Write-off for Underpayment---
     @classmethod

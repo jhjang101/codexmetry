@@ -249,7 +249,15 @@
                     <label class="block text-sm font-medium text-gray-500">Link to PO (Optional)</label>
                     <div id="po-select-container">
                         {% if mode == 'view' %}
-                            <p class="mt-1 block bg-gray-100 border rounded-lg p-2 text-sm">{{ expense.order.order_number if expense.order else '-' }}</p>
+                            <p class="mt-1 block bg-gray-100 border rounded-lg p-2 text-sm">
+                                {% if expense.purchase_order and expense.purchase_order.po_number %}
+                                    {{ expense.purchase_order.po_number }}
+                                {% elif expense.order %}
+                                    {{ expense.order.order_number }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </p>
                         {% else %}
                             <!-- Handled by partial: expenses/partials/po_select.html -->
                             {% include 'expenses/partials/po_select.html' with context %}

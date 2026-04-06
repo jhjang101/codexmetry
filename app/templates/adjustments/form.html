@@ -282,9 +282,12 @@
                     <div id="po-select-container">
                         {% if mode == 'view' %}
                             <p class="mt-1 block bg-gray-100 border rounded-lg p-2 text-sm">
-                                {% if adjustment.purchase_order %} 
-                                    {{ adjustment.order.order_number }} ({{ adjustment.purchase_order.po_number }})
-                                {% else %}-
+                                {% if adjustment.purchase_order and adjustment.purchase_order.po_number %}
+                                    {{ adjustment.purchase_order.po_number }}
+                                {% elif adjustment.order %}
+                                    {{ adjustment.order.order_number }}
+                                {% else %}
+                                    -
                                 {% endif %}
                             </p>
 

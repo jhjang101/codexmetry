@@ -196,7 +196,7 @@
                 <div class="col-span-2">
                     <label class="block text-sm font-medium text-gray-500">PO Number</label>
                     {% if mode == 'view' %}
-                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ po.po_number or '-'}}</p>
+                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ po.po_number or po.order.order_number}}</p>
                     {% else %}
                         <input type="text" name="po_number" value="{{ po.po_number if po else '' }}" 
                                placeholder="Client reference"
