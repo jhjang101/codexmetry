@@ -32,13 +32,13 @@
                         
                         {# Accrual Columns #}
                         <td class="px-4 py-2 text-right border-l border-gray-100">{{ m.accrual.revenue | usd }}</td>
-                        <td class="px-4 py-2 text-right font-bold {{ 'text-green-600' if m.accrual.net_income >= 0 else 'text-red-600' }}">
+                        <td class="px-4 py-2 text-right font-bold {{ 'text-green-700' if m.accrual.net_income >= 0 else 'text-red-600' }}">
                             {{ m.accrual.net_income | usd }}
                         </td>
 
                         {# Cash Columns #}
                         <td class="px-4 py-2 text-right border-l border-gray-100">{{ m.cash.income | usd }}</td>
-                        <td class="px-4 py-2 text-right font-bold {{ 'text-green-700' if m.cash.net_cash >= 0 else 'text-red-700' }}">
+                        <td class="px-4 py-2 text-right font-bold {{ 'text-green-700' if m.cash.net_cash >= 0 else 'text-red-600' }}">
                             {{ m.cash.net_cash | usd }}
                         </td>
                     </tr>

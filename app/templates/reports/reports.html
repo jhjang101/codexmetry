@@ -75,7 +75,9 @@
                             </tr>
                             <tr class="text-red-600">
                                 <td class="px-4 py-2">Cost of Goods Sold (COGS)</td>
-                                <td class="px-4 py-2 text-right font-medium">-{{ data.accrual.cogs | usd }}</td>
+                                <td class="px-4 py-2 text-right font-medium {{ 'text-red-600' if data.accrual.cogs >= 0 else 'text-green-700' }}">
+                                    {{ data.accrual.cogs | usd }}
+                                </td>
                             </tr>
                             <tr class="bg-gray-50 font-bold text-gray-800 uppercase text-[10px]">
                                 <td class="px-4 py-2">Gross Profit</td>
@@ -83,7 +85,9 @@
                             </tr>
                             <tr class="text-gray-500">
                                 <td class="px-4 py-2 italic">Operating Expenses (OPEX)</td>
-                                <td class="px-4 py-2 text-right font-medium">-{{ data.accrual.opex | usd }}</td>
+                                <td class="px-4 py-2 text-right font-medium {{ 'text-red-600' if data.accrual.opex >= 0 else 'text-green-700' }}">
+                                    {{ data.accrual.opex | usd }}
+                                </td>
                             </tr>
                             <tr class="font-bold text-gray-900 uppercase text-[10px] border-t-2 border-gray-200">
                                 <td class="px-4 py-2">Operating Profit (EBIT)</td>
@@ -92,7 +96,7 @@
                             {% for adj in data.adjustments %}
                             <tr class="text-gray-500 italic text-[11px]">
                                 <td class="px-4 py-1.5 pl-8">Non-Op: {{ adj.category }}</td>
-                                <td class="px-4 py-1.5 text-right {{ 'text-green-600' if adj.total >= 0 else 'text-red-500' }}">
+                                <td class="px-4 py-1.5 text-right {{ 'text-green-700' if adj.total >= 0 else 'text-red-600' }}">
                                     {{ adj.total | usd }}
                                 </td>
                             </tr>
@@ -118,7 +122,9 @@
                             </tr>
                             <tr class="text-red-600">
                                 <td class="px-4 py-2">COGS Actually Paid</td>
-                                <td class="px-4 py-2 text-right">-{{ data.cash.cogs_paid | usd }}</td>
+                                <td class="px-4 py-2 text-right {{ 'text-red-600' if data.cash.cogs_paid >= 0 else 'text-green-700' }}">
+                                    {{ data.cash.cogs_paid | usd }}
+                                </td>
                             </tr>
                             <tr class="bg-gray-50 font-bold text-gray-800 uppercase text-[10px]">
                                 <td class="px-4 py-2">Gross Profit (Cash)</td>
@@ -126,7 +132,9 @@
                             </tr>
                             <tr class="text-gray-500">
                                 <td class="px-4 py-2 italic">OPEX Actually Paid</td>
-                                <td class="px-4 py-2 text-right">-{{ data.cash.opex_paid | usd }}</td>
+                                <td class="px-4 py-2 text-right {{ 'text-red-600' if data.cash.opex_paid >= 0 else 'text-green-700' }}">
+                                    {{ data.cash.opex_paid | usd }}
+                                </td>
                             </tr>
                             <tr class="font-bold text-gray-900 uppercase text-[10px] border-t-2 border-gray-200">
                                 <td class="px-4 py-2">Net Operations Cash Flow</td>
