@@ -3,6 +3,39 @@
 {% block header %}Financial Reports{% endblock %}
 
 {% block content %}
+
+{% macro fold_row(label, id_prefix, data, text_color='text-gray-900') %}
+    {# 1. HEADER ROW #}
+    <tr class="cursor-pointer hover:bg-gray-50 transition-colors group" 
+        onclick="toggleFolder('{{ id_prefix }}')">
+        <td class="px-4 py-2 flex items-center gap-2">
+            <i id="icon-{{ id_prefix }}" class="fa-solid fa-chevron-right text-[8px] text-gray-300 group-hover:text-blue-500 transition-transform"></i>
+            <span class="text-gray-600">{{ label }}</span>
+        </td>
+        <td class="px-4 py-2 text-right font-bold {{ text_color }}">
+            {{ data.total | usd }}
+        </td>
+    </tr>
+
+    {# 2. BREAKDOWN ROW #}
+    <tr id="fold-{{ id_prefix }}" class="hidden bg-gray-50/50">
+        <td colspan="2" class="px-8 py-2">
+            <table class="w-full text-[11px]">
+                {% for item in data.breakdown %}
+                <tr class="border-b border-gray-100 last:border-0">
+                    <td class="py-1 text-gray-500">{{ item.category }}</td>
+                    <td class="py-1 text-right font-medium {{ text_color }} opacity-80">
+                        {{ item.amount | usd }}
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="2" class="py-1 text-gray-400 italic">No data.</td></tr>
+                {% endfor %}
+            </table>
+        </td>
+    </tr>
+{% endmacro %}
+
 <div class="max-w-5xl mx-auto px-4 pb-12">
 
     <!-- 1. TAB NAVIGATION (Persistent) -->
@@ -64,43 +97,37 @@
                 
                 <!-- Table 1: Performance Statement (Accrual) -->
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    <div class="px-4 py-2 bg-slate-100 border-b border-gray-200">
-                        <h3 class="font-bold text-slate-700 uppercase text-[10px] tracking-widest">1. Performance Statement (Accrual Basis)</h3>
+                    <div class="px-4 py-2 bg-slate-100 border-b border-gray-200 flex justify-between items-center">
+                        <h3 class="font-bold text-slate-700 uppercase text-[10px] tracking-widest">1. Performance Statement (Accrual)</h3>
+                        <span class="text-[9px] text-slate-400 font-bold uppercase">Issued Documents</span>
                     </div>
                     <table class="min-w-full text-xs">
                         <tbody class="divide-y divide-gray-100">
-                            <tr class="bg-blue-50/30">
-                                <td class="px-4 py-2 text-gray-600">Operating Revenue (Invoiced)</td>
-                                <td class="px-4 py-2 text-right font-bold text-blue-700">{{ data.accrual.revenue | usd }}</td>
-                            </tr>
-                            <tr class="text-red-600">
-                                <td class="px-4 py-2">Cost of Goods Sold (COGS)</td>
-                                <td class="px-4 py-2 text-right font-medium {{ 'text-red-600' if data.accrual.cogs >= 0 else 'text-green-700' }}">
-                                    {{ data.accrual.cogs | usd }}
-                                </td>
-                            </tr>
+                            {# Revenue: Blue #}
+                            {{ fold_row('Sales Revenue', 'acc-rev', data.accrual.revenue, 'text-blue-700') }}
+                            {# COGS: Red if spending, Green if refund #}
+                            {{ fold_row('Cost of Goods Sold (COGS)', 'acc-cogs', data.accrual.cogs, 
+                                        'text-red-600' if data.accrual.cogs.total >= 0 else 'text-green-700') }}
+                            
+                            <!-- Static Summary Row -->
                             <tr class="bg-gray-50 font-bold text-gray-800 uppercase text-[10px]">
                                 <td class="px-4 py-2">Gross Profit</td>
                                 <td class="px-4 py-2 text-right">{{ data.accrual.gross_profit | usd }}</td>
                             </tr>
-                            <tr class="text-gray-500">
-                                <td class="px-4 py-2 italic">Operating Expenses (OPEX)</td>
-                                <td class="px-4 py-2 text-right font-medium {{ 'text-red-600' if data.accrual.opex >= 0 else 'text-green-700' }}">
-                                    {{ data.accrual.opex | usd }}
-                                </td>
-                            </tr>
+
+                            {# OPEX: Red if spending, Green if refund #}
+                            {{ fold_row('Operating Expenses (OPEX)', 'acc-opex', data.accrual.opex, 
+                                        'text-red-600' if data.accrual.opex.total >= 0 else 'text-green-700') }}
+
                             <tr class="font-bold text-gray-900 uppercase text-[10px] border-t-2 border-gray-200">
                                 <td class="px-4 py-2">Operating Profit (EBIT)</td>
                                 <td class="px-4 py-2 text-right">{{ data.accrual.operating_profit | usd }}</td>
                             </tr>
-                            {% for adj in data.adjustments %}
-                            <tr class="text-gray-500 italic text-[11px]">
-                                <td class="px-4 py-1.5 pl-8">Non-Op: {{ adj.category }}</td>
-                                <td class="px-4 py-1.5 text-right {{ 'text-green-700' if adj.total >= 0 else 'text-red-600' }}">
-                                    {{ adj.total | usd }}
-                                </td>
-                            </tr>
-                            {% endfor %}
+
+                            {# Adjustments: Green if gain, Red if loss #}
+                            {{ fold_row('Adjustments', 'acc-adj', data.accrual.adjustments, 
+                                        'text-green-700' if data.accrual.adjustments.total >= 0 else 'text-red-600') }}
+
                             <tr class="bg-slate-900 text-white font-bold uppercase text-xs">
                                 <td class="px-4 py-3 tracking-widest">Net Income</td>
                                 <td class="px-4 py-3 text-right text-lg">{{ data.accrual.net_income | usd }}</td>
@@ -111,35 +138,36 @@
 
                 <!-- Table 2: Cash Flow Summary (Cash) -->
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    <div class="px-4 py-2 bg-green-50 border-b border-green-100">
-                        <h3 class="font-bold text-green-800 uppercase text-[10px] tracking-widest">2. Cash Flow Summary (Cash Basis)</h3>
+                    <div class="px-4 py-2 bg-green-50 border-b border-green-100 flex justify-between items-center">
+                        <h3 class="font-bold text-green-800 uppercase text-[10px] tracking-widest">2. Cash Flow Summary (Cash)</h3>
+                        <span class="text-[9px] text-green-600 font-bold uppercase">Settled Transactions</span>
                     </div>
                     <table class="min-w-full text-xs">
-                        <tbody class="divide-y divide-gray-100 h-full">
-                            <tr class="bg-green-50/30">
-                                <td class="px-4 py-2 text-gray-600">Total Cash Receipts (Payments)</td>
-                                <td class="px-4 py-2 text-right font-bold text-green-700">{{ data.cash.income | usd }}</td>
-                            </tr>
-                            <tr class="text-red-600">
-                                <td class="px-4 py-2">COGS Actually Paid</td>
-                                <td class="px-4 py-2 text-right {{ 'text-red-600' if data.cash.cogs_paid >= 0 else 'text-green-700' }}">
-                                    {{ data.cash.cogs_paid | usd }}
-                                </td>
-                            </tr>
+                        <tbody class="divide-y divide-gray-100">
+                            {# Payments: Green #}
+                            {{ fold_row('Cash Receipts (Payments)', 'cash-inc', data.cash.payments, 'text-green-700') }}
+                            {# COGS: Red if spending, Green if refund #}
+                            {{ fold_row('COGS Actually Paid', 'cash-cogs', data.cash.cogs, 
+                                        'text-red-600' if data.cash.cogs.total >= 0 else 'text-green-700') }}
+                            
                             <tr class="bg-gray-50 font-bold text-gray-800 uppercase text-[10px]">
                                 <td class="px-4 py-2">Gross Profit (Cash)</td>
-                                <td class="px-4 py-2 text-right">{{ data.cash.gross_profit_cash | usd }}</td>
+                                <td class="px-4 py-2 text-right">{{ data.cash.gross_profit | usd }}</td>
                             </tr>
-                            <tr class="text-gray-500">
-                                <td class="px-4 py-2 italic">OPEX Actually Paid</td>
-                                <td class="px-4 py-2 text-right {{ 'text-red-600' if data.cash.opex_paid >= 0 else 'text-green-700' }}">
-                                    {{ data.cash.opex_paid | usd }}
-                                </td>
-                            </tr>
+                            
+                            {# OPEX: Red if spending, Green if refund #}
+                            {{ fold_row('OPEX Actually Paid', 'cash-opex', data.cash.opex, 
+                                        'text-red-600' if data.cash.opex.total >= 0 else 'text-green-700') }}
+
                             <tr class="font-bold text-gray-900 uppercase text-[10px] border-t-2 border-gray-200">
-                                <td class="px-4 py-2">Net Operations Cash Flow</td>
-                                <td class="px-4 py-2 text-right">{{ data.cash.net_cash | usd }}</td>
+                                <td class="px-4 py-2">Operating Cash Flow</td>
+                                <td class="px-4 py-2 text-right">{{ data.cash.operating_profit | usd }}</td>
                             </tr>
+
+                            {# Manual Adjustments: Green if gain, Red if loss #}
+                            {{ fold_row('Adjustments', 'cash-adj', data.cash.adjustments, 
+                                        'text-green-700' if data.cash.adjustments.total >= 0 else 'text-red-600') }}
+
                             <tr class="bg-slate-700 text-white font-bold uppercase text-xs">
                                 <td class="px-4 py-3 tracking-widest">Net Cash Movement</td>
                                 <td class="px-4 py-3 text-right text-lg">{{ data.cash.net_cash | usd }}</td>
@@ -224,6 +252,13 @@
         const activeBtn = document.getElementById('tab-btn-' + tabName);
         activeBtn.classList.remove('bg-gray-100', 'border-transparent', 'text-gray-400');
         activeBtn.classList.add('bg-white', 'border-gray-200', 'text-blue-600', 'z-10');
+    }
+
+    function toggleFolder(id) {
+        const row = document.getElementById('fold-' + id);
+        const icon = document.getElementById('icon-' + id);
+        row.classList.toggle('hidden');
+        icon.classList.toggle('rotate-90');
     }
 </script>
 

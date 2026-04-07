@@ -4,7 +4,7 @@ from datetime import date
 from ..extensions import db
 from ..models import (
     Invoice, InvoiceItem, Expense, ExpenseItem, 
-    Payment, Adjustment, AdjustmentCategory, 
+    Payment, PaymentType, Adjustment, AdjustmentCategory, 
     Product, ProductCategory, ExpenseCategory, Client, Vendor
 )
 
@@ -15,48 +15,45 @@ class ReportService:
         """Brain: Compiles a 6-table dataset for the Financial Fortress."""
         
         # 1. ACCRUAL DATA (Performance - Based on Issued Documents)
-        accrual_revenue = cls._get_accrual_revenue(start_date, end_date)
-        accrual_expenses = cls._get_accrual_expenses(start_date, end_date)
+        accrual_revenue = cls._get_revenue_summary(start_date, end_date)
+        accrual_expenses = cls._get_expense_summary(start_date, end_date, mode='accrual')
+        accrual_adjustments = cls._get_adjustment_summary(start_date, end_date, mode='accrual')
         
         # 2. CASH DATA (Liquidity - Based on Cash Movement)
-        cash_income = db.session.execute(
-            select(func.sum(Payment.amount))
-            .where(Payment.is_active == True, Payment.payment_date.between(start_date, end_date))
-        ).scalar() or 0
+        cash_payments = cls._get_payment_summary(start_date, end_date)
+        cash_expenses = cls._get_expense_summary(start_date, end_date, mode='cash')
+        cash_adjustments = cls._get_adjustment_summary(start_date, end_date, mode='cash')
         
-        cash_outgoings = cls._get_cash_outgoings(start_date, end_date)
-
-        # 3. ADJUSTMENTS (Non-Operating)
-        adjustments = cls._get_adjustments_breakdown(start_date, end_date)
-        total_adj = sum(a['total'] for a in adjustments)
-
-        # 4. CONSOLIDATED SUMMARY MATH
+        # 3. SUMMARY MATH
         # Accrual Perspective
-        gross_profit_accrual = accrual_revenue - accrual_expenses['cogs_total']
-        operating_profit_accrual = gross_profit_accrual - accrual_expenses['opex_total']
-        net_income = operating_profit_accrual + total_adj
+        accrual_gross_profit = accrual_revenue['total'] - accrual_expenses['cogs']['total']
+        accrual_operating_profit = accrual_gross_profit - accrual_expenses['opex']['total']
+        accrual_net_income = accrual_operating_profit + accrual_adjustments['total']
 
         # Cash Perspective
-        gross_profit_cash = cash_income - cash_outgoings['cogs_paid']
-        net_cash_flow = cash_income - cash_outgoings['total_paid']
+        cash_gross_profit = cash_payments['total'] - cash_expenses['cogs']['total']
+        cash_operating_profit = cash_gross_profit - cash_expenses['opex']['total']
+        cash_net_cash = cash_operating_profit + cash_adjustments['total']
 
         return {
             'accrual': {
                 'revenue': accrual_revenue,
-                'cogs': accrual_expenses['cogs_total'],
-                'gross_profit': gross_profit_accrual,
-                'opex': accrual_expenses['opex_total'],
-                'operating_profit': operating_profit_accrual,
-                'net_income': net_income
+                'cogs': accrual_expenses['cogs'],
+                'gross_profit': accrual_gross_profit,
+                'opex': accrual_expenses['opex'],
+                'operating_profit': accrual_operating_profit,
+                'adjustments': accrual_adjustments,
+                'net_income': accrual_net_income
             },
             'cash': {
-                'income': cash_income,
-                'cogs_paid': cash_outgoings['cogs_paid'],
-                'gross_profit_cash': gross_profit_cash,
-                'opex_paid': cash_outgoings['opex_paid'],
-                'net_cash': net_cash_flow
+                'payments': cash_payments,
+                'cogs': cash_expenses['cogs'],
+                'gross_profit': cash_gross_profit,
+                'opex': cash_expenses['opex'],
+                'operating_profit': cash_operating_profit,
+                'adjustments': cash_adjustments,
+                'net_cash': cash_net_cash
             },
-            'adjustments': adjustments,
             'audit': {
                 'invoices': cls._get_invoice_audit(start_date, end_date),
                 'payments': cls._get_payment_audit(start_date, end_date),
@@ -65,13 +62,19 @@ class ReportService:
             }
         }
 
-    # --- ACCRUAL HELPERS (Document Based) ---
+    # --- HELPERS (Document Based) ---
 
     @classmethod
-    def _get_accrual_revenue(cls, start, end):
-        """Sums items where is_revenue is True using InvoiceItem anchor."""
+    def _get_revenue_summary(cls, start, end):
+        """
+        Sums items grouped by category where is_revenue is True 
+        from open and completed Invoices.
+        """
         stmt = (
-            select(func.sum(InvoiceItem.quantity * InvoiceItem.billed_unit_price))
+            select(
+                ProductCategory.type, 
+                func.sum(InvoiceItem.quantity * InvoiceItem.billed_unit_price)
+            )
             .select_from(InvoiceItem)
             .join(Invoice).join(Product).join(ProductCategory)
             .where(
@@ -80,59 +83,112 @@ class ReportService:
                 Invoice.invoice_date.between(start, end),
                 ProductCategory.is_revenue == True
             )
+            .group_by(ProductCategory.type)
         )
-        return db.session.execute(stmt).scalar() or 0
-
-    @classmethod
-    def _get_accrual_expenses(cls, start, end):
-        """Sums COGS vs OPEX using ExpenseItem anchor."""
-        stmt = (
-            select(
-                ExpenseCategory.is_cogs,
-                func.sum(ExpenseItem.quantity * ExpenseItem.unit_price)
-            )
-            .select_from(ExpenseItem)
-            .join(Expense).join(ExpenseCategory)
-            .where(
-                Expense.is_active == True,
-                Expense.status != 'draft',
-                Expense.expense_date.between(start, end)
-            )
-            .group_by(ExpenseCategory.is_cogs)
-        )
-        
         results = db.session.execute(stmt).all()
-        data = {'cogs_total': 0, 'opex_total': 0}
-        for is_cogs, total in results:
-            if is_cogs: data['cogs_total'] = total
-            else: data['opex_total'] = total
-        return data
 
-    # --- CASH HELPERS (Transaction Based) ---
+        breakdown = [{'category': r[0], 'amount': r[1] or 0} for r in results]
+        total = sum(item['amount'] for item in breakdown)
 
+        return {'total': total, 'breakdown': breakdown}
+    
     @classmethod
-    def _get_cash_outgoings(cls, start, end):
-        """Sums Completed Expenses, splitting by COGS vs OPEX flags."""
+    def _get_payment_summary(cls, start, end):
+        """
+        Groups actual cash received by Payment Type
+        from Payments.
+        """
         stmt = (
             select(
-                ExpenseCategory.is_cogs,
+                PaymentType.type, 
+                func.sum(Payment.amount)
+            )
+            .join(PaymentType)
+            .where(
+                Payment.is_active == True, 
+                Payment.payment_date.between(start, end)
+            )
+            .group_by(PaymentType.type)
+        )
+        results = db.session.execute(stmt).all()
+
+        breakdown = [{'category': r[0], 'amount': r[1] or 0} for r in results]
+        total = sum(item['amount'] for item in breakdown)
+
+        return {'total': total, 'breakdown': breakdown}
+
+    @classmethod
+    def _get_expense_summary(cls, start, end, mode='accrual'):
+        """Groups Expenses by category, separated into COGS and OPEX."""
+        stmt = (
+            select(
+                ExpenseCategory.type, 
+                ExpenseCategory.is_cogs, 
                 func.sum(Expense.total_amount)
             )
             .join(ExpenseCategory)
             .where(
                 Expense.is_active == True,
-                Expense.status == 'completed', # Paid
                 Expense.expense_date.between(start, end)
             )
-            .group_by(ExpenseCategory.is_cogs)
         )
+
+        # Apply status filters based on accounting perspective
+        if mode == 'accrual':
+            # Accrual basis looks at all open/completed expenses
+            stmt = stmt.where(Expense.status != 'draft')
+        else:
+            # Cash basis looks only at completed espenses
+            stmt = stmt.where(Expense.status == 'completed')
+        
+        # Group by category and separated into COGS and OPEX
+        stmt = stmt.group_by(ExpenseCategory.type, ExpenseCategory.is_cogs)
+
         results = db.session.execute(stmt).all()
-        data = {'cogs_paid': 0, 'opex_paid': 0, 'total_paid': 0}
-        for is_cogs, total in results:
-            if is_cogs: data['cogs_paid'] = total
-            else: data['opex_paid'] = total
-        data['total_paid'] = data['cogs_paid'] + data['opex_paid']
-        return data
+        
+        cogs_breakdown = [{'category': r[0], 'amount': r[2] or 0} for r in results if r[1]]
+        cogs_total = sum(item['amount'] for item in cogs_breakdown)
+        
+        opex_breakdown = [{'category': r[0], 'amount': r[2] or 0} for r in results if not r[1]]
+        opex_total = sum(item['amount'] for item in opex_breakdown)
+
+        expenses = {
+            'cogs': {'total': cogs_total, 'breakdown': cogs_breakdown},
+            'opex': {'total': opex_total, 'breakdown': opex_breakdown}
+        }
+        return expenses
+    
+    @classmethod
+    def _get_adjustment_summary(cls, start, end, mode='accrual'):
+        """
+        Groups Adjustments by category,
+        Accrual mode includes all active
+        Cash mode excludes system write-offs.
+        """
+        stmt = (
+            select(
+                AdjustmentCategory.type, 
+                func.sum(Adjustment.amount)
+            )
+            .join(AdjustmentCategory)
+            .where(
+                Adjustment.is_active == True,
+                Adjustment.adjustment_date.between(start, end)
+            )
+        )
+        # If cash mode, only include manual entries
+        if mode == 'cash':
+            stmt = stmt.where(Adjustment.is_system == False)
+
+        # Group by category
+        stmt = stmt.group_by(AdjustmentCategory.type)
+            
+        results = db.session.execute(stmt).all()
+
+        breakdown = [{'category': r[0], 'amount': r[1] or 0} for r in results]
+        total = sum(item['amount'] for item in breakdown)
+
+        return {'total': total, 'breakdown': breakdown}
     
     # --- SORTING HELPER ---
 
