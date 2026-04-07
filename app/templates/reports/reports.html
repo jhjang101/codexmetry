@@ -145,13 +145,13 @@
                     <table class="min-w-full text-xs">
                         <tbody class="divide-y divide-gray-100">
                             {# Payments: Green #}
-                            {{ fold_row('Cash Receipts (Payments)', 'cash-inc', data.cash.payments, 'text-green-700') }}
+                            {{ fold_row('Payments Received', 'cash-inc', data.cash.payments, 'text-green-700') }}
                             {# COGS: Red if spending, Green if refund #}
                             {{ fold_row('COGS Actually Paid', 'cash-cogs', data.cash.cogs, 
                                         'text-red-600' if data.cash.cogs.total >= 0 else 'text-green-700') }}
                             
                             <tr class="bg-gray-50 font-bold text-gray-800 uppercase text-[10px]">
-                                <td class="px-4 py-2">Gross Profit (Cash)</td>
+                                <td class="px-4 py-2">Gross Margin</td>
                                 <td class="px-4 py-2 text-right">{{ data.cash.gross_profit | usd }}</td>
                             </tr>
                             
@@ -169,7 +169,7 @@
                                         'text-green-700' if data.cash.adjustments.total >= 0 else 'text-red-600') }}
 
                             <tr class="bg-slate-700 text-white font-bold uppercase text-xs">
-                                <td class="px-4 py-3 tracking-widest">Net Cash Movement</td>
+                                <td class="px-4 py-3 tracking-widest">Net Cash Income</td>
                                 <td class="px-4 py-3 text-right text-lg">{{ data.cash.net_cash | usd }}</td>
                             </tr>
                         </tbody>
