@@ -21,25 +21,27 @@
             <span class="text-[10px] text-blue-600 font-medium mt-1">Unpaid Invoice Balance</span>
         </div>
 
-        <!-- MTD Cash Summary -->
-        <div class="bg-white p-4 pb-1 rounded-xl shadow-sm border-l-4 {{ 'border-green-500' if data.kpis.mtd.net >= 0 else 'border-red-500' }} flex flex-col ">
+        <!-- Example for MTD Card (Apply same logic to YTD) -->
+        <div class="bg-white p-4 pb-1 rounded-xl shadow-sm border-l-4 {{ 'border-green-500' if data.kpis.ytd.net >= 0 else 'border-red-500' }} flex flex-col ">
             <div class="flex justify-between items-start">
-                <span class="text-[10px] font-bold text-gray-600 uppercase tracking-widest">Net Cash</span>
+                <span class="text-[10px] font-bold text-gray-600 uppercase tracking-widest">Net Cash Income</span>
                 <span class="text-[10px] font-bold text-gray-600 uppercase">This Month</span>
             </div>
-            <span class="text-2xl font-bold {{ 'text-green-700' if data.kpis.mtd.net >= 0 else 'text-red-600' }}">
+            <span class="text-2xl font-bold {{ 'text-green-700' if data.kpis.mtd.net >= 0 else 'text-red-700' }}">
                 {{ data.kpis.mtd.net | usd }}
             </span>
-            <div class="grid grid-cols-2 mt-1 border-t border-gray-50">
+            <div class="grid grid-cols-3 mt-1 border-t border-gray-50">
                 <div class="flex flex-col">
-                    <span class="text-[9px] text-gray-400 uppercase font-bold">Payments Received</span>
-                    <span class="text-sm font-bold text-green-700">{{ data.kpis.mtd.received | usd }}</span>
+                    <span class="text-[9px] text-gray-400 uppercase font-bold">Payments</span>
+                    <span class="text-sm font-bold text-green-700">{{ data.kpis.mtd.payments | usd }}</span>
+                </div>
+                <div class="flex flex-col text-center">
+                    <span class="text-[9px] text-gray-400 uppercase font-bold">Expenses</span>
+                    <span class="text-sm font-bold {{ 'text-red-600' if data.kpis.mtd.expenses >= 0 else 'text-green-700' }}">{{ data.kpis.mtd.expenses | usd }}</span>
                 </div>
                 <div class="flex flex-col text-right">
-                    <span class="text-[9px] text-gray-400 uppercase font-bold">Expenses Spent</span>
-                    <span class="text-sm font-bold {{ 'text-red-600' if data.kpis.mtd.spent >= 0 else 'text-green-700' }}">
-                        {{ data.kpis.mtd.spent | usd }}
-                    </span>
+                    <span class="text-[9px] text-gray-400 uppercase font-bold">Adjustments</span>
+                    <span class="text-sm font-bold {{ 'text-green-700' if data.kpis.mtd.adjustments >= 0 else 'text-red-600' }}">{{ data.kpis.mtd.adjustments | usd }}</span>
                 </div>
             </div>
         </div>
@@ -47,20 +49,24 @@
         <!-- YTD Cash Summary -->
         <div class="bg-white p-4 pb-1 rounded-xl shadow-sm border-l-4 {{ 'border-green-500' if data.kpis.ytd.net >= 0 else 'border-red-500' }} flex flex-col ">
             <div class="flex justify-between items-start">
-                <span class="text-[10px] font-bold text-gray-600 uppercase tracking-widest">Net Cash</span>
+                <span class="text-[10px] font-bold text-gray-600 uppercase tracking-widest">Net Cash Income</span>
                 <span class="text-[10px] font-bold text-gray-600 uppercase">This Year</span>
             </div>
             <span class="text-2xl font-bold {{ 'text-green-700' if data.kpis.ytd.net >= 0 else 'text-red-700' }}">
                 {{ data.kpis.ytd.net | usd }}
             </span>
-            <div class="grid grid-cols-2 mt-1 border-t border-gray-50">
+            <div class="grid grid-cols-3 mt-1 border-t border-gray-50">
                 <div class="flex flex-col">
-                    <span class="text-[9px] text-gray-400 uppercase font-bold">Payments Received</span>
-                    <span class="text-sm font-bold text-green-700">{{ data.kpis.ytd.received | usd }}</span>
+                    <span class="text-[9px] text-gray-400 uppercase font-bold">Payments</span>
+                    <span class="text-sm font-bold text-green-700">{{ data.kpis.ytd.payments | usd }}</span>
+                </div>
+                <div class="flex flex-col text-center">
+                    <span class="text-[9px] text-gray-400 uppercase font-bold">Expenses</span>
+                    <span class="text-sm font-bold {{ 'text-red-600' if data.kpis.ytd.expenses >= 0 else 'text-green-700' }}">{{ data.kpis.ytd.expenses | usd }}</span>
                 </div>
                 <div class="flex flex-col text-right">
-                    <span class="text-[9px] text-gray-400 uppercase font-bold">Expenses Spent</span>
-                    <span class="text-sm font-bold {{ 'text-red-600' if data.kpis.ytd.spent >= 0 else 'text-green-700' }}">{{ data.kpis.ytd.spent | usd }}</span>
+                    <span class="text-[9px] text-gray-400 uppercase font-bold">Adjustments</span>
+                    <span class="text-sm font-bold {{ 'text-green-700' if data.kpis.ytd.adjustments >= 0 else 'text-red-600' }}">{{ data.kpis.ytd.adjustments | usd }}</span>
                 </div>
             </div>
         </div>

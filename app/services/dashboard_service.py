@@ -4,7 +4,7 @@ from sqlalchemy import select, func, or_, and_
 from ..extensions import db
 from ..models import (
     PurchaseOrder, Invoice, Payment, Expense, AuditLog, 
-    SettingsMetadata, OrderRegistry, Client, Vendor
+    SettingsMetadata, OrderRegistry, Client, Vendor, Adjustment
 )
 from .purchase_orders_service import PurchaseOrderService
 from .invoices_service import InvoiceService
@@ -57,20 +57,40 @@ class DashboardService:
     @classmethod
     def _get_cash_summary(cls, start_date, end_date):
         """Calculates Received, Paid, and Net for a given period."""
-        received = db.session.execute(
+        # 1. Payments Received (Income)
+        payments = db.session.execute(
             select(func.sum(Payment.amount))
-            .where(Payment.is_active == True, Payment.payment_date.between(start_date.date(), end_date.date()))
+            .where(
+                Payment.is_active == True, 
+                Payment.payment_date.between(start_date.date(), end_date.date())
+            )
         ).scalar() or 0
 
-        spent = db.session.execute(
+        # 2. Expenses Spent (Completed only)
+        expenses = db.session.execute(
             select(func.sum(Expense.total_amount))
-            .where(Expense.is_active == True, Expense.status == 'completed', Expense.expense_date.between(start_date.date(), end_date.date()))
+            .where(
+                Expense.is_active == True, 
+                Expense.status == 'completed',
+                Expense.expense_date.between(start_date.date(), end_date.date())
+            )
+        ).scalar() or 0
+        
+        # 3. Manual Adjustments (Non-system only)
+        adjustments = db.session.execute(
+            select(func.sum(Adjustment.amount))
+            .where(
+                Adjustment.is_active == True, 
+                Adjustment.is_system == False,
+                Adjustment.adjustment_date.between(start_date.date(), end_date.date())
+            )
         ).scalar() or 0
 
         return {
-            'received': received,
-            'spent': spent,
-            'net': received - spent
+            'payments': payments,
+            'expenses': expenses,
+            'adjustments': adjustments,
+            'net': payments - expenses + adjustments
         }
 
     # --- PRIVATE HELPERS: TABLE FETCHING ---
