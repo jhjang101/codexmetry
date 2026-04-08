@@ -119,7 +119,8 @@ class AuditLogService:
                target_type: str, 
                action: str, 
                old_data: dict | None = None, 
-               new_data: dict | None = None):
+               new_data: dict | None = None,
+               parent_id: int | None = None):
         """
         Brain: Compares old vs new data and records a deep audit log.
         """
@@ -190,14 +191,22 @@ class AuditLogService:
 
             log = AuditLog()
             log.user_id = user_id
+            log.parent_id = parent_id # Assign the parent link
             log.action = action
             log.target_type = target_type
             log.target_id = target_id
             log.target_label = target_label
             log.changes = changes if changes else None
             log.order_id = found_order_id
-            db.session.add(log)
-            # We do NOT commit here. The calling service handles the transaction.
+
+            db.session.add(log) # We do NOT commit here. The calling service handles the transaction.
+
+            # Secure the ID for return without ending the transaction
+            db.session.flush() 
+            return log.id
+        
+        return None # Return None if no log was created
+
 
     @classmethod
     def get_for_entity(cls, target_type: str, target_id: int):
