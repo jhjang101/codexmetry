@@ -32,6 +32,7 @@ class AuditMixin:
 class AuditLog(db.Model):
     __tablename__ = 'audit_logs'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    parent_id: Mapped[int | None] = mapped_column(Integer, ForeignKey('audit_logs.id'))
     order_id: Mapped[int | None] = mapped_column(ForeignKey('orders.id'))
     timestamp: Mapped[datetime] = mapped_column(DateTime, server_default=func.current_timestamp())
     user_id: Mapped[int | None] = mapped_column(ForeignKey('users.id'))
@@ -45,6 +46,8 @@ class AuditLog(db.Model):
 
     user: Mapped["User"] = relationship()
     order: Mapped["OrderRegistry | None"] = relationship(back_populates="audit_logs")
+    parent: Mapped["AuditLog | None"] = relationship("AuditLog", remote_side=[id], back_populates="children")
+    children: Mapped[list["AuditLog"]] = relationship("AuditLog", back_populates="parent")
 
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
