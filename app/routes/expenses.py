@@ -263,7 +263,7 @@ def archive(id):
     try:
         expense = ExpenseService.archive(id)
         if expense:
-            flash(f'Expense {expense.expense_number} moved to archives.', 'warning')
+            flash(f'Expense {expense.expense_number} archived.', 'success')
         else:
             raise ValueError("Expense not found.")
         return redirect(url_for('expenses.index'))

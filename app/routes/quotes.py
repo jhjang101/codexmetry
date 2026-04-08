@@ -83,7 +83,7 @@ def add():
             new_quote = QuoteService.add_quote(header_data, items, new_files=new_files)
             
             # 5. Success Flow
-            flash(f"Quote {new_quote.quote_number} added successfully!", "success")
+            flash(f"Quote {new_quote.quote_number} created successfully!", "success")
             
             # The Safe Save Redirect: Forces a clean page load to 'View' mode
             response = make_response("", 200)
@@ -200,7 +200,7 @@ def archive(id):
         if not quote:
             raise ValueError("Quote not found.")
 
-        flash(f'Quote {quote.quote_number} has been moved to archives.', 'warning')
+        flash(f'Quote {quote.quote_number} archived.', 'success')
         return redirect(url_for('quotes.index'))
 
     except Exception as e:

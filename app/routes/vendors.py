@@ -62,7 +62,7 @@ def add():
             new_vendor = VendorService.add_vendor(vendor_data, contacts_data)
 
             # 3. Success Feedback
-            flash(f'Vendor {new_vendor.company_name} added successfully!', 'success')
+            flash(f'Vendor {new_vendor.company_name} created successfully!', 'success')
             # The Safe Save Redirect: Forces a clean page load to 'View' mode
             response = make_response("", 200)
             response.headers['HX-Redirect'] = url_for('vendors.view', id=new_vendor.id)
@@ -123,7 +123,7 @@ def archive(id):
     try:
         vendor = VendorService.archive(id)
         if vendor:
-            flash(f'Vendor {vendor.company_name} moved to archives.', 'warning')
+            flash(f'Vendor {vendor.company_name} archived.', 'success')
         else:
             raise ValueError("Vendor not found.")
         return redirect(url_for('vendors.index'))

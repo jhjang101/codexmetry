@@ -70,7 +70,7 @@ def add():
             # 3. Call Service
             new_product = ProductService.add_product(product_data)
 
-            flash('Product added successfully!', 'success')
+            flash('Product created successfully!', 'success')
             # The Safe Save Redirect: Forces a clean page load to 'View' mode
             response = make_response("", 200)
             response.headers['HX-Redirect'] = url_for('products.view', id=new_product.id)
@@ -147,7 +147,7 @@ def archive(id):
         if not product:
             raise ValueError("Product not found.")
         
-        flash(f'Product {product.name} has been moved to archives.', 'warning')
+        flash(f'Product {product.name} archived.', 'warning')
         return redirect(url_for('products.index'))
     
     except Exception as e:

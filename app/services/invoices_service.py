@@ -1,5 +1,5 @@
 from .base_service import BaseService
-from ..models import Invoice, InvoiceItem, PurchaseOrder, OrderRegistry, Client, Payment, Product, SettingsMetadata
+from ..models import Invoice, InvoiceItem, PurchaseOrder, OrderRegistry, Client, Payment, Product, SettingsMetadata, Adjustment
 from .audit_service import AuditLogService
 from .attachment_service import AttachmentService
 from .adjustments_service import AdjustmentService
@@ -347,16 +347,22 @@ class InvoiceService(BaseService):
     def archive_invoice(cls, id: int):
         """
         Specialized archive for Invoices.
-        Checks for active payments and returns (invoice, has_payments).
+        Checks for active payments and a result dictionary with document numbers for UI feedback
         """
         invoice = cls.get_invoice_by_id(id)
         if not invoice:
-            return None, False, None, None # Added a 4th slot for adjustment_status
+            return None
+        
+        # 1. Initialize Result Collection
+        results = {
+            'invoice_num': invoice.invoice_number,
+            'po_ref': invoice.purchase_order.po_number or invoice.order.order_number,
+            'deleted_adjustments': [],
+            'active_payments': [p.payment_number for p in invoice.payments if p.is_active],
+            'po_status': None
+        }
 
-        # Check for active payments specifically linked to this invoice
-        has_payments = any(p.is_active for p in invoice.payments)
-
-        # Forensic Record before we flip the bit
+        # 2. Audit Record of the primary action
         parent_audit_id = AuditLogService.record(
             target_id=id, 
             target_type=cls.model.__name__, 
@@ -365,20 +371,21 @@ class InvoiceService(BaseService):
             new_data={'is_active': False}
         )
 
-        # Soft delete
+        # 3. Soft delete
         invoice.is_active = False
 
-        # 2. SURGICAL STRIKE: Call the brain directly to clean up the adjustment
-        # Because is_active is now False, it will hit the 'else' block and DELETE
-        adjustment_status = AdjustmentService.reconcile_writeoff(invoice, parent_id=parent_audit_id) # Use AdjustmentService.reconcile_writeoff
+        # 4. Ripple Delete Adjustments and Record Audit
+        adj_res = AdjustmentService.reconcile_writeoff(invoice, parent_id=parent_audit_id)
+        if adj_res and adj_res.get('action') == 'DELETE':
+            results['deleted_adjustments'].append(adj_res['number'])
 
-        # PO Status Ripple
-        po_status = sync_po_status(invoice.po_id, parent_id=parent_audit_id)
+        # 5. PO Status Ripple
+        results['po_status'] = sync_po_status(invoice.po_id, parent_id=parent_audit_id)
 
         # Commit
         db.session.commit()
 
-        return invoice, has_payments, adjustment_status, po_status
+        return results
     
     @classmethod
     def get_invoices_by_po(cls, 

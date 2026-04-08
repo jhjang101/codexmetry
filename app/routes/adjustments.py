@@ -74,7 +74,7 @@ def add():
             # 3. Call Service (handles numbering/parsing)
             new_adjustment = AdjustmentService.add_adjustment(data, new_files=new_files)
             
-            flash(f"Adjustment {new_adjustment.adjustment_number} recorded!", "success")
+            flash(f"Adjustment {new_adjustment.adjustment_number} recorded successfully!", "success")
             # The Safe Save Redirect: Forces a clean page load to 'View' mode
             response = make_response("", 200)
             response.headers['HX-Redirect'] = url_for('adjustments.view', id=new_adjustment.id)
@@ -207,7 +207,7 @@ def archive(id):
     try:
         adjustment = AdjustmentService.archive(id)
         if adjustment:
-            flash(f'Adjustment {adjustment.adjustment_number} moved to archives.', 'warning')
+            flash(f'Adjustment {adjustment.adjustment_number} archived.', 'success')
         else:
             raise ValueError("Adjustment not found.")
         return redirect(url_for('adjustments.index'))

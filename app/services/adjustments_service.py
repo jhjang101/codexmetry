@@ -189,6 +189,7 @@ class AdjustmentService(BaseService):
         """
         Brain: Automates the creation/deletion of threshold write-offs.
         Ensures Net Income is corrected by the underpayment gap.
+        Returns: {action: str, amount: int, number: str} for UI feedback.
         """
         # 1. Fetch the System Category
         category = db.session.execute(
@@ -209,7 +210,7 @@ class AdjustmentService(BaseService):
         # 4. Initialize result packet
         result = None
 
-        # 4. Logic Branch: Is the invoice completed?
+        # 5. Logic Branch: Is the invoice completed?
         if invoice.status == 'completed' and invoice.is_active:
             # Calculate the Gap (Receipts - Billed Amount)
             # Example: $998 received - $1000 billed = -$2 write-off
@@ -242,7 +243,7 @@ class AdjustmentService(BaseService):
                                                old_data=old_snapshot, 
                                                new_data=new_data,
                                                parent_id=parent_id)
-                        result = {'action': 'UPDATE', 'amount': gap}
+                        result = {'action': 'UPDATE', 'amount': gap, 'number': existing_adj.adjustment_number}
                         
                 else: # Create 
                     new_adj = Adjustment()
@@ -268,28 +269,30 @@ class AdjustmentService(BaseService):
                                            'CREATE',
                                            new_data=new_snapshot,
                                            parent_id=parent_id)
-                    result = {'action': 'CREATE', 'amount': gap}
+                    result = {'action': 'CREATE', 'amount': gap, 'number': new_adj.adjustment_number}
             
             # B: If gap is 0 but record exists (e.g. they paid the final cent), delete it
             elif existing_adj:
+                adj_number = existing_adj.adjustment_number # Capture BEFORE delete
                 AuditLogService.record(existing_adj.id, 
                                        cls.model.__name__, 
                                        'DELETE',
                                        old_data=old_snapshot,
                                        parent_id=parent_id)
                 db.session.delete(existing_adj)
-                result = {'action': 'DELETE'}
+                result = {'action': 'DELETE', 'number': adj_number}
 
         # 4. Logic Branch: If NOT completed, ensure no write-off exists
         else:
             if existing_adj:
+                adj_number = existing_adj.adjustment_number # Capture BEFORE delete
                 AuditLogService.record(existing_adj.id, 
                                        cls.model.__name__, 
                                        'DELETE',
                                        old_data=old_snapshot,
                                        parent_id=parent_id)
                 db.session.delete(existing_adj)
-                result = {'action': 'DELETE'}
+                result = {'action': 'DELETE', 'number': adj_number}
         
         return result
 

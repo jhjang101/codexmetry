@@ -82,15 +82,15 @@ def add():
             new_payment, invoice_status, po_status = PaymentService.add_payment(payment_data, new_files=new_files)
             
             # 5. Flash message
-            flash(f"Payment for {new_payment.payment_number} created successfully!", "success")
+            flash(f"Payment for {new_payment.payment_number} recorded successfully!", "success")
 
             if invoice_status and invoice_status['before'] != invoice_status['after']:
                 invoice_name = new_payment.invoice.invoice_number
-                flash(f"Associated Invoice {invoice_name} status updated: {invoice_status['before'].upper()} → {invoice_status['after'].upper()}", "success")
+                flash(f"Associated Invoice {invoice_name} status updated: {invoice_status['before'].upper()} → {invoice_status['after'].upper()}", "info")
 
             if po_status and po_status['before'] != po_status['after']:
                 po_name = new_payment.purchase_order.po_number or new_payment.order.order_number
-                flash(f"Associated PO {po_name} status updated: {po_status['before'].upper()} → {po_status['after'].upper()}", "success")
+                flash(f"Associated PO {po_name} status updated: {po_status['before'].upper()} → {po_status['after'].upper()}", "info")
             
             # Adjustment Ripple Flash
             # We look specifically inside the invoice_status for the adjustment packet
@@ -98,16 +98,17 @@ def add():
                 adjustment_status = invoice_status.get('adjustment')
                 if isinstance(adjustment_status, dict):
                     action = adjustment_status.get('action')
+                    adjustment_number = adjustment_status.get('number')
                     raw_amount = adjustment_status.get('amount', 0)
                     amount = int(raw_amount) if raw_amount is not None else 0
                     amount_str = format_usd(amount)
                     
                     if action == 'CREATE':
-                        flash(f"Threshold gap of {amount_str} auto-recorded as a Write-off Adjustment.", "info")
+                        flash(f"Threshold gap of {amount_str} auto-recorded as a Write-off Adjustment {adjustment_number}.", "info")
                     elif action == 'UPDATE':
-                        flash(f"System Write-off Adjustment updated to match new {amount_str} gap.", "info")
+                        flash(f"System Write-off Adjustment {adjustment_number} updated to match new {amount_str} gap.", "info")
                     elif action == 'DELETE':
-                        flash("System Write-off Adjustment removed (Invoice settled or re-opened).", "info")
+                        flash("System Write-off Adjustment {adjustment_number} has been removed (Invoice settled or re-opened).", "info")
 
             # The Safe Save Redirect: Forces a clean page load to 'View' mode
             response = make_response("", 200)
@@ -145,7 +146,7 @@ def add():
         
         # GUARD: Already Paid
         if invoice.status == 'completed':
-            flash(f"Invoice {invoice.invoice_number} is already fully paid.", "info")
+            flash(f"Invoice {invoice.invoice_number} is already fully paid.", "warning")
             return redirect(url_for('invoices.view', id=invoice_id))
         
         client_id = invoice.client_id
@@ -165,7 +166,7 @@ def add():
         
         # GUARD: Fully Settled deal (Optional but recommended)
         if po.status == 'completed':
-            flash(f"This order is already completed.", "info")
+            flash(f"This order is already completed.", "warning")
             return redirect(url_for('purchase_orders.view', id=po_id))
 
         client_id = po.client_id
@@ -182,7 +183,7 @@ def add():
         
         # Guard: Ensure there's actually something to pay (optional, but good UX)
         if not client.has_open_pos and not client.has_open_invoices:
-            flash(f"Client {client.company_name} has no active POs or Invoices to record payments.", "info")
+            flash(f"Client {client.company_name} has no active POs or Invoices to record payments.", "warning")
             return redirect(url_for('clients.view', id=client_id))
 
         payer_prefill_id = client_id
@@ -281,18 +282,18 @@ def edit(id):
             payment, old_invoice_status, new_invoice_status, old_po_status, new_po_status = PaymentService.edit_payment(id, payment_data, new_files=new_files, delete_ids=delete_ids)
             
             # 4. Flash Messages
-            flash(f"Payment updated successfully!", "success")
+            flash(f"Payment {payment.payment_number} updated successfully!", "success")
             # New Invoice Flash
             if new_invoice_status and new_invoice_status['before'] != new_invoice_status['after']:
                 invoice_name = payment.invoice.invoice_number if payment.invoice else None
-                flash(f"Associated Invoice {invoice_name} status pdated: {new_invoice_status['before'].upper()} → {new_invoice_status['after'].upper()}", "success")
+                flash(f"Associated Invoice {invoice_name} status pdated: {new_invoice_status['before'].upper()} → {new_invoice_status['after'].upper()}", "info")
             # Old Invoice Flash (The Reversion)
             if old_invoice_status and old_invoice_status['before'] != old_invoice_status['after']:
                 flash(f"Previous Invoice {old_invoice_name} status reverted: {old_invoice_status['before'].upper()} → {old_invoice_status['after'].upper()}", "info")
             # New PO Flash
             if new_po_status and new_po_status['before'] != new_po_status['after']:
                 po_name = payment.purchase_order.po_number or payment.order.order_number
-                flash(f"Associated PO {po_name} updated: {new_po_status['before'].upper()} → {new_po_status['after'].upper()}", "success")
+                flash(f"Associated PO {po_name} updated: {new_po_status['before'].upper()} → {new_po_status['after'].upper()}", "info")
             # Old PO Flash
             if old_po_status and old_po_status['before'] != old_po_status['after']:
                 flash(f"Previous PO {old_invoice_name} reverted: {old_po_status['before'].upper()} → {old_po_status['after'].upper()}", "info")
@@ -304,6 +305,7 @@ def edit(id):
                 adjustment_status = status.get('adjustment')
                 if isinstance(adjustment_status, dict):
                     action = adjustment_status.get('action')
+                    adjustment_number = adjustment_status.get('number')
                     raw_amt = adjustment_status.get('amount', 0)
                     amount = int(raw_amt) if raw_amt is not None else 0
                     amt_str = format_usd(amount)
@@ -311,11 +313,11 @@ def edit(id):
                     # Note: We keep the message generic because the user just 
                     # performed the action and knows which invoices are involved.
                     if action == 'CREATE':
-                        flash(f"Threshold gap of {amt_str} auto-recorded as a Write-off Adjustment.", "info")
+                        flash(f"Threshold gap of {amt_str} auto-recorded as a Write-off Adjustment {adjustment_number}.", "info")
                     elif action == 'UPDATE':
-                        flash(f"System Write-off Adjustment updated to match new {amt_str} gap.", "info")
+                        flash(f"System Write-off Adjustment {adjustment_number} updated to match new {amt_str} gap.", "info")
                     elif action == 'DELETE':
-                        flash("System Write-off Adjustment removed (Invoice re-opened or settled).", "info")
+                        flash("System Write-off Adjustment {adjustment_number} has been removed (Invoice re-opened or settled).", "info")
 
             response = make_response("", 200)
             response.headers['HX-Redirect'] = url_for('payments.view', id=id)
@@ -363,29 +365,30 @@ def archive(id):
             raise ValueError("Payment not found.")
         
         # 2. Success Flashes
-        flash(f'Payment for {payment.payment_number} moved to archives.', 'warning')
+        flash(f'Payment for {payment.payment_number} archived.', 'success')
         if invoice_status and invoice_status['before'] != invoice_status['after']:
             invoice_name = payment.invoice.invoice_number if payment.invoice else None
-            flash(f"Associated Invoice {invoice_name} status updated: {invoice_status['before'].upper()} → {invoice_status['after'].upper()}", "success")
+            flash(f"Associated Invoice {invoice_name} status updated: {invoice_status['before'].upper()} → {invoice_status['after'].upper()}", "info")
         if po_status and po_status['before'] != po_status['after']:
             po_name = payment.purchase_order.po_number or payment.order.order_number
-            flash(f"Associated PO {po_name} status updated: {po_status['before'].upper()} → {po_status['after'].upper()}", "success")
+            flash(f"Associated PO {po_name} status updated: {po_status['before'].upper()} → {po_status['after'].upper()}", "info")
         # Adjustment Ripple Flash
         # We look specifically inside the invoice_status for the adjustment packet
         if invoice_status:
             adjustment_status = invoice_status.get('adjustment')
             if isinstance(adjustment_status, dict):
                 action = adjustment_status.get('action')
+                adjustment_number = adjustment_status.get('number')
                 raw_amount = adjustment_status.get('amount', 0)
                 amount = int(raw_amount) if raw_amount is not None else 0
                 amount_str = format_usd(amount)
                 
                 if action == 'CREATE':
-                    flash(f"Threshold gap of {amount_str} auto-recorded as a Write-off Adjustment.", "info")
+                    flash(f"Threshold gap of {amount_str} auto-recorded as a Write-off Adjustment {adjustment_number}.", "info")
                 elif action == 'UPDATE':
-                    flash(f"System Write-off Adjustment updated to match new {amount_str} gap.", "info")
+                    flash(f"System Write-off Adjustment {adjustment_number} updated to match new {amount_str} gap.", "info")
                 elif action == 'DELETE':
-                    flash("System Write-off Adjustment removed (Invoice settled or re-opened).", "info")
+                    flash(f"System Write-off Adjustment {adjustment_number} has been removed (Invoice settled or re-opened).", "info")
                     
         return redirect(url_for('payments.index'))
     

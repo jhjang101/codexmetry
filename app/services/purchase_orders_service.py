@@ -1,5 +1,5 @@
 from .base_service import BaseService
-from ..models import PurchaseOrder, PoItem, OrderRegistry, Client, Quote, Invoice, InvoiceItem, Payment, Product, SettingsMetadata
+from ..models import PurchaseOrder, PoItem, OrderRegistry, Client, Quote, Invoice, InvoiceItem, Payment, Product, SettingsMetadata, Adjustment
 from .audit_service import AuditLogService
 from .attachment_service import AttachmentService
 from .adjustments_service import AdjustmentService
@@ -542,17 +542,22 @@ class PurchaseOrderService(BaseService):
     def archive_po(cls, id: int):
         """
         Specialized archive that ripples through Registry, Quotes, and Invoices.
-        Returns (PO object, has_payments boolean).
+        Returns a result dictionary with document numbers for UI feedback
         """
         po = cls.get_po_by_id(id)
         if not po:
-            return None, False
+            return None
 
-        # 1. Check for active payments (Money Safety)
-        # We check the collection for any item where is_active is True
-        has_payments = any(payment.is_active for payment in po.payments)
+        # 1. Initialize Result Collection
+        results = {
+            'po_ref': po.po_number or po.order.order_number,
+            'quote_ref': po.quote.quote_number if po.quote else None,
+            'archived_invoices': [],
+            'deleted_adjustments': [],
+            'active_payments': [p.payment_number for p in po.payments if p.is_active]
+        }
 
-        # 2. Forensic Record before we flip the bit
+        # 2. Audit Record of the primary action
         parent_audit_id = AuditLogService.record(
             target_id=id, 
             target_type=cls.model.__name__, 
@@ -595,14 +600,19 @@ class PurchaseOrderService(BaseService):
                     new_data={'is_active': False},
                     parent_id=parent_audit_id
                 )
-            inv.is_active = False
-            adjustment_status = AdjustmentService.reconcile_writeoff(inv, parent_id=parent_audit_id)
+                inv.is_active = False
+                results['archived_invoices'].append(inv.invoice_number)
 
-        # 6. Archive the PO itself
+                # 6. Ripple Delete Adjustments and Record Audit
+                adj_res = AdjustmentService.reconcile_writeoff(inv, parent_id=parent_audit_id)
+                if adj_res and adj_res.get('action') == 'DELETE':
+                    results['deleted_adjustments'].append(adj_res['number'])
+
+        # 7. Archive the PO itself
         po.is_active = False
 
         db.session.commit()
-        return po, has_payments
+        return results
     
     @classmethod
     def get_pos_by_client(cls, 

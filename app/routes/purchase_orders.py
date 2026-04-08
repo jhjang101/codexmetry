@@ -85,7 +85,7 @@ def add():
             # 5. Success Flow
             flash(f'PO {new_po.order.order_number} created successfully!', 'success')
             if new_po.quote:
-                flash(f"Quote {new_po.quote.quote_number} has been accepted.", "success")
+                flash(f"Quote {new_po.quote.quote_number} has been accepted.", "info")
 
             # The Safe Save Redirect: Forces a clean page load to 'View' mode
             response = make_response("", 200)
@@ -238,11 +238,11 @@ def edit(id):
             new_quote_id = po.quote_id
             if old_quote_id != new_quote_id:
                 if old_quote_id and new_quote_id:
-                    flash(f"Quote link updated: {old_quote_number} released, {po.quote.quote_number} accepted.", "success")
+                    flash(f"Quote link updated: {old_quote_number} released, {po.quote.quote_number} accepted.", "info")
                 elif old_quote_id:
                     flash(f"Previous Quote {old_quote_number} has been released and reverted to 'SENT' status.", "info")
                 elif new_quote_id:
-                    flash(f"Quote {po.quote.quote_number} has been accepted.", "success")
+                    flash(f"Quote {po.quote.quote_number} has been accepted.", "info")
 
 
 
@@ -273,23 +273,31 @@ def edit(id):
 def archive(id):
     """Specialized archive for PO with dependency ripples."""
     try:
-        po, has_payments = PurchaseOrderService.archive_po(id)
+        results = PurchaseOrderService.archive_po(id)
+        if not results:
+            raise ValueError("Purchase Order not found.")
+        
+        # Flash 1: Primary Success (PO and Registry)
+        flash(f"Purchase Order {results['po_ref']} and the Order Registry have been archived.", "success")
 
-        if po:
-            # Use the CDX fallback for the flash message
-            po_name = po.po_number or po.order.order_number
-            flash(f'PO {po_name} and all linked Invoices have been archived.', 'warning')
+        # Flash 2: Quote Reversion (If applicable)
+        if results['quote_ref']:
+            flash(f"Quote {results['quote_ref']} has been released and reverted to 'SENT' status.", "info")
 
-            # Free the Quote? Notify the user.
-            if po.quote:
-                flash(f"Quote {po.quote.quote_number} released and reverted to 'SENT' status.", 'success')
+        # Flash 3: Cascaded Invoices (List format)
+        if results['archived_invoices']:
+            inv_list = ", ".join(results['archived_invoices'])
+            flash(f"Linked Invoices archived: {inv_list}.", "info")
 
-            # MONEY SAFETY WARNING
-            if has_payments:
-                flash(f'ATTENTION: Active payments exist for this PO. The pyayment records were NOT archived. Please manage them manually.', 'error')
+        # Flash 4: Cascaded Adjustments (List format)
+        if results['deleted_adjustments']:
+            adj_list = ", ".join(results['deleted_adjustments'])
+            flash(f"Automated Write-off Adjustments deleted: {adj_list}.", "info")
 
-        else:
-            raise ValueError("PO not found.")
+        # Flash 5: Action Required (Active Payments)
+        if results['active_payments']:
+            pay_list = ", ".join(results['active_payments'])
+            flash(f"ACTION REQUIRED: Active payments {pay_list} were NOT archived. Please manage them manually.", "warning")
         
         return redirect(url_for('purchase_orders.index'))
     

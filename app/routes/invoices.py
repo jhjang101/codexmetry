@@ -89,26 +89,27 @@ def add():
             new_invoice, invoice_status, po_status = InvoiceService.add_invoice(header_data, items, new_files=new_files)
 
             # 5. Flash Messages
-            flash(f"Invoice {new_invoice.invoice_number} created!", "success")
+            flash(f"Invoice {new_invoice.invoice_number} created successfully!", "success")
             # New/Current PO Ripple Feedback
             if po_status and po_status['before'] != po_status['after']:
                 po_name = new_invoice.purchase_order.po_number or new_invoice.order.order_number
-                flash(f"Associated PO {po_name} status updated: {po_status['before'].upper()} → {po_status['after'].upper()}", "success")
+                flash(f"Associated PO {po_name} status updated: {po_status['before'].upper()} → {po_status['after'].upper()}", "info")
 
             # Adjustment Ripple Flash (The hardened Pylance-safe logic)
             adjustment_status = invoice_status.get('adjustment')
             if isinstance(adjustment_status, dict):
                 action = adjustment_status.get('action')
+                adjustment_number = adjustment_status.get('adjustment_number')
                 raw_amount = adjustment_status.get('amount', 0)
                 amount = int(raw_amount) if raw_amount is not None else 0
                 amount_str = format_usd(amount)
                 
                 if action == 'CREATE':
-                    flash(f"Threshold gap of {amount_str} auto-recorded as a Write-off Adjustment.", "info")
+                    flash(f"Threshold gap of {amount_str} auto-recorded as a Write-off Adjustment {adjustment_number}.", "info")
                 elif action == 'UPDATE':
-                    flash(f"System Write-off Adjustment updated to match new {amount_str} gap.", "info")
+                    flash(f"System Write-off Adjustment {adjustment_number} updated to match new {amount_str} gap.", "info")
                 elif action == 'DELETE':
-                    flash("System Write-off Adjustment removed (Invoice settled or re-opened).", "info")
+                    flash(f"System Write-off Adjustment {adjustment_number} removed (Invoice settled or re-opened).", "info")
 
             # The Safe Save Redirect: Forces a clean page load to 'View' mode
             response = make_response("", 200)
@@ -289,7 +290,7 @@ def edit(id):
             # New/Current PO Ripple Feedback
             if new_po_status and new_po_status['before'] != new_po_status['after']:
                 po_name = invoice.purchase_order.po_number or invoice.order.order_number
-                flash(f"Associated PO {po_name} status updated: {new_po_status['before'].upper()} → {new_po_status['after'].upper()}", "success")
+                flash(f"Associated PO {po_name} status updated: {new_po_status['before'].upper()} → {new_po_status['after'].upper()}", "info")
             # Old PO Ripple Feedback (Only fires if a PO swap occurred)
             if old_po_status and old_po_status['before'] != old_po_status['after']:
                 # Fetch old name for forensic clarity in the UI
@@ -299,17 +300,17 @@ def edit(id):
 
             if isinstance(adjustment_status, dict):
                 action = adjustment_status.get('action')
+                adjustment_number = adjustment_status.get('adjustment_number')
                 # Use adj.get('amount', 0) to ensure Pylance sees an int
                 raw_amount = adjustment_status.get('amount', 0)
                 amount = int(raw_amount) if raw_amount is not None else 0
-
                 amount_str = format_usd(amount)
                 if action == 'CREATE':
-                    flash(f"Threshold gap of {amount_str} auto-recorded as a Write-off Adjustment.", "info")
+                    flash(f"Threshold gap of {amount_str} auto-recorded as a Write-off Adjustment {adjustment_number}.", "info")
                 elif action == 'UPDATE':
-                    flash(f"System Write-off Adjustment updated to match new {amount_str} gap.", "info")
+                    flash(f"System Write-off Adjustment {adjustment_number} updated to match new {amount_str} gap.", "info")
                 elif action == 'DELETE':
-                    flash("System Write-off Adjustment removed (Invoice settled or re-opened).", "info")
+                    flash(f"System Write-off Adjustment {adjustment_number} removed (Invoice settled or re-opened).", "info")
 
             # The Safe Save Redirect: Forces a clean page load to 'View' mode
             response = make_response("", 200)
@@ -342,30 +343,31 @@ def archive(id):
     """Specialized archive for invoices with payment protection."""
     try:
         # 1. Perform specialized archive
-        invoice, has_payments, adjustment_status, po_status = InvoiceService.archive_invoice(id)
-
-        if not invoice:
+        results = InvoiceService.archive_invoice(id)
+        if not results:
             raise ValueError("Invoice not found.")
+        
+        # 2. SUCCESS: Primary Human Action
+        flash(f"Invoice {results['invoice_num']} archived.", "success")
 
-        # 3. Flash Messages
-        flash(f'Invoice {invoice.invoice_number} moved to archives.', 'warning')
 
-        # MONEY SAFETY WARNING: Tell the user exactly where the money went
-        if has_payments:
-            po_name = invoice.purchase_order.po_number or invoice.order.order_number
-            flash(f'ACTION REQUIRED: This invoice had active payments. These funds are now sitting as a credit on PO {po_name}.', 'error')
+        # 3. INFO: System Automation (Adjustments)
+        if results['deleted_adjustments']:
+            adj_list = ", ".join(results['deleted_adjustments'])
+            flash(f"Automated Write-off Adjustments deleted: {adj_list}.", "info")
 
-        # PO SYNC FEEDBACK
+        # 4. INFO: System Automation (PO Sync)
+        po_status = results['po_status']
         if po_status and po_status['before'] != po_status['after']:
-            po_name = invoice.purchase_order.po_number or invoice.order.order_number
-            flash(f"Previous PO {po_name} status reverted: {po_status['before'].upper()} → {po_status['after'].upper()}", "info")
-
-        # Adjustment Ripple Flash
-        if isinstance(adjustment_status, dict):
-            action = adjustment_status.get('action')
-            # On archive, we generally only expect DELETE
-            if action == 'DELETE':
-                flash("System Write-off Adjustment removed (Invoice archived).", "info")
+            flash(f"Associated PO {results['po_ref']} status reverted from "
+                  f"{po_status['before'].upper()} to {po_status['after'].upper()}.", "info")
+            
+        # 5. WARNING: Action Required (Money Safety)
+        if results['active_payments']:
+            pay_list = ", ".join(results['active_payments'])
+            flash(f"ACTION REQUIRED: Active payments {pay_list} were NOT archived. "
+                  f"These funds are now sitting as unapplied credits on PO {results['po_ref']}. "
+                  "Please manage them manually.", "warning")
             
         return redirect(url_for('invoices.index'))
     
@@ -399,17 +401,17 @@ def print_view(id):
         adjustment_status = invoice_status.get('adjustment') 
         if isinstance(adjustment_status, dict):
             action = adjustment_status.get('action')
+            adjustment_name = adjustment_status.get('adjustment_name')
             raw_amount = adjustment_status.get('amount', 0)
             amount = int(raw_amount) if raw_amount is not None else 0
-        
             amount_str = format_usd(amount)
             
             if action == 'CREATE':
-                flash(f"Threshold gap of {amount_str} auto-recorded as a Write-off Adjustment.", "info")
+                flash(f"Threshold gap of {amount_str} auto-recorded as a Write-off Adjustment {adjustment_name}.", "info")
             elif action == 'UPDATE':
-                flash(f"System Write-off Adjustment updated to match new {amount_str} gap.", "info")
+                flash(f"System Write-off Adjustment {adjustment_name} updated to match new {amount_str} gap.", "info")
             elif action == 'DELETE':
-                flash("System Write-off Adjustment removed (Invoice settled or re-opened).", "info")
+                flash(f"System Write-off Adjustment {adjustment_name} removed (Invoice settled or re-opened).", "info")
 
     # 2. Initialize buckets
     line_display_items = []

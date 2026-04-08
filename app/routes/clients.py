@@ -62,7 +62,7 @@ def add():
             new_client = ClientService.add_client(client_data, contacts_data)
 
             # 3. Flash message
-            flash(f'Client {new_client.company_name} added successfully!', 'success')
+            flash(f'Client {new_client.company_name} created successfully!', 'success')
 
             # The Safe Save Redirect: Forces a clean page load to 'View' mode
             response = make_response("", 200)
@@ -128,7 +128,7 @@ def archive(id):
     try:
         client = ClientService.archive(id)
         if client:
-            flash(f'Client {client.company_name} has been moved to archives.', 'warning')
+            flash(f'Client {client.company_name} archived.', 'success')
         else:
             raise ValueError("Client not found.")
         return redirect(url_for('clients.index'))
