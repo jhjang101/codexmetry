@@ -3,7 +3,7 @@ from flask import has_request_context
 from datetime import datetime, date
 from ..extensions import db
 from sqlalchemy import select
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, selectinload
 from ..models import (
     AuditLog, User, PoType, ProductCategory, ExpenseCategory, 
     Quote, PurchaseOrder, Invoice, Payment, Product, Vendor, Client,
@@ -225,13 +225,20 @@ class AuditLogService:
     @classmethod
     def get_for_order(cls, order_id: int):
         """
-        Brain: Fetches every log entry tagged with this order_id.
-        Used for order-tree
+        Brain: Fetches 'Root' log entries (User Actions) and 
+        pre-loads their system ripples (Children).
         """
         stmt = (
             select(AuditLog)
-            .options(joinedload(AuditLog.user))
-            .where(AuditLog.order_id == order_id)
+            .options(
+                joinedload(AuditLog.user),
+                # Efficiently pre-load the next level of the tree
+                selectinload(AuditLog.children).joinedload(AuditLog.user)
+            )
+            .where(
+                AuditLog.order_id == order_id,
+                AuditLog.parent_id == None # Get only the starting actions
+            )
             .order_by(AuditLog.timestamp.desc())
         )
         return db.session.execute(stmt).scalars().all()
