@@ -446,6 +446,8 @@ class InvoiceService(BaseService):
 
         # 5. Update status
         invoice_status = sync_invoice_status(invoice, original_status='open', proposed_status=None, parent_id=parent_audit_id)
+        invoice_status['before'] = old_snapshot['status']
+        
         # invoice_status = None
         # po_status = None
         # before = old_snapshot['status']

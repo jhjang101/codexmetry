@@ -7,7 +7,7 @@ from ..services.adjustments_service import AdjustmentService
 def sync_invoice_status(invoice, 
                         original_status: str | None = None, 
                         proposed_status: str | None = None,
-                        parent_id: int | None = None):
+                        parent_id: int | None = None) -> dict:
     """
     Determines the target status based on user intent and payment.
     1. Always honor manual user overrides.
@@ -48,7 +48,12 @@ def sync_invoice_status(invoice,
 
         # RULE 4: Otherwise, switch back to draft state.
         else:
-            new_status = "draft"
+            # If the invoice was already out of the 'draft' sandbox, 
+            # don't let the system pull it back in automatically.
+            if original_status in ['open', 'completed']:
+                new_status = "open"
+            else:
+                new_status = "draft"
     
     # Capture result and stage
     if invoice.status != new_status:
