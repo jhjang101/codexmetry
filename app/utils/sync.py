@@ -4,7 +4,10 @@ from ..services.purchase_orders_service import PurchaseOrderService
 from ..services.audit_service import AuditLogService
 from ..services.adjustments_service import AdjustmentService
 
-def sync_invoice_status(invoice, original_status: str | None = None, proposed_status: str | None = None):
+def sync_invoice_status(invoice, 
+                        original_status: str | None = None, 
+                        proposed_status: str | None = None,
+                        parent_id: int | None = None):
     """
     Determines the target status based on user intent and payment.
     1. Always honor manual user overrides.
@@ -49,11 +52,19 @@ def sync_invoice_status(invoice, original_status: str | None = None, proposed_st
     
     # Capture result and stage
     if invoice.status != new_status:
+        AuditLogService.record(
+            target_id=invoice.id,
+            target_type='Invoice',
+            action='UPDATE',
+            old_data={'status': invoice.status},
+            new_data={'status': new_status},
+            parent_id=parent_id
+        )
         invoice.status = new_status
 
     # Wite-off Adjustment Reconciliation
     # This ensures that whenever a status is evaluated, the write-off matches the reality
-    adjustment_result = AdjustmentService.reconcile_writeoff(invoice)
+    adjustment_result = AdjustmentService.reconcile_writeoff(invoice, parent_id=parent_id)
 
     res = {"before": original_status, 
            "after": new_status,
@@ -62,7 +73,7 @@ def sync_invoice_status(invoice, original_status: str | None = None, proposed_st
     return res
 
 
-def sync_po_status(po_id: int):
+def sync_po_status(po_id: int, parent_id: int | None = None):
     """
     Updates PO status based on the 3-Stage Lifecycle:
     1. 'open'      -> Real items remain to be invoiced.
@@ -106,7 +117,8 @@ def sync_po_status(po_id: int):
             target_type='PurchaseOrder',
             action='UPDATE',
             old_data={'status': old_status},
-            new_data={'status': new_status}
+            new_data={'status': new_status},
+            parent_id=parent_id
         )
         
     return {"before": before, "after": new_status}

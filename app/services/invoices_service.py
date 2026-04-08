@@ -162,26 +162,25 @@ class InvoiceService(BaseService):
         db.session.flush()
         cls.get_invoice_by_id(invoice.id)
 
-        # 7. Update Invoice Status
-        invoice_status = sync_invoice_status(invoice)
-
-        # 8. Prepare the Snapshot for the log
+        # 7. Prepare the Snapshot for the log
         new_snapshot = clean_data.copy()
         new_snapshot['line_items'] = new_items_fingerprint
         new_snapshot['total_amount'] = invoice.total_amount
         new_snapshot['attachments'] = AttachmentService._get_fingerprint(invoice.attachments)
-        new_snapshot['status'] = invoice.status
 
-        # 9. Record 'CREATE' Audit
-        AuditLogService.record(
+        # 8. Record 'CREATE' Audit
+        parent_audit_id = AuditLogService.record(
             target_id=invoice.id, 
             target_type=cls.model.__name__, 
             action='CREATE', 
             new_data=new_snapshot
-        )
+        ) 
+        
+        # 9. Update Invoice Status
+        invoice_status = sync_invoice_status(invoice, parent_id=parent_audit_id)
 
         # 10. PO Status Ripple
-        po_status = sync_po_status(invoice.po_id)
+        po_status = sync_po_status(invoice.po_id, parent_id=parent_audit_id)
         
         db.session.commit()
         return invoice, invoice_status, po_status
@@ -240,29 +239,30 @@ class InvoiceService(BaseService):
         db.session.flush()
         cls.get_invoice_by_id(invoice_id)
 
-        # 8. Update Invoice Status
-        invoice_status = sync_invoice_status(invoice, old_snapshot['status'], clean_data['status'])
-
-        # 9. Prepare the Snapshot for the log
+        # 8. Prepare the Snapshot for the log
         new_snapshot = clean_data.copy()
         new_snapshot['line_items'] = new_items_fingerprint
         new_snapshot['total_amount'] = invoice.total_amount
         new_snapshot['attachments'] = AttachmentService._get_fingerprint(invoice.attachments)
-        new_snapshot['status'] = invoice_status['after']
 
-        # 10. Record 'UPDATE' Audit
-        AuditLogService.record(invoice_id, 
-                               cls.model.__name__, 
-                               'UPDATE', 
-                               old_data=old_snapshot, 
-                               new_data=new_snapshot)
+        # 9. Record 'UPDATE' Audit
+        parent_audit_id = AuditLogService.record(
+            invoice_id, 
+            cls.model.__name__, 
+            'UPDATE', 
+            old_data=old_snapshot, 
+            new_data=new_snapshot
+        )
         
+        # 10. Update Invoice Status
+        invoice_status = sync_invoice_status(invoice, old_snapshot['status'], clean_data['status'], parent_id=parent_audit_id)
+
         # 11. PO Status Ripple
-        new_po_status = sync_po_status(invoice.po_id)
+        new_po_status = sync_po_status(invoice.po_id, parent_id=parent_audit_id)
         
         old_po_status = None
         if old_po_id != invoice.po_id:
-            old_po_status = sync_po_status(old_po_id)
+            old_po_status = sync_po_status(old_po_id, parent_id=parent_audit_id)
 
         #12. Atomic Commit
         db.session.commit()
@@ -357,7 +357,7 @@ class InvoiceService(BaseService):
         has_payments = any(p.is_active for p in invoice.payments)
 
         # Forensic Record before we flip the bit
-        AuditLogService.record(
+        parent_audit_id = AuditLogService.record(
             target_id=id, 
             target_type=cls.model.__name__, 
             action='ARCHIVE', 
@@ -370,10 +370,10 @@ class InvoiceService(BaseService):
 
         # 2. SURGICAL STRIKE: Call the brain directly to clean up the adjustment
         # Because is_active is now False, it will hit the 'else' block and DELETE
-        adjustment_status = AdjustmentService.reconcile_writeoff(invoice) # Use AdjustmentService.reconcile_writeoff
+        adjustment_status = AdjustmentService.reconcile_writeoff(invoice, parent_id=parent_audit_id) # Use AdjustmentService.reconcile_writeoff
 
         # PO Status Ripple
-        po_status = sync_po_status(invoice.po_id)
+        po_status = sync_po_status(invoice.po_id, parent_id=parent_audit_id)
 
         # Commit
         db.session.commit()
@@ -419,43 +419,70 @@ class InvoiceService(BaseService):
         if not invoice or not invoice.is_active:
             return None, None, None
         
-        # 1. INITIALIZE
-        invoice_status = None
-        po_status = None
-        before = invoice.status
+        # 1. Capture the "Old" State (Before PDF)
+        old_snapshot : dict[str, str | list] = {'status': invoice.status}
+        old_snapshot['attachments'] = AttachmentService._get_fingerprint(invoice.attachments)
+        
+        # 2. PDF Generation Logic (Todo)
+        # This adds the record to the 'attachments' table
+        # new_pdf_file = cls._generate_pdf_file(invoice)
+        # AttachmentService.stage('Invoice', invoice.id, new_files=[new_pdf_file])
+        # db.session.flush()
+        # db.session.refresh(invoice)
 
-        if before == 'draft':
-            # 2. Ask the sync logic for the 'Financial Reality'
-            # We pass proposed_status=None to ignore manual overrides
-            invoice_status = sync_invoice_status(invoice, original_status='draft', proposed_status=None)
+        # 3. Capture the "New" State (After PDF)
+        new_snapshot : dict[str, str | list]  = {'status': 'open'}
+        new_snapshot['attachments'] = AttachmentService._get_fingerprint(invoice.attachments)
+
+        # 4. Record the Parent "ISSUE" Action
+        parent_audit_id = AuditLogService.record(
+            target_id=id,
+            target_type='Invoice',
+            action='UPDATE',
+            old_data=old_snapshot,
+            new_data=new_snapshot
+        )
+        invoice.status = 'open' 
+
+        # 5. Update status
+        invoice_status = sync_invoice_status(invoice, original_status='open', proposed_status=None, parent_id=parent_audit_id)
+        # invoice_status = None
+        # po_status = None
+        # before = old_snapshot['status']
+
+        # if before == 'draft':
+        #     # 2. Ask the sync logic for the 'Financial Reality'
+        #     # We pass proposed_status=None to ignore manual overrides
+        #     invoice_status = sync_invoice_status(invoice, original_status='draft', proposed_status=None)
             
-            target = invoice_status['after']
+        #     target = invoice_status['after']
             
-            # 3. Apply the "Issuance Floor" 
-            # If no money exists, sync_invoice_status returns 'draft'. 
-            # We must promote to 'open' because it's being printed.
-            if target == 'draft':
-                target = 'open'
-                invoice_status['after'] = 'open'
+        #     # 3. Apply the "Issuance Floor" 
+        #     # If no money exists, sync_invoice_status returns 'draft'. 
+        #     # We must promote to 'open' because it's being printed.
+        #     if target == 'draft':
+        #         target = 'open'
+        #         invoice_status['after'] = 'open'
 
-            # 4. Finalize state
-            invoice.status = target
+        #     # 4. Finalize state
+        #     invoice.status = target
 
-            # 5. Forensic Record (One log for the transition)
-            AuditLogService.record(
-                target_id=id,
-                target_type='Invoice',
-                action='UPDATE',
-                old_data={'status': 'draft'},
-                new_data={'status': target}
-            )
+        #     # 5. Forensic Record (One log for the transition)
+        #     AuditLogService.record(
+        #         target_id=id,
+        #         target_type='Invoice',
+        #         action='UPDATE',
+        #         old_data={'status': 'draft'},
+        #         new_data={'status': target},
+        #         parent_id=parent_audit_id
+        #     )
 
         # 6. PO Status Ripple
         # If the invoice jumped straight to 'completed' (or even 'open'), 
         # the PO needs to re-evaluate its lifecycle.
         po_status = None
         if invoice.po_id:
-            po_status = sync_po_status(invoice.po_id)
+            po_status = sync_po_status(invoice.po_id, parent_id=parent_audit_id)
 
             db.session.commit()
         

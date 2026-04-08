@@ -2,6 +2,7 @@ from .base_service import BaseService
 from ..models import PurchaseOrder, PoItem, OrderRegistry, Client, Quote, Invoice, InvoiceItem, Payment, Product, SettingsMetadata
 from .audit_service import AuditLogService
 from .attachment_service import AttachmentService
+from .adjustments_service import AdjustmentService
 from ..extensions import db
 from ..utils.docs import generate_doc_number
 from ..utils.money import parse_to_cents
@@ -228,7 +229,39 @@ class PurchaseOrderService(BaseService):
         db.session.add(registry)
         db.session.flush() # Flush to get registry.id before commit
 
-        # 3. Handle Quote Handshake (1:1 link)
+        # 3. Stage PO Header
+        po = cls.model(**clean_data)
+        po.order_id = registry.id
+        po.status = 'open'
+        db.session.add(po)
+        db.session.flush()
+
+        # 4. Stage items
+        new_items_fingerprint = cls._stage_items(po, items_data)
+
+        # 5. Stage Attahments
+        AttachmentService.stage('PurchaseOrder', po.id, new_files=new_files)
+
+        # 6. flash and hydrate
+        db.session.flush()
+        db.session.refresh(po)
+
+        # 7. Prepare the Snapshot for the log
+        db.session.flush() 
+        new_snapshot = clean_data.copy()
+        new_snapshot['line_items'] = new_items_fingerprint
+        new_snapshot['total_amount'] = po.total_amount
+        new_snapshot['attachments'] = AttachmentService._get_fingerprint(po.attachments)
+
+        # 8. Record 'CREATE' Audit
+        parent_audit_id = AuditLogService.record(
+            target_id=po.id, 
+            target_type=cls.model.__name__, 
+            action='CREATE', 
+            new_data=new_snapshot
+        )
+
+        # 9. Handle Quote Handshake (1:1 link)
         quote_id = clean_data.get('quote_id')
         if quote_id:
             quote = db.session.get(Quote, quote_id)
@@ -239,42 +272,11 @@ class PurchaseOrderService(BaseService):
                     target_type='Quote',
                     action='UPDATE',
                     old_data={'status': quote.status, 'order_id': None},
-                    new_data={'status': 'accepted', 'order_id': registry.id}
+                    new_data={'status': 'accepted', 'order_id': registry.id},
+                    parent_id=parent_audit_id
                 )
                 quote.status = 'accepted'
                 quote.order_id = registry.id
-
-        # 4. Stage PO Header
-        po = cls.model(**clean_data)
-        po.order_id = registry.id
-        po.status = 'open'
-        db.session.add(po)
-        db.session.flush()
-
-        # 5. Stage items
-        new_items_fingerprint = cls._stage_items(po, items_data)
-
-        # 6. Stage Attahments
-        AttachmentService.stage('PurchaseOrder', po.id, new_files=new_files)
-
-        # 7. flash and hydrate
-        db.session.flush()
-        db.session.refresh(po)
-
-        # 6. Prepare the Snapshot for the log
-        db.session.flush() 
-        new_snapshot = clean_data.copy()
-        new_snapshot['line_items'] = new_items_fingerprint
-        new_snapshot['total_amount'] = po.total_amount
-        new_snapshot['attachments'] = AttachmentService._get_fingerprint(po.attachments)
-
-        # 7. Record 'CREATE' Audit
-        AuditLogService.record(
-            target_id=po.id, 
-            target_type=cls.model.__name__, 
-            action='CREATE', 
-            new_data=new_snapshot
-        )
 
         db.session.commit()
         return po
@@ -305,40 +307,6 @@ class PurchaseOrderService(BaseService):
             if po.has_active_invoices or po.has_active_payments: # type: ignore
                 raise ValueError("Cannot change Quote link: active invoices or payments exist for this deal.")
         
-        quote_id = data.get('quote_id')
-        
-        # 3. Handle Quote Link Reversion (1:1 logic)
-        old_quote_id = po.quote_id
-        new_quote_id = int(quote_id) if quote_id else None
-
-        if old_quote_id != new_quote_id:
-            # Release the old quote
-            if old_quote_id:
-                old_quote = db.session.get(Quote, old_quote_id)
-                if old_quote:
-                    AuditLogService.record(
-                        target_id=old_quote.id,
-                        target_type='Quote',
-                        action='UPDATE',
-                        old_data={'status': 'accepted', 'order_id': po.order_id},
-                        new_data={'status': 'sent', 'order_id': None}
-                    )
-                    old_quote.status = 'sent'
-                    old_quote.order_id = None
-            # Accept the new quote
-            if new_quote_id:
-                new_quote = db.session.get(Quote, new_quote_id)
-                if new_quote:
-                    AuditLogService.record(
-                        target_id=new_quote.id,
-                        target_type='Quote',
-                        action='UPDATE',
-                        old_data={'status': new_quote.status, 'order_id': None},
-                        new_data={'status': 'accepted', 'order_id': po.order_id}
-                    )
-                    new_quote.status = 'accepted'
-                    new_quote.order_id = po.order_id
-
         # 3. Validate & transform header
         clean_data = cls._validate_and_transform(data)
 
@@ -368,11 +336,46 @@ class PurchaseOrderService(BaseService):
         new_snapshot['attachments'] = AttachmentService._get_fingerprint(po.attachments)
 
         # 10. Record audit
-        AuditLogService.record(po_id, 
-                               cls.model.__name__, 
-                               'UPDATE', 
-                               old_data=old_snapshot, 
-                               new_data=new_snapshot)
+        parent_audit_id = AuditLogService.record(
+            po_id, 
+            cls.model.__name__, 
+            'UPDATE', 
+            old_data=old_snapshot, 
+            new_data=new_snapshot)
+        
+        # 11. Handle Quote Link Reversion (1:1 logic)
+        original_quote_id = old_snapshot.get('quote_id') 
+        new_quote_id = clean_data.get('quote_id') # From your validated data
+
+        if original_quote_id != new_quote_id:
+            # Release the old quote
+            if original_quote_id:
+                old_quote = db.session.get(Quote, original_quote_id)
+                if old_quote:
+                    AuditLogService.record(
+                        target_id=old_quote.id,
+                        target_type='Quote',
+                        action='UPDATE',
+                        old_data={'status': 'accepted', 'order_id': po.order_id},
+                        new_data={'status': 'sent', 'order_id': None},
+                        parent_id=parent_audit_id
+                    )
+                    old_quote.status = 'sent'
+                    old_quote.order_id = None
+            # Accept the new quote
+            if new_quote_id:
+                new_quote = db.session.get(Quote, new_quote_id)
+                if new_quote:
+                    AuditLogService.record(
+                        target_id=new_quote.id,
+                        target_type='Quote',
+                        action='UPDATE',
+                        old_data={'status': new_quote.status, 'order_id': None},
+                        new_data={'status': 'accepted', 'order_id': po.order_id},
+                        parent_id=parent_audit_id 
+                    )
+                    new_quote.status = 'accepted'
+                    new_quote.order_id = po.order_id
 
         # 11. Commit
         db.session.commit()
@@ -549,32 +552,8 @@ class PurchaseOrderService(BaseService):
         # We check the collection for any item where is_active is True
         has_payments = any(payment.is_active for payment in po.payments)
 
-        # 2. Archive the Registry (frees the CDX number)
-        if po.order:
-            po.order.is_active = False
-
-        # 3. Revert the Quote (liberates it back to Lead status)
-        if po.quote:
-            AuditLogService.record(
-                po.quote.id, 'Quote', 'UPDATE', 
-                old_data={'status': 'accepted', 'order_id': po.order_id}, 
-                new_data={'status': 'sent', 'order_id': None}
-            )
-            po.quote.status = 'sent'
-            po.quote.order_id = None
-
-        # 4. Ripple Archive to Invoices
-        for inv in po.invoices:
-            if inv.is_active:
-                AuditLogService.record(inv.id, 
-                                       'Invoice', 
-                                       'ARCHIVE', 
-                                       old_data={'is_active': True}, 
-                                       new_data={'is_active': False})
-            inv.is_active = False
-
-        # 5. Forensic Record before we flip the bit
-        AuditLogService.record(
+        # 2. Forensic Record before we flip the bit
+        parent_audit_id = AuditLogService.record(
             target_id=id, 
             target_type=cls.model.__name__, 
             action='ARCHIVE', 
@@ -582,7 +561,44 @@ class PurchaseOrderService(BaseService):
             new_data={'is_active': False}
         )
 
-        # 5. Archive the PO itself
+        # 3. Archive the Registry (frees the CDX number)
+        if po.order:
+            AuditLogService.record(
+                target_id=po.order.id,
+                target_type='OrderRegistry',
+                action='ARCHIVE',
+                old_data={'is_active': True},
+                new_data={'is_active': False},
+                parent_id=parent_audit_id # Link to PO Archive action
+            )
+            po.order.is_active = False
+
+        # 4. Revert the Quote (liberates it back to Lead status)
+        if po.quote:
+            AuditLogService.record(
+                po.quote.id, 'Quote', 'UPDATE', 
+                old_data={'status': 'accepted', 'order_id': po.order_id}, 
+                new_data={'status': 'sent', 'order_id': None},
+                parent_id=parent_audit_id
+            )
+            po.quote.status = 'sent'
+            po.quote.order_id = None
+
+        # 5. Ripple Archive to Invoices
+        for inv in po.invoices:
+            if inv.is_active:
+                AuditLogService.record(
+                    inv.id, 
+                    'Invoice', 
+                    'ARCHIVE', 
+                    old_data={'is_active': True}, 
+                    new_data={'is_active': False},
+                    parent_id=parent_audit_id
+                )
+            inv.is_active = False
+            adjustment_status = AdjustmentService.reconcile_writeoff(inv, parent_id=parent_audit_id)
+
+        # 6. Archive the PO itself
         po.is_active = False
 
         db.session.commit()

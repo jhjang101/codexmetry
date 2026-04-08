@@ -119,7 +119,7 @@ class PaymentService(BaseService):
         new_snapshot['attachments'] = AttachmentService._get_fingerprint(payment.attachments)
 
         # 6. Record 'CREATE' Audit
-        AuditLogService.record(
+        parent_audit_id = AuditLogService.record(
             target_id=payment.id, 
             target_type=cls.model.__name__, 
             action='CREATE', 
@@ -130,22 +130,14 @@ class PaymentService(BaseService):
         if payment.invoice_id:
             invoice = InvoiceService.get_invoice_by_id(payment.invoice_id)
             invoice_status = sync_invoice_status(invoice, 
-                                                 original_status = invoice.status)
+                                                 original_status = invoice.status, # type: ignore
+                                                 parent_id=parent_audit_id)
         else:
             invoice_status = None
-
-        if invoice_status and invoice_status['before'] != invoice_status['after']:
-            AuditLogService.record(
-                target_id=invoice.id, 
-                target_type='Invoice', 
-                action='UPDATE', 
-                old_data={'status': invoice_status['before']}, 
-                new_data={'status': invoice_status['after']}
-            )
         
         # 8. PO Status Ripple
         if payment.po_id:
-            po_status = sync_po_status(payment.po_id)
+            po_status = sync_po_status(payment.po_id, parent_id=parent_audit_id)
         else:
             po_status = None
 
@@ -203,51 +195,39 @@ class PaymentService(BaseService):
         new_snapshot['attachments'] = AttachmentService._get_fingerprint(payment.attachments)
 
         # 8. Record 'UPDATE' Audit
-        AuditLogService.record(payment_id, 
-                               cls.model.__name__, 
-                               'UPDATE', 
-                               old_data=old_snapshot, 
-                               new_data=new_snapshot)
+        parent_audit_id = AuditLogService.record(
+            payment_id, 
+            cls.model.__name__, 
+            'UPDATE', 
+            old_data=old_snapshot, 
+            new_data=new_snapshot
+        )
         
         # 9. Invoice Status Ripple
         if old_invoice_id and old_invoice_id != payment.invoice_id:
             old_invoice = InvoiceService.get_invoice_by_id(old_invoice_id)
             old_invoice_status = sync_invoice_status(old_invoice, 
-                                                     original_status = old_invoice.status)
-            if old_invoice_status and old_invoice_status['before'] != old_invoice_status['after']:
-                AuditLogService.record(
-                    target_id=old_invoice.id, 
-                    target_type='Invoice', 
-                    action='UPDATE', 
-                    old_data={'status': old_invoice_status['before']}, 
-                    new_data={'status': old_invoice_status['after']}
-                )
+                                                     original_status = old_invoice.status, # type: ignore
+                                                     parent_id=parent_audit_id)
         else:
             old_invoice_status = None
         
         if payment.invoice_id:
             new_invoice = InvoiceService.get_invoice_by_id(payment.invoice_id)
             new_invoice_status = sync_invoice_status(new_invoice, 
-                                                     original_status = new_invoice.status)
-            if new_invoice_status and new_invoice_status['before'] != new_invoice_status['after']:
-                AuditLogService.record(
-                    target_id=new_invoice.id, 
-                    target_type='Invoice', 
-                    action='UPDATE', 
-                    old_data={'status': new_invoice_status['before']}, 
-                    new_data={'status': new_invoice_status['after']}
-                )
+                                                     original_status = new_invoice.status, # type: ignore 
+                                                     parent_id=parent_audit_id)
         else:
             new_invoice_status = None
 
         # 10. PO Status Ripple
         if old_po_id and old_po_id != payment.po_id:
-            old_po_status = sync_po_status(old_po_id)
+            old_po_status = sync_po_status(old_po_id, parent_id=parent_audit_id)
         else:
             old_po_status = None
         
         if payment.po_id:
-            new_po_status = sync_po_status(payment.po_id)
+            new_po_status = sync_po_status(payment.po_id, parent_id=parent_audit_id)
         else:
             new_po_status = None
 
@@ -278,7 +258,7 @@ class PaymentService(BaseService):
                 )
 
         # 2. Forensic Record before we flip the bit
-        AuditLogService.record(
+        parent_audit_id = AuditLogService.record(
             target_id=payment_id, 
             target_type=cls.model.__name__, 
             action='ARCHIVE', 
@@ -293,21 +273,14 @@ class PaymentService(BaseService):
         if payment.invoice_id:
             invoice = InvoiceService.get_invoice_by_id(payment.invoice_id)
             invoice_status = sync_invoice_status(invoice, 
-                                                 original_status = invoice.status)
-            if invoice_status and invoice_status['before'] != invoice_status['after']:
-                AuditLogService.record(
-                    target_id=invoice.id, 
-                    target_type='Invoice', 
-                    action='UPDATE',
-                    old_data={'status': invoice_status['before']}, 
-                    new_data={'status': invoice_status['after']}
-                    )
+                                                 original_status = invoice.status, #type: ignore
+                                                 parent_id=parent_audit_id)
         else:
             invoice_status = None
 
         # 5. PO Status Ripple
         if payment.po_id:
-            po_status = sync_po_status(payment.po_id)
+            po_status = sync_po_status(payment.po_id, parent_id=parent_audit_id)
         else:
             po_status = None
 

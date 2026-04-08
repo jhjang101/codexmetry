@@ -152,11 +152,13 @@ class AdjustmentService(BaseService):
         new_smapshot['attachments'] = AttachmentService._get_fingerprint(adjustment.attachments)
 
         # 8. Deep Audit Trigger
-        AuditLogService.record(adjustment_id, 
-                               cls.model.__name__, 
-                               'UPDATE', 
-                               old_data=old_snapshot, 
-                               new_data=new_smapshot)
+        AuditLogService.record(
+            adjustment_id, 
+            cls.model.__name__, 
+            'UPDATE', 
+            old_data=old_snapshot, 
+            new_data=new_smapshot
+        )
 
         db.session.commit()
         return adjustment
@@ -183,7 +185,7 @@ class AdjustmentService(BaseService):
     
     # --- Auto Create Write-off for Underpayment---
     @classmethod
-    def reconcile_writeoff(cls, invoice):
+    def reconcile_writeoff(cls, invoice, parent_id: int | None = None):
         """
         Brain: Automates the creation/deletion of threshold write-offs.
         Ensures Net Income is corrected by the underpayment gap.
@@ -238,7 +240,8 @@ class AdjustmentService(BaseService):
                                                cls.model.__name__,  
                                                'UPDATE', 
                                                old_data=old_snapshot, 
-                                               new_data=new_data)
+                                               new_data=new_data,
+                                               parent_id=parent_id)
                         result = {'action': 'UPDATE', 'amount': gap}
                         
                 else: # Create 
@@ -263,7 +266,8 @@ class AdjustmentService(BaseService):
                     AuditLogService.record(new_adj.id, 
                                            cls.model.__name__,  
                                            'CREATE',
-                                           new_data=new_snapshot)
+                                           new_data=new_snapshot,
+                                           parent_id=parent_id)
                     result = {'action': 'CREATE', 'amount': gap}
             
             # B: If gap is 0 but record exists (e.g. they paid the final cent), delete it
@@ -271,7 +275,8 @@ class AdjustmentService(BaseService):
                 AuditLogService.record(existing_adj.id, 
                                        cls.model.__name__, 
                                        'DELETE',
-                                       old_data=old_snapshot)
+                                       old_data=old_snapshot,
+                                       parent_id=parent_id)
                 db.session.delete(existing_adj)
                 result = {'action': 'DELETE'}
 
@@ -281,7 +286,8 @@ class AdjustmentService(BaseService):
                 AuditLogService.record(existing_adj.id, 
                                        cls.model.__name__, 
                                        'DELETE',
-                                       old_data=old_snapshot)
+                                       old_data=old_snapshot,
+                                       parent_id=parent_id)
                 db.session.delete(existing_adj)
                 result = {'action': 'DELETE'}
         
