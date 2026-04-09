@@ -27,6 +27,7 @@ app/backups/*
 
 # --- Uploads & Static Assets ---
 app/static/uploads/*
+tailwindcss
 
 # --- OS Specific ---
 .DS_Store
