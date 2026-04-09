@@ -9,10 +9,10 @@
     <!-- CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/tailwind.css') }}">
     <!-- CDNs -->
-    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="{{ url_for('static', filename='js/htmx.min.js') }}"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <!-- Include Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="{{ url_for('static', filename='js/chart.min.js') }}"></script>
     <!-- Link Attachments JS -->
     <script src="{{ url_for('static', filename='js/attachments.js') }}"></script>
     <!-- Link App JS -->
