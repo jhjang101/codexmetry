@@ -6,12 +6,13 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='images/favicon.svg') }}">
     <title>{% block title %}Codexmetry{% endblock %}</title>
+    <!-- FontAwesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <!-- CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/tailwind.css') }}">
-    <!-- CDNs -->
+    <!-- HTMX -->
     <script src="{{ url_for('static', filename='js/htmx.min.js') }}"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <!-- Include Chart.js -->
+    <!-- Chart.js -->
     <script src="{{ url_for('static', filename='js/chart.min.js') }}"></script>
     <!-- Link Attachments JS -->
     <script src="{{ url_for('static', filename='js/attachments.js') }}"></script>
