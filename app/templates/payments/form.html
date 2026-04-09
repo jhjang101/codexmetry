@@ -242,7 +242,10 @@
                     <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ payment.payment_type.type if payment.payment_type else '-' }}</p>
                     {% else %}
                     <div class="relative">
-                        <select name="payment_type_id" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none appearance-none bg-transparent cursor-pointer pr-10">
+                        <select name="payment_type_id" 
+                                class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 
+                                focus:ring-blue-300 outline-none appearance-none bg-transparent cursor-pointer pr-10"
+                                required>
                             <option value="">Select Type...</option>
                             {% for payment_type in payment_types %}
                             <option value="{{ payment_type.id }}" {{ 'selected' if (payment and payment.payment_type_id == payment_type.id) else '' }}>

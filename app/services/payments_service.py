@@ -323,6 +323,7 @@ class PaymentService(BaseService):
         payment_number = data.get('payment_number', '').strip()
         po_id = data.get('po_id')
         invoice_id = data.get('invoice_id')
+        payment_type_id = data.get('payment_type_id')
         paid_from_id = data.get('paid_from_id')
         
         if not client_id: 
@@ -331,6 +332,8 @@ class PaymentService(BaseService):
             raise ValueError("Payment Number is required.")
         if not po_id: 
             raise ValueError("Purchase Order is required.")
+        if not payment_type_id: 
+            raise ValueError("Payment Type is required.")
         if not paid_from_id: 
             raise ValueError("Payer (Paid From) is required.")
         
