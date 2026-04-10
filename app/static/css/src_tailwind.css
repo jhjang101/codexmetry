@@ -1,0 +1,29 @@
+/* 1. Import Tailwind Core */
+@import "tailwindcss";
+
+/* 2. Import Custom Logic (Consolidation) */
+@import "./app.css";
+@import "./print.css";
+
+/* 3. Logic-Driven Scanning (The "Black Box" Sources) */
+/* Tells Tailwind to look for classes in templates and Python code */
+@source "../../templates/**/*.html";
+@source "../js/**/*.js";
+@source "../../utils/*.py";
+@source "../../services/*.py";
+
+/* --- GLOBAL UI FIX: Restore subtle borders --- */
+@layer base {
+  input, textarea, select {
+    /* Replaces the v4 'black' default with the classic v3 subtle gray */
+    @apply border-gray-300;
+  }
+  
+  /* Ensure the 'border' utility itself defaults to gray-200 elsewhere */
+  *, ::after, ::before, ::placeholder {
+    border-color: theme('colors.gray.200');
+  }
+}
+
+/* Run in project root (/Documents/projects/codexmetry/) */
+/* ./tailwindcss -i ./app/static/css/src_tailwind.css -o ./app/static/css/tailwind.css */

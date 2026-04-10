@@ -6,16 +6,16 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='images/favicon.svg') }}">
     <title>{% block title %}Codexmetry{% endblock %}</title>
-    <!-- CDNs -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <!-- FontAwesome CDN -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <!-- Include Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/tailwind.css') }}">
+    <!-- HTMX -->
+    <script src="{{ url_for('static', filename='js/htmx.min.js') }}"></script>
+    <!-- Chart.js -->
+    <script src="{{ url_for('static', filename='js/chart.min.js') }}"></script>
     <!-- Link Attachments JS -->
     <script src="{{ url_for('static', filename='js/attachments.js') }}"></script>
-    <!-- Link App CSS -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
     <!-- Link App JS -->
     <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
 
