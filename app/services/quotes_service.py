@@ -237,6 +237,7 @@ class QuoteService(BaseService):
             snapshot = cls._get_snapshot(quote)
             snapshot['line_items'] = cls._get_items_fingerprint(quote.items, 'quantity', 'quoted_unit_price')
             snapshot['status'] = 'sent'
+
             parent_audit_id = AuditLogService.record(
                 target_id=id,
                 target_type=cls.model.__name__,

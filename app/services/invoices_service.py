@@ -421,81 +421,44 @@ class InvoiceService(BaseService):
     
     @classmethod
     def issue_invoice(cls, id: int):
-        """Transitions Invoice from draft to issued state."""
+        """
+        Transitions Invoice from draft to issued state.
+        Records a complete Forensic JSON Snapshot and links system ripples.
+        """
         invoice = cls.get_invoice_by_id(id) # Hydrated with .balance
         if not invoice or not invoice.is_active:
             return None, None, None
         
-        # 1. Capture the "Old" State (Before PDF)
-        old_snapshot : dict[str, str | list] = {'status': invoice.status}
-        old_snapshot['attachments'] = AttachmentService._get_fingerprint(invoice.attachments)
-        
-        # 2. PDF Generation Logic (Todo)
-        # This adds the record to the 'attachments' table
-        # new_pdf_file = cls._generate_pdf_file(invoice)
-        # AttachmentService.stage('Invoice', invoice.id, new_files=[new_pdf_file])
-        # db.session.flush()
-        # db.session.refresh(invoice)
+        before = invoice.status
+        if before == 'draft':
+            # 1. CAPTURE FULL FORENSIC SNAPSHOT (Matching Quote pattern)
+            snapshot = cls._get_snapshot(invoice)
+            snapshot['line_items'] = cls._get_items_fingerprint(invoice.items, 'quantity', 'billed_unit_price')
+            # We manually set the target status for the notarized record
+            snapshot['status'] = 'open' 
 
-        # 3. Capture the "New" State (After PDF)
-        new_snapshot : dict[str, str | list]  = {'status': 'open'}
-        new_snapshot['attachments'] = AttachmentService._get_fingerprint(invoice.attachments)
+            # 2. RECORD THE PARENT "ISSUE" ACTION (Full dump)
+            parent_audit_id = AuditLogService.record(
+                target_id=id,
+                target_type=cls.model.__name__,
+                action='ISSUE',
+                old_data={}, # Forces full snapshot
+                new_data=snapshot
+            )
 
-        # 4. Record the Parent "ISSUE" Action
-        parent_audit_id = AuditLogService.record(
-            target_id=id,
-            target_type='Invoice',
-            action='UPDATE',
-            old_data=old_snapshot,
-            new_data=new_snapshot
-        )
-        invoice.status = 'open' 
-
-        # 5. Update status
-        invoice_status = sync_invoice_status(invoice, original_status='open', proposed_status=None, parent_id=parent_audit_id)
-        invoice_status['before'] = old_snapshot['status']
-        
-        # invoice_status = None
-        # po_status = None
-        # before = old_snapshot['status']
-
-        # if before == 'draft':
-        #     # 2. Ask the sync logic for the 'Financial Reality'
-        #     # We pass proposed_status=None to ignore manual overrides
-        #     invoice_status = sync_invoice_status(invoice, original_status='draft', proposed_status=None)
+            # 3. ADVANCE STATUS & RIPPLE
+            invoice.status = 'open'
             
-        #     target = invoice_status['after']
+            # 4. RUN SYSTEM RIPPLES (Linked to Parent)
+            invoice_status = sync_invoice_status(invoice, original_status='open', parent_id=parent_audit_id)
+            invoice_status['before'] = before # Correct UI feedback (Draft -> Final Status)
             
-        #     # 3. Apply the "Issuance Floor" 
-        #     # If no money exists, sync_invoice_status returns 'draft'. 
-        #     # We must promote to 'open' because it's being printed.
-        #     if target == 'draft':
-        #         target = 'open'
-        #         invoice_status['after'] = 'open'
-
-        #     # 4. Finalize state
-        #     invoice.status = target
-
-        #     # 5. Forensic Record (One log for the transition)
-        #     AuditLogService.record(
-        #         target_id=id,
-        #         target_type='Invoice',
-        #         action='UPDATE',
-        #         old_data={'status': 'draft'},
-        #         new_data={'status': target},
-        #         parent_id=parent_audit_id
-        #     )
-
-        # 6. PO Status Ripple
-        # If the invoice jumped straight to 'completed' (or even 'open'), 
-        # the PO needs to re-evaluate its lifecycle.
-        po_status = None
-        if invoice.po_id:
             po_status = sync_po_status(invoice.po_id, parent_id=parent_audit_id)
 
             db.session.commit()
+            return invoice, invoice_status, po_status
         
-        return invoice, invoice_status, po_status
+        return invoice, None, None
     
     @classmethod
     def _validate_pure_prepayment(cls, items_data: list[dict]) -> bool:

@@ -220,15 +220,20 @@ class ExpenseService(BaseService):
         before = expense.status
         if before == 'draft':
             # 1. Forensic Record
-            AuditLogService.record(
+            snapshot = cls._get_snapshot(expense)
+            snapshot['line_items'] = cls._get_items_fingerprint(expense.items)
+            snapshot['status'] = 'open'
+
+            parent_audit_id = AuditLogService.record(
                 target_id=id,
                 target_type='Expense',
-                action='UPDATE',
-                old_data={'status': 'draft'},
-                new_data={'status': 'open'}
+                action='ISSUE',
+                old_data={},
+                new_data=snapshot
             )
             # 2. Status Flip
             expense.status = 'open'
+            
             db.session.commit()
         
         return expense, {"before": before, "after": expense.status}
