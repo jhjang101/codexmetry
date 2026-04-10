@@ -27,3 +27,33 @@ function switchTab(tabName) {
         activeBtn.classList.add('bg-white', 'border-gray-200', 'text-blue-600', 'z-10');
     }
 }
+
+/**
+ * Sync Engine: Arms a one-time refresh trigger when the window gains focus.
+ * Used for "Print" workflows where data changes in a separate tab.
+ */
+function armFocusSync(url) {
+    const container = document.getElementById('focus-sync-container');
+    if (!container) {
+        console.warn("Sync Engine: #focus-sync-container not found. Refresh aborted.");
+        return;
+    }
+
+    console.log("Sync Engine: Arming refresh for:", url);
+
+    // 100ms delay ensures the browser focus has fully shifted 
+    // to the new tab before we set the "trap" on this one.
+    setTimeout(() => {
+        container.innerHTML = `
+            <div hx-get="${url}" 
+                 hx-trigger="focus from:window" 
+                 hx-target="#main-content-area" 
+                 hx-select="#main-content-area" 
+                 hx-swap="innerHTML">
+            </div>`;
+        
+        // Re-initialize HTMX for the newly injected element
+        htmx.process(container);
+        console.log("Sync Engine: Listener active.");
+    }, 100);
+}

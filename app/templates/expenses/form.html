@@ -16,15 +16,8 @@
 {% block content %}
 <div class="max-w-5xl mx-auto">
 
-     {# Focus-Sync enabled only for DRAFT expenses in VIEW mode #}
-     {% if mode == 'view' and expense.status == 'draft' %}
-        <div hx-get="{{ url_for('expenses.view', id=expense.id) }}"
-             hx-trigger="focus from:window"
-             hx-target="#main-content-area"
-             hx-select="#main-content-area"
-             hx-swap="outerHTML">
-        </div>
-     {% endif %}
+    {# one-time refresh trigger when the window gains focus #}
+    <div id="focus-sync-container"></div>
      
     <div class="flex justify-between items-center mb-2">
         <a href="{{ session.get('expenses_last_url', url_for('expenses.index')) }}" class="text-blue-600 text-sm font-medium"><i class="fa-solid fa-arrow-left"></i> Back to Expenses List</a>
@@ -51,6 +44,7 @@
 
                             <a href="{{ url_for('expenses.print_view', id=expense.id) }}" 
                                 target="_blank"
+                                onclick="armFocusSync('{{ url_for('expenses.view', id=expense.id) }}')"
                                 class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">
                                 <i class="fa-solid fa-print w-2"></i>
                                 Print / Save PDF
