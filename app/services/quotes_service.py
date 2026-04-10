@@ -234,12 +234,15 @@ class QuoteService(BaseService):
         before = quote.status
         if before == 'draft':
             # 1. Forensic Record
-            AuditLogService.record(
+            snapshot = cls._get_snapshot(quote)
+            snapshot['line_items'] = cls._get_items_fingerprint(quote.items, 'quantity', 'quoted_unit_price')
+            snapshot['status'] = 'sent'
+            parent_audit_id = AuditLogService.record(
                 target_id=id,
-                target_type='Quote',
-                action='UPDATE',
-                old_data={'status': 'draft'},
-                new_data={'status': 'sent'}
+                target_type=cls.model.__name__,
+                action='ISSUE',
+                old_data={},
+                new_data=snapshot
             )
             # 2. Status Flip
             quote.status = 'sent'
