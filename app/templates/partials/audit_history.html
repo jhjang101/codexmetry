@@ -23,6 +23,7 @@
             <div class="flex-1 text-gray-700">
                 <span class="font-bold uppercase text-[10px] mr-2 
                     {% if log.action == 'CREATE' %}text-green-600
+                    {% elif log.action == 'ISSUE' %}text-indigo-600
                     {% elif log.action == 'ARCHIVE' %}text-red-600
                     {% elif log.action == 'DELETE' %}text-red-900
                     {% else %}text-blue-600{% endif %}">
@@ -31,6 +32,8 @@
 
                 {% if log.action == 'CREATE' %}
                     <span class="italic text-gray-500 font-medium">Record created.</span>
+                {% elif log.action == 'ISSUE' %}
+                    <span class="italic text-gray-500 font-medium">Document issued.</span>
                 {% elif log.action == 'ARCHIVE' %}
                     <span class="italic text-red-500 font-medium">Record moved to archives.</span>
                 {% elif log.action == 'DELETE' %}
