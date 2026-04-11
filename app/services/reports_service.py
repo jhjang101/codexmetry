@@ -344,8 +344,8 @@ class ReportService:
                 'year': curr.year,
                 'month': curr.month,
                 'month_label': curr.strftime('%b %Y'),
-                'accrual': {'revenue': 0, 'cogs': 0, 'opex': 0, 'adj': 0},
-                'cash': {'income': 0, 'cogs_paid': 0, 'opex_paid': 0}
+                'accrual': {'revenue': 0, 'cogs': 0, 'opex': 0, 'total_adj': 0},
+                'cash': {'payments': 0, 'cogs_paid': 0, 'opex_paid': 0, 'manual_adj': 0}
             }
             curr += relativedelta(months=1)
 
@@ -383,7 +383,7 @@ class ReportService:
                 label = 'cogs' if is_cogs else 'opex'
                 timeline[key]['accrual'][label] = total or 0
 
-        # --- BUCKET C: Cash Income (Payments) ---
+        # --- BUCKET C: Cash Payments Received ---
         y_ext = extract('year', Payment.payment_date)
         m_ext = extract('month', Payment.payment_date)
         
@@ -396,7 +396,7 @@ class ReportService:
             key = f"{int(y)}-{int(m):02d}"
             if key in timeline: timeline[key]['cash']['income'] = total or 0
 
-        # --- BUCKET D: Cash Outgoings (Completed Expenses) ---
+        # --- BUCKET D: Cash Paid Expenses (Completed Expenses) ---
         y_ext = extract('year', Expense.expense_date)
         m_ext = extract('month', Expense.expense_date)
 
@@ -412,27 +412,37 @@ class ReportService:
                 label = 'cogs_paid' if is_cogs else 'opex_paid'
                 timeline[key]['cash'][label] = total or 0
 
-        # --- BUCKET E: Adjustments ---
+        # --- BUCKET E & F: Adjustments (Accrual vs Cash) ---
         y_ext = extract('year', Adjustment.adjustment_date)
         m_ext = extract('month', Adjustment.adjustment_date)
         
         adj_stmt = (
-            select(y_ext, m_ext, func.sum(Adjustment.amount))
+            select(y_ext, m_ext, Adjustment.is_system, func.sum(Adjustment.amount))
             .where(Adjustment.is_active == True, Adjustment.adjustment_date.between(start_date, end_date))
-            .group_by(y_ext, m_ext)
+            .group_by(y_ext, m_ext, Adjustment.is_system)
         )
-        for y, m, total in db.session.execute(adj_stmt).all():
+        for y, m, is_system, total in db.session.execute(adj_stmt).all():
             key = f"{int(y)}-{int(m):02d}"
-            if key in timeline: timeline[key]['accrual']['adj'] = total or 0
+            if key in timeline:
+                # Every adjustment counts for Accrual
+                timeline[key]['accrual']['total_adj'] += (total or 0)
+                # Only non-system adjustments count for Cash
+                if not is_system:
+                    timeline[key]['cash']['manual_adj'] = total or 0
 
         # 4. Final Processing (Derived Math)
         results = []
         for k in sorted(timeline.keys(), reverse=True):
-            m = timeline[k]
+            # Accrual Perspctive
             m['accrual']['gross_profit'] = m['accrual']['revenue'] - m['accrual']['cogs']
             m['accrual']['operating_profit'] = m['accrual']['gross_profit'] - m['accrual']['opex']
-            m['accrual']['net_income'] = m['accrual']['operating_profit'] + m['accrual']['adj']
-            m['cash']['net_cash'] = m['cash']['income'] - (m['cash']['cogs_paid'] + m['cash']['opex_paid'])
+            m['accrual']['net_income'] = m['accrual']['operating_profit'] + m['accrual']['total_adj']
+            
+            # Cash Perspective
+            m['cash']['gross_margin'] = m['cash']['payments'] - m['cash']['cogs_paid']
+            m['cash']['operating_cash'] = m['cash']['gross_margin'] - m['cash']['opex_paid']
+            m['cash']['net_cash'] = m['cash']['operating_cash'] + m['cash']['manual_adj']
+            
             results.append(m)
 
         return results
