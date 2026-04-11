@@ -57,10 +57,19 @@
                         hx-trigger="change"
                         hx-target="#unit-price-cell-{{ row_id }}"
                         hx-swap="innerHTML"
-                        hx-include="closest tr">
+                        hx-include="closest tr"
+                        {# --- CONNFIRM: Prepayment clears other items --- #}
+                        hx-on::before-request="if (this.selectedOptions[0].dataset.isPrepayment === 'true') {
+                            if (!confirm('Selecting a Prepayment Request will CLEAR all other line items. Continue?')) {
+                                event.preventDefault();
+                                this.value = ''; // Reset selection if cancelled
+                            }
+                        }">
                     <option value="">Select Product...</option>
                     {% for product in products %}
                         <option value="{{ product.id }}" 
+                                      {# Tag the specific product #}
+                                        {% if product.catalog_number == 'PRE-PMT' %}data-is-prepayment="true"{% endif %}
                                       {% if item and item.product_id == product.id %}
                                       selected
                                       {% endif %}>
