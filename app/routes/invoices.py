@@ -491,6 +491,11 @@ def get_unit_price():
 
     product_id = int(raw_pid) if raw_pid and raw_pid.strip() else None
 
+    # IF ID IS EMPTY: Return a blank price input instead of crashing
+    if not product_id:
+        return render_template('invoices/partials/unit_price_input.html',
+                               row_id=row_id, price=0, mode='add')
+
     # Query product for its default price
     product = ProductService.get_by_id(product_id)
     price = product.default_unit_price if product else 0

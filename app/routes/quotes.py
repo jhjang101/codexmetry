@@ -271,8 +271,15 @@ def add_row():
 @bp.route('/get-unit-price')
 def get_unit_price():
     """Returns the default_unit_price for the selected product."""
-    product_id = request.args.get('product_ids[]', type=int)
+    raw_pid = request.args.get('product_ids[]')
     row_id = request.args.get('row_id')
+
+    product_id = int(raw_pid) if raw_pid and raw_pid.strip() else None
+
+    # IF ID IS EMPTY: Return a blank price input instead of crashing
+    if not product_id:
+        return render_template('quotes/partials/unit_price_input.html',
+                               row_id=row_id, price=0)
 
     product = ProductService.get_by_id(product_id)
     price = product.default_unit_price if product else 0
