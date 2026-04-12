@@ -451,26 +451,73 @@ class ReportService:
     @classmethod
     def get_chart_data(cls, history, perspective='accrual', mode='monthly'):
         """
-        Brain: Transforms 60-month history into Monthly, Quarterly, or Yearly aggregates.
-        perspective: 'accrual' or 'cash'
-        mode: 'monthly', 'quarterly', 'yearly'
+        Brain: Transforms 60-month history into Monthly, Quarterly, Yearly, 
+        or Seasonal Overlay aggregates.
         """
-        # 1. Sort chronological (Oldest -> Newest)
-        raw_data = sorted(history, key=lambda x: f"{x['year']}-{x['month']:02d}")
-        
-        # 2. Map the correct keys for the perspective
+        # 1. Perspective Configuration
         if perspective == 'accrual':
             kpi_keys = ['revenue', 'cogs', 'gross_profit', 'opex', 'operating_profit', 'total_adj', 'net_income']
             sub_key = 'accrual'
+            focus_kpi = 'net_income'
+            primary_color = '#3b82f6' # Blue spectrum
         else:
             kpi_keys = ['payments', 'cogs_paid', 'gross_margin', 'opex_paid', 'operating_cash', 'manual_adj', 'net_cash']
             sub_key = 'cash'
+            focus_kpi = 'net_cash'
+            primary_color = '#10b981' # Green spectrum
 
-        # 3. Aggregation Logic
-        aggregated = {} # Key: Group Label, Value: Dict of KPI sums
+         # ---------------------------------------------------------
+        # MODE A: OVERLAY VIEWS (Seasonal Performance & Growth)
+        # ---------------------------------------------------------
+        if mode in ['yearly_comparison', 'seasonal_cumulative']:
+            this_year = date.today().year
+            target_years = [this_year, this_year - 1, this_year - 2]
+            labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+            datasets = []
+            
+            overlay_styles = [
+                {'label': f"{this_year}", 'color': primary_color, 'width': 3, 'dash': []},
+                {'label': f"{this_year - 1}", 'color': primary_color + '88', 'width': 2, 'dash': []},
+                {'label': f"{this_year - 2}", 'color': '#94a3b8', 'width': 1, 'dash': [5, 5]}
+            ]
+
+            for i, year in enumerate(target_years):
+                year_data = [None] * 12
+                running_total = 0
+                
+                # Filter and sort months for this specific year
+                year_months = sorted([m for m in history if m['year'] == year], key=lambda x: x['month'])
+                
+                for m in year_months:
+                    val = m[sub_key].get(focus_kpi, 0) / 100
+                    
+                    if mode == 'seasonal_cumulative':
+                        running_total += val
+                        year_data[m['month'] - 1] = running_total
+                    else:
+                        year_data[m['month'] - 1] = val
+
+                style = overlay_styles[i]
+                datasets.append({
+                    'label': f"{style['label']} {'(YTD Growth)' if mode == 'seasonal_cumulative' else '(Monthly)'}",
+                    'data': year_data,
+                    'borderColor': style['color'],
+                    'borderWidth': style['width'],
+                    'borderDash': style['dash'],
+                    'tension': 0.1 if mode == 'seasonal_cumulative' else 0.3,
+                    'pointRadius': 3,
+                    'fill': i == 0 
+                })
+            
+            return {'labels': labels, 'datasets': datasets}
+
+        # ---------------------------------------------------------
+        # MODE B: LINEAR AGGREGATION (Chronological MoM, QoQ, YoY)
+        # ---------------------------------------------------------
+        raw_data = sorted(history, key=lambda x: f"{x['year']}-{x['month']:02d}")
+        aggregated = {}
 
         for m in raw_data:
-            # Determine the Group Key
             if mode == 'yearly':
                 group_key = str(m['year'])
             elif mode == 'quarterly':
@@ -482,27 +529,21 @@ class ReportService:
             if group_key not in aggregated:
                 aggregated[group_key] = {k: 0 for k in kpi_keys}
             
-            # Add values to the group
             for k in kpi_keys:
-                aggregated[group_key][k] += (m[sub_key].get(k, 0) / 100) # Convert to dollars for chart
+                aggregated[group_key][k] += (m[sub_key].get(k, 0) / 100)
 
-        # 4. Prepare Chart.js datasets structure
         labels = list(aggregated.keys())
-        
-        # Optional: Filter monthly to last 24 months to keep chart readable
-        if mode == 'monthly':
-            labels = labels[-24:]
+        if mode == 'monthly': labels = labels[-24:] # Filter to last 2 years for MoM clarity
 
         datasets = []
-        # Professional Styling Map
         style_map = {
-            'revenue': {'color': '#3b82f6', 'width': 3, 'dash': []},      # Solid Blue
-            'payments': {'color': '#10b981', 'width': 3, 'dash': []},     # Solid Green
-            'net_income': {'color': '#0f172a', 'width': 3, 'dash': []},   # Solid Slate
-            'net_cash': {'color': '#064e3b', 'width': 3, 'dash': []},     # Solid Dark Green
-            'cogs': {'color': '#ef4444', 'width': 1, 'dash': [5, 5]},    # Dashed Red
+            'revenue': {'color': '#3b82f6', 'width': 3, 'dash': []},
+            'payments': {'color': '#10b981', 'width': 3, 'dash': []},
+            'net_income': {'color': '#0f172a', 'width': 3, 'dash': []},
+            'net_cash': {'color': '#064e3b', 'width': 3, 'dash': []},
+            'cogs': {'color': '#ef4444', 'width': 1, 'dash': [5, 5]},
             'cogs_paid': {'color': '#ef4444', 'width': 1, 'dash': [5, 5]},
-            'opex': {'color': '#f59e0b', 'width': 1, 'dash': [2, 2]},    # Dotted Amber
+            'opex': {'color': '#f59e0b', 'width': 1, 'dash': [2, 2]},
             'opex_paid': {'color': '#f59e0b', 'width': 1, 'dash': [2, 2]},
         }
 
@@ -515,7 +556,7 @@ class ReportService:
                 'borderWidth': style['width'],
                 'borderDash': style['dash'],
                 'tension': 0.3,
-                'pointRadius': 2 if len(labels) < 20 else 2
+                'pointRadius': 2 if len(labels) < 20 else 0
             })
 
         return {'labels': labels, 'datasets': datasets}
