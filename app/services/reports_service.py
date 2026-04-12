@@ -394,7 +394,7 @@ class ReportService:
         )
         for y, m, total in db.session.execute(cash_in_stmt).all():
             key = f"{int(y)}-{int(m):02d}"
-            if key in timeline: timeline[key]['cash']['income'] = total or 0
+            if key in timeline: timeline[key]['cash']['payments'] = total or 0
 
         # --- BUCKET D: Cash Paid Expenses (Completed Expenses) ---
         y_ext = extract('year', Expense.expense_date)
@@ -433,6 +433,7 @@ class ReportService:
         # 4. Final Processing (Derived Math)
         results = []
         for k in sorted(timeline.keys(), reverse=True):
+            m = timeline[k]
             # Accrual Perspctive
             m['accrual']['gross_profit'] = m['accrual']['revenue'] - m['accrual']['cogs']
             m['accrual']['operating_profit'] = m['accrual']['gross_profit'] - m['accrual']['opex']

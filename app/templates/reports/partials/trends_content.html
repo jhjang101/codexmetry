@@ -1,4 +1,4 @@
-<div class="space-y-6">
+<div class="p-6">
     <!-- 1. VISUAL TRENDS (Chart.js) -->
     <section class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
         <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">5-Year Performance Trend (Accrual)</h3>
@@ -8,45 +8,84 @@
         </div>
     </section>
 
-    <!-- 2. HISTORICAL SUMMARY TABLE -->
-    <section class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div class="px-4 py-3 bg-slate-900 flex justify-between items-center">
-            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest">Historical Monthly Comparison</h3>
-            <span class="text-[9px] text-slate-500 font-bold uppercase">60-Month View</span>
-        </div>
-        <div class="overflow-x-auto">
+    <!-- PANE 2: ACCRUAL HISTORY TABLE -->
+    <div id="pane-accrual" class="report-pane hidden p-6">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="px-4 py-3 bg-slate-900 flex justify-between items-center">
+                <h3 class="text-xs font-bold text-slate-300 uppercase tracking-widest">60-Month Performance (Accrual Basis)</h3>
+                <span class="text-[9px] text-blue-400 font-bold uppercase">Issued Documents</span>
+            </div>
             <table class="min-w-full text-[11px]">
                 <thead class="bg-gray-50 text-[9px] font-bold text-gray-500 uppercase border-b border-gray-200">
                     <tr>
                         <th class="px-4 py-3 text-left bg-gray-100 w-24">Month</th>
-                        <th class="px-4 py-3 text-right text-blue-700 border-l border-gray-100">Accrual: Revenue</th>
-                        <th class="px-4 py-3 text-right text-blue-900">Accrual: Net</th>
-                        <th class="px-4 py-3 text-right text-green-700 border-l border-gray-100">Cash: Income</th>
-                        <th class="px-4 py-3 text-right text-slate-800">Cash: Net</th>
+                        <th class="px-4 py-3 text-right">Revenue</th>
+                        <th class="px-4 py-3 text-right">COGS</th>
+                        <th class="px-4 py-3 text-right text-blue-600">GP</th>
+                        <th class="px-4 py-3 text-right">OPEX</th>
+                        <th class="px-4 py-3 text-right text-blue-800">OP (EBIT)</th>
+                        <th class="px-4 py-3 text-right">ADJ</th>
+                        <th class="px-4 py-3 text-right bg-slate-50">Net Income</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
                     {% for m in history %}
-                    <tr class="hover:bg-gray-50 transition-colors">
+                    <tr class="hover:bg-blue-50/30 transition-colors">
                         <td class="px-4 py-2 font-bold text-gray-700 bg-gray-50/50">{{ m.month_label }}</td>
-                        
-                        {# Accrual Columns #}
-                        <td class="px-4 py-2 text-right border-l border-gray-100">{{ m.accrual.revenue | usd }}</td>
-                        <td class="px-4 py-2 text-right font-bold {{ 'text-green-700' if m.accrual.net_income >= 0 else 'text-red-600' }}">
-                            {{ m.accrual.net_income | usd }}
-                        </td>
-
-                        {# Cash Columns #}
-                        <td class="px-4 py-2 text-right border-l border-gray-100">{{ m.cash.income | usd }}</td>
-                        <td class="px-4 py-2 text-right font-bold {{ 'text-green-700' if m.cash.net_cash >= 0 else 'text-red-600' }}">
-                            {{ m.cash.net_cash | usd }}
-                        </td>
+                        <td class="px-4 py-2 text-right">{{ m.accrual.revenue | usd }}</td>
+                        <td class="px-4 py-2 text-right text-red-600">{{ m.accrual.cogs | usd }}</td>
+                        <td class="px-4 py-2 text-right font-bold text-blue-600">{{ m.accrual.gross_profit | usd }}</td>
+                        <td class="px-4 py-2 text-right text-red-600">{{ m.accrual.opex | usd }}</td>
+                        <td class="px-4 py-2 text-right font-bold text-blue-800">{{ m.accrual.operating_profit | usd }}</td>
+                        <td class="px-4 py-2 text-right {{ 'text-green-600' if m.accrual.total_adj >= 0 else 'text-red-500' }}">{{ m.accrual.total_adj | usd }}</td>
+                        <td class="px-4 py-2 text-right font-black bg-slate-50 {{ 'text-green-700' if m.accrual.net_income >= 0 else 'text-red-600' }}">{{ m.accrual.net_income | usd }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
-    </section>
+    </div>
+
+    <!-- PANE 3: CASH HISTORY -->
+    <div id="pane-cash" class="report-pane hidden p-6">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="px-4 py-3 bg-green-900 flex justify-between items-center">
+                <h3 class="text-xs font-bold text-green-100 uppercase tracking-widest">60-Month Liquidity (Cash Basis)</h3>
+                <span class="text-[9px] text-green-400 font-bold uppercase">Cleared Funds</span>
+            </div>
+            <table class="min-w-full text-[11px]">
+                <thead class="bg-green-50/50 text-[9px] font-bold text-green-700 uppercase border-b border-green-100">
+                    <tr>
+                        <th class="px-4 py-3 text-left bg-green-50 w-24">Month</th>
+                        <th class="px-4 py-3 text-right">Payments</th>
+                        <th class="px-4 py-3 text-right">COGS Paid</th>
+                        <th class="px-4 py-3 text-right text-green-600">Margin</th>
+                        <th class="px-4 py-3 text-right">OPEX Paid</th>
+                        <th class="px-4 py-3 text-right text-green-800">Op. Cash</th>
+                        <th class="px-4 py-3 text-right">Manual ADJ</th>
+                        <th class="px-4 py-3 text-right bg-green-50">Net Cash</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for m in history %}
+                    <tr class="hover:bg-green-50/30 transition-colors">
+                        <td class="px-4 py-2 font-bold text-gray-700 bg-gray-50/50">{{ m.month_label }}</td>
+                        <td class="px-4 py-2 text-right text-green-700">{{ m.cash.payments | usd }}</td>
+                        <td class="px-4 py-2 text-right text-red-600">{{ m.cash.cogs_paid | usd }}</td>
+                        <td class="px-4 py-2 text-right font-bold text-green-600">{{ m.cash.gross_margin | usd }}</td>
+                        <td class="px-4 py-2 text-right text-red-600">{{ m.cash.opex_paid | usd }}</td>
+                        <td class="px-4 py-2 text-right font-bold text-green-800">{{ m.cash.operating_cash | usd }}</td>
+                        <td class="px-4 py-2 text-right {{ 'text-green-600' if m.cash.manual_adj >= 0 else 'text-red-500' }}">{{ m.cash.manual_adj | usd }}</td>
+                        <td class="px-4 py-2 text-right font-black bg-green-50 {{ 'text-green-700' if m.cash.net_cash >= 0 else 'text-red-600' }}">{{ m.cash.net_cash | usd }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+
+
 </div>
 
 <!-- 3. CHART INITIALIZATION -->

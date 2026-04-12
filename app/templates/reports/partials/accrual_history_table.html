@@ -1,0 +1,118 @@
+<div class="p-6">
+    <!-- VISUAL TREND: PERFORMANCE -->
+    <section class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+        <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">5-Year Performance Trend (Accrual)</h3>
+        <div class="h-[250px]">
+            <canvas id="accrualChart" data-chart-values='{{ chart_json | safe }}'></canvas>
+        </div>
+    </section>
+
+    <!-- ACCRUAL HISTORY TABLE -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <!-- Section Header -->
+        <div class="px-4 py-3 bg-slate-900 flex justify-between items-center">
+            <h3 class="text-xs font-bold text-slate-300 uppercase tracking-widest flex items-center gap-2">
+                <i class="fa-solid fa-chart-line"></i> 60-Month Performance (Accrual Basis)
+            </h3>
+            <span class="text-[9px] text-blue-400 font-bold uppercase tracking-wider">Economic Truth • Issued Documents</span>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="min-w-full text-[11px]">
+                <thead class="bg-gray-50 text-[9px] font-bold text-gray-500 uppercase border-b border-gray-200">
+                    <tr>
+                        <th class="px-4 py-3 text-left bg-gray-100 w-24">Month</th>
+                        <th class="px-4 py-3 text-right">Revenue</th>
+                        <th class="px-4 py-3 text-right">COGS</th>
+                        <th class="px-4 py-3 text-right text-blue-600 border-l border-gray-100">Gross Profit</th>
+                        <th class="px-4 py-3 text-right">OPEX</th>
+                        <th class="px-4 py-3 text-right text-blue-800 border-l border-gray-100">OP (EBIT)</th>
+                        <th class="px-4 py-3 text-right">Adjustments</th>
+                        <th class="px-4 py-3 text-right bg-slate-50 border-l-2 border-slate-200">Net Income</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for m in history %}
+                    <tr class="hover:bg-blue-50/30 transition-colors">
+                        <!-- Date Label -->
+                        <td class="px-4 py-2 font-bold text-gray-700 bg-gray-50/50 italic">{{ m.month_label }}</td>
+                        
+                        <!-- Top-Line Metrics -->
+                        <td class="px-4 py-2 text-right text-blue-700">{{ m.accrual.revenue | usd }}</td>
+                        <td class="px-4 py-2 text-right text-red-600">{{ m.accrual.cogs | usd }}</td>
+                        
+                        <!-- Gross Profit Margin -->
+                        <td class="px-4 py-2 text-right font-bold text-blue-600 border-l border-gray-100 bg-blue-50/20">
+                            {{ m.accrual.gross_profit | usd }}
+                        </td>
+                        
+                        <!-- Operating Metrics -->
+                        <td class="px-4 py-2 text-right text-red-600">{{ m.accrual.opex | usd }}</td>
+                        <td class="px-4 py-2 text-right font-bold text-blue-800 border-l border-gray-100 bg-blue-50/30">
+                            {{ m.accrual.operating_profit | usd }}
+                        </td>
+                        
+                        <!-- Non-Operating Adjustments -->
+                        <td class="px-4 py-2 text-right {{ 'text-green-600' if m.accrual.total_adj >= 0 else 'text-red-500' }}">
+                            {{ m.accrual.total_adj | usd }}
+                        </td>
+
+                        <!-- Bottom Line (Net Income) -->
+                        <td class="px-4 py-2 text-right font-black border-l-2 border-slate-200 bg-slate-50 
+                                   {{ 'text-green-700' if m.accrual.net_income >= 0 else 'text-red-600' }}">
+                            {{ m.accrual.net_income | usd }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- CHART INITIALIZATION -->
+<script>
+    (function() {
+        const canvas = document.getElementById('accrualChart');
+        if (!canvas) return;
+
+        // Parse the data from the attribute
+        const data = JSON.parse(canvas.getAttribute('data-chart-values'));
+        const ctx = canvas.getContext('2d');
+
+        // Create the chart
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: data.labels,
+                datasets: [
+                    { 
+                        label: 'Revenue', 
+                        data: data.revenue, 
+                        borderColor: '#3b82f6',  // blue-500
+                        backgroundColor: '#3b82f611', 
+                        fill: true, 
+                        tension: 0.3 
+                    },
+                    { 
+                        label: 'Net Income', 
+                        data: data.net_income, 
+                        borderColor: '#0f172a',  // slate-900
+                        borderWidth: 2, 
+                        tension: 0.3, 
+                        pointRadius: 0 
+                    }
+                ]
+            },
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false, 
+                scales: { 
+                    y: { 
+                        ticks: { callback: (v) => '$' + v.toLocaleString() } 
+                    } 
+                } 
+            }
+        });
+    })();
+</script>

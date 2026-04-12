@@ -1,0 +1,123 @@
+<div class="p-6">
+
+    <!-- VISUAL TREND: LIQUIDITY -->
+    <section class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+        <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">5-Year Liquidity Trend (Cash)</h3>
+        <div class="h-[250px]">
+            <canvas id="cashChart" data-chart-values='{{ chart_json | safe }}'></canvas>
+        </div>
+    </section>
+
+    <!-- CASH HISTORY TABLE -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <!-- Section Header -->
+        <div class="px-4 py-3 bg-green-900 flex justify-between items-center">
+            <h3 class="text-xs font-bold text-green-100 uppercase tracking-widest flex items-center gap-2">
+                <i class="fa-solid fa-money-bill-transfer"></i> 60-Month Liquidity (Cash Basis)
+            </h3>
+            <span class="text-[9px] text-green-400 font-bold uppercase tracking-wider">Liquidity Truth • Cleared Funds</span>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="min-w-full text-[11px]">
+                <thead class="bg-green-50/50 text-[9px] font-bold text-green-700 uppercase border-b border-green-100">
+                    <tr>
+                        <th class="px-4 py-3 text-left bg-green-50 w-24">Month</th>
+                        <th class="px-4 py-3 text-right">Payments In</th>
+                        <th class="px-4 py-3 text-right">COGS Paid</th>
+                        <th class="px-4 py-3 text-right text-green-600 border-l border-green-100">Gross Margin</th>
+                        <th class="px-4 py-3 text-right">OPEX Paid</th>
+                        <th class="px-4 py-3 text-right text-green-800 border-l border-green-100">Op. Cash Flow</th>
+                        <th class="px-4 py-3 text-right">Manual ADJ</th>
+                        <th class="px-4 py-3 text-right bg-green-50 border-l-2 border-green-200">Net Cash In</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for m in history %}
+                    <tr class="hover:bg-green-50/30 transition-colors">
+                        <!-- Date Label -->
+                        <td class="px-4 py-2 font-bold text-gray-700 bg-gray-50/30 italic">{{ m.month_label }}</td>
+                        
+                        <!-- Cash-In -->
+                        <td class="px-4 py-2 text-right text-green-700 font-medium">{{ m.cash.payments | usd }}</td>
+                        
+                        <!-- Cash-Out (COGS) -->
+                        <td class="px-4 py-2 text-right text-red-600">{{ m.cash.cogs_paid | usd }}</td>
+                        
+                        <!-- Liquidity Margin -->
+                        <td class="px-4 py-2 text-right font-bold text-green-600 border-l border-green-50 bg-green-50/10">
+                            {{ m.cash.gross_margin | usd }}
+                        </td>
+                        
+                        <!-- Cash-Out (OPEX) -->
+                        <td class="px-4 py-2 text-right text-red-600">{{ m.cash.opex_paid | usd }}</td>
+                        
+                        <!-- Operating Cash -->
+                        <td class="px-4 py-2 text-right font-bold text-green-800 border-l border-green-50 bg-green-50/20">
+                            {{ m.cash.operating_cash | usd }}
+                        </td>
+                        
+                        <!-- Manual Adjustments (Non-System) -->
+                        <td class="px-4 py-2 text-right {{ 'text-green-600' if m.cash.manual_adj >= 0 else 'text-red-500' }}">
+                            {{ m.cash.manual_adj | usd }}
+                        </td>
+
+                        <!-- Final Net Cash Flow -->
+                        <td class="px-4 py-2 text-right font-black border-l-2 border-green-200 bg-green-50 
+                                   {{ 'text-green-700' if m.cash.net_cash >= 0 else 'text-red-600' }}">
+                            {{ m.cash.net_cash | usd }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- CHART INITIALIZATION -->
+<script>
+    (function() {
+        const canvas = document.getElementById('cashChart');
+        if (!canvas) return;
+
+        // Parse the data from the attribute
+        const data = JSON.parse(canvas.getAttribute('data-chart-values'));
+        const ctx = canvas.getContext('2d');
+
+        // Create the chart
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: data.labels,
+                datasets: [
+                    { 
+                        label: 'Cash In', 
+                        data: data.payments, 
+                        borderColor: '#10b981', 
+                        backgroundColor: '#10b98111', 
+                        fill: true, 
+                        tension: 0.3 
+                    },
+                    { 
+                        label: 'Net Cash', 
+                        data: data.net_cash, 
+                        borderColor: '#064e3b', 
+                        borderWidth: 2, 
+                        tension: 0.3, 
+                        pointRadius: 0 
+                    }
+                ]
+            },
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false,
+                scales: { 
+                    y: { 
+                        ticks: { callback: (v) => '$' + v.toLocaleString() } 
+                    } 
+                } 
+            }
+        });
+    })();
+</script>

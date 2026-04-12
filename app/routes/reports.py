@@ -55,27 +55,40 @@ def index():
         calendar=calendar
     )
 
-@bp.route('/trends')
-def trends():
-    # 1. Fetch data
+@bp.route('/accrual-history')
+def accrual_history():
+    """Messenger: Fetches 5-year performance data for the Accrual pane."""
+    # Call the high-fidelity historical service
     history = ReportService.get_historical_summary(years=5)
-    
-    # 2. Prep Chart.js JSON
+
+    # Prepare JSON for Performance Chart
     chart_raw = sorted(history, key=lambda x: x['month_label'])
     chart_data = {
         'labels': [m['month_label'] for m in chart_raw],
-        'accrual_revenue': [m['accrual']['revenue'] / 100 for m in chart_raw],
-        'accrual_net': [m['accrual']['net_income'] / 100 for m in chart_raw],
-        'cash_income': [m['cash']['income'] / 100 for m in chart_raw],
-        'cash_net': [m['cash']['net_cash'] / 100 for m in chart_raw]
+        'revenue': [m['accrual']['revenue'] / 100 for m in chart_raw],
+        'net_income': [m['accrual']['net_income'] / 100 for m in chart_raw]
     }
+    
+    # Return strictly the Accrual table partial
+    return render_template('reports/partials/accrual_history_table.html', 
+                           history=history,
+                           chart_json=json.dumps(chart_data))
 
-    # 3. Render partial template
-    return render_template(
-        'reports/partials/trends_content.html',
-        history=history,
-        chart_json=json.dumps(chart_data)
-    )
+@bp.route('/cash-history')
+def cash_history():
+    """Messenger: Fetches 5-year liquidity data for the Cash pane."""
+    # Reuse the same service (Zero bloat)
+    history = ReportService.get_historical_summary(years=5)
+
+    # Prepare JSON for Liquidity Chart
+    chart_raw = sorted(history, key=lambda x: x['month_label'])
+    chart_data = {
+        'labels': [m['month_label'] for m in chart_raw],
+        'payments': [m['cash']['payments'] / 100 for m in chart_raw],
+        'net_cash': [m['cash']['net_cash'] / 100 for m in chart_raw]
+    }
+    return render_template('reports/partials/cash_history_table.html', 
+                           history=history, chart_json=json.dumps(chart_data))
 
 # --- HTMX TARGETED AUDIT ROUTES ---
 

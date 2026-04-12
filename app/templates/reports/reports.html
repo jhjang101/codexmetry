@@ -40,19 +40,42 @@
 
     <!-- 1. TAB NAVIGATION (Persistent) -->
     <div class="flex items-end -mb-px">
+
+        {# Monthly Statement #}
         <button onclick="switchTab('monthly')" id="tab-btn-monthly"
-           class="tab-btn px-6 py-2.5 text-[10px] font-black uppercase tracking-widest transition-all border-t border-l border-r rounded-t-lg z-10 bg-white border-gray-200 text-blue-600">
+           class="tab-btn px-6 py-2.5 text-[10px] font-black 
+           uppercase tracking-widest transition-all 
+           border-t border-l border-r rounded-t-lg z-10 bg-white border-gray-200 text-blue-600">
             Monthly Statement
         </button>
 
-        <button hx-get="{{ url_for('reports.trends') }}" 
+        {# Accrual History #}
+        <button hx-get="{{ url_for('reports.accrual_history') }}" 
                 hx-trigger="click once" 
-                hx-target="#pane-trends" 
+                hx-target="#pane-accrual" 
                 hx-indicator="#loading-spinner"
-                onclick="switchTab('trends')" id="tab-btn-trends"
-                class="tab-btn px-6 py-2.5 text-[10px] font-black uppercase tracking-widest transition-all border-t border-l border-r rounded-t-lg bg-gray-100 border-transparent text-gray-400 hover:bg-gray-50">
-            Trends & Analytics
+                onclick="switchTab('accrual')" id="tab-btn-accrual"
+                class="tab-btn px-6 py-2.5 text-[10px] font-black 
+                uppercase tracking-widest transition-all 
+                border-t border-l border-r rounded-t-lg bg-gray-100 
+                border-transparent text-gray-400 hover:bg-gray-50">
+            Accrual History
         </button>
+        
+        {# Cash History #}
+        <button hx-get="{{ url_for('reports.cash_history') }}" 
+                hx-trigger="click once" 
+                hx-target="#pane-cash" 
+                hx-indicator="#loading-spinner"
+                onclick="switchTab('cash')" id="tab-btn-cash"
+                class="tab-btn px-6 py-2.5 text-[10px] font-black 
+                uppercase tracking-widest transition-all 
+                border-t border-l border-r rounded-t-lg bg-gray-100 
+                border-transparent text-gray-400 hover:bg-gray-50">
+            Cash History
+        </button>
+
+
     </div>
 
 
@@ -218,9 +241,14 @@
         </div>
 
     
-        <!-- PANE 2: TRENDS (Hidden by default, future-proof) -->
-        <div id="pane-trends" class="report-pane hidden p-6">
-            <!-- HTMX will inject trends_content.html here -->
+        <!-- PANE 2: ACCRUAL (Loaded via HTMX) -->
+        <div id="pane-accrual" class="report-pane hidden">
+            <!-- HTMX will inject accrual_history_table.html here -->
+        </div>
+
+        <!-- PANE 3: CASH (Loaded via HTMX) -->
+        <div id="pane-cash" class="report-pane hidden">
+            <!-- HTMX will inject cash_history_table.html here -->
         </div>
 
 
@@ -234,33 +262,5 @@
 <div id="loading-spinner" class="htmx-indicator fixed bottom-4 right-4 bg-slate-900 text-white px-4 py-2 rounded-full text-[10px] font-bold shadow-xl animate-pulse z-50">
     <i class="fa-solid fa-spinner fa-spin mr-2"></i> CALCULATING 5-YEAR HISTORY...
 </div>
-
-<script>
-    function switchTab(tabName) {
-        // 1. Hide all panes
-        document.querySelectorAll('.report-pane').forEach(p => p.classList.add('hidden'));
-        // 2. Show target pane
-        document.getElementById('pane-' + tabName).classList.remove('hidden');
-
-        // 3. Reset all tab button styles
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.classList.remove('bg-white', 'border-gray-200', 'text-blue-600', 'z-10');
-            btn.classList.add('bg-gray-100', 'border-transparent', 'text-gray-400');
-        });
-
-        // 4. Apply Active styles to selected button
-        const activeBtn = document.getElementById('tab-btn-' + tabName);
-        activeBtn.classList.remove('bg-gray-100', 'border-transparent', 'text-gray-400');
-        activeBtn.classList.add('bg-white', 'border-gray-200', 'text-blue-600', 'z-10');
-    }
-
-    function toggleFolder(id) {
-        const row = document.getElementById('fold-' + id);
-        const icon = document.getElementById('icon-' + id);
-        row.classList.toggle('hidden');
-        icon.classList.toggle('rotate-90');
-    }
-</script>
-
 
 {% endblock %}
