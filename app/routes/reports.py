@@ -5,6 +5,7 @@ import calendar
 from zoneinfo import ZoneInfo
 from ..services.monthly_reports_service import MonthlyReportService
 from ..services.history_reports_service import HistoryReportService
+from ..services.analytics_report_service import AnalyticsReportService
 from ..services.settings_service import MetadataService
 from ..extensions import db
 import json
@@ -56,6 +57,8 @@ def index():
         calendar=calendar
     )
 
+# --- HISTORY ROUTES ---
+
 @bp.route('/accrual-history')
 def accrual_history():
     """Messenger: Fetches 5-year performance data for the Accrual pane."""
@@ -87,6 +90,43 @@ def cash_history():
                            history=history, 
                            chart_json=json.dumps(chart_data),
                            current_mode=mode)
+
+# --- CLIENT ANALYTICS ROUTES ---
+
+@bp.route('/client-performance')
+def client_performance():
+    """Messenger: Yearly client ranking and bar chart data."""
+    # 1. Capture parameters
+    today = datetime.now()
+    year = request.args.get('year', today.year, type=int)
+    mode = request.args.get('mode', 'revenue')
+
+    # 2. Brain Call
+    data = AnalyticsReportService.get_client_performance(year, mode)
+
+    # 3. Chart Prep (Top 10)
+    top_10 = data['clients'][:3]
+    bar_color = '#3b82f6' if mode == 'revenue' else '#10b981'
+    
+    chart_json = {
+        'labels': [c['name'] for c in top_10],
+        'datasets': [{
+            'label': f'Total {mode.capitalize()} ($)',
+            'data': [c['amount'] / 100 for c in top_10],
+            'backgroundColor': bar_color + '44',
+            'borderColor': bar_color,
+            'borderWidth': 1
+        }]
+    }
+
+    return render_template(
+        'reports/partials/client_performance.html',
+        data=data,
+        chart_json=json.dumps(chart_json),
+        current_year=year,
+        current_mode=mode
+    )
+
 
 # --- HTMX TARGETED AUDIT ROUTES ---
 

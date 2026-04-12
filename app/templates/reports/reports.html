@@ -75,6 +75,16 @@
             Cash History
         </button>
 
+        {# Client Performance #}
+        <button hx-get="{{ url_for('reports.client_performance') }}" 
+                hx-trigger="click once" 
+                hx-target="#pane-clients" 
+                hx-indicator="#loading-spinner"
+                onclick="switchTab('clients')" id="tab-btn-clients"
+                class="tab-btn px-6 py-2.5 text-[10px] font-black uppercase tracking-widest transition-all border-t border-l border-r rounded-t-lg bg-gray-100 border-transparent text-gray-400 hover:bg-gray-50">
+            Client Performance
+        </button>
+
 
     </div>
 
@@ -249,6 +259,11 @@
         <!-- PANE 3: CASH (Loaded via HTMX) -->
         <div id="pane-cash" class="report-pane hidden">
             <!-- HTMX will inject cash_history_table.html here -->
+        </div>
+
+        <!-- PANE 4: CLIENTS (Loaded via HTMX) -->
+        <div id="pane-clients" class="report-pane hidden">
+            <!-- HTMX will inject client_performance.html here -->
         </div>
 
 
