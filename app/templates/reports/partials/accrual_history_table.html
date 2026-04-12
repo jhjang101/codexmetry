@@ -1,8 +1,25 @@
-<div class="p-6">
+<div class="p-6 space-y-6">
     <!-- VISUAL TREND: PERFORMANCE -->
     <section class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-        <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">5-Year Performance Trend (Accrual)</h3>
-        <div class="h-[250px]">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest">Performance Analytics</h3>
+            
+            <!-- THE TRIGGER -->
+            <div class="flex items-center gap-2">
+                <span class="text-[10px] font-bold text-gray-400 uppercase">View Mode:</span>
+                <select name="mode" 
+                        hx-get="{{ url_for('reports.accrual_history') }}"
+                        hx-target="#pane-accrual"
+                        hx-swap="innerHTML"
+                        class="text-[10px] font-bold border rounded-lg p-1 px-2 outline-none focus:ring-1 focus:ring-blue-500 bg-gray-50 cursor-pointer">
+                    <option value="monthly" {{ 'selected' if current_mode == 'monthly' }}>Month-over-Month</option>
+                    <option value="quarterly" {{ 'selected' if current_mode == 'quarterly' }}>Quarterly Summary</option>
+                    <option value="yearly" {{ 'selected' if current_mode == 'yearly' }}>Yearly Comparison</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="h-[300px]">
             <canvas id="accrualChart" data-chart-values='{{ chart_json | safe }}'></canvas>
         </div>
     </section>
@@ -78,39 +95,27 @@
 
         // Parse the data from the attribute
         const data = JSON.parse(canvas.getAttribute('data-chart-values'));
-        const ctx = canvas.getContext('2d');
 
         // Create the chart
-        new Chart(ctx, {
+        new Chart(canvas.getContext('2d'), {
             type: 'line',
             data: {
                 labels: data.labels,
-                datasets: [
-                    { 
-                        label: 'Revenue', 
-                        data: data.revenue, 
-                        borderColor: '#3b82f6',  // blue-500
-                        backgroundColor: '#3b82f611', 
-                        fill: true, 
-                        tension: 0.3 
-                    },
-                    { 
-                        label: 'Net Income', 
-                        data: data.net_income, 
-                        borderColor: '#0f172a',  // slate-900
-                        borderWidth: 2, 
-                        tension: 0.3, 
-                        pointRadius: 0 
-                    }
-                ]
+                datasets: data.datasets // The Service now provides all 7 styled datasets
             },
             options: { 
                 responsive: true, 
-                maintainAspectRatio: false, 
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { 
+                        display: true, 
+                        position: 'bottom',
+                        labels: { boxWidth: 12, font: { size: 9, weight: 'bold' } }
+                    }
+                },
                 scales: { 
-                    y: { 
-                        ticks: { callback: (v) => '$' + v.toLocaleString() } 
-                    } 
+                    y: { ticks: { font: { size: 9 }, callback: (v) => '$' + v.toLocaleString() } },
+                    x: { ticks: { font: { size: 9 } } }
                 } 
             }
         });

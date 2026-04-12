@@ -58,37 +58,34 @@ def index():
 @bp.route('/accrual-history')
 def accrual_history():
     """Messenger: Fetches 5-year performance data for the Accrual pane."""
-    # Call the high-fidelity historical service
-    history = ReportService.get_historical_summary(years=5)
-
-    # Prepare JSON for Performance Chart
-    chart_raw = sorted(history, key=lambda x: x['month_label'])
-    chart_data = {
-        'labels': [m['month_label'] for m in chart_raw],
-        'revenue': [m['accrual']['revenue'] / 100 for m in chart_raw],
-        'net_income': [m['accrual']['net_income'] / 100 for m in chart_raw]
-    }
+    # 1. Capture user intent (default to monthly)
+    mode = request.args.get('mode', 'monthly')
     
-    # Return strictly the Accrual table partial
+    # 2. Fetch the 60-month raw data
+    history = ReportService.get_historical_summary(years=5)
+    
+    # 3. Transform raw data into structured Chart.js JSON
+    chart_data = ReportService.get_chart_data(history, perspective='accrual', mode=mode)
+    
     return render_template('reports/partials/accrual_history_table.html', 
-                           history=history,
-                           chart_json=json.dumps(chart_data))
+                           history=history, 
+                           chart_json=json.dumps(chart_data),
+                           current_mode=mode) # Pass mode to keep dropdown in sync
 
 @bp.route('/cash-history')
 def cash_history():
     """Messenger: Fetches 5-year liquidity data for the Cash pane."""
     # Reuse the same service (Zero bloat)
+    mode = request.args.get('mode', 'monthly')
+    
     history = ReportService.get_historical_summary(years=5)
-
-    # Prepare JSON for Liquidity Chart
-    chart_raw = sorted(history, key=lambda x: x['month_label'])
-    chart_data = {
-        'labels': [m['month_label'] for m in chart_raw],
-        'payments': [m['cash']['payments'] / 100 for m in chart_raw],
-        'net_cash': [m['cash']['net_cash'] / 100 for m in chart_raw]
-    }
+    
+    chart_data = ReportService.get_chart_data(history, perspective='cash', mode=mode)
+    
     return render_template('reports/partials/cash_history_table.html', 
-                           history=history, chart_json=json.dumps(chart_data))
+                           history=history, 
+                           chart_json=json.dumps(chart_data),
+                           current_mode=mode)
 
 # --- HTMX TARGETED AUDIT ROUTES ---
 

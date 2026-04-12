@@ -447,3 +447,75 @@ class ReportService:
             results.append(m)
 
         return results
+    
+    @classmethod
+    def get_chart_data(cls, history, perspective='accrual', mode='monthly'):
+        """
+        Brain: Transforms 60-month history into Monthly, Quarterly, or Yearly aggregates.
+        perspective: 'accrual' or 'cash'
+        mode: 'monthly', 'quarterly', 'yearly'
+        """
+        # 1. Sort chronological (Oldest -> Newest)
+        raw_data = sorted(history, key=lambda x: f"{x['year']}-{x['month']:02d}")
+        
+        # 2. Map the correct keys for the perspective
+        if perspective == 'accrual':
+            kpi_keys = ['revenue', 'cogs', 'gross_profit', 'opex', 'operating_profit', 'total_adj', 'net_income']
+            sub_key = 'accrual'
+        else:
+            kpi_keys = ['payments', 'cogs_paid', 'gross_margin', 'opex_paid', 'operating_cash', 'manual_adj', 'net_cash']
+            sub_key = 'cash'
+
+        # 3. Aggregation Logic
+        aggregated = {} # Key: Group Label, Value: Dict of KPI sums
+
+        for m in raw_data:
+            # Determine the Group Key
+            if mode == 'yearly':
+                group_key = str(m['year'])
+            elif mode == 'quarterly':
+                q = (m['month'] - 1) // 3 + 1
+                group_key = f"{m['year']} Q{q}"
+            else: # monthly
+                group_key = m['month_label']
+
+            if group_key not in aggregated:
+                aggregated[group_key] = {k: 0 for k in kpi_keys}
+            
+            # Add values to the group
+            for k in kpi_keys:
+                aggregated[group_key][k] += (m[sub_key].get(k, 0) / 100) # Convert to dollars for chart
+
+        # 4. Prepare Chart.js datasets structure
+        labels = list(aggregated.keys())
+        
+        # Optional: Filter monthly to last 24 months to keep chart readable
+        if mode == 'monthly':
+            labels = labels[-24:]
+
+        datasets = []
+        # Professional Styling Map
+        style_map = {
+            'revenue': {'color': '#3b82f6', 'width': 3, 'dash': []},      # Solid Blue
+            'payments': {'color': '#10b981', 'width': 3, 'dash': []},     # Solid Green
+            'net_income': {'color': '#0f172a', 'width': 3, 'dash': []},   # Solid Slate
+            'net_cash': {'color': '#064e3b', 'width': 3, 'dash': []},     # Solid Dark Green
+            'cogs': {'color': '#ef4444', 'width': 1, 'dash': [5, 5]},    # Dashed Red
+            'cogs_paid': {'color': '#ef4444', 'width': 1, 'dash': [5, 5]},
+            'opex': {'color': '#f59e0b', 'width': 1, 'dash': [2, 2]},    # Dotted Amber
+            'opex_paid': {'color': '#f59e0b', 'width': 1, 'dash': [2, 2]},
+        }
+
+        for k in kpi_keys:
+            style = style_map.get(k, {'color': '#94a3b8', 'width': 1, 'dash': [5, 5]})
+            datasets.append({
+                'label': k.replace('_', ' ').capitalize(),
+                'data': [aggregated[l][k] for l in labels],
+                'borderColor': style['color'],
+                'borderWidth': style['width'],
+                'borderDash': style['dash'],
+                'tension': 0.3,
+                'pointRadius': 2 if len(labels) < 20 else 2
+            })
+
+        return {'labels': labels, 'datasets': datasets}
