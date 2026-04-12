@@ -3,7 +3,8 @@ from flask_login import login_required
 from datetime import datetime, date
 import calendar
 from zoneinfo import ZoneInfo
-from ..services.reports_service import ReportService
+from ..services.monthly_reports_service import MonthlyReportService
+from ..services.history_reports_service import HistoryReportService
 from ..services.settings_service import MetadataService
 from ..extensions import db
 import json
@@ -20,7 +21,7 @@ def before_request():
 def index():
     """
     Messenger: Orchestrates date range selection and fetches the 
-    Dual-Perspective financial package from the ReportService.
+    Dual-Perspective financial package from the MonthlyReportService.
     """
     # 1. Determine Business Today (Timezone Aware)
     metadata = MetadataService.get_by_id(1)
@@ -44,7 +45,7 @@ def index():
         year, month = today.year, today.month
 
     # 4. Brain Call: Fetch the 6-Table Financial Package
-    data = ReportService.get_financial_package(start_date, end_date)
+    data = MonthlyReportService.get_financial_package(start_date, end_date)
 
     # 5. Render Full Page (Standard GET)
     return render_template(
@@ -62,10 +63,10 @@ def accrual_history():
     mode = request.args.get('mode', 'monthly')
     
     # 2. Fetch the 60-month raw data
-    history = ReportService.get_historical_summary(years=5)
+    history = HistoryReportService.get_historical_summary(years=5)
     
     # 3. Transform raw data into structured Chart.js JSON
-    chart_data = ReportService.get_chart_data(history, perspective='accrual', mode=mode)
+    chart_data = HistoryReportService.get_chart_data(history, perspective='accrual', mode=mode)
     
     return render_template('reports/partials/accrual_history_table.html', 
                            history=history, 
@@ -78,9 +79,9 @@ def cash_history():
     # Reuse the same service (Zero bloat)
     mode = request.args.get('mode', 'monthly')
     
-    history = ReportService.get_historical_summary(years=5)
+    history = HistoryReportService.get_historical_summary(years=5)
     
-    chart_data = ReportService.get_chart_data(history, perspective='cash', mode=mode)
+    chart_data = HistoryReportService.get_chart_data(history, perspective='cash', mode=mode)
     
     return render_template('reports/partials/cash_history_table.html', 
                            history=history, 
@@ -93,17 +94,20 @@ def cash_history():
 def revenue_audit():
     """Messenger: Targeted sort for the Revenue Audit table."""
     # 1. Context extraction
-    month = request.args.get('month', type=int)
-    year = request.args.get('year', type=int)
+    raw_month = request.args.get('month', type=int)
+    raw_year = request.args.get('year', type=int)
     sort_by = request.args.get('sort')
     direction = request.args.get('dir')
+
+    month = int(raw_month) if raw_month else date.today().month
+    year = int(raw_year) if raw_year else date.today().year
 
     # 2. Date windowing
     _, last_day = calendar.monthrange(year, month)
     start_date, end_date = date(year, month, 1), date(year, month, last_day)
 
     # 3. Brain Call
-    rows = ReportService._get_invoice_audit(start_date, end_date, sort_by, direction)
+    rows = MonthlyReportService._get_invoice_audit(start_date, end_date, sort_by, direction)
 
     # 4. Return only the partial
     return render_template('reports/partials/revenue_table.html', 
@@ -112,15 +116,18 @@ def revenue_audit():
 @bp.route('/payment-audit')
 def payment_audit():
     """Messenger: Targeted sort for the Payment Audit table."""
-    month = request.args.get('month', type=int)
-    year = request.args.get('year', type=int)
+    raw_month = request.args.get('month', type=int)
+    raw_year = request.args.get('year', type=int)
     sort_by = request.args.get('sort')
     direction = request.args.get('dir')
+    
+    month = int(raw_month) if raw_month else date.today().month
+    year = int(raw_year) if raw_year else date.today().year
 
     _, last_day = calendar.monthrange(year, month)
     start_date, end_date = date(year, month, 1), date(year, month, last_day)
 
-    rows = ReportService._get_payment_audit(start_date, end_date, sort_by, direction)
+    rows = MonthlyReportService._get_payment_audit(start_date, end_date, sort_by, direction)
 
     return render_template('reports/partials/payment_table.html', 
                            rows=rows, month=month, year=year)
@@ -128,15 +135,18 @@ def payment_audit():
 @bp.route('/expense-audit')
 def expense_audit():
     """Messenger: Targeted sort for the Expense Audit table."""
-    month = request.args.get('month', type=int)
-    year = request.args.get('year', type=int)
+    raw_month = request.args.get('month', type=int)
+    raw_year = request.args.get('year', type=int)
     sort_by = request.args.get('sort')
     direction = request.args.get('dir')
+
+    month = int(raw_month) if raw_month else date.today().month
+    year = int(raw_year) if raw_year else date.today().year
 
     _, last_day = calendar.monthrange(year, month)
     start_date, end_date = date(year, month, 1), date(year, month, last_day)
 
-    rows = ReportService._get_expense_audit(start_date, end_date, sort_by, direction)
+    rows = MonthlyReportService._get_expense_audit(start_date, end_date, sort_by, direction)
 
     return render_template('reports/partials/expense_table.html', 
                            rows=rows, month=month, year=year)
@@ -144,15 +154,18 @@ def expense_audit():
 @bp.route('/adjustment-audit')
 def adjustment_audit():
     """Messenger: Targeted sort for the Adjustment Audit table."""
-    month = request.args.get('month', type=int)
-    year = request.args.get('year', type=int)
+    raw_month = request.args.get('month')
+    raw_year = request.args.get('year')
     sort_by = request.args.get('sort')
     direction = request.args.get('dir')
+
+    month = int(raw_month) if raw_month else date.today().month
+    year = int(raw_year) if raw_year else date.today().year
 
     _, last_day = calendar.monthrange(year, month)
     start_date, end_date = date(year, month, 1), date(year, month, last_day)
 
-    rows = ReportService._get_adjustment_audit(start_date, end_date, sort_by, direction)
+    rows = MonthlyReportService._get_adjustment_audit(start_date, end_date, sort_by, direction)
 
     return render_template('reports/partials/adjustment_table.html', 
                            rows=rows, month=month, year=year)
