@@ -39,7 +39,7 @@
     <!-- 2. VISUAL RANKING (TOP 10) -->
     <section class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
         <h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-6">Top 10 Clients by Volume</h4>
-        <div class="w-full" id="canvas-wrapper">
+        <div style="height: 400px" class="w-full" id="canvas-wrapper">
             <canvas id="clientChart" data-chart-values='{{ chart_json | safe }}'></canvas>
         </div>
     </section>
@@ -82,36 +82,32 @@
 </div>
 
 <script>
-    /**
-     * THE STABILITY FIX:
-     * We use a small delay (requestAnimationFrame) to ensure the DOM has 
-     * finished its "Settle" transition before drawing the chart.
-     */
     (function() {
-        const initChart = () => {
-            const canvas = document.getElementById('clientChart');
-            if (!canvas) return;
-            const data = JSON.parse(canvas.getAttribute('data-chart-values'));
-            
-            new Chart(canvas.getContext('2d'), {
-                type: 'bar',
-                data: data,
-                options: {
-                    indexAxis: 'y',
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        x: { ticks: { font: { size: 9 }, callback: (v) => '$' + v.toLocaleString() } },
-                        y: { ticks: { font: { size: 10, weight: 'bold' } } }
+        const canvas = document.getElementById('clientChart');
+        if (!canvas) return;
+        const data = JSON.parse(canvas.getAttribute('data-chart-values'));
+        
+        new Chart(canvas.getContext('2d'), {
+            type: 'bar',
+            data: data,
+            options: {
+                indexAxis: 'y', // MAKES IT HORIZONTAL
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    x: { 
+                        grid: { display: false },
+                        ticks: { font: { size: 9 }, callback: (v) => '$' + v.toLocaleString() }
+                    },
+                    y: { 
+                        grid: { display: false },
+                        ticks: { font: { size: 10, weight: 'bold' } }
                     }
                 }
-            });
-        };
-
-        // Wait for the next browser paint cycle
-        window.requestAnimationFrame(() => {
-            initChart();
+            }
         });
     })();
 </script>

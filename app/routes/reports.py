@@ -105,7 +105,7 @@ def client_performance():
     data = AnalyticsReportService.get_client_performance(year, mode)
 
     # 3. Chart Prep (Top 10)
-    top_10 = data['clients'][:3]
+    top_10 = data['clients'][:10]
     bar_color = '#3b82f6' if mode == 'revenue' else '#10b981'
     
     chart_json = {
