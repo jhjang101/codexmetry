@@ -36,7 +36,7 @@
     </tr>
 {% endmacro %}
 
-<div class="max-w-5xl mx-auto px-4 pb-12">
+<div class="max-w-6xl mx-auto px-4 pb-12">
 
     <!-- 1. TAB NAVIGATION (Persistent) -->
     <div class="flex items-end -mb-px">
@@ -95,6 +95,15 @@
             Product Performance
         </button>
 
+        {# Expense Performance #}
+        <button hx-get="{{ url_for('reports.expense_performance') }}" 
+                hx-trigger="click once" 
+                hx-target="#pane-expenses" 
+                hx-indicator="#loading-spinner"
+                onclick="switchTab('expenses')" id="tab-btn-expenses"
+                class="tab-btn px-6 py-2.5 text-[10px] font-black uppercase tracking-widest transition-all border-t border-l border-r rounded-t-lg bg-gray-100 border-transparent text-gray-400 hover:bg-gray-50">
+            Expense Breakdown
+        </button>
 
     </div>
 
@@ -280,6 +289,10 @@
         <div id="pane-products" class="report-pane hidden">
             <!-- HTMX will inject product_performance.html here -->
         </div>
+
+        <!-- PANE 6: EXPENSES (Loaded via HTMX) -->
+        <div id="pane-expenses" class="report-pane hidden">
+            <!-- HTMX will inject expense_performance.html here -->
 
 
 

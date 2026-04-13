@@ -76,8 +76,12 @@ function initReportChart(canvasId) {
     if (existingChart) existingChart.destroy();
 
     // 3. Determine View (horizontal bars, doughnuts)
-    const isBar = canvasId.includes('clientChart') || canvasId.includes('productChart');
-    const isDoughnut = canvasId.includes('categoryChart');
+    const isBar = canvasId.includes('clientChart') || 
+                  canvasId.includes('productChart') || 
+                  canvasId.includes('vendorChart');
+
+    const isDoughnut = canvasId.includes('categoryChart') || 
+                       canvasId.includes('expenseCategoryChart');
 
     // Determine Type string for Chart.js
     let chartType = 'line';
@@ -125,7 +129,11 @@ function initReportChart(canvasId) {
  * Wakes up after HTMX finishes a swap and paints the screen.
  */
 document.addEventListener('htmx:afterSettle', function(evt) {
-    const charts = ['accrualChart', 'cashChart', 'clientChart', 'categoryChart', 'productChart'];
+    const charts = [
+        'accrualChart', 'cashChart', 'clientChart', 
+        'categoryChart', 'productChart', 
+        'expenseCategoryChart', 'vendorChart'
+    ];
     setTimeout(() => {
         charts.forEach(id => {
             if (document.getElementById(id)) initReportChart(id);

@@ -130,7 +130,6 @@ def client_performance():
 # --- PRODUCT ANALYTICS ROUTES ---
 
 @bp.route('/product-performance')
-@login_required
 def product_performance():
     """Messenger: Orchestrates product SKU and category analytics."""
     # 1. Capture user selection
@@ -140,15 +139,15 @@ def product_performance():
     # 2. Brain Call: Get dual aggregation
     data = AnalyticsReportService.get_product_performance(year)
 
-    # 3. Visualization A: Category Mix (Doughnut)
-    # Define a clean blue/slate palette for categories
-    category_colors = ['#1e3a8a', '#1d4ed8', '#3b82f6', '#60a5fa', '#93c5fd', '#bfdbfe']
+    # 3. GENERATE DYNAMIC BLUE GRADIENT
+    # Uses Hue 220 (Tailwind Blue)
+    colors = generate_hsl_gradient(hue=220, count=len(data['categories']))
     
     category_chart_json = {
         'labels': [c['name'] for c in data['categories']],
         'datasets': [{
             'data': [c['amount'] / 100 for c in data['categories']],
-            'backgroundColor': category_colors,
+            'backgroundColor': colors,
             'borderWidth': 1
         }]
     }
@@ -171,6 +170,66 @@ def product_performance():
         data=data,
         category_chart_json=json.dumps(category_chart_json),
         product_chart_json=json.dumps(product_chart_json),
+        current_year=year
+    )
+
+# --- EXPENSE ANALYTICS ROUTES ---
+
+@bp.route('/expense-performance')
+def expense_performance():
+    today = datetime.now()
+    year = request.args.get('year', today.year, type=int)
+    data = AnalyticsReportService.get_expense_performance(year)
+
+    # 1. GROUP BY CLASSIFICATION for gradient generation
+    cogs_cats = [c for c in data['categories'] if c['is_cogs']]
+    opex_cats = [c for c in data['categories'] if not c['is_cogs']]
+
+    # 2. GENERATE FAMILY GRADIENTS
+    # COGS = Red Family (Hue 0) | OPEX = Amber Family (Hue 25)
+    cogs_colors = generate_hsl_gradient(hue=0, count=len(cogs_cats), start_l=50, end_l=80)
+    opex_colors = generate_hsl_gradient(hue=30, count=len(opex_cats), start_l=50, end_l=80)
+
+    # 3. MAP COLORS BACK TO ORIGINAL SORTED LIST
+    # We create iterators to pop colors in order
+    c_iter = iter(cogs_colors)
+    o_iter = iter(opex_colors)
+    
+    colors = []
+    for cat in data['categories']:
+        if cat['is_cogs']:
+            colors.append(next(c_iter))
+        else:
+            colors.append(next(o_iter))
+    
+    # Prepare Category Chart
+    category_json = {
+        'labels': [c['name'] for c in data['categories']],
+        'datasets': [{
+            'data': [c['amount'] / 100 for c in data['categories']],
+            'backgroundColor': colors,
+            'borderWidth': 1
+        }]
+    }
+
+    # Prepare Top 10 VENDORS Bar Chart
+    top_10_vendors = data['vendors'][:10]
+    vendor_json = {
+        'labels': [v['name'] for v in top_10_vendors],
+        'datasets': [{
+            'label': 'Total Paid ($)',
+            'data': [v['amount'] / 100 for v in top_10_vendors],
+            'backgroundColor': '#ef444444', # Light Red
+            'borderColor': '#dc2626',
+            'borderWidth': 1
+        }]
+    }
+
+    return render_template(
+        'reports/partials/expense_performance.html',
+        data=data,
+        category_chart_json=json.dumps(category_json),
+        vendor_chart_json=json.dumps(vendor_json), # NEW ID
         current_year=year
     )
 
@@ -255,3 +314,16 @@ def adjustment_audit():
 
     return render_template('reports/partials/adjustment_table.html', 
                            rows=rows, month=month, year=year)
+
+# --- INTERNAL HELPERS ---
+
+def generate_hsl_gradient(hue, count, start_l=50, end_l=80):
+    """
+    Brain: Generates a list of HSL strings as a gradient.
+    hue: 0-360 (0=Red, 35=Amber, 220=Blue)
+    """
+    if count <= 0: return []
+    if count == 1: return [f'hsl({hue}, 90%, {start_l}%)']
+    
+    step = (end_l - start_l) / (count - 1)
+    return [f'hsl({hue}, 90%, {int(start_l + (i * step))}%)' for i in range(count)]

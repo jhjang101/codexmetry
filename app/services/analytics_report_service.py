@@ -1,7 +1,7 @@
 from sqlalchemy import select, func, and_
 from datetime import date
 from ..extensions import db
-from ..models import Invoice, InvoiceItem, ProductCategory, Payment, Client, Product
+from ..models import Invoice, InvoiceItem, ProductCategory, Payment, Client, Product, Expense, ExpenseCategory, Vendor
 
 class AnalyticsReportService:
 
@@ -154,4 +154,67 @@ class AnalyticsReportService:
             'grand_total': grand_total,
             'categories': categories,
             'products': products
+        }
+    
+    @classmethod
+    def get_expense_performance(cls, year: int):
+        """
+        Brain: Aggregates spend by Category (Mix) and Vendor (Ranking) for a year.
+        Strictly filters for 'completed' expenses (Real outgoings).
+        """
+        start_date = date(year, 1, 1)
+        end_date = date(year, 12, 31)
+
+        # 1. CATEGORY AGGREGATION (For Doughnut)
+        cat_stmt = (
+            select(
+                ExpenseCategory.type,
+                ExpenseCategory.is_cogs,
+                func.sum(Expense.total_amount).label('total')
+            )
+            .join(ExpenseCategory, Expense.category_id == ExpenseCategory.id)
+            .where(
+                Expense.is_active == True, 
+                Expense.status == 'completed', 
+                Expense.expense_date.between(start_date, end_date)
+            )
+            .group_by(ExpenseCategory.type, ExpenseCategory.is_cogs)
+            .order_by(func.sum(Expense.total_amount).desc())
+        )
+        cat_results = db.session.execute(cat_stmt).all()
+        grand_total = sum(r[2] for r in cat_results) or 0
+
+        # 2. VENDOR AGGREGATION (For Bar Chart)
+        ven_stmt = (
+            select(
+                Vendor.company_name,
+                func.sum(Expense.total_amount).label('total')
+            )
+            .join(Vendor, Expense.vendor_id == Vendor.id)
+            .where(Expense.is_active == True, Expense.status == 'completed',
+                Expense.expense_date.between(start_date, end_date))
+            .group_by(Vendor.company_name)
+            .order_by(func.sum(Expense.total_amount).desc())
+        )
+        ven_results = db.session.execute(ven_stmt).all()
+
+        # 3. Format Data
+        categories = []
+        for r in cat_results:
+            amount = r[2] or 0
+            categories.append({
+                'name': r[0],
+                'is_cogs': r[1],
+                'amount': amount,
+                'percentage': round((amount / grand_total * 100), 1) if grand_total > 0 else 0
+            })
+        
+        vendors = [{'rank': idx, 'name': r[0], 'amount': r[1] or 0} 
+                for idx, r in enumerate(ven_results, start=1)]
+
+        return {
+            'year': year,
+            'grand_total': grand_total,
+            'categories': categories,
+            'vendors': vendors
         }
