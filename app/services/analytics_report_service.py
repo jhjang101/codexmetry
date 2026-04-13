@@ -78,3 +78,80 @@ class AnalyticsReportService:
             'year': year,
             'mode': mode
         }
+    
+    @classmethod
+    def get_product_performance(cls, year: int):
+        """
+        Brain: Aggregates revenue by Category and Product SKU for a specific year.
+        Strictly filters for Issued/Completed revenue items.
+        """
+        start_date = date(year, 1, 1)
+        end_date = date(year, 12, 31)
+
+        # 1. CATEGORY AGGREGATION
+        cat_stmt = (
+            select(
+                ProductCategory.type,
+                func.sum(InvoiceItem.quantity * InvoiceItem.billed_unit_price).label('total')
+            )
+            .join(Product, Product.category_id == ProductCategory.id)
+            .join(InvoiceItem, InvoiceItem.product_id == Product.id)
+            .join(Invoice, InvoiceItem.invoice_id == Invoice.id)
+            .where(
+                Invoice.is_active == True,
+                Invoice.status != 'draft',
+                Invoice.invoice_date.between(start_date, end_date),
+                ProductCategory.is_revenue == True
+            )
+            .group_by(ProductCategory.type)
+            .order_by(func.sum(InvoiceItem.quantity * InvoiceItem.billed_unit_price).desc())
+        )
+        cat_results = db.session.execute(cat_stmt).all()
+        grand_total = sum(r[1] for r in cat_results) or 0
+
+        categories = []
+        for r in cat_results:
+            categories.append({
+                'name': r[0],
+                'amount': r[1] or 0,
+                'percentage': round((r[1] / grand_total * 100), 1) if grand_total > 0 else 0
+            })
+
+        # 2. PRODUCT AGGREGATION (SKU Level)
+        prod_stmt = (
+            select(
+                Product.name,
+                Product.catalog_number,
+                func.sum(InvoiceItem.quantity).label('qty_sold'),
+                func.sum(InvoiceItem.quantity * InvoiceItem.billed_unit_price).label('total')
+            )
+            .join(InvoiceItem, InvoiceItem.product_id == Product.id)
+            .join(Invoice, InvoiceItem.invoice_id == Invoice.id)
+            .join(ProductCategory, Product.category_id == ProductCategory.id) # Filter out non-revenue
+            .where(
+                Invoice.is_active == True,
+                Invoice.status != 'draft',
+                Invoice.invoice_date.between(start_date, end_date),
+                ProductCategory.is_revenue == True
+            )
+            .group_by(Product.name, Product.catalog_number)
+            .order_by(func.sum(InvoiceItem.quantity * InvoiceItem.billed_unit_price).desc())
+        )
+        prod_results = db.session.execute(prod_stmt).all()
+
+        products = []
+        for idx, r in enumerate(prod_results, start=1):
+            products.append({
+                'rank': idx,
+                'name': r[0],
+                'catalog': r[1],
+                'qty': r[2] or 0,
+                'amount': r[3] or 0
+            })
+
+        return {
+            'year': year,
+            'grand_total': grand_total,
+            'categories': categories,
+            'products': products
+        }

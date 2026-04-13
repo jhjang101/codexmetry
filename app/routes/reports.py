@@ -127,6 +127,52 @@ def client_performance():
         current_mode=mode
     )
 
+# --- PRODUCT ANALYTICS ROUTES ---
+
+@bp.route('/product-performance')
+@login_required
+def product_performance():
+    """Messenger: Orchestrates product SKU and category analytics."""
+    # 1. Capture user selection
+    today = datetime.now()
+    year = request.args.get('year', today.year, type=int)
+
+    # 2. Brain Call: Get dual aggregation
+    data = AnalyticsReportService.get_product_performance(year)
+
+    # 3. Visualization A: Category Mix (Doughnut)
+    # Define a clean blue/slate palette for categories
+    category_colors = ['#1e3a8a', '#1d4ed8', '#3b82f6', '#60a5fa', '#93c5fd', '#bfdbfe']
+    
+    category_chart_json = {
+        'labels': [c['name'] for c in data['categories']],
+        'datasets': [{
+            'data': [c['amount'] / 100 for c in data['categories']],
+            'backgroundColor': category_colors,
+            'borderWidth': 1
+        }]
+    }
+
+    # 4. Visualization B: Top 10 Products (Horizontal Bar)
+    top_10 = data['products'][:10]
+    product_chart_json = {
+        'labels': [p['name'] for p in top_10],
+        'datasets': [{
+            'label': 'Product Revenue ($)',
+            'data': [p['amount'] / 100 for p in top_10],
+            'backgroundColor': '#3b82f644',
+            'borderColor': '#3b82f6',
+            'borderWidth': 1
+        }]
+    }
+
+    return render_template(
+        'reports/partials/product_performance.html',
+        data=data,
+        category_chart_json=json.dumps(category_chart_json),
+        product_chart_json=json.dumps(product_chart_json),
+        current_year=year
+    )
 
 # --- HTMX TARGETED AUDIT ROUTES ---
 

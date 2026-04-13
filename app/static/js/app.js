@@ -75,11 +75,17 @@ function initReportChart(canvasId) {
     const existingChart = Chart.getChart(canvas);
     if (existingChart) existingChart.destroy();
 
-    // 3. Determine View (Pane 4 uses horizontal bars)
-    const isBar = canvasId.includes('clientChart'); 
-    
+    // 3. Determine View (horizontal bars, doughnuts)
+    const isBar = canvasId.includes('clientChart') || canvasId.includes('productChart');
+    const isDoughnut = canvasId.includes('categoryChart');
+
+    // Determine Type string for Chart.js
+    let chartType = 'line';
+    if (isBar) chartType = 'bar';
+    if (isDoughnut) chartType = 'doughnut';
+
     new Chart(canvas.getContext('2d'), {
-        type: isBar ? 'bar' : 'line',
+        type: chartType,
         data: data,
         options: {
             indexAxis: isBar ? 'y' : 'x',
@@ -88,32 +94,25 @@ function initReportChart(canvasId) {
             maxBarThickness: 40,        // Forensic standard: Prevents 'huge' bars
             plugins: {
                 legend: { 
-                    display: !isBar, 
-                    position: 'bottom',
-                    labels: { boxWidth: 12, font: { size: 9, weight: 'bold' } }
+                    display: !isBar, // Bar charts hide legend, Doughnut/Line show them
+                    position: isDoughnut ? 'right' : 'bottom',
+                    labels: { boxWidth: 10, font: { size: 9, weight: 'bold' } }
                 }
             },
-            scales: {
+            // Only define scales if NOT a doughnut (Doughnuts have no axes)
+            scales: isDoughnut ? {} : {
                 x: { 
                     grid: { color: '#f8fafc' }, // Subtle grid lines
                     ticks: { 
                         font: { size: 9 },
-                        callback: function(value) {
-                            // If Bar, this is a Price. If Line, this is a Month string.
-                            if (isBar) return '$' + value.toLocaleString();
-                            return this.getLabelForValue(value);
-                        }
+                        callback: function(v) { return isBar ? '$' + v.toLocaleString() : this.getLabelForValue(v); }
                     } 
                 },
                 y: { 
                     grid: { color: '#f1f5f9' }, // Subtle grid lines
                     ticks: { 
                         font: { size: 10, weight: isBar ? 'bold' : 'normal' },
-                        callback: function(value) {
-                            // If Bar, this is a Client Name string. If Line, this is a Price.
-                            if (isBar) return this.getLabelForValue(value);
-                            return '$' + value.toLocaleString();
-                        }
+                        callback: function(v) { return isBar ? this.getLabelForValue(v) : '$' + v.toLocaleString(); }
                     } 
                 }
             }
@@ -126,12 +125,10 @@ function initReportChart(canvasId) {
  * Wakes up after HTMX finishes a swap and paints the screen.
  */
 document.addEventListener('htmx:afterSettle', function(evt) {
-    const charts = ['accrualChart', 'cashChart', 'clientChart'];
-    
-    // Pushes the execution to the end of the current browser task queue
+    const charts = ['accrualChart', 'cashChart', 'clientChart', 'categoryChart', 'productChart'];
     setTimeout(() => {
         charts.forEach(id => {
             if (document.getElementById(id)) initReportChart(id);
         });
-    }, 0);
+    }, 50);
 });

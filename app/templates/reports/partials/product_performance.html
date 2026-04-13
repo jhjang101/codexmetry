@@ -1,0 +1,98 @@
+<div class="p-6 space-y-6" id="product-performance-container">
+    
+    <!-- 1. ANALYTICS CONTROL BAR -->
+    <section class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex justify-between items-center">
+        <div class="flex items-center gap-4">
+            <h3 class="text-xs font-bold text-gray-600 uppercase tracking-widest">Product & Category Analytics</h3>
+            <div class="flex gap-2" id="product-filter-form">
+                <select name="year" class="text-[10px] font-bold border rounded-lg p-1.5 outline-none focus:ring-1 focus:ring-blue-500 bg-gray-50 cursor-pointer">
+                    {% for y in range(now.year, now.year - 5, -1) %}
+                        <option value="{{ y }}" {{ 'selected' if y == current_year }}>Year: {{ y }}</option>
+                    {% endfor %}
+                </select>
+                <button hx-get="{{ url_for('reports.product_performance') }}"
+                        hx-target="#pane-products"
+                        hx-include="#product-filter-form select"
+                        hx-indicator="#loading-spinner"
+                        class="bg-blue-600 text-white px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-blue-700">
+                    Update Report
+                </button>
+            </div>
+        </div>
+        <div class="text-right">
+            <span class="text-[9px] font-bold text-gray-400 uppercase tracking-wider block">Total Revenue:</span>
+            <span class="text-sm font-black text-blue-700">{{ data.grand_total | usd }}</span>
+        </div>
+    </section>
+
+    <!-- 2. VISUALIZATION ROW -->
+    <div class="flex flex-row w-full gap-6">
+        <!-- Category Mix (40%) -->
+        <section class="flex-1 min-w-0 bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+            <h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-6">Market Mix by Category</h4>
+            <div style="height: 300px;" class="w-full relative">
+                <canvas id="categoryChart" data-chart-values='{{ category_chart_json | safe }}'></canvas>
+            </div>
+        </section>
+
+        <!-- Top Products (70%) -->
+        <section class="w-7/12 bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+            <h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-6">Top 10 Products by Revenue</h4>
+            <div style="height: 300px;" class="w-full relative">
+                <canvas id="productChart" data-chart-values='{{ product_chart_json | safe }}'></canvas>
+            </div>
+        </section>
+    </div>
+
+    <!-- 3. DATA TABLES ROW -->
+    <div class="flex flex-row w-full gap-6">
+        <!-- Category Table -->
+        <div class="flex-1 min-w-0 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <table class="min-w-full text-xs">
+                <thead class="bg-gray-50 text-[9px] font-bold text-gray-500 uppercase border-b">
+                    <tr>
+                        <th class="px-4 py-3 text-left">Category</th>
+                        <th class="px-4 py-3 text-right">Revenue</th>
+                        <th class="px-4 py-3 text-right">% of Mix</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for cat in data.categories %}
+                    <tr class="hover:bg-blue-50/30">
+                        <td class="px-4 py-2 font-bold text-gray-700">{{ cat.name }}</td>
+                        <td class="px-4 py-2 text-right font-medium text-blue-700">{{ cat.amount | usd }}</td>
+                        <td class="px-4 py-2 text-right text-gray-400 font-mono">{{ cat.percentage }}%</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Product Table -->
+        <div class="w-7/12 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <table class="min-w-full text-xs">
+                <thead class="bg-gray-50 text-[9px] font-bold text-gray-500 uppercase border-b">
+                    <tr>
+                        <th class="px-4 py-3 text-left">Rank</th>
+                        <th class="px-4 py-3 text-left">Product / Catalog #</th>
+                        <th class="px-4 py-3 text-right">Qty Sold</th>
+                        <th class="px-4 py-3 text-right">Revenue</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for prod in data.products[:10] %}
+                    <tr class="hover:bg-blue-50/30">
+                        <td class="px-4 py-2 text-gray-400">#{{ prod.rank }}</td>
+                        <td class="px-4 py-2">
+                            <p class="font-bold text-gray-700">{{ prod.name }}</p>
+                            <p class="text-[9px] text-gray-400 font-mono uppercase">{{ prod.catalog }}</p>
+                        </td>
+                        <td class="px-4 py-2 text-right text-gray-600">{{ prod.qty }}</td>
+                        <td class="px-4 py-2 text-right font-bold text-blue-700">{{ prod.amount | usd }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

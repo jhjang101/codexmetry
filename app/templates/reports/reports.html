@@ -85,6 +85,16 @@
             Client Performance
         </button>
 
+        {# Product Performance #}
+        <button hx-get="{{ url_for('reports.product_performance') }}" 
+                hx-trigger="click once" 
+                hx-target="#pane-products" 
+                hx-indicator="#loading-spinner"
+                onclick="switchTab('products')" id="tab-btn-products"
+                class="tab-btn px-6 py-2.5 text-[10px] font-black uppercase tracking-widest transition-all border-t border-l border-r rounded-t-lg bg-gray-100 border-transparent text-gray-400 hover:bg-gray-50">
+            Product Performance
+        </button>
+
 
     </div>
 
@@ -264,6 +274,11 @@
         <!-- PANE 4: CLIENTS (Loaded via HTMX) -->
         <div id="pane-clients" class="report-pane hidden">
             <!-- HTMX will inject client_performance.html here -->
+        </div>
+
+        <!-- PANE 5: PRODUCTS (Loaded via HTMX) -->
+        <div id="pane-products" class="report-pane hidden">
+            <!-- HTMX will inject product_performance.html here -->
         </div>
 
 
