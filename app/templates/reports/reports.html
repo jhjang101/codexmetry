@@ -278,4 +278,14 @@
     <i class="fa-solid fa-spinner fa-spin mr-2"></i> CALCULATING 5-YEAR HISTORY...
 </div>
 
+<script>
+
+    function toggleFolder(id) {
+        const row = document.getElementById('fold-' + id);
+        const icon = document.getElementById('icon-' + id);
+        row.classList.toggle('hidden');
+        icon.classList.toggle('rotate-90');
+    }
+</script>
+
 {% endblock %}
