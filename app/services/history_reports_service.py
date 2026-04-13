@@ -242,7 +242,7 @@ class HistoryReportService:
                 'borderWidth': style['width'],
                 'borderDash': style['dash'],
                 'tension': 0.3,
-                'pointRadius': 2 if len(labels) < 20 else 0
+                'pointRadius': 3 if len(labels) < 20 else 2
             })
 
         return {'labels': labels, 'datasets': datasets}

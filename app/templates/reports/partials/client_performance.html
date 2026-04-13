@@ -80,34 +80,3 @@
         </table>
     </section>
 </div>
-
-<script>
-    (function() {
-        const canvas = document.getElementById('clientChart');
-        if (!canvas) return;
-        const data = JSON.parse(canvas.getAttribute('data-chart-values'));
-        
-        new Chart(canvas.getContext('2d'), {
-            type: 'bar',
-            data: data,
-            options: {
-                indexAxis: 'y', // MAKES IT HORIZONTAL
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false }
-                },
-                scales: {
-                    x: { 
-                        grid: { display: false },
-                        ticks: { font: { size: 9 }, callback: (v) => '$' + v.toLocaleString() }
-                    },
-                    y: { 
-                        grid: { display: false },
-                        ticks: { font: { size: 10, weight: 'bold' } }
-                    }
-                }
-            }
-        });
-    })();
-</script>

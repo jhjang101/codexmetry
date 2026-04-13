@@ -91,38 +91,3 @@
         </div>
     </div>
 </div>
-
-<!-- CHART INITIALIZATION -->
-<script>
-    (function() {
-        const canvas = document.getElementById('cashChart');
-        if (!canvas) return;
-
-        // Parse the data from the attribute
-        const data = JSON.parse(canvas.getAttribute('data-chart-values'));
-
-        // Create the chart
-        new Chart(canvas.getContext('2d'), {
-            type: 'line',
-            data: {
-                labels: data.labels,
-                datasets: data.datasets 
-            },
-            options: { 
-                responsive: true, 
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { 
-                        display: true, 
-                        position: 'bottom',
-                        labels: { boxWidth: 12, font: { size: 9, weight: 'bold' } }
-                    }
-                },
-                scales: { 
-                    y: { ticks: { font: { size: 9 }, callback: (v) => '$' + v.toLocaleString() } },
-                    x: { ticks: { font: { size: 9 } } }
-                } 
-            }
-        });
-    })();
-</script>

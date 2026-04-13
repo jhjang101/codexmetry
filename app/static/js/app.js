@@ -57,3 +57,81 @@ function armFocusSync(url) {
         console.log("Sync Engine: Listener active.");
     }, 100);
 }
+
+/**
+ * Universal Chart.js Initializer
+ * Logic: Reads data from DOM, destroys old instances, and applies professional styling.
+ */
+function initReportChart(canvasId) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+
+    // 1. Capture data from the canvas's own data-attribute
+    const rawData = canvas.getAttribute('data-chart-values');
+    if (!rawData) return;
+    const data = JSON.parse(rawData);
+
+    // 2. Memory Protection: Wipe old chart instance if it exists
+    const existingChart = Chart.getChart(canvas);
+    if (existingChart) existingChart.destroy();
+
+    // 3. Determine View (Pane 4 uses horizontal bars)
+    const isBar = canvasId.includes('clientChart'); 
+    
+    new Chart(canvas.getContext('2d'), {
+        type: isBar ? 'bar' : 'line',
+        data: data,
+        options: {
+            indexAxis: isBar ? 'y' : 'x',
+            responsive: true,
+            maintainAspectRatio: false, // Critical: Allows inline style to control height
+            maxBarThickness: 40,        // Forensic standard: Prevents 'huge' bars
+            plugins: {
+                legend: { 
+                    display: !isBar, 
+                    position: 'bottom',
+                    labels: { boxWidth: 12, font: { size: 9, weight: 'bold' } }
+                }
+            },
+            scales: {
+                x: { 
+                    grid: { color: '#f8fafc' }, // Subtle grid lines
+                    ticks: { 
+                        font: { size: 9 },
+                        callback: function(value) {
+                            // If Bar, this is a Price. If Line, this is a Month string.
+                            if (isBar) return '$' + value.toLocaleString();
+                            return this.getLabelForValue(value);
+                        }
+                    } 
+                },
+                y: { 
+                    grid: { color: '#f1f5f9' }, // Subtle grid lines
+                    ticks: { 
+                        font: { size: 10, weight: isBar ? 'bold' : 'normal' },
+                        callback: function(value) {
+                            // If Bar, this is a Client Name string. If Line, this is a Price.
+                            if (isBar) return this.getLabelForValue(value);
+                            return '$' + value.toLocaleString();
+                        }
+                    } 
+                }
+            }
+        }
+    });
+}
+
+/**
+ * THE FORTRESS DISPATCHER:
+ * Wakes up after HTMX finishes a swap and paints the screen.
+ */
+document.addEventListener('htmx:afterSettle', function(evt) {
+    const charts = ['accrualChart', 'cashChart', 'clientChart'];
+    
+    // Pushes the execution to the end of the current browser task queue
+    setTimeout(() => {
+        charts.forEach(id => {
+            if (document.getElementById(id)) initReportChart(id);
+        });
+    }, 0);
+});
