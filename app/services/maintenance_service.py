@@ -1,8 +1,6 @@
 import os
 import logging
 import subprocess
-from urllib.parse import urlparse
-import shutil
 import csv
 import io
 from datetime import datetime
@@ -43,17 +41,15 @@ class MaintenanceService:
     @classmethod
     def create_backup(cls):
         """Brain: Generates a 'Self-Healing' SQL snapshot using pg_dump."""
-        # 1. Parse connection string from environment
-        db_url = os.getenv('DATABASE_URL')
-        if not db_url:
-            raise ValueError("DATABASE_URL not found in environment.")
-            
-        uri = urlparse(db_url)
-        db_user = uri.username
-        db_password = uri.password
-        db_host = uri.hostname
-        db_name = uri.path.lstrip('/')
-        db_port = uri.port or 5432
+        # 1. Pull modular variables directly from environment
+        db_user = os.getenv('DB_USER')
+        db_password = os.getenv('DB_PASSWORD')
+        db_host = os.getenv('DB_HOST')
+        db_name = os.getenv('DB_NAME')
+        db_port = os.getenv('DB_PORT', '5432')
+
+        if not all([db_user, db_password, db_host, db_name]):
+            raise ValueError("Database configuration variables missing for backup.")
         
         # 2. Setup File Identity
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')

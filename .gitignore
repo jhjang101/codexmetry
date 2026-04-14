@@ -20,6 +20,8 @@ instance/config.py
 # --- Database & Storage ---
 app/instance/*
 app/backups/*
+test
+
 # SQLite temporary/journal files
 *.db-journal
 *.db-shm

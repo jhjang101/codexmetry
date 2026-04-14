@@ -13,13 +13,27 @@ def create_app():
     app = Flask(__name__)
 
     # 1. Configuration
+    db_user = os.getenv('DB_USER')
+    db_pass = os.getenv('DB_PASSWORD')
+    db_name = os.getenv('DB_NAME')
+    db_host = os.getenv('DB_HOST')
+    db_port = os.getenv('DB_PORT', '5432')
+
+    if not all([db_user, db_pass, db_name, db_host]):
+        raise RuntimeError(
+            "CRITICAL: Missing mandatory Database environment variables. "
+            "Ensure DB_USER, DB_PASSWORD, DB_NAME, and DB_HOST are set in .env"
+        )
+    
+    db_url = f"postgresql+psycopg://{db_user}:{db_pass}@{db_host}:{db_port}/{db_name}"
+
     UPLOAD_FOLDER = os.path.join(app.root_path, 'static', 'uploads')
     BACKUP_FOLDER = os.path.join(app.root_path, 'backups')
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)
     os.makedirs(BACKUP_FOLDER, exist_ok=True)
     app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'generate-a-long-random-string-here')
     default_db = 'postgresql+psycopg://admin:password@localhost:5432/codexmetry'
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', default_db)
+    app.config['SQLALCHEMY_DATABASE_URI'] = db_url
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['BACKUP_FOLDER'] = BACKUP_FOLDER 
     app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
