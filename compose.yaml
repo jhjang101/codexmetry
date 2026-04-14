@@ -21,17 +21,7 @@ services:
     restart: always
     ports:
       - "5001:5001"
-    environment:
-      # Inject the split variables
-      - DB_USER=${DB_USER}
-      - DB_PASSWORD=${DB_PASSWORD}
-      - DB_NAME=${DB_NAME}
-      - DB_HOST=${DB_HOST}
-      - DB_PORT=${DB_PORT}
-      - SECRET_KEY=${SECRET_KEY}
-      - INITIAL_ADMIN_USERNAME=${INITIAL_ADMIN_USERNAME}
-      - INITIAL_ADMIN_PASSWORD=${INITIAL_ADMIN_PASSWORD}
-      - INITIAL_ADMIN_EMAIL=${INITIAL_ADMIN_EMAIL}
+    env_file: .env
     volumes:
       - ./data/uploads:/app/app/static/uploads
       - ./data/backups:/app/app/backups
