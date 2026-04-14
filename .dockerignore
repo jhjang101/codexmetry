@@ -1,0 +1,29 @@
+# --- Secrets & Environment ---
+.env
+.env.example
+
+# --- Binaries & Cache ---
+tailwindcss
+.venv
+__pycache__
+*.pyc
+
+# --- Local Data & Source Assets ---
+data/
+logo/
+test/
+*.sql
+
+# --- Storage Folders ---
+app/static/uploads/*
+app/backups/*
+
+# --- System & IDE Metadata ---
+.git
+.gitignore
+.dockerignore
+.vscode
+.idea
+*.log
+Thumbs.db
+.DS_Store

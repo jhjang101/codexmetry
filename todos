@@ -1,6 +1,0 @@
-TODOS:
-1. Quotes_service.py - def get_all_with_search
-    stmt = select(cls.model).outerjoin(Client).where(cls.model.is_active == True)
-    is outerjoin necessery?
-
-
