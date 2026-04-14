@@ -20,7 +20,10 @@ instance/config.py
 # --- Database & Storage ---
 app/instance/*
 app/backups/*
-test
+test/
+
+# --- Docker Data Anchor ---
+data/
 
 # SQLite temporary/journal files
 *.db-journal
