@@ -1,8 +1,8 @@
-"""initial postgres baseline
+"""initial baseline
 
-Revision ID: c9941dbbf7d4
+Revision ID: a156e9220171
 Revises: 
-Create Date: 2026-04-01 15:49:12.977879
+Create Date: 2026-04-15 10:21:31.382059
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'c9941dbbf7d4'
+revision = 'a156e9220171'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -21,6 +21,7 @@ def upgrade():
     op.create_table('adjustment_categories',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('type', sa.String(length=50), nullable=False),
+    sa.Column('is_system', sa.Boolean(), server_default='false', nullable=False),
     sa.Column('is_active', sa.Boolean(), nullable=False),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_adjustment_categories')),
     sa.UniqueConstraint('type', name=op.f('uq_adjustment_categories_type'))
@@ -100,24 +101,6 @@ def upgrade():
     sa.UniqueConstraint('email', name=op.f('uq_users_email')),
     sa.UniqueConstraint('username', name=op.f('uq_users_username'))
     )
-    op.create_table('adjustments',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('adjustment_number', sa.String(length=100), nullable=False),
-    sa.Column('description', sa.String(length=255), nullable=False),
-    sa.Column('amount', sa.Integer(), nullable=False),
-    sa.Column('adjustment_date', sa.Date(), server_default=sa.text('CURRENT_DATE'), nullable=False),
-    sa.Column('category_id', sa.Integer(), nullable=True),
-    sa.Column('note', sa.Text(), nullable=True),
-    sa.Column('is_active', sa.Boolean(), nullable=False),
-    sa.Column('created_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
-    sa.Column('updated_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
-    sa.Column('created_by_id', sa.Integer(), nullable=True),
-    sa.Column('updated_by_id', sa.Integer(), nullable=True),
-    sa.ForeignKeyConstraint(['category_id'], ['adjustment_categories.id'], name=op.f('fk_adjustments_category_id_adjustment_categories')),
-    sa.ForeignKeyConstraint(['created_by_id'], ['users.id'], name=op.f('fk_adjustments_created_by_id_users')),
-    sa.ForeignKeyConstraint(['updated_by_id'], ['users.id'], name=op.f('fk_adjustments_updated_by_id_users')),
-    sa.PrimaryKeyConstraint('id', name=op.f('pk_adjustments'))
-    )
     op.create_table('attachments',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('entity_type', sa.String(length=50), nullable=False),
@@ -125,7 +108,7 @@ def upgrade():
     sa.Column('file_path', sa.String(length=255), nullable=False),
     sa.Column('file_name', sa.String(length=255), nullable=False),
     sa.Column('uploaded_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
-    sa.Column('is_generated', sa.Boolean(), server_default='0', nullable=False),
+    sa.Column('is_generated', sa.Boolean(), server_default='false', nullable=False),
     sa.Column('created_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
     sa.Column('updated_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
     sa.Column('created_by_id', sa.Integer(), nullable=True),
@@ -133,18 +116,6 @@ def upgrade():
     sa.ForeignKeyConstraint(['created_by_id'], ['users.id'], name=op.f('fk_attachments_created_by_id_users')),
     sa.ForeignKeyConstraint(['updated_by_id'], ['users.id'], name=op.f('fk_attachments_updated_by_id_users')),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_attachments'))
-    )
-    op.create_table('audit_logs',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('timestamp', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
-    sa.Column('user_id', sa.Integer(), nullable=True),
-    sa.Column('action', sa.String(length=20), nullable=False),
-    sa.Column('target_type', sa.String(length=50), nullable=False),
-    sa.Column('target_id', sa.Integer(), nullable=False),
-    sa.Column('target_label', sa.String(length=255), nullable=True),
-    sa.Column('changes', sa.JSON(), nullable=True),
-    sa.ForeignKeyConstraint(['user_id'], ['users.id'], name=op.f('fk_audit_logs_user_id_users')),
-    sa.PrimaryKeyConstraint('id', name=op.f('pk_audit_logs'))
     )
     op.create_table('clients',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -205,6 +176,22 @@ def upgrade():
     sa.ForeignKeyConstraint(['created_by_id'], ['users.id'], name=op.f('fk_vendors_created_by_id_users')),
     sa.ForeignKeyConstraint(['updated_by_id'], ['users.id'], name=op.f('fk_vendors_updated_by_id_users')),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_vendors'))
+    )
+    op.create_table('audit_logs',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('parent_id', sa.Integer(), nullable=True),
+    sa.Column('order_id', sa.Integer(), nullable=True),
+    sa.Column('timestamp', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
+    sa.Column('user_id', sa.Integer(), nullable=True),
+    sa.Column('action', sa.String(length=20), nullable=False),
+    sa.Column('target_type', sa.String(length=50), nullable=False),
+    sa.Column('target_id', sa.Integer(), nullable=False),
+    sa.Column('target_label', sa.String(length=255), nullable=True),
+    sa.Column('changes', sa.JSON(), nullable=True),
+    sa.ForeignKeyConstraint(['order_id'], ['orders.id'], name=op.f('fk_audit_logs_order_id_orders')),
+    sa.ForeignKeyConstraint(['parent_id'], ['audit_logs.id'], name=op.f('fk_audit_logs_parent_id_audit_logs')),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], name=op.f('fk_audit_logs_user_id_users')),
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_audit_logs'))
     )
     op.create_table('client_contacts',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -329,6 +316,33 @@ def upgrade():
     sa.ForeignKeyConstraint(['product_id'], ['products.id'], name=op.f('fk_po_items_product_id_products')),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_po_items'))
     )
+    op.create_table('adjustments',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('adjustment_number', sa.String(length=100), nullable=False),
+    sa.Column('description', sa.String(length=255), nullable=False),
+    sa.Column('amount', sa.Integer(), nullable=False),
+    sa.Column('adjustment_date', sa.Date(), server_default=sa.text('CURRENT_DATE'), nullable=False),
+    sa.Column('category_id', sa.Integer(), nullable=True),
+    sa.Column('client_id', sa.Integer(), nullable=True),
+    sa.Column('order_id', sa.Integer(), nullable=True),
+    sa.Column('po_id', sa.Integer(), nullable=True),
+    sa.Column('invoice_id', sa.Integer(), nullable=True),
+    sa.Column('note', sa.Text(), nullable=True),
+    sa.Column('is_system', sa.Boolean(), server_default='false', nullable=False),
+    sa.Column('is_active', sa.Boolean(), nullable=False),
+    sa.Column('created_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
+    sa.Column('created_by_id', sa.Integer(), nullable=True),
+    sa.Column('updated_by_id', sa.Integer(), nullable=True),
+    sa.ForeignKeyConstraint(['category_id'], ['adjustment_categories.id'], name=op.f('fk_adjustments_category_id_adjustment_categories')),
+    sa.ForeignKeyConstraint(['client_id'], ['clients.id'], name=op.f('fk_adjustments_client_id_clients')),
+    sa.ForeignKeyConstraint(['created_by_id'], ['users.id'], name=op.f('fk_adjustments_created_by_id_users')),
+    sa.ForeignKeyConstraint(['invoice_id'], ['invoices.id'], name=op.f('fk_adjustments_invoice_id_invoices')),
+    sa.ForeignKeyConstraint(['order_id'], ['orders.id'], name=op.f('fk_adjustments_order_id_orders')),
+    sa.ForeignKeyConstraint(['po_id'], ['purchase_orders.id'], name=op.f('fk_adjustments_po_id_purchase_orders')),
+    sa.ForeignKeyConstraint(['updated_by_id'], ['users.id'], name=op.f('fk_adjustments_updated_by_id_users')),
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_adjustments'))
+    )
     op.create_table('expenses',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('expense_number', sa.String(length=100), nullable=False),
@@ -420,6 +434,7 @@ def downgrade():
     op.drop_table('payments')
     op.drop_table('invoice_items')
     op.drop_table('expenses')
+    op.drop_table('adjustments')
     op.drop_table('po_items')
     op.drop_table('invoices')
     op.drop_table('quote_items')
@@ -427,13 +442,12 @@ def downgrade():
     op.drop_table('vendor_contacts')
     op.drop_table('quotes')
     op.drop_table('client_contacts')
+    op.drop_table('audit_logs')
     op.drop_table('vendors')
     op.drop_table('products')
     op.drop_table('orders')
     op.drop_table('clients')
-    op.drop_table('audit_logs')
     op.drop_table('attachments')
-    op.drop_table('adjustments')
     op.drop_table('users')
     op.drop_table('settings_metadata')
     op.drop_table('product_categories')
