@@ -13,24 +13,34 @@ COPY pyproject.toml uv.lock ./
 RUN /bin/uv sync --frozen --no-install-project --no-dev
 
 
-# --- STAGE 2: The Final Fortress ---
+# --- STAGE 2: The Final Image ---
 FROM python:3.13-slim
 
-# 4. Install only the absolutely necessary system runtime tool
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends netcat-openbsd && \
-    rm -rf /var/lib/apt/lists/*
+# 4. Install necessary system runtime tool
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    netcat-openbsd \
+    curl \
+    ca-certificates \
+    gnupg \
+    && rm -rf /var/lib/apt/lists/*
+
+# 5. Add official PostgreSQL Repo and install Client v17
+RUN curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor -o /usr/share/keyrings/postgresql-keyring.gpg \
+    && echo "deb [signed-by=/usr/share/keyrings/postgresql-keyring.gpg] http://apt.postgresql.org/pub/repos/apt bookworm-pgdg main" > /etc/apt/sources.list.d/pgdg.list \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends postgresql-client-17 \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# 5. Copy the pre-built Python environment from the builder
+# 6. Copy the pre-built Python environment from the builder
 # This skips the entire installation/cache bloat
 COPY --from=builder /app/.venv /app/.venv
 
-# 6. Copy the source code
+# 7. Copy the source code
 COPY . .
 
-# 7. Security & Execution
+# 8. Security & Execution
 # Update PATH so the app uses the virtualenv's Python/Flask automatically
 ENV PATH="/app/.venv/bin:$PATH"
 RUN chmod +x entrypoint.sh
