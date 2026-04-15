@@ -1,5 +1,5 @@
 # --- STAGE 1: The Builder ---
-FROM python:3.13-slim AS builder
+FROM python:3.13-slim-bookworm AS builder
 
 # 1. Install uv binary directly (Official Astral method)
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
@@ -14,7 +14,7 @@ RUN /bin/uv sync --frozen --no-install-project --no-dev
 
 
 # --- STAGE 2: The Final Image ---
-FROM python:3.13-slim
+FROM python:3.13-slim-bookworm
 
 # 4. Install necessary system runtime tool
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -25,7 +25,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # 5. Add official PostgreSQL Repo and install Client v17
-RUN curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor -o /usr/share/keyrings/postgresql-keyring.gpg \
+RUN install -d /usr/share/postgresql-common/pgdg \
+    && curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor -o /usr/share/keyrings/postgresql-keyring.gpg \
     && echo "deb [signed-by=/usr/share/keyrings/postgresql-keyring.gpg] http://apt.postgresql.org/pub/repos/apt bookworm-pgdg main" > /etc/apt/sources.list.d/pgdg.list \
     && apt-get update \
     && apt-get install -y --no-install-recommends postgresql-client-17 \
@@ -34,7 +35,6 @@ RUN curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmo
 WORKDIR /app
 
 # 6. Copy the pre-built Python environment from the builder
-# This skips the entire installation/cache bloat
 COPY --from=builder /app/.venv /app/.venv
 
 # 7. Copy the source code
