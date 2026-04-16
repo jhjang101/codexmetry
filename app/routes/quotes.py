@@ -113,7 +113,7 @@ def add():
     products = ProductService.get_all_products()
     suggested_number = generate_doc_number(prefix='Q', model=Quote, column_name='quote_number')
     initial_row_id = str(int(time.time() * 1000))
-    metadata = db.session.get(SettingsMetadata, 1)
+    metadata = g.metadata
     today = datetime.now(ZoneInfo(g.office_tz)).date()
     expiry_days = metadata.default_quote_expiry_days if metadata else 30
     suggested_expiry = today + timedelta(days=expiry_days)
@@ -327,7 +327,7 @@ def calculate_expiry():
     quote_date_raw = request.args.get('quote_date')
     
     # 1. Fetch the business rule from Metadata
-    metadata = db.session.get(SettingsMetadata, 1)
+    metadata = g.metadata
     expiry_days = metadata.default_quote_expiry_days if metadata else 30
     
     # 2. Perform the math

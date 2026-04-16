@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, session, flash, make_response
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash, make_response, g
 from flask_login import login_required
 from ..services.orders_service import OrderService
 from ..services.invoices_service import InvoiceService
@@ -163,7 +163,7 @@ def add():
         
         customer_po_prefill = po.customer_po_number if po.customer_po_number is not None else ""
         # Use PO override if it exists, else use global metadata default
-        metadata = db.session.get(SettingsMetadata, 1)
+        metadata = g.metadata
         net_days_prefill = po.net_days if po.net_days is not None else (metadata.default_net_days if metadata else 30)
         client_id = po.client_id if po else None
         payer_prefill_id = po.bill_to_id if po else None
@@ -440,7 +440,7 @@ def print_view(id):
     # invoice.balance is (total_due - total_received)
 
     # 5. Calculate Payment Due Date
-    metadata = db.session.get(SettingsMetadata, 1)
+    metadata = g.metadata
     net_days = invoice.net_days if invoice else (metadata.default_net_days if metadata else 30)
     due_date = invoice.invoice_date + timedelta(days=net_days) # type: ignore
 
@@ -634,7 +634,7 @@ def load_po_details():
         po = PurchaseOrderService.get_po_by_id(po_id, exclude_invoice_id=invoice_id)
         if po:
             customer_po_prefill = po.customer_po_number if po.customer_po_number is not None else ""
-            metadata = db.session.get(SettingsMetadata, 1)
+            metadata = g.metadata
             net_days_prefill = po.net_days if po.net_days is not None else (metadata.default_net_days if metadata else 30)
             payer_prefill_id = po.bill_to_id if po else None
 
