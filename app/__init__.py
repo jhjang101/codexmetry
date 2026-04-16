@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 import logging
-from flask import Flask, render_template, request, redirect, url_for, flash, make_response
+from flask import Flask, render_template, request, redirect, url_for, flash, make_response, g
 from sqlalchemy.exc import SQLAlchemyError
 from datetime import datetime
 from zoneinfo import ZoneInfo
@@ -31,8 +31,8 @@ def create_app():
     BACKUP_FOLDER = os.path.join(app.root_path, 'backups')
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)
     os.makedirs(BACKUP_FOLDER, exist_ok=True)
+
     app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'generate-a-long-random-string-here')
-    default_db = 'postgresql+psycopg://admin:password@localhost:5432/codexmetry'
     app.config['SQLALCHEMY_DATABASE_URI'] = db_url
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['BACKUP_FOLDER'] = BACKUP_FOLDER 
@@ -71,6 +71,19 @@ def create_app():
         flash("Please log in to access this page.", "info")
         return redirect(url_for('auth.login', next=request.full_path))
     
+    # --- GLOBAL CONTEXT HOOK ---
+    @app.before_request
+    def load_global_context():
+        """Brain: Fetches Metadata once per request to serve as the Source of Truth."""
+        # Avoid running on static file requests for performance
+        if request.endpoint == 'static':
+            return
+
+        from .services.settings_service import MetadataService
+        # Store in 'g' (Request Global) to prevent redundant DB queries
+        g.metadata = MetadataService.get_by_id(1)
+        g.office_tz = g.metadata.timezone if g.metadata else 'America/Chicago'
+    
     # 3. Register CLI Commands
     from .utils.cli import seed_db_command
     app.cli.add_command(seed_db_command)
@@ -107,11 +120,8 @@ def create_app():
         """Converts UTC database datetime to Business Timezone."""
         if not dt:
             return None
-        
-        from .services.settings_service import MetadataService
-        metadata = MetadataService.get_by_id(1)
-        tz_name = metadata.timezone if metadata else 'America/Chicago'
-        
+
+        tz_name = g.office_tz
         # Ensure the naive datetime from DB is treated as UTC, then convert
         return dt.replace(tzinfo=ZoneInfo('UTC')).astimezone(ZoneInfo(tz_name))
 
@@ -153,11 +163,10 @@ def create_app():
     
     # 7. Global Context Processors (For now, and Metadata)
     @app.context_processor
-    def inject_metadata():
-        from .services.settings_service import MetadataService as Metadata
-        metadata = Metadata.get_by_id(1)
-        tz = metadata.timezone if metadata else 'America/Chicago'
-        now = datetime.now(ZoneInfo(tz))
+    def inject_global_vars():
+        """Injects shared variables into every Jinja template."""
+        metadata = g.metadata
+        now = datetime.now(ZoneInfo(g.office_tz))
         return dict(metadata=metadata, now=now)
 
     return app
