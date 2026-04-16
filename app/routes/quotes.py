@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, session, flash, make_response
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash, make_response, g
 from flask_login import login_required
 from ..services.orders_service import OrderService
 from ..services.quotes_service import QuoteService
@@ -15,7 +15,7 @@ from ..models import Quote
 from ..extensions import db
 from datetime import datetime, timedelta
 import time
-import zoneinfo
+from zoneinfo import ZoneInfo
 
 bp = Blueprint('quotes', __name__)
 
@@ -114,8 +114,7 @@ def add():
     suggested_number = generate_doc_number(prefix='Q', model=Quote, column_name='quote_number')
     initial_row_id = str(int(time.time() * 1000))
     metadata = db.session.get(SettingsMetadata, 1)
-    tz_name = metadata.timezone if metadata else 'America/Chicago'
-    today = datetime.now(zoneinfo.ZoneInfo(tz_name)).date()
+    today = datetime.now(ZoneInfo(g.office_tz)).date()
     expiry_days = metadata.default_quote_expiry_days if metadata else 30
     suggested_expiry = today + timedelta(days=expiry_days)
 

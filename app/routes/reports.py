@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request
+from flask import Blueprint, render_template, request, g
 from flask_login import login_required
 from datetime import datetime, date
 import calendar
@@ -25,9 +25,7 @@ def index():
     Dual-Perspective financial package from the MonthlyReportService.
     """
     # 1. Determine Business Today (Timezone Aware)
-    metadata = MetadataService.get_by_id(1)
-    tz_name = metadata.timezone if metadata else 'America/Chicago'
-    today = datetime.now(ZoneInfo(tz_name))
+    today = datetime.now(ZoneInfo(g.office_tz))
 
     # 2. Extract Month/Year from URL (Fallback to Current)
     year = request.args.get('year', today.year, type=int)
@@ -97,7 +95,7 @@ def cash_history():
 def client_performance():
     """Messenger: Yearly client ranking and bar chart data."""
     # 1. Capture parameters
-    today = datetime.now()
+    today = datetime.now(ZoneInfo(g.office_tz))
     year = request.args.get('year', today.year, type=int)
     mode = request.args.get('mode', 'revenue')
 
@@ -133,7 +131,7 @@ def client_performance():
 def product_performance():
     """Messenger: Orchestrates product SKU and category analytics."""
     # 1. Capture user selection
-    today = datetime.now()
+    today = datetime.now(ZoneInfo(g.office_tz))
     year = request.args.get('year', today.year, type=int)
 
     # 2. Brain Call: Get dual aggregation
@@ -177,7 +175,7 @@ def product_performance():
 
 @bp.route('/expense-performance')
 def expense_performance():
-    today = datetime.now()
+    today = datetime.now(ZoneInfo(g.office_tz))
     year = request.args.get('year', today.year, type=int)
     data = AnalyticsReportService.get_expense_performance(year)
 
