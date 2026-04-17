@@ -12,6 +12,12 @@
 @source "../../utils/*.py";
 @source "../../services/*.py";
 
+/* 4. THE FORTRESS THEME: Global Font Override */
+@theme {
+  /* TO SWITCH FONTS: Simply change 'Inter' to 'Roboto' below */
+  --font-sans: "Roboto", ui-sans-serif, system-ui, sans-serif;
+}
+
 /* --- GLOBAL UI FIX: Restore subtle borders --- */
 @layer base {
   input, textarea, select {
