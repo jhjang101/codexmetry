@@ -10,217 +10,233 @@
 <body class="bg-gray-100 font-sans p-4">
 
     <!-- Print Control Bar (Hidden on Print) -->
-    <div class="max-w-[800px] mx-auto mb-4 no-print flex justify-between items-center bg-gray-800 text-white p-3 rounded-lg shadow-lg">
-        <span class="text-sm font-medium">Print Preview: {{ quote.quote_number }}</span>
-        <div class="flex gap-3">
-            <button onclick="window.print()" class="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 rounded text-xs font-bold transition-colors">
-                <i class="fa-solid fa-print mr-2"></i> Print or Save PDF
-            </button>
-        </div>
-    </div>
+    <!-- THE TEST FORM WRAPPER -->
+    <form action="{{ url_for('quotes.test_pdf_fidelity', id=quote.id) }}" method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-    <!-- MAIN PAGE CONTAINER -->
-    <div class="print-container max-w-[800px] mx-auto bg-white p-14 shadow-sm border border-gray-200 min-h-[900px] relative">
-        
-        <!-- 1. HEADER SECTION -->
-        <div class="flex justify-between items-start mb-1">
-            <div>
-                {% if metadata.company_logo %}
-                <img src="{{ url_for('static', filename='uploads/logos/' + metadata.company_logo) }}" class="h-16 mb-1">
-                {% else %}
-                <div class="h-16 w-16 border-none flex items-center justify-center mb-1 uppercase"></div>
-                {% endif %}
+        <!-- Print Control Bar (Hidden on actual Print/PDF) -->
+        {% if not is_pdf_mode %}
+        <div class="max-w-[800px] mx-auto mb-4 no-print flex justify-between items-center bg-gray-800 text-white p-3 rounded-lg shadow-lg">
+            <span class="text-sm font-medium">Print Preview: {{ quote.quote_number }}</span>
+            <div class="flex gap-3">
+                <!-- NEW: Fidelity Test Button -->
+                <button type="submit" class="px-4 py-1.5 bg-green-600 hover:bg-green-500 rounded text-xs font-bold transition-colors">
+                    <i class="fa-solid fa-vial mr-2"></i> Test PDF Fidelity
+                </button>
                 
-            </div>
-            <div class="text-right">
-                <h2 class="text-3xl font-bold text-gray-800 tracking-wider uppercase opacity-90">Quotation</h2>
+                <button type="button" onclick="window.print()" class="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 rounded text-xs font-bold transition-colors">
+                    <i class="fa-solid fa-print mr-2"></i> Browser Print
+                </button>
             </div>
         </div>
+        {% endif %}
 
-        <!-- 2. COMPANY & DOCUMENT INFO GRID -->
-        <div class="grid grid-cols-5 gap-12 mb-4 text-xs items-start">
-            <!-- Seller Info -->
-            <div class="col-span-3 text-gray-800">
-                <h1 class="text-xl font-bold text-gray-800 mb-1">{{ metadata.company_name }}</h1>
-                <p class="whitespace-pre-line">{{ metadata.address or '' }}</p>
-                {% if metadata.company_phone %}
-                <p>Phone: {{ metadata.company_phone }}</p>
-                {% endif %}
-                {% if metadata.company_fax %}
-                <p>Fax: {{ metadata.company_fax }}</p>
-                {% endif %}
-                {% if metadata.company_email %}
-                <p>Email: {{ metadata.company_email }}</p>
-                {% endif %}
-            </div>
-
-            <!-- Doc Meta -->
-            <div class="col-span-2 content-start gap-y-1 p-1 grid grid-cols-2 bg-gray-100 text-gray-800">
-                <div class="font-bold">Quotation NO.</div>
-                <div>{{ quote.quote_number }}</div>
-                
-                <div class="font-bold">Quotation Date</div>
-                <div>{{ quote.quote_date.strftime('%B %d, %Y') }}</div>
-                
-                <div class="font-bold">Expiration</div>
-                <div>{{ quote.expiration_date.strftime('%B %d, %Y') if quote.expiration_date else '-' }}</div>
-            </div>
-        </div>
-
-        <!-- 3. ADDRESS GRID -->
-        <div class="grid grid-cols-2 gap-12 ml-8 mb-6 text-xs">
-            <!-- TO: Client -->
-            <div class="flex justify-start items-start gap-2">
-                <div class="font-bold uppercase tracking-widest pr-4">TO</div>
-                <div class="text-gray-800">
-                    {% if quote.client.primary_contact_name %}
-                    <p class="text-gray-950">{{ quote.client.primary_contact_name }}</p>
-                    {% endif %}
-                    {% if quote.client.address %}
-                    <p class="whitespace-pre-line">{{ quote.client.address }}</p>
-                    {% endif %}
-                    {% if quote.client.primary_contact_phone %}
-                    <p>Phone: {{ quote.client.primary_contact_phone }}</p>
-                    {% endif %}
-                    {% if quote.client.primary_contact_email %}
-                    <p>Enail: {{ quote.client.primary_contact_email }}</p>
-                    {% endif %}
-                </div>
-            </div>
-
-            <!-- Quoted By: Internal -->
-            <div class="grid grid-cols-3 content-start gap-y-1">
-                <div class="font-bold pr-4">Quoted by</div>
-                <div class="col-span-2 text-left">{{ quote.creator.full_name or quote.creator.username }}</div>
-                <div class="font-bold pr-4">E-mail</div>
-                <div class="col-span-2 text-blue-600">{{ quote.creator.email }}</div>
-                {% if quote.creator.phone_number or metadata.company_phone %}
-                <div class="font-bold pr-4">Phone</div>
-                <div class="col-span-2 text-gray-800">
-                    {% if quote.creator.phone_number %}
-                        {{ quote.creator.phone_number }}
+        <!-- MAIN PAGE CONTAINER -->
+        <div class="print-container max-w-[800px] mx-auto bg-white p-14 shadow-sm border border-gray-200 min-h-[900px] relative">
+            
+            <!-- 1. HEADER SECTION -->
+            <div class="flex justify-between items-start mb-1">
+                <div>
+                    {% if metadata.company_logo %}
+                    <img src="{{ url_for('static', filename='uploads/logos/' + metadata.company_logo) }}" class="h-16 mb-1">
                     {% else %}
-                        {{ metadata.company_phone }}       
-                    {% endif %} 
+                    <div class="h-16 w-16 border-none flex items-center justify-center mb-1 uppercase"></div>
+                    {% endif %}
+                    
                 </div>
-                {% endif %}
+                <div class="text-right">
+                    <h2 class="text-3xl font-bold text-gray-800 tracking-wider uppercase opacity-90">Quotation</h2>
+                </div>
             </div>
-        </div>
 
-        <!-- 4. ITEMS TABLE -->
-        <div class="mb-1">
-            <table class="w-full border-collapse table-auto">
-                <thead>
-                    <tr class="bg-gray-100 text-gray-800 text-[10px] uppercase font-bold border-y border-gray-500">
-                        <th class="py-1 px-1 text-center w-10">Item</th>
-                        <th class="py-1 px-1 text-center w-24">Cat #</th>
-                        <th class="py-1 px-1 text-left">Description</th>
-                        <th class="py-1 px-1 text-center w-16">Qty</th>
-                        <th class="py-1 px-1 text-right w-24">Unit Price</th>
-                        <th class="py-1 px-1 pr-2 text-right w-24">Line Total</th>
-                    </tr>
-                </thead>
-                <tbody class="text-[10px] text-gray-800">
-                    {% for item in line_display_items %}
-                    <tr class="align-top border-b border-gray-200">
-                        <td class="px-1 py-1 text-center">{{ loop.index }}</td>
-                        <td class="px-1 py-1 text-center">{{ item.product.catalog_number or '-' }}</td>
-                        <td class="px-1 py-1">
-                            <p class="font-medium">{{ item.product.name }}</p>
-                            {% if item.description %}
-                                <p class="text-gray-600 italic">{{ item.description }}</p>
-                            {% else %}
-                                <p class="text-gray-600 italic">&nbsp;</p>
-                            {% endif %}
-                        </td>
-                        <td class="px-1 py-1 text-center">{{ item.quantity }}</td>
-                        <td class="px-1 text-right">{{ item.quoted_unit_price | usd }}</td>
-                        <td class="px-1 pr-2 text-right font-medium">
-                            {{ (item.quantity * item.quoted_unit_price) | usd }}
-                        </td>
-                    </tr>
-                    {% endfor %}
+            <!-- 2. COMPANY & DOCUMENT INFO GRID -->
+            <div class="grid grid-cols-5 gap-12 mb-4 text-xs items-start">
+                <!-- Seller Info -->
+                <div class="col-span-3 text-gray-800">
+                    <h1 class="text-xl font-bold text-gray-800 mb-1">{{ metadata.company_name }}</h1>
+                    <p class="whitespace-pre-line">{{ metadata.address or '' }}</p>
+                    {% if metadata.company_phone %}
+                    <p>Phone: {{ metadata.company_phone }}</p>
+                    {% endif %}
+                    {% if metadata.company_fax %}
+                    <p>Fax: {{ metadata.company_fax }}</p>
+                    {% endif %}
+                    {% if metadata.company_email %}
+                    <p>Email: {{ metadata.company_email }}</p>
+                    {% endif %}
+                </div>
 
-                    {# Visual Spacer Rows #}
-                    {% if line_display_items | length < 5 %}
-                        {% for i in range(5 - (line_display_items | length)) %}
-                        <tr class="border-b border-gray-200">
-                            <td class="py-1" colspan="6">&nbsp;<p>&nbsp;</p></td>
+                <!-- Doc Meta -->
+                <div class="col-span-2 content-start gap-y-1 p-1 grid grid-cols-2 bg-gray-100 text-gray-800">
+                    <div class="font-bold">Quotation NO.</div>
+                    <div>{{ quote.quote_number }}</div>
+                    
+                    <div class="font-bold">Quotation Date</div>
+                    <div>{{ quote.quote_date.strftime('%B %d, %Y') }}</div>
+                    
+                    <div class="font-bold">Expiration</div>
+                    <div>{{ quote.expiration_date.strftime('%B %d, %Y') if quote.expiration_date else '-' }}</div>
+                </div>
+            </div>
+
+            <!-- 3. ADDRESS GRID -->
+            <div class="grid grid-cols-2 gap-12 ml-8 mb-6 text-xs">
+                <!-- TO: Client -->
+                <div class="flex justify-start items-start gap-2">
+                    <div class="font-bold uppercase tracking-widest pr-4">TO</div>
+                    <div class="text-gray-800">
+                        {% if quote.client.primary_contact_name %}
+                        <p class="text-gray-950">{{ quote.client.primary_contact_name }}</p>
+                        {% endif %}
+                        {% if quote.client.address %}
+                        <p class="whitespace-pre-line">{{ quote.client.address }}</p>
+                        {% endif %}
+                        {% if quote.client.primary_contact_phone %}
+                        <p>Phone: {{ quote.client.primary_contact_phone }}</p>
+                        {% endif %}
+                        {% if quote.client.primary_contact_email %}
+                        <p>Enail: {{ quote.client.primary_contact_email }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Quoted By: Internal -->
+                <div class="grid grid-cols-3 content-start gap-y-1">
+                    <div class="font-bold pr-4">Quoted by</div>
+                    <div class="col-span-2 text-left">{{ quote.creator.full_name or quote.creator.username }}</div>
+                    <div class="font-bold pr-4">E-mail</div>
+                    <div class="col-span-2 text-blue-600">{{ quote.creator.email }}</div>
+                    {% if quote.creator.phone_number or metadata.company_phone %}
+                    <div class="font-bold pr-4">Phone</div>
+                    <div class="col-span-2 text-gray-800">
+                        {% if quote.creator.phone_number %}
+                            {{ quote.creator.phone_number }}
+                        {% else %}
+                            {{ metadata.company_phone }}       
+                        {% endif %} 
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- 4. ITEMS TABLE -->
+            <div class="mb-1">
+                <table class="w-full border-collapse table-auto">
+                    <thead>
+                        <tr class="bg-gray-100 text-gray-800 text-[10px] uppercase font-bold border-y border-gray-500">
+                            <th class="py-1 px-1 text-center w-10">Item</th>
+                            <th class="py-1 px-1 text-center w-24">Cat #</th>
+                            <th class="py-1 px-1 text-left">Description</th>
+                            <th class="py-1 px-1 text-center w-16">Qty</th>
+                            <th class="py-1 px-1 text-right w-24">Unit Price</th>
+                            <th class="py-1 px-1 pr-2 text-right w-24">Line Total</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-[10px] text-gray-800">
+                        {% for item in line_display_items %}
+                        <tr class="align-top border-b border-gray-200">
+                            <td class="px-1 py-1 text-center">{{ loop.index }}</td>
+                            <td class="px-1 py-1 text-center">{{ item.product.catalog_number or '-' }}</td>
+                            <td class="px-1 py-1">
+                                <p class="font-medium">{{ item.product.name }}</p>
+                                {% if item.description %}
+                                    <p class="text-gray-600 italic">{{ item.description }}</p>
+                                {% else %}
+                                    <p class="text-gray-600 italic">&nbsp;</p>
+                                {% endif %}
+                            </td>
+                            <td class="px-1 py-1 text-center">{{ item.quantity }}</td>
+                            <td class="px-1 text-right">{{ item.quoted_unit_price | usd }}</td>
+                            <td class="px-1 pr-2 text-right font-medium">
+                                {{ (item.quantity * item.quoted_unit_price) | usd }}
+                            </td>
                         </tr>
                         {% endfor %}
-                    {% endif %}
-                </tbody>
-            </table>
-        </div>
 
-        <!-- 5. SUMMARY SECTION -->
-        <div class="flex justify-between items-start mb-4">
-            <!-- Terms Notes (Left) -->
-            <div class="w-3/5 mt-3">
-                <label class="no-print block text-[9px] font-bold text-blue-500 uppercase mb-1">
-                    Editable Terms & Notes (Transient):
-                </label>
-                <textarea class="print-notes w-full text-[10px] leading-relaxed text-gray-800 bg-gray-50 p-2 
-                                 border border-dashed border-gray-300 rounded outline-none focus:bg-white 
-                                 focus:border-blue-400 transition-all resize-none overflow-hidden"
-                        style="height: 80px;"
-                        oninput='this.style.height = "";this.style.height = this.scrollHeight + "px"'
-                        placeholder="Enter terms, valid dates, or special instructions...">{{ metadata.default_quote_terms }}</textarea>
-            </div>
-
-            <!-- Financials (Right) -->
-            <div class="w-1/4">
-                <table class="w-full text-[10px] text-gray-800">
-                    <tr class="border-b border-gray-200">
-                        <td class="py-1 px-2 font-bold uppercase">Subtotal</td>
-                        <td class="py-1 px-2 text-right">{{ subtotal | usd }}</td>
-                    </tr>
-                    <tr class="border-b border-gray-200">
-                        <td class="py-1 px-2 font-bold uppercase">Sales Tax</td>
-                        <td class="py-1 px-2 text-right">{{ tax_total | usd }}</td>
-                    </tr>
-                    <tr class="border-b border-gray-200">
-                        <td class="py-1 px-2 font-bold uppercase">Shipping</td>
-                        <td class="py-1 px-2 text-right">{{ shipping_total | usd }}</td>
-                    </tr>
-                    <tr class="bg-gray-100 border-b border-gray-500">
-                        <td class="py-1.5 px-2 font-bold text-xs uppercase">TOTAL</td>
-                        <td class="py-1.5 px-2 text-right font-bold text-xs">{{ quote.total_amount | usd }}</td>
-                    </tr>
+                        {# Visual Spacer Rows #}
+                        {% if line_display_items | length < 5 %}
+                            {% for i in range(5 - (line_display_items | length)) %}
+                            <tr class="border-b border-gray-200">
+                                <td class="py-1" colspan="6">&nbsp;<p>&nbsp;</p></td>
+                            </tr>
+                            {% endfor %}
+                        {% endif %}
+                    </tbody>
                 </table>
             </div>
-        </div>
 
-        <!-- 6. SIGNATURE & CTA SECTION (FOOTER) -->
-        <div class="mt-auto">
-            <!-- Customer Acceptance Block -->
-            <div class="grid grid-cols-10 gap-6 mb-6">
-                <div class="col-span-4">
-                    <p class="text-[10px] font-bold text-gray-800 underline mb-6">Customer Acceptance (Submit PO or sign below)</p>
-                    <div class="sig-line mb-1"></div>
-                    <p class="text-[9px] text-gray-800 ">Name & Title</p>
+            <!-- 5. SUMMARY SECTION -->
+            <div class="flex justify-between items-start mb-4">
+                <!-- Terms Notes (Left) -->
+                <div class="w-3/5 mt-3">
+                    <label class="no-print block text-[9px] font-bold text-blue-500 uppercase mb-1">
+                        Editable Terms & Notes (Transient):
+                    </label>
+                    <textarea name="transient_notes" 
+                            class="print-notes w-full text-[10px] leading-relaxed text-gray-800 bg-gray-50 p-2 
+                                    border border-dashed border-gray-300 rounded outline-none focus:bg-white 
+                                    focus:border-blue-400 transition-all resize-none overflow-hidden"
+                            style="height: 80px;"
+                            oninput='this.style.height = "";this.style.height = this.scrollHeight + "px"'
+                            placeholder="Enter terms, valid dates, or special instructions...">{{ metadata.default_quote_terms }}</textarea>
                 </div>
-                <div class="col-span-4">
-                    <p class="text-[10px] mb-6">&nbsp;</p>
-                    <div class="sig-line mb-1"></div>
-                    <p class="text-[9px] text-gray-800 ">Signature</p>
-                </div>
-                <div class="col-span-2">
-                    <p class="text-[10px] mb-6">&nbsp;</p>
-                    <div class="sig-line mb-1"></div>
-                    <p class="text-[9px] text-gray-800 ">Date</p>
+
+                <!-- Financials (Right) -->
+                <div class="w-1/4">
+                    <table class="w-full text-[10px] text-gray-800">
+                        <tr class="border-b border-gray-200">
+                            <td class="py-1 px-2 font-bold uppercase">Subtotal</td>
+                            <td class="py-1 px-2 text-right">{{ subtotal | usd }}</td>
+                        </tr>
+                        <tr class="border-b border-gray-200">
+                            <td class="py-1 px-2 font-bold uppercase">Sales Tax</td>
+                            <td class="py-1 px-2 text-right">{{ tax_total | usd }}</td>
+                        </tr>
+                        <tr class="border-b border-gray-200">
+                            <td class="py-1 px-2 font-bold uppercase">Shipping</td>
+                            <td class="py-1 px-2 text-right">{{ shipping_total | usd }}</td>
+                        </tr>
+                        <tr class="bg-gray-100 border-b border-gray-500">
+                            <td class="py-1.5 px-2 font-bold text-xs uppercase">TOTAL</td>
+                            <td class="py-1.5 px-2 text-right font-bold text-xs">{{ quote.total_amount | usd }}</td>
+                        </tr>
+                    </table>
                 </div>
             </div>
 
-            <!-- Call to Action & Contact -->
-            <div class="text-[10px] text-gray-800 space-y-1">
-                <p class="font-bold text-gray-800 underline">To proceed with this order:</p>
-                <p>Please submit a Purchase Order referencing this Quotation number, or return a signed copy of this document.</p>
-                <p>If you have any questions, please contact <span class="font-medium">{{ quote.creator.full_name or quote.creator.username }}</span> at <span class="text-blue-600">{{ quote.creator.email }}</span>{% if quote.creator.phone_number %} or <span class="font-medium">{{ quote.creator.phone_number }}</span>{% elif metadata.company_phone %} or <span class="font-medium">{{ metadata.company_phone }}</span> {% endif %}.</p>
+            <!-- 6. SIGNATURE & CTA SECTION (FOOTER) -->
+            <div class="mt-auto">
+                <!-- Customer Acceptance Block -->
+                <div class="grid grid-cols-10 gap-6 mb-6">
+                    <div class="col-span-4">
+                        <p class="text-[10px] font-bold text-gray-800 underline mb-6">Customer Acceptance (Submit PO or sign below)</p>
+                        <div class="sig-line mb-1"></div>
+                        <p class="text-[9px] text-gray-800 ">Name & Title</p>
+                    </div>
+                    <div class="col-span-4">
+                        <p class="text-[10px] mb-6">&nbsp;</p>
+                        <div class="sig-line mb-1"></div>
+                        <p class="text-[9px] text-gray-800 ">Signature</p>
+                    </div>
+                    <div class="col-span-2">
+                        <p class="text-[10px] mb-6">&nbsp;</p>
+                        <div class="sig-line mb-1"></div>
+                        <p class="text-[9px] text-gray-800 ">Date</p>
+                    </div>
+                </div>
+
+                <!-- Call to Action & Contact -->
+                <div class="text-[10px] text-gray-800 space-y-1">
+                    <p class="font-bold text-gray-800 underline">To proceed with this order:</p>
+                    <p>Please submit a Purchase Order referencing this Quotation number, or return a signed copy of this document.</p>
+                    <p>If you have any questions, please contact <span class="font-medium">{{ quote.creator.full_name or quote.creator.username }}</span> at <span class="text-blue-600">{{ quote.creator.email }}</span>{% if quote.creator.phone_number %} or <span class="font-medium">{{ quote.creator.phone_number }}</span>{% elif metadata.company_phone %} or <span class="font-medium">{{ metadata.company_phone }}</span> {% endif %}.</p>
+                </div>
             </div>
+
         </div>
 
-    </div>
+    </form>
+
 
     <!-- External Icon Support -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
