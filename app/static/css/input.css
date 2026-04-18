@@ -1,0 +1,17 @@
+@tailwind base;
+@tailwind components;
+
+/* 1. Import your custom business logic styles */
+@import "./app.css";
+@import "./print.css";
+
+@tailwind utilities;
+
+/* 
+   Note: We have removed the 'Global UI Fix'. 
+   Tailwind v3.4 defaults to a subtle gray for borders, 
+   which will resolve the 'Black Border' issue you saw in v4.
+*/
+
+/* Run in project root (/Documents/projects/codexmetry/) */
+/* ./tailwindcss -i ./app/static/css/input.css -o ./app/static/css/tailwind.css */
