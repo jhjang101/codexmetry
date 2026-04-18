@@ -1,10 +1,9 @@
-@tailwind base;
-@tailwind components;
-
-/* 1. Import your custom business logic styles */
+/* 1. Import your custom styles */
 @import "./app.css";
 @import "./print.css";
 
+@tailwind base;
+@tailwind components;
 @tailwind utilities;
 
 /* 

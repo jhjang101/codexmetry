@@ -277,21 +277,19 @@ def test_pdf_fidelity(id):
             line_display_items.append(item)
             subtotal += val
 
-    # 3. Render HTML to String (This is what WeasyPrint will 'see')
-    html_content = render_template(
-        'quotes/print.html',
-        quote=quote,
-        line_display_items=line_display_items,
-        subtotal=subtotal,
-        tax_total=tax_total,
-        shipping_total=shipping_total,
-        test_notes=transient_notes, # Pass notes back to template
-        is_pdf_mode=True # Flag to hide UI elements in the PDF
-    )
+    # Pack data for the WeasyPrint
+    context_data = {
+        'quote': quote,
+        'line_display_items': line_display_items,
+        'subtotal': subtotal,
+        'tax_total': tax_total,
+        'shipping_total': shipping_total,
+        'test_notes': transient_notes
+    }
 
     # 4. Generate PDF
     filename = f"TEST_Fidelity_{quote.quote_number}.pdf"
-    save_pdf_from_html(html_content, filename, subfolder='quotes')
+    save_pdf_from_html('quotes/print.html', context_data, filename, subfolder='quotes')
 
     flash(f"Test PDF generated: static/uploads/quotes/{filename}", "info")
     return redirect(url_for('quotes.print_view', id=id))

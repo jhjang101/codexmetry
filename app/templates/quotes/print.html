@@ -38,11 +38,15 @@
             <div class="flex justify-between items-start mb-1">
                 <div>
                     {% if metadata.company_logo %}
-                    <img src="{{ url_for('static', filename='uploads/logos/' + metadata.company_logo) }}" class="h-16 mb-1">
+                        {# Logic: Use physical drive path for PDF engine, URL path for browser #}
+                        {% if is_pdf_mode %}
+                            <img src="{{ physical_root }}/static/uploads/logos/{{ metadata.company_logo }}" class="h-16 mb-1">
+                        {% else %}
+                            <img src="{{ url_for('static', filename='uploads/logos/' + metadata.company_logo) }}" class="h-16 mb-1">
+                        {% endif %}
                     {% else %}
-                    <div class="h-16 w-16 border-none flex items-center justify-center mb-1 uppercase"></div>
+                        <div class="h-16 w-16 border-none flex items-center justify-center mb-1 uppercase"></div>
                     {% endif %}
-                    
                 </div>
                 <div class="text-right">
                     <h2 class="text-3xl font-bold text-gray-800 tracking-wider uppercase opacity-90">Quotation</h2>
