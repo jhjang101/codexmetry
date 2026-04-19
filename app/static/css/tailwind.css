@@ -141,6 +141,15 @@
     margin: 15mm;
   }
 
+  /* --- NEW: Content Baseline Reset --- */
+
+  /* Strips default browser/engine margins to ensure mb-[pt] units are absolute */
+
+  p, tr, h1, h2, h3, table {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
   /* Professional Textarea Formatting */
 
   textarea, .print-notes {
@@ -930,10 +939,6 @@ video {
 
 .mb-8 {
   margin-bottom: 2rem;
-}
-
-.mb-\[20pt\] {
-  margin-bottom: 20pt;
 }
 
 .ml-1 {
@@ -2203,6 +2208,10 @@ video {
 
 .pr-8 {
   padding-right: 2rem;
+}
+
+.pt-0 {
+  padding-top: 0px;
 }
 
 .pt-1 {

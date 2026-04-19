@@ -30,6 +30,14 @@
         margin: 15mm; 
     }
 
+    /* --- NEW: Content Baseline Reset --- */
+    /* Strips default browser/engine margins to ensure mb-[pt] units are absolute */
+    p, h1, h2, h3, table {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+
     /* Professional Textarea Formatting */
     textarea, .print-notes {
         border: none !important;
