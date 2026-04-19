@@ -145,7 +145,7 @@
 
   /* Strips default browser/engine margins to ensure mb-[pt] units are absolute */
 
-  p, tr, h1, h2, h3, table {
+  p, tr, th, td, h1, h2, h3, table, thead, tbody {
     margin: 0 !important;
     padding: 0 !important;
   }
@@ -2208,10 +2208,6 @@ video {
 
 .pr-8 {
   padding-right: 2rem;
-}
-
-.pt-0 {
-  padding-top: 0px;
 }
 
 .pt-1 {

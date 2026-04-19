@@ -173,7 +173,7 @@
                             <td class="px-1 py-1">
                                 <p class="font-medium">{{ item.product.name }}</p>
                                 {% if item.description %}
-                                    <p class="text-gray-600">{{ item.description }}</p>
+                                    <p class="text-gray-600 leading-none">{{ item.description }}</p>
                                 {% else %}
                                     <p class="text-gray-600">&nbsp;</p>
                                 {% endif %}
@@ -202,10 +202,13 @@
             <div class="flex justify-between items-start mb-4">
                 <!-- Terms Notes (Left) -->
                     {% if is_pdf_mode %}
-                    <div name="transient_notes" 
-                         class="w-3/5 print-notes w-full text-[10px] whitespace-pre-line text-gray-800 p-2">
-                        {{ transient_notes }}
+                    <div class="w-3/5">
+                        <div name="transient_notes" 
+                            class="print-notes w-full text-[10px] whitespace-pre-line text-gray-800 p-2">
+                            {{ transient_notes }}
+                        </div>
                     </div>
+
 
                     {% else %}
                     <div class="w-3/5 mt-3">

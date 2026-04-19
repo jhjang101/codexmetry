@@ -32,7 +32,7 @@
 
     /* --- NEW: Content Baseline Reset --- */
     /* Strips default browser/engine margins to ensure mb-[pt] units are absolute */
-    p, h1, h2, h3, table {
+    p, tr, th, td, h1, h2, h3, table, thead, tbody {
         margin: 0 !important;
         padding: 0 !important;
     }
