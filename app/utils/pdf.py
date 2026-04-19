@@ -26,7 +26,9 @@ def save_pdf_from_html(template_path: str, context: dict, filename: str, subfold
     # base_url=app_path allows WeasyPrint to resolve /static/ as a local folder
     HTML(string=html_string, base_url=app_path).write_pdf(
         target=output_path,
-        stylesheets=[CSS(css_path)]
+        zoom=1,
+        stylesheets=[CSS(css_path)],
+        pdf_forms=True
     )
 
     return filename

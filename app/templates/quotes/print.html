@@ -202,6 +202,14 @@
             <div class="flex justify-between items-start mb-4">
                 <!-- Terms Notes (Left) -->
                 <div class="w-3/5 mt-3">
+
+                    {% if is_pdf_mode %}
+                    <div name="transient_notes" 
+                         class="print-notes w-full text-[10px] leading-relaxed whitespace-pre-line text-gray-800 p-2">
+                        {{ transient_notes }}
+                    </div>
+                    {% else %}
+
                     <label class="no-print block text-[9px] font-bold text-blue-500 uppercase mb-1">
                         Editable Terms & Notes (Transient):
                     </label>
@@ -212,6 +220,10 @@
                             style="height: 80px;"
                             oninput='this.style.height = "";this.style.height = this.scrollHeight + "px"'
                             placeholder="Enter terms, valid dates, or special instructions...">{{ metadata.default_quote_terms }}</textarea>
+
+                    {% endif %}
+
+
                 </div>
 
                 <!-- Financials (Right) -->

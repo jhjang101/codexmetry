@@ -284,7 +284,7 @@ def test_pdf_fidelity(id):
         'subtotal': subtotal,
         'tax_total': tax_total,
         'shipping_total': shipping_total,
-        'test_notes': transient_notes
+        'transient_notes': transient_notes
     }
 
     # 4. Generate PDF
