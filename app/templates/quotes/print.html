@@ -201,15 +201,14 @@
             <!-- 5. SUMMARY SECTION -->
             <div class="flex justify-between items-start mb-4">
                 <!-- Terms Notes (Left) -->
-                <div class="w-3/5 mt-3">
-
                     {% if is_pdf_mode %}
                     <div name="transient_notes" 
-                         class="print-notes w-full text-[10px] leading-relaxed whitespace-pre-line text-gray-800 p-2">
+                         class="w-3/5 print-notes w-full text-[10px] whitespace-pre-line text-gray-800 p-2">
                         {{ transient_notes }}
                     </div>
-                    {% else %}
 
+                    {% else %}
+                    <div class="w-3/5 mt-3">
                     <label class="no-print block text-[9px] font-bold text-blue-500 uppercase mb-1">
                         Editable Terms & Notes (Transient):
                     </label>
@@ -217,14 +216,13 @@
                             class="print-notes w-full text-[10px] leading-relaxed text-gray-800 bg-gray-50 p-2 
                                     border border-dashed border-gray-300 rounded outline-none focus:bg-white 
                                     focus:border-blue-400 transition-all resize-none overflow-hidden"
-                            style="height: 80px;"
                             oninput='this.style.height = "";this.style.height = this.scrollHeight + "px"'
                             placeholder="Enter terms, valid dates, or special instructions...">{{ metadata.default_quote_terms }}</textarea>
+                    </div>
 
                     {% endif %}
 
 
-                </div>
 
                 <!-- Financials (Right) -->
                 <div class="w-1/4">
@@ -271,6 +269,12 @@
                         <p class="text-[9px] text-gray-800 ">Date</p>
                     </div>
                 </div>
+
+                {% if is_pdf_mode %}
+                is_pdf_mode = True
+                {% else %}
+                is_pdf_mode = False
+                {% endif %}
 
                 <!-- Call to Action & Contact -->
                 <div class="text-[10px] text-gray-800 space-y-1">

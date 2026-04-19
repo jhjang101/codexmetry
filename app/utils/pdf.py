@@ -10,11 +10,12 @@ def save_pdf_from_html(template_path: str, context: dict, filename: str, subfold
     app_path = current_app.root_path
     
     # 1. Inject Environment Flags into the data package
-    context['physical_root'] = app_path
-    context['is_pdf_mode'] = True
+    context_data = context.copy()
+    context_data['physical_root'] = app_path
+    context_data['is_pdf_mode'] = True
     
     # 2. Render the HTML string
-    html_string = render_template(template_path, **context)
+    html_string = render_template(template_path, **context_data)
     
     # 3. Pathing for CSS and Output
     css_path = os.path.join(app_path, 'static', 'css', 'tailwind.css')

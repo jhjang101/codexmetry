@@ -37,13 +37,11 @@
         resize: none !important;
         overflow: hidden !important;
         background: transparent !important;
-        min-height: 80px;
     }
 
     /* Auto-sizing support for modern browsers */
     .print-notes {
         field-sizing: content; /* Modern CSS to auto-expand textarea */
-        min-height: 80px;
     }
 }
 
