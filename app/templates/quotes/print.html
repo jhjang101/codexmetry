@@ -4,6 +4,35 @@
     <meta charset="UTF-8">
     <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='images/favicon.svg') }}">
     <title>Quote - {{ quote.quote_number }}</title>
+
+
+    {% if is_pdf_mode %}
+    <style>
+        /* 1. PHYSICAL FONT ANCHORING */
+        @font-face {
+            font-family: 'Roboto';
+            src: url('{{ physical_root }}/static/font/roboto/Roboto-Regular.ttf') format('truetype');
+            font-weight: 400;
+            font-style: normal;
+        }
+        @font-face {
+            font-family: 'Roboto';
+            src: url('{{ physical_root }}/static/font/roboto/Roboto-Medium.ttf') format('truetype');
+            font-weight: 500;
+            font-style: normal;
+        }
+        @font-face {
+            font-family: 'Roboto';
+            src: url('{{ physical_root }}/static/font/roboto/Roboto-Bold.ttf') format('truetype');
+            font-weight: 700;
+            font-style: normal;
+        }
+
+    </style>
+    {% endif %}
+
+
+
     <link rel="stylesheet" href="{{ url_for('static', filename='css/tailwind.css') }}">
     
 </head>
@@ -144,9 +173,9 @@
                             <td class="px-1 py-1">
                                 <p class="font-medium">{{ item.product.name }}</p>
                                 {% if item.description %}
-                                    <p class="text-gray-600 italic">{{ item.description }}</p>
+                                    <p class="text-gray-600">{{ item.description }}</p>
                                 {% else %}
-                                    <p class="text-gray-600 italic">&nbsp;</p>
+                                    <p class="text-gray-600">&nbsp;</p>
                                 {% endif %}
                             </td>
                             <td class="px-1 py-1 text-center">{{ item.quantity }}</td>
