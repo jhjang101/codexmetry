@@ -39,12 +39,19 @@
 
 
     /* Professional Textarea Formatting */
-    textarea, .print-notes {
+    textarea .print-notes {
         border: none !important;
         padding: 0 !important;
         resize: none !important;
         overflow: hidden !important;
         background: transparent !important;
+    }
+
+    input {
+        border: none !important;
+        border-bottom: 1px solid #94a3b8 !important;
+        min-height: 30px !important;
+        max-height: 30px !important;
     }
 
     /* Auto-sizing support for modern browsers */
@@ -56,7 +63,8 @@
 /* Extra spacing for electronical typing on PDF */
 .sig-line { 
     border-bottom: 1px solid #94a3b8; /* slate-400 */
-    min-height: 24px; 
+    min-height: 24px !important;
+    max-height: 24px !important;
 }
 
 /* Ensure dashed borders show up clearly for notes */
