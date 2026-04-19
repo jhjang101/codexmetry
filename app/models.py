@@ -376,6 +376,7 @@ class Quote(db.Model, AuditMixin):
     status: Mapped[str] = mapped_column(String(20), default='draft') # draft, sent, accepted, expired
     order_id: Mapped[int | None] = mapped_column(ForeignKey('orders.id')) # Linked after conversion
     note: Mapped[str | None] = mapped_column(Text)
+    terms_snapshot: Mapped[str | None] = mapped_column(Text)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     
     order: Mapped["OrderRegistry"] = relationship(back_populates="quote")
@@ -507,6 +508,7 @@ class Invoice(db.Model, AuditMixin):
     tracking_number: Mapped[str | None] = mapped_column(String(100))
     status: Mapped[str] = mapped_column(String(20), default='draft')
     note: Mapped[str | None] = mapped_column(Text)
+    terms_snapshot: Mapped[str | None] = mapped_column(Text)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
     order: Mapped["OrderRegistry"] = relationship(back_populates="invoices")
@@ -587,6 +589,7 @@ class Expense(db.Model, AuditMixin):
     expense_date: Mapped[date] = mapped_column(Date, server_default=func.current_date())
     status: Mapped[str] = mapped_column(String(20), default='open') # New: draft, open, completed
     note: Mapped[str | None] = mapped_column(Text)
+    terms_snapshot: Mapped[str | None] = mapped_column(Text)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
     vendor: Mapped["Vendor"] = relationship(back_populates="expenses")
