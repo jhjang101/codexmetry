@@ -136,6 +136,8 @@
   }
 
   @page {
+    size: letter;
+
     margin: 15mm;
   }
 
