@@ -278,46 +278,6 @@ def issue(id):
         # Rollback and show OOB error if the PDF generation or commit fails
         return handle_post_error(e, "quotes.issue")
 
-
-    # # 1. Promote status if it is currently a draft
-    # quote, status = QuoteService.issue_quote(id)
-    # if not quote:
-    #     flash("Quote not found.", "error")
-    #     return redirect(url_for('quotes.index'))
-
-    # # 2. Feedback: Notify the user of the deal's progression
-    # if status and status['before'] != status['after']:
-    #     flash(f"Quote issued. Status updated: {status['before'].upper()} → {status['after'].upper()}", "success")
-
-    # # 3. Initialize buckets
-    # line_display_items = []
-    # subtotal = 0
-    # tax_total = 0
-    # shipping_total = 0
-
-    # # 4. Sort items into buckets based on document_placement
-    # for item in quote.items:
-    #     # Standardize value calculation in the "Brain"
-    #     item_value = item.quantity * item.quoted_unit_price
-    #     placement = item.product.document_placement
-
-    #     if placement == 'Tax':
-    #         tax_total += item_value
-    #     elif placement == 'Shipping':
-    #         shipping_total += item_value
-    #     else:
-    #         # if it's not 'Tax' or 'Shipping', it's a Lineitem
-    #         line_display_items.append(item)
-    #         subtotal += item_value
-
-    # # 5. Pass pre-calculated values to the template
-    # return render_template('quotes/print.html', 
-    #                        quote=quote,
-    #                        line_display_items=line_display_items,
-    #                        subtotal=subtotal,
-    #                        tax_total=tax_total,
-    #                        shipping_total=shipping_total)
-
 # --- TESTING ---
 
 from ..utils.pdf import save_pdf_from_html

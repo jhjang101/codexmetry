@@ -280,7 +280,8 @@ class QuoteService(BaseService):
         save_pdf_from_html('quotes/print.html', context_data, filename, subfolder='quotes')
 
         # 6. Database Updates (State & Linkage)
-        quote.status = 'sent'
+        if quote.status == 'draft':
+            quote.status = 'sent'
         quote.terms_snapshot = notes
 
         # Create the Forensic Attachment record
@@ -299,36 +300,14 @@ class QuoteService(BaseService):
             action='ISSUE',
             old_data=old_snapshot,
             new_data={
-                'status': 'sent',
+                'status': quote.status,
                 'terms_snapshot': notes,
                 'snapshot_file': filename # Link for the history timeline
             }
         )
 
         db.session.commit()
-        return quote, {"before": old_snapshot['status'], "after": 'sent'}
-
-        
-        # before = quote.status
-        # if before == 'draft':
-        #     # 1. Forensic Record
-        #     snapshot = cls._get_snapshot(quote)
-        #     snapshot['line_items'] = cls._get_items_fingerprint(quote.items, 'quantity', 'quoted_unit_price')
-        #     snapshot['status'] = 'sent'
-
-        #     parent_audit_id = AuditLogService.record(
-        #         target_id=id,
-        #         target_type=cls.model.__name__,
-        #         action='ISSUE',
-        #         old_data={},
-        #         new_data=snapshot
-        #     )
-        #     # 2. Status Flip
-        #     quote.status = 'sent'
-            
-        #     db.session.commit()
-        
-        # return quote, {"before": before, "after": quote.status}
+        return quote, {"before": old_snapshot['status'], "after": quote.status}
 
     # --- INTERNAL HELPERS ---
 
