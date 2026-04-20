@@ -1,3 +1,4 @@
+from flask_login import current_user
 from .base_service import BaseService
 from ..models import Attachment
 from ..extensions import db
@@ -18,14 +19,15 @@ class AttachmentService(BaseService):
 
     @classmethod
     def stage(cls, 
-               entity_type: str, 
-               entity_id: int, 
-               new_files: list | None = None, 
-               delete_ids: list[int] | None = None):
+              entity_type: str, 
+              entity_id: int, 
+              new_files: list | None = None, 
+              delete_ids: list[int] | None = None):
         """
         The 'Git-Commit' for files.
         1. Deletes files marked in 'delete_ids' (DB + Disk).
         2. Saves 'new_files' (Disk + DB).
+        Prevents non-admins from deleting system-generated documents.
         """
         # Initialize to empty lists if None provided
         files_to_save = new_files or []
@@ -35,6 +37,11 @@ class AttachmentService(BaseService):
         for fid in ids_to_delete:
             file_record = cls.get_by_id(fid)
             if file_record:
+                # BACKEND AUTHORIZATION GUARD
+                # If the file is a generated snapshot, only 'admin' can proceed.
+                if file_record.is_generated and current_user.role != 'admin':
+                    continue # Skip this deletion instruction
+
                 # Remove from disk first
                 delete_physical_file(file_record.file_path, subfolder=entity_type.lower() + 's')
                 # Remove from DB
