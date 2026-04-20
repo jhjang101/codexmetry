@@ -208,29 +208,24 @@ def archive(id):
 # --- PRINT ---
 
 @bp.route('/print/<int:id>')
-@login_required
 def print_view(id):
     """
     Messenger: Fetches hydrated Quote data for the printable layout.
     Metadata is already injected via global context processor.
     """
-    # 1. Promote status if it is currently a draft
-    quote, status = QuoteService.issue_quote(id)
+    # 1. Fetch hydrated object (Passively)
+    quote = QuoteService.get_quote_by_id(id)
     if not quote:
-        flash("Quote not found.", "error")
-        return redirect(url_for('quotes.index'))
-
-    # 2. Feedback: Notify the user of the deal's progression
-    if status and status['before'] != status['after']:
-        flash(f"Quote issued. Status updated: {status['before'].upper()} → {status['after'].upper()}", "success")
-
-    # 3. Initialize buckets
+            flash("Quote not found.", "error")
+            return redirect(url_for('quotes.index'))
+    
+    # 2. Initialize buckets
     line_display_items = []
     subtotal = 0
     tax_total = 0
     shipping_total = 0
 
-    # 4. Sort items into buckets based on document_placement
+    # 3. Sort items into buckets based on document_placement
     for item in quote.items:
         # Standardize value calculation in the "Brain"
         item_value = item.quantity * item.quoted_unit_price
@@ -244,14 +239,84 @@ def print_view(id):
             # if it's not 'Tax' or 'Shipping', it's a Lineitem
             line_display_items.append(item)
             subtotal += item_value
-
-    # 5. Pass pre-calculated values to the template
+    
+    # 4. Render the preview template with pre-calculated values
     return render_template('quotes/print.html', 
                            quote=quote,
                            line_display_items=line_display_items,
                            subtotal=subtotal,
                            tax_total=tax_total,
                            shipping_total=shipping_total)
+
+@bp.route('/issue/<int:id>', methods=['POST'])
+def issue(id):
+    """
+    Messenger: Commits the document to the legal record.
+    Action: Flips status, persists terms_snapshot, and archives the PDF.
+    """
+    try:
+        # 1. Capture user-typed terms from the Preview form
+        transient_notes = request.form.get('transient_notes', '')
+
+        # 2. Call the Atomic Brain Logic
+        # (This will handle status, snapshot, PDF generation, and Audit)
+        quote, status = QuoteService.issue_quote(id, transient_notes)
+        
+        if not quote:
+            flash("Quote record not found.", "error")
+            return redirect(url_for('quotes.index'))
+
+        # 3. Success Feedback
+        flash(f"Quote {quote.quote_number} has been issued and archived as PDF.", "success")
+        if status and status['before'] != status['after']:
+            flash(f"Status updated: {status['before'].upper()} → {status['after'].upper()}", "info")
+
+        # 4. Final Redirect to the View page
+        return redirect(url_for('quotes.view', id=id))
+
+    except Exception as e:
+        # Rollback and show OOB error if the PDF generation or commit fails
+        return handle_post_error(e, "quotes.issue")
+
+
+    # # 1. Promote status if it is currently a draft
+    # quote, status = QuoteService.issue_quote(id)
+    # if not quote:
+    #     flash("Quote not found.", "error")
+    #     return redirect(url_for('quotes.index'))
+
+    # # 2. Feedback: Notify the user of the deal's progression
+    # if status and status['before'] != status['after']:
+    #     flash(f"Quote issued. Status updated: {status['before'].upper()} → {status['after'].upper()}", "success")
+
+    # # 3. Initialize buckets
+    # line_display_items = []
+    # subtotal = 0
+    # tax_total = 0
+    # shipping_total = 0
+
+    # # 4. Sort items into buckets based on document_placement
+    # for item in quote.items:
+    #     # Standardize value calculation in the "Brain"
+    #     item_value = item.quantity * item.quoted_unit_price
+    #     placement = item.product.document_placement
+
+    #     if placement == 'Tax':
+    #         tax_total += item_value
+    #     elif placement == 'Shipping':
+    #         shipping_total += item_value
+    #     else:
+    #         # if it's not 'Tax' or 'Shipping', it's a Lineitem
+    #         line_display_items.append(item)
+    #         subtotal += item_value
+
+    # # 5. Pass pre-calculated values to the template
+    # return render_template('quotes/print.html', 
+    #                        quote=quote,
+    #                        line_display_items=line_display_items,
+    #                        subtotal=subtotal,
+    #                        tax_total=tax_total,
+    #                        shipping_total=shipping_total)
 
 # --- TESTING ---
 

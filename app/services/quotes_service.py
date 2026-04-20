@@ -1,10 +1,11 @@
 from .base_service import BaseService
-from ..models import Quote, QuoteItem, Client, OrderRegistry, SettingsMetadata, Product
+from ..models import Quote, QuoteItem, Client, OrderRegistry, SettingsMetadata, Product, Attachment
 from .audit_service import AuditLogService
 from .attachment_service import AttachmentService
 from ..extensions import db
 from ..utils.money import parse_to_cents
-from sqlalchemy import select, or_
+from ..utils.pdf import save_pdf_from_html
+from sqlalchemy import select, or_, func
 from sqlalchemy.orm import contains_eager, joinedload, selectinload
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
@@ -225,32 +226,109 @@ class QuoteService(BaseService):
         return db.session.execute(stmt).scalars().all()
     
     @classmethod
-    def issue_quote(cls, id: int):
-        """Transitions Quote from draft to sent. Audits and Commits."""
+    def issue_quote(cls, id: int, notes: str):
+        """
+        Issue the Quote and save PDF as Attatchment.
+        Performs item bucketing, versioned PDF generation, and Audit logging.
+        """
+        # 1. Fetch hydrated object
         quote = cls.get_quote_by_id(id)
         if not quote or not quote.is_active:
             return None, None
         
-        before = quote.status
-        if before == 'draft':
-            # 1. Forensic Record
-            snapshot = cls._get_snapshot(quote)
-            snapshot['line_items'] = cls._get_items_fingerprint(quote.items, 'quantity', 'quoted_unit_price')
-            snapshot['status'] = 'sent'
+        # 2. Preparation: Internal Item Bucketing for PDF Accuracy
+        line_display_items = []
+        subtotal = tax_total = shipping_total = 0
+        for item in quote.items:
+            val = item.quantity * item.quoted_unit_price
+            placement = item.product.document_placement
 
-            parent_audit_id = AuditLogService.record(
-                target_id=id,
-                target_type=cls.model.__name__,
-                action='ISSUE',
-                old_data={},
-                new_data=snapshot
-            )
-            # 2. Status Flip
-            quote.status = 'sent'
-            
-            db.session.commit()
+            if placement == 'Tax':
+                tax_total += val
+            elif placement == 'Shipping':
+                shipping_total += val
+            else:
+                line_display_items.append(item)
+                subtotal += val
+
+        # 3. Versioning Logic: Count existing generated snapshots
+        v_count = db.session.query(func.count(Attachment.id)).filter_by(
+            entity_type='Quote', 
+            entity_id=id, 
+            is_generated=True
+        ).scalar() or 0
+        version = v_count + 1
+
+        # 4. Capture current state for Audit
+        old_snapshot = cls._get_snapshot(quote)
+
+        # 5. Physical Archival (PDF Generation)
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M')
+        filename = f"Quote_{quote.quote_number}_{timestamp}_v{version}.pdf"
+
+        # Construct the data package for WeasyPrint
+        context_data = {
+            'quote': quote,
+            'line_display_items': line_display_items,
+            'subtotal': subtotal,
+            'tax_total': tax_total,
+            'shipping_total': shipping_total,
+            'transient_notes': notes
+        }
+
+        # The utility handles rendering and physical saving
+        save_pdf_from_html('quotes/print.html', context_data, filename, subfolder='quotes')
+
+        # 6. Database Updates (State & Linkage)
+        quote.status = 'sent'
+        quote.terms_snapshot = notes
+
+        # Create the Forensic Attachment record
+        new_snapshot = Attachment()
+        new_snapshot.entity_type = 'Quote'
+        new_snapshot.entity_id = id
+        new_snapshot.file_path = filename
+        new_snapshot.file_name = filename
+        new_snapshot.is_generated = True
+        db.session.add(new_snapshot)
+
+        # 7. Forensic Trail: Record the ISSUE action
+        AuditLogService.record(
+            target_id=id,
+            target_type='Quote',
+            action='ISSUE',
+            old_data=old_snapshot,
+            new_data={
+                'status': 'sent',
+                'terms_snapshot': notes,
+                'snapshot_file': filename # Link for the history timeline
+            }
+        )
+
+        db.session.commit()
+        return quote, {"before": old_snapshot['status'], "after": 'sent'}
+
         
-        return quote, {"before": before, "after": quote.status}
+        # before = quote.status
+        # if before == 'draft':
+        #     # 1. Forensic Record
+        #     snapshot = cls._get_snapshot(quote)
+        #     snapshot['line_items'] = cls._get_items_fingerprint(quote.items, 'quantity', 'quoted_unit_price')
+        #     snapshot['status'] = 'sent'
+
+        #     parent_audit_id = AuditLogService.record(
+        #         target_id=id,
+        #         target_type=cls.model.__name__,
+        #         action='ISSUE',
+        #         old_data={},
+        #         new_data=snapshot
+        #     )
+        #     # 2. Status Flip
+        #     quote.status = 'sent'
+            
+        #     db.session.commit()
+        
+        # return quote, {"before": before, "after": quote.status}
 
     # --- INTERNAL HELPERS ---
 

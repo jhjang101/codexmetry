@@ -40,17 +40,17 @@
 
     <!-- Print Control Bar (Hidden on Print) -->
     <!-- THE TEST FORM WRAPPER -->
-    <form action="{{ url_for('quotes.test_pdf_fidelity', id=quote.id) }}" method="POST">
+    <form action="{{ url_for('quotes.issue', id=quote.id) }}" method="POST">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
         <!-- Print Control Bar (Hidden on actual Print/PDF) -->
         {% if not is_pdf_mode %}
         <div class="max-w-[800px] mx-auto mb-4 no-print flex justify-between items-center bg-gray-800 text-white p-3 rounded-lg shadow-lg">
-            <span class="text-sm font-medium">Print Preview: {{ quote.quote_number }}</span>
+            <span class="text-sm font-medium">Document Preview: {{ quote.quote_number }}</span>
             <div class="flex gap-3">
-                <!-- NEW: Fidelity Test Button -->
+                <!-- The Issue Button -->
                 <button type="submit" class="px-4 py-1.5 bg-green-600 hover:bg-green-500 rounded text-xs font-bold transition-colors">
-                    <i class="fa-solid fa-vial mr-2"></i> Test PDF Fidelity
+                    <i class="fa-solid fa-file-export mr-2"></i> Issue & Generate PDF
                 </button>
                 
                 <button type="button" onclick="window.print()" class="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 rounded text-xs font-bold transition-colors">
