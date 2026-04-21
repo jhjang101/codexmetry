@@ -1,5 +1,5 @@
 from .base_service import BaseService
-from ..models import (Expense, ExpenseItem,  Vendor,  
+from ..models import (Expense, ExpenseItem,  Vendor, Attachment, 
                       ExpenseCategory, Client, OrderRegistry, 
                       PurchaseOrder, Invoice, SettingsMetadata)
 from .audit_service import AuditLogService
@@ -7,6 +7,7 @@ from .attachment_service import AttachmentService
 from ..extensions import db
 from ..utils.docs import generate_doc_number
 from ..utils.money import parse_to_cents
+from ..utils.pdf import save_pdf_from_html
 from sqlalchemy import select, or_, func
 from sqlalchemy.orm import contains_eager, joinedload, selectinload
 from datetime import datetime
@@ -210,33 +211,106 @@ class ExpenseService(BaseService):
         return db.session.execute(stmt).scalar_one_or_none()
     
     @classmethod
-    def issue_expense(cls, id: int):
-        """Transitions Expense from draft to open. Audits and Commits."""
-        # Ensure hydrated fetch for the return object
+    def issue_expense(cls, id: int, notes: str):
+        """
+        Brain: Commits the Expense to the legal record (Vendor PO).
+        Performs versioned PDF generation and Audit logging.
+        """
+        # 1. Fetch hydrated object
         expense = cls.get_expense_by_id(id)
         if not expense or not expense.is_active:
             return None, None
         
-        before = expense.status
-        if before == 'draft':
-            # 1. Forensic Record
-            snapshot = cls._get_snapshot(expense)
-            snapshot['line_items'] = cls._get_items_fingerprint(expense.items)
-            snapshot['status'] = 'open'
+        # 2. Preparation: Recalculate Subtotal for PDF context
+        subtotal = sum(item.quantity * item.unit_price for item in expense.items)
 
-            parent_audit_id = AuditLogService.record(
-                target_id=id,
-                target_type='Expense',
-                action='ISSUE',
-                old_data={},
-                new_data=snapshot
-            )
-            # 2. Status Flip
+        # 3. Versioning Logic: Count existing generated snapshots
+        v_count = db.session.query(func.count(Attachment.id)).filter_by(
+            entity_type='Expense', 
+            entity_id=id, 
+            is_generated=True
+        ).scalar() or 0
+        version = v_count + 1
+
+        # 4. Capture current state for Audit
+        old_snapshot = cls._get_snapshot(expense)
+        before_status = expense.status
+
+        # 5. Physical Archival (PDF Generation)
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M')
+        filename = f"Expense_{expense.expense_number}_{timestamp}_v{version}.pdf"
+
+        # Construct the data package for WeasyPrint
+        context_data = {
+            'expense': expense,
+            'subtotal': subtotal,
+            'transient_notes': notes
+        }
+
+        # The utility handles rendering and physical saving
+        save_pdf_from_html('expenses/print.html', context_data, filename, subfolder='expenses')
+
+        # 6. Database Updates (State & Linkage)
+        if before_status == 'draft':
             expense.status = 'open'
-            
-            db.session.commit()
+        expense.terms_snapshot = notes
+
+        # Create the Forensic Attachment record
+        new_snapshot = Attachment()
+        new_snapshot.entity_type = 'Expense'
+        new_snapshot.entity_id = id
+        new_snapshot.file_path = filename
+        new_snapshot.file_name = filename
+        new_snapshot.is_generated = True
+        db.session.add(new_snapshot)
+
+        # 7. Forensic Trail: Record the ISSUE action
+        AuditLogService.record(
+            target_id=id,
+            target_type='Expense',
+            action='ISSUE',
+            old_data=old_snapshot,
+            new_data={
+                'status': expense.status,
+                'terms_snapshot': notes,
+                'snapshot_file': filename
+                }
+        )
+
+        db.session.commit()
+        return expense, {"before": before_status, "after": expense.status}
+
+
+
+
         
-        return expense, {"before": before, "after": expense.status}
+
+
+
+
+
+
+        
+        # before = expense.status
+        # if before == 'draft':
+        #     # 1. Forensic Record
+        #     snapshot = cls._get_snapshot(expense)
+        #     snapshot['line_items'] = cls._get_items_fingerprint(expense.items)
+        #     snapshot['status'] = 'open'
+
+        #     parent_audit_id = AuditLogService.record(
+        #         target_id=id,
+        #         target_type='Expense',
+        #         action='ISSUE',
+        #         old_data={},
+        #         new_data=snapshot
+        #     )
+        #     # 2. Status Flip
+        #     expense.status = 'open'
+            
+        #     db.session.commit()
+        
+        # return expense, {"before": before, "after": expense.status}
     
     # --- INTERNAL HELPERS ---
 

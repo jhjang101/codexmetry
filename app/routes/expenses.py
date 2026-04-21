@@ -274,29 +274,51 @@ def archive(id):
 # --- PRINT ---
 
 @bp.route('/print/<int:id>')
-@login_required
 def print_view(id):
     """
     Messenger: Fetches hydrated Invoice data for the printable layout.
     Metadata is already injected via global context processor.
     """
-    # 1. Promote status and fetch hydrated object
-    expense, status = ExpenseService.issue_expense(id)
+    # 1. Fetch hydrated object (Passively)
+    expense = ExpenseService.get_expense_by_id(id)
     if not expense:
         flash("Expense record not found.", "error")
         return redirect(url_for('expenses.index'))
     
-    # 2. Feedback
-    if status and status['before'] != status['after']:
-        flash(f"Purchase Order issued. Status: {status['before'].upper()} → {status['after'].upper()}", "success")
-
-    # 3. Calculate Subtotal (In-Memory)
+    # 2. Calculate Subtotal (In-Memory)
     subtotal = sum(item.quantity * item.unit_price for item in expense.items)
 
-    # 4. Render the dedicated print template
+    # 3. Render the dedicated print template
     return render_template('expenses/print.html', 
                            expense=expense, 
                            subtotal=subtotal)
+
+@bp.route('/issue/<int:id>', methods=['POST'])
+def issue(id):
+    """
+    Messenger: Commits the Expense to the legal record.
+    Action: Flips status to 'open', persists terms_snapshot, and archives the PDF.
+    """
+    try:
+        # 1. Capture user-typed instructions from the Preview form
+        transient_notes = request.form.get('transient_notes', '')
+
+        # 2. Brain Call: Atomic Issuance
+        expense, status = ExpenseService.issue_expense(id, transient_notes)
+        
+        if not expense:
+            flash("Expense record not found.", "error")
+            return redirect(url_for('expenses.index'))
+
+        # 3. Success Feedback
+        flash(f"Expense {expense.expense_number} has been issued and attached as PDF.", "success")
+        if status and status['before'] != status['after']:
+            flash(f"Status updated: {status['before'].upper()} → {status['after'].upper()}", "info")
+
+        return redirect(url_for('expenses.view', id=id))
+
+    except Exception as e:
+        return handle_post_error(e, "expenses.issue")
 
 # --- HTMX Item-row and Calculation Routes ---
 
