@@ -3,7 +3,7 @@ from ..models import Quote, QuoteItem, Client, OrderRegistry, SettingsMetadata, 
 from .audit_service import AuditLogService
 from .attachment_service import AttachmentService
 from ..extensions import db
-from ..utils.money import parse_to_cents
+from ..utils.money import parse_to_cents, format_usd
 from ..utils.pdf import save_pdf_from_html
 from sqlalchemy import select, or_, func
 from sqlalchemy.orm import contains_eager, joinedload, selectinload
@@ -250,6 +250,15 @@ class QuoteService(BaseService):
             else:
                 line_display_items.append(item)
                 subtotal += val
+        
+        # 2.1. total_amount Cross Check
+        calculated_total = subtotal + tax_total + shipping_total
+        if calculated_total != quote.total_amount:
+            raise ValueError(
+                f"Integrity Error: The saved Quote total ({format_usd(quote.total_amount)}) "
+                f"does not match the calculated sum of its items ({format_usd(calculated_total)}). "
+                "Please edit and re-save the Quote before issuing."
+            )
 
         # 3. Versioning Logic: Count existing generated snapshots
         v_count = db.session.query(func.count(Attachment.id)).filter_by(

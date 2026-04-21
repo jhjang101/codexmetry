@@ -446,6 +446,15 @@ class InvoiceService(BaseService):
         active_payments = [p for p in invoice.payments if p.is_active]
         total_received = sum(p.amount for p in active_payments)
 
+        # 2.1. total_amount Cross Check
+        calculated_total = subtotal + tax_total + shipping_total
+        if calculated_total != invoice.total_amount:
+            raise ValueError(
+                f"Integrity Error: The saved Invoice total ({format_usd(invoice.total_amount)}) "
+                f"does not match the calculated sum of its items ({format_usd(calculated_total)}). "
+                "Please edit and re-save the Invoice before issuing."
+            )
+
         # 3. Term & Date Logic for PDF
         metadata = db.session.get(SettingsMetadata, 1)
         net_days = invoice.net_days if invoice.net_days is not None else (metadata.default_net_days if metadata else 30)
