@@ -45,14 +45,34 @@
             {% if invoice and invoice.attachments %}
                 {% for file in invoice.attachments %}
                 <div class="flex justify-between items-center bg-gray-100 p-1 rounded-lg border text-[11px] group" id="existing-file-{{ file.id }}">
-                    <a href="{{ url_for('static', filename='uploads/invoices/' + file.file_path) }}" target="_blank" class="truncate font-medium text-blue-600 hover:underline">
-                        <i class="fa-solid fa-file-lines mr-1"></i>{{ file.file_name }}
+                    <a href="{{ url_for('static', filename='uploads/invoices/' + file.file_path) }}" 
+                       target="_blank" 
+                       class="truncate font-medium hover:underline {{ 'text-blue-700' if file.is_generated else 'text-gray-700' }}">
+
+                        {# 1. DYNAMIC ICON LOGIC #}
+                        {% if file.is_generated %}
+                            <i class="fa-solid fa-file-shield mr-1" title="System Generated Snapshot"></i>
+                        {% else %}
+                            <i class="fa-solid fa-file-lines mr-1"></i>
+                        {% endif %}
+                        {{ file.file_name }}
                     </a>
+
                     {% if mode != 'view' %}
-                        <button type="button" onclick="toggleFileDelete('{{ file.id }}')" class="text-red-400 hover:text-red-600">
-                            <i class="fa-solid fa-trash-can" id="icon-{{ file.id }}"></i>
-                        </button>
-                        <input type="hidden" name="delete_ids[]" id="delete-input-{{ file.id }}" disabled value="{{ file.id }}">
+                        {# 2. FRONTEND DELETION GUARD #}
+                        {# Rule: If generated, only show delete button to Admins #}
+                        {% if not file.is_generated or current_user.role == 'admin' %}
+                            <button type="button" 
+                                    onclick="toggleFileDelete('{{ file.id }}')" 
+                                    class="text-red-400 hover:text-red-600">
+                                <i class="fa-solid fa-trash-can" id="icon-{{ file.id }}"></i>
+                            </button>
+                            <input type="hidden" name="delete_ids[]" id="delete-input-{{ file.id }}" disabled value="{{ file.id }}">
+                        {% else %}
+                            {# Visual indicator for locked files (Optional) #}
+                            <i class="fa-solid fa-lock text-[9px] text-gray-300 px-2" 
+                               title="Locked: Snapshots can only be removed by an Administrator."></i>
+                        {% endif %}
                     {% endif %}
                 </div>
                 {% endfor %}

@@ -377,41 +377,16 @@ def archive(id):
 # --- PRINT ---
 
 @bp.route('/print/<int:id>')
-@login_required
 def print_view(id):
     """
     Messenger: Fetches hydrated Invoice data for the printable layout.
     Metadata is already injected via global context processor.
     """
-    # 1. Promote status and fetch hydrated object
-    invoice, invoice_status, po_status = InvoiceService.issue_invoice(id)
+    # 1. Fetch hydrated object (Passively)
+    invoice = InvoiceService.get_invoice_by_id(id)
     if not invoice:
         flash("Invoice not found.", "error")
         return redirect(url_for('invoices.index'))
-
-    # 2. Feedback
-    if invoice_status and invoice_status['before'] != invoice_status['after']:
-        flash(f"Invoice issued. Status updated from {invoice_status['before'].upper()} to {invoice_status['after'].upper()}.", "success")
-    if po_status and po_status['before'] != po_status['after']:
-        # Fetch old name for forensic clarity in the UI
-        po_name = invoice.purchase_order.po_number or invoice.order.order_number # type: ignore
-        flash(f"Associated PO {po_name} status updated from {po_status['before'].upper()} to {po_status['after'].upper()}.", "success")
-    # Adjustment Ripple Flash
-    if invoice_status:
-        adjustment_status = invoice_status.get('adjustment') 
-        if isinstance(adjustment_status, dict):
-            action = adjustment_status.get('action')
-            adjustment_name = adjustment_status.get('adjustment_name')
-            raw_amount = adjustment_status.get('amount', 0)
-            amount = int(raw_amount) if raw_amount is not None else 0
-            amount_str = format_usd(amount)
-            
-            if action == 'CREATE':
-                flash(f"Threshold gap of {amount_str} auto-recorded as a Write-off Adjustment {adjustment_name}.", "info")
-            elif action == 'UPDATE':
-                flash(f"System Write-off Adjustment {adjustment_name} updated to match new {amount_str} gap.", "info")
-            elif action == 'DELETE':
-                flash(f"System Write-off Adjustment {adjustment_name} removed (Invoice settled or re-opened).", "info")
 
     # 2. Initialize buckets
     line_display_items = []
@@ -445,6 +420,7 @@ def print_view(id):
     due_date = invoice.invoice_date + timedelta(days=net_days) # type: ignore
 
     # 6. Template Selection
+    # Draft and Open use standard print; completed use print_paid
     if invoice.status == 'completed':
         template = 'invoices/print_paid.html'
     else:
@@ -461,6 +437,55 @@ def print_view(id):
                            active_payments=active_payments,
                            due_date=due_date,
                            net_days=net_days)
+
+@bp.route('/issue/<int:id>', methods=['POST'])
+def issue(id):
+    """
+    Messenger: Commits the Invoice to the legal record.
+    Ripples: Triggers PO Status sync and Adjustment reconciliation.
+    """
+    try:
+        # 1. Capture terms from preview
+        notes = request.form.get('transient_notes', '')
+
+        # 2. Call The Atomic issue_invoice
+        # Returns: (obj, invoice_status_dict, po_status_dict)
+        invoice, invoice_status, po_status = InvoiceService.issue_invoice(id, notes)
+        
+        if not invoice:
+            flash("Invoice record not found.", "error")
+            return redirect(url_for('invoices.index'))
+        
+        # 3. SUCCESS FEEDBACK
+        flash(f"Invoice {invoice.invoice_number} has been issued and attached as PDF.", "success")
+        if invoice_status and invoice_status['before'] != invoice_status['after']:
+            flash(f"Invoice status updated: {invoice_status['before'].upper()} → {invoice_status['after'].upper()}", "info")
+
+        # 4. RIPPLE FEEDBACK: PO Status
+        if po_status and po_status['before'] != po_status['after']:
+            po_name = invoice.purchase_order.po_number or invoice.order.order_number
+            flash(f"Associated PO {po_name} status updated: {po_status['before'].upper()} → {po_status['after'].upper()}", "info")
+
+        # 5. RIPPLE FEEDBACK: Write-off Adjustments
+        adjustment_status = invoice_status.get('adjustment')
+        if isinstance(adjustment_status, dict):
+            action = adjustment_status.get('action')
+            adjustment_name = adjustment_status.get('adjustment_number')
+            raw_amount = adjustment_status.get('amount', 0)
+            amount = int(raw_amount) if raw_amount is not None else 0
+            amount_str = format_usd(amount)
+            if action == 'CREATE':
+                flash(f"Threshold gap of {amount_str} auto-recorded as a Write-off Adjustment {adjustment_name}.", "info")
+            elif action == 'UPDATE':
+                flash(f"System Write-off Adjustment {adjustment_name} updated to match new {amount_str} gap.", "info")
+            elif action == 'DELETE':
+                flash(f"System Write-off Adjustment {adjustment_name} removed (Invoice settled or re-opened).", "info")
+
+        return redirect(url_for('invoices.view', id=id))
+
+    except Exception as e:
+        return handle_post_error(e, "invoices.issue")
+
 
 # --- HTMX Item-row and Calculation Routes ---
 

@@ -267,7 +267,7 @@ def issue(id):
             return redirect(url_for('quotes.index'))
 
         # 3. Success Feedback
-        flash(f"Quote {quote.quote_number} has been issued and archived as PDF.", "success")
+        flash(f"Quote {quote.quote_number} has been issued and attached as PDF.", "success")
         if status and status['before'] != status['after']:
             flash(f"Status updated: {status['before'].upper()} → {status['after'].upper()}", "info")
 

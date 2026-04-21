@@ -1,5 +1,5 @@
 from .base_service import BaseService
-from ..models import Invoice, InvoiceItem, PurchaseOrder, OrderRegistry, Client, Payment, Product, SettingsMetadata, Adjustment
+from ..models import Invoice, InvoiceItem, PurchaseOrder, OrderRegistry, Client, Payment, Product, SettingsMetadata, Adjustment, Attachment
 from .audit_service import AuditLogService
 from .attachment_service import AttachmentService
 from .adjustments_service import AdjustmentService
@@ -7,9 +7,10 @@ from ..extensions import db
 from ..utils.money import parse_to_cents, format_usd
 from ..utils.manual_pagination import ManualPagination
 from ..utils.sync import sync_invoice_status, sync_po_status
+from ..utils.pdf import save_pdf_from_html
 from sqlalchemy import select, or_, func, case
 from sqlalchemy.orm import contains_eager, joinedload, selectinload
-from datetime import datetime
+from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 class InvoiceService(BaseService):
@@ -420,45 +421,137 @@ class InvoiceService(BaseService):
         return db.session.execute(stmt).scalars().all()
     
     @classmethod
-    def issue_invoice(cls, id: int):
+    def issue_invoice(cls, id: int, notes: str):
         """
-        Transitions Invoice from draft to issued state.
-        Records a complete Forensic JSON Snapshot and links system ripples.
+        Transitions Invoice and save PDF as Attatchment.
+        Performs item bucketing, versioned PDF generation, triggers system ripples, and Audit logging.
         """
-        invoice = cls.get_invoice_by_id(id) # Hydrated with .balance
+        # 1. Fetch hydrated object (includes .balance and .po_total_prepayment)
+        invoice = cls.get_invoice_by_id(id)
         if not invoice or not invoice.is_active:
             return None, None, None
         
+        # 2. Preparation: Internal Item Bucketing & Ledger Math
+        line_display_items = []
+        subtotal = tax_total = shipping_total = 0
+        for item in invoice.items:
+            val = item.quantity * item.billed_unit_price
+            p = item.product.document_placement
+            if p == 'Tax': tax_total += val
+            elif p == 'Shipping': shipping_total += val
+            else:
+                line_display_items.append(item)
+                subtotal += val
+
+        active_payments = [p for p in invoice.payments if p.is_active]
+        total_received = sum(p.amount for p in active_payments)
+
+        # 3. Term & Date Logic for PDF
+        metadata = db.session.get(SettingsMetadata, 1)
+        net_days = invoice.net_days if invoice.net_days is not None else (metadata.default_net_days if metadata else 30)
+        due_date = invoice.invoice_date + timedelta(days=net_days)
+
+        # 4. Versioning Logic: Count existing generated snapshots
+        v_count = db.session.query(func.count(Attachment.id)).filter_by(
+            entity_type='Invoice', 
+            entity_id=id, 
+            is_generated=True
+        ).scalar() or 0
+        version = v_count + 1
+        
+        # 5. Capture current state for Audit
+        old_snapshot = cls._get_snapshot(invoice)
+
+        # 6. Physical Archival (PDF Generation)
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M')
+        filename = f"Invoice_{invoice.invoice_number}_{timestamp}_v{version}.pdf"
+
+        # Construct the data package for WeasyPrint
+        context_data = {
+            'invoice': invoice,
+            'line_display_items': line_display_items,
+            'subtotal': subtotal,
+            'tax_total': tax_total,
+            'shipping_total': shipping_total,
+            'total_received': total_received,
+            'active_payments': active_payments,
+            'due_date': due_date,
+            'net_days': net_days,
+            'transient_notes': notes
+        }
+
+        # Select template based on current payment status
+        template = 'invoices/print_paid.html' if invoice.status == 'completed' else 'invoices/print.html'
+        save_pdf_from_html(template, context_data, filename, subfolder='invoices')
+
+        # 7. Database Updates (State & Linkage)
         before = invoice.status
         if before == 'draft':
-            # 1. CAPTURE FULL FORENSIC SNAPSHOT (Matching Quote pattern)
-            snapshot = cls._get_snapshot(invoice)
-            snapshot['line_items'] = cls._get_items_fingerprint(invoice.items, 'quantity', 'billed_unit_price')
-            # We manually set the target status for the notarized record
-            snapshot['status'] = 'open' 
-
-            # 2. RECORD THE PARENT "ISSUE" ACTION (Full dump)
-            parent_audit_id = AuditLogService.record(
-                target_id=id,
-                target_type=cls.model.__name__,
-                action='ISSUE',
-                old_data={}, # Forces full snapshot
-                new_data=snapshot
-            )
-
-            # 3. ADVANCE STATUS & RIPPLE
             invoice.status = 'open'
-            
-            # 4. RUN SYSTEM RIPPLES (Linked to Parent)
-            invoice_status = sync_invoice_status(invoice, original_status='open', parent_id=parent_audit_id)
-            invoice_status['before'] = before # Correct UI feedback (Draft -> Final Status)
-            
-            po_status = sync_po_status(invoice.po_id, parent_id=parent_audit_id)
+        invoice.terms_snapshot = notes
 
-            db.session.commit()
-            return invoice, invoice_status, po_status
+        # Create the Forensic Attachment record
+        new_snapshot = Attachment()
+        new_snapshot.entity_type = 'Invoice'
+        new_snapshot.entity_id = id
+        new_snapshot.file_path = filename
+        new_snapshot.file_name = filename
+        new_snapshot.is_generated = True
+        db.session.add(new_snapshot)
+
+        # 8. Forensic Trail: Record the ISSUE action
+        parent_audit_id = AuditLogService.record(
+            target_id=id,
+            target_type='Invoice',
+            action='ISSUE',
+            old_data=old_snapshot,
+            new_data={
+                'status': invoice.status,
+                'terms_snapshot': notes,
+                'snapshot_file': filename
+            }
+        )
+
+        # 9. System Ripples (Sync status and PO)
+        # Note: We pass the 'parent_audit_id' so ripples are nested in the timeline
+        invoice_status_ripple = sync_invoice_status(invoice, original_status='open', parent_id=parent_audit_id)
+        invoice_status_ripple['before'] = before # Correct UI feedback (Draft -> Final Status)
+        po_status_ripple = sync_po_status(invoice.po_id, parent_id=parent_audit_id)
+
+        db.session.commit()
+        return invoice, invoice_status_ripple, po_status_ripple
+    
         
-        return invoice, None, None
+        # before = invoice.status
+        # if before == 'draft':
+        #     # 1. CAPTURE FULL FORENSIC SNAPSHOT (Matching Quote pattern)
+        #     snapshot = cls._get_snapshot(invoice)
+        #     snapshot['line_items'] = cls._get_items_fingerprint(invoice.items, 'quantity', 'billed_unit_price')
+        #     # We manually set the target status for the notarized record
+        #     snapshot['status'] = 'open' 
+
+        #     # 2. RECORD THE PARENT "ISSUE" ACTION (Full dump)
+        #     parent_audit_id = AuditLogService.record(
+        #         target_id=id,
+        #         target_type=cls.model.__name__,
+        #         action='ISSUE',
+        #         old_data={}, # Forces full snapshot
+        #         new_data=snapshot
+        #     )
+
+        #     # 3. ADVANCE STATUS & RIPPLE
+        #     invoice.status = 'open'
+            
+        #     # 4. RUN SYSTEM RIPPLES (Linked to Parent)
+        #     invoice_status = sync_invoice_status(invoice, original_status='open', parent_id=parent_audit_id)
+        #     invoice_status['before'] = before # Correct UI feedback (Draft -> Final Status)
+            
+        #     po_status = sync_po_status(invoice.po_id, parent_id=parent_audit_id)
+
+        #     db.session.commit()
+        #     return invoice, invoice_status, po_status
+        
+        # return invoice, None, None
     
     @classmethod
     def _validate_pure_prepayment(cls, items_data: list[dict]) -> bool:

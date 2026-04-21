@@ -39,7 +39,7 @@
 
 
     /* Professional Textarea Formatting */
-    textarea .print-notes {
+    textarea, .print-notes {
         border: none !important;
         padding: 0 !important;
         resize: none !important;
