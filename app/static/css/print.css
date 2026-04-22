@@ -9,6 +9,7 @@
     body { 
         background: white !important; 
         -webkit-print-color-adjust: exact; 
+        print-color-adjust: exact;
     }
     
     .no-print { 
@@ -30,12 +31,33 @@
         margin: 15mm; 
     }
 
-    /* --- NEW: Content Baseline Reset --- */
     /* Strips default browser/engine margins to ensure mb-[pt] units are absolute */
-    p, tr, th, td, h1, h2, h3, table, thead, tbody {
+    p, tr, h1, h2, h3, table, thead, tbody {
         margin: 0 !important;
         padding: 0 !important;
     }
+
+    table {
+        border-collapse: collapse !important;
+    }
+
+    th, td {
+        padding: 2pt 1pt !important;
+    }
+
+    /* Forces Tailwind pixel units to verified physical points for vector fidelity */
+    /* Logic: Target specific sides to prevent shorthand from turning on all 4 borders */
+    .border { border-width: 0.5pt !important; }
+    .border-t, .border-y { border-top-width: 0.5pt !important; }
+    .border-b, .border-y { border-bottom-width: 0.5pt !important; }
+    .border-l, .border-x { border-left-width: 0.5pt !important; }
+    .border-r, .border-x { border-right-width: 0.5pt !important; }
+
+    .border-2 { border-width: 1.0pt !important; }
+    .border-t-2, .border-y-2 { border-top-width: 1.0pt !important; }
+    .border-b-2, .border-y-2 { border-bottom-width: 1.0pt !important; }
+    .border-l-2, .border-x-2 { border-left-width: 1.0pt !important; }
+    .border-r-2, .border-x-2 { border-right-width: 1.0pt !important; }
 
 
     /* Professional Textarea Formatting */
@@ -49,9 +71,9 @@
 
     input {
         border: none !important;
-        border-bottom: 1px solid #94a3b8 !important;
-        min-height: 30px !important;
-        max-height: 30px !important;
+        border-bottom: 0.5pt solid #94a3b8 !important;
+        min-height: 22.5pt !important;
+        max-height: 22.5pt !important;
     }
 
     /* Auto-sizing support for modern browsers */
@@ -63,8 +85,8 @@
 /* Extra spacing for electronical typing on PDF */
 .sig-line { 
     border-bottom: 1px solid #94a3b8; /* slate-400 */
-    min-height: 24px !important;
-    max-height: 24px !important;
+    min-height: 18pt !important;
+    max-height: 18pt !important;
 }
 
 /* Ensure dashed borders show up clearly for notes */
