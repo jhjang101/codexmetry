@@ -321,7 +321,7 @@ class QuoteService(BaseService):
     # --- INTERNAL HELPERS ---
 
     @classmethod
-    def _validate_and_transform(cls, data: dict, quote=None) -> dict:
+    def _validate_and_transform(cls, data: dict, quote: Quote | None = None) -> dict:
         """Handles header validation, data type conversion and terms pre-population."""
         client_id = data.get('client_id')
         quote_number = data.get('quote_number', '').strip()

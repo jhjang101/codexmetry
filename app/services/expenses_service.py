@@ -146,7 +146,7 @@ class ExpenseService(BaseService):
             raise ValueError("Expense not found.")
 
         # 2. Validate & transform
-        clean_data = cls._validate_and_transform(data, items_data)
+        clean_data = cls._validate_and_transform(data, items_data, expense)
 
         # 3. Audit_logs snapshot
         old_snapshot = cls._get_snapshot(expense)
@@ -323,7 +323,10 @@ class ExpenseService(BaseService):
     # --- INTERNAL HELPERS ---
 
     @classmethod
-    def _validate_and_transform(cls, data: dict, items_data: list[dict]) -> dict:
+    def _validate_and_transform(cls, 
+                                data: dict, 
+                                items_data: list[dict],
+                                expense: Expense | None = None) -> dict:
         """Handles header validation and description fallback."""
         vendor_id = data.get('vendor_id')
         expense_number = data.get('expense_number', '').strip()
@@ -348,7 +351,20 @@ class ExpenseService(BaseService):
         if not description:
             raise ValueError("Description is required or must be provided in the first item line.")
         
-        # 2. Expense Linkage (Client -> PO -> Invoice -> Order inheritance)
+        # 2. Get Defaults from metadata
+        metadata = db.session.get(SettingsMetadata, 1)
+        tz_name = metadata.timezone if metadata else 'America/Chicago'
+        default_terms = metadata.default_po_terms if metadata else ""
+
+        # 3. Parse dates
+        raw_date = data.get('expense_date')
+        
+        if raw_date:
+            expense_date = datetime.strptime(raw_date, '%Y-%m-%d').date() 
+        else:
+            expense_date = datetime.now(ZoneInfo(tz_name)).date()
+
+        # 4. Expense Linkage (Client -> PO -> Invoice -> Order inheritance)
         client_id = data.get('client_id')
         po_id = data.get('po_id')
         invoice_id = data.get('invoice_id')
@@ -367,18 +383,13 @@ class ExpenseService(BaseService):
                 order_id = po.order_id
         # Note: If only client_id was provided, it remains as captured from data.get
 
-        # Parse dates
-        raw_date = data.get('expense_date')
-        # Get TimeZone from metadata
-        metadata = db.session.get(SettingsMetadata, 1)
-        tz_name = metadata.timezone if metadata else 'America/Chicago'
-
-        if raw_date:
-            expense_date = datetime.strptime(raw_date, '%Y-%m-%d').date() 
+        # 5. Terms Resolution
+        if expense and expense.terms_snapshot:
+            resolved_terms = expense.terms_snapshot
         else:
-            expense_date = datetime.now(ZoneInfo(tz_name)).date()
+            resolved_terms = default_terms
 
-        # 3. Transform Data
+        # 6. Transform Data
         clean_data ={
             'vendor_id': int(vendor_id),
             'expense_number': expense_number,
@@ -390,7 +401,8 @@ class ExpenseService(BaseService):
             'description': description,
             'expense_date': expense_date,
             'status': data.get('status', 'open'),
-            'note': data.get('note', '').strip()
+            'note': data.get('note', '').strip(),
+            'terms_snapshot': resolved_terms
         }
 
         return clean_data

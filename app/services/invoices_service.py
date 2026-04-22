@@ -199,7 +199,7 @@ class InvoiceService(BaseService):
             raise ValueError("Invoice not found.")
 
         # 1. Validate & Transform
-        clean_data = cls._validate_and_transform(data)
+        clean_data = cls._validate_and_transform(data, invoice)
 
         # 2. Guard
         # Locking guard: if invoice have payments prevent switching client and po link
@@ -593,8 +593,11 @@ class InvoiceService(BaseService):
     # --- INTERNAL HELPERS ---
 
     @classmethod
-    def _validate_and_transform(cls, data: dict) -> dict:
-        """Header validation and registry link inheritance."""
+    def _validate_and_transform(cls, data: dict, invoice: Invoice | None = None) -> dict:
+        """
+        Header validation and registry link inheritance.
+        terms pre-population.
+        """
         po_id = data.get('po_id')
         if not po_id:
             raise ValueError("Source Purchase Order is required.")
@@ -603,19 +606,20 @@ class InvoiceService(BaseService):
         if not po:
             raise ValueError("The selected Purchase Order does not exist.")
 
-        # Get Defaults from metadata
+        # 1. Get Defaults from metadata
         metadata = db.session.get(SettingsMetadata, 1)
         tz_name = metadata.timezone if metadata else 'America/Chicago'
         default_net_days = metadata.default_net_days if metadata else 30
+        default_terms = metadata.default_invoice_terms if metadata else ""
 
-        # 1. Parse dates
+        # 2. Parse dates
         raw_date = data.get('invoice_date')
         if raw_date:
             invoice_date = datetime.strptime(raw_date, '%Y-%m-%d').date()
         else: 
             invoice_date = datetime.now(ZoneInfo(tz_name)).date()
 
-        # 2. Resolve Net Days (The Snapshot Rule)
+        # 3. Resolve Net Days (The Snapshot Rule)
         raw_net = data.get('net_days')
         if raw_net and str(raw_net).strip():
             try:
@@ -630,7 +634,7 @@ class InvoiceService(BaseService):
             # Fallback 2: Use global system default
             net_days = default_net_days
 
-        # 3. Resolve Customer PO Number (Inheritance Rule)
+        # 4. Resolve Customer PO Number (Inheritance Rule)
         customer_po = data.get('customer_po_number', '').strip()
         if not customer_po and po:
             customer_po = po.customer_po_number
@@ -638,7 +642,13 @@ class InvoiceService(BaseService):
         raw_ship_date = data.get('ship_date')
         carrier_id = data.get('carrier_id')
 
-        # Transform data
+        # 5. Terms Resolution
+        if invoice and invoice.terms_snapshot:
+            resolved_terms = invoice.terms_snapshot
+        else:
+            resolved_terms = default_terms
+
+        # 6. Transform data
         clean_data = {
             'order_id': po.order_id,
             'po_id': po.id,
@@ -652,7 +662,8 @@ class InvoiceService(BaseService):
             'carrier_id': int(carrier_id) if carrier_id else None,
             'tracking_number': data.get('tracking_number', '').strip(),
             'status': data.get('status', 'draft'),
-            'note': data.get('note', '').strip()
+            'note': data.get('note', '').strip(),
+            'terms': resolved_terms
         }
 
         return clean_data
