@@ -203,9 +203,8 @@
                 <!-- Terms Notes (Left) -->
                     {% if is_pdf_mode %}
                     <div class="w-3/5">
-                        <div name="transient_notes" 
-                            class="print-notes w-full text-[10px] whitespace-pre-line text-gray-800 p-2">
-                            {{ transient_notes }}
+                        <div class="print-notes w-full text-[10px] whitespace-pre-line text-gray-800 p-2">
+                            {{ quote.terms_snapshot }}
                         </div>
                     </div>
 
@@ -213,14 +212,14 @@
                     {% else %}
                     <div class="w-3/5 mt-3">
                     <label class="no-print block text-[9px] font-bold text-blue-500 uppercase mb-1">
-                        Editable Terms & Notes (Transient):
+                        Editable Terms & Notes (Saved on Issue):
                     </label>
                     <textarea name="transient_notes" 
                             class="print-notes w-full text-[10px] leading-relaxed text-gray-800 bg-gray-50 p-2 
                                     border border-dashed border-gray-300 rounded outline-none focus:bg-white 
                                     focus:border-blue-400 transition-all resize-none overflow-hidden"
                             oninput='this.style.height = "";this.style.height = this.scrollHeight + "px"'
-                            placeholder="Enter terms, valid dates, or special instructions...">{{ metadata.default_quote_terms }}</textarea>
+                            placeholder="Enter terms, valid dates, or special instructions...">{{ quote.terms_snapshots }}</textarea>
                     </div>
 
                     {% endif %}

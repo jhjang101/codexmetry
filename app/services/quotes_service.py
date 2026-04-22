@@ -128,7 +128,7 @@ class QuoteService(BaseService):
             raise ValueError("Quote not found.")
         
         # 1. Validate & transform
-        clean_data = cls._validate_and_transform(data)
+        clean_data = cls._validate_and_transform(data, quote)
         
         # 2. Capture original state for audit
         old_snapshot = cls._get_snapshot(quote)
@@ -321,8 +321,8 @@ class QuoteService(BaseService):
     # --- INTERNAL HELPERS ---
 
     @classmethod
-    def _validate_and_transform(cls, data: dict) -> dict:
-        """Handles header validation and data type conversion."""
+    def _validate_and_transform(cls, data: dict, quote=None) -> dict:
+        """Handles header validation, data type conversion and terms pre-population."""
         client_id = data.get('client_id')
         quote_number = data.get('quote_number', '').strip()
         
@@ -330,21 +330,22 @@ class QuoteService(BaseService):
             raise ValueError("Client is required.")
         if not quote_number:
             raise ValueError("Quote Number is required.")
-
-        # Parse dates
-        raw_date = data.get('quote_date')
-        raw_expiry = data.get('expiration_date')
-
-        # Get TimeZone from metadata
+        
+        # 1. Fetch Metadata (Shared context)
         metadata = db.session.get(SettingsMetadata, 1)
         tz_name = metadata.timezone if metadata else 'America/Chicago'
-        # Get dynamic expiry days (default to 30 if record missing)
         expiry_days = metadata.default_quote_expiry_days if metadata else 30
+        default_terms = metadata.default_quote_terms if metadata else ""
+
+        # 2. Date Parsing
+        raw_date = data.get('quote_date')
+        raw_expiry = data.get('expiration_date')
         
         if raw_date:
             quote_date = datetime.strptime(raw_date, '%Y-%m-%d').date() 
         else:
             quote_date = datetime.now(ZoneInfo(tz_name)).date()
+
         if raw_expiry:
             expiration_date = datetime.strptime(raw_expiry, '%Y-%m-%d').date() 
         else:
@@ -352,15 +353,22 @@ class QuoteService(BaseService):
 
         if quote_date > expiration_date:
             raise ValueError("Expiration date cannot be before quote date.")
+        
+        # 3. Terms Resolution
+        if quote and quote.terms_snapshot:
+            resolved_terms = quote.terms_snapshot
+        else:
+            resolved_terms = default_terms
 
-        # Transform data
+        # 4. Transform and return data
         clean_data ={
             'client_id': int(client_id),
             'quote_number': quote_number,
             'quote_date': quote_date,
             'expiration_date': expiration_date,
             'status': data.get('status', 'draft'),
-            'note': data.get('note', '').strip()
+            'note': data.get('note', '').strip(),
+            'terms_snapshot': resolved_terms
         }
 
         return clean_data
