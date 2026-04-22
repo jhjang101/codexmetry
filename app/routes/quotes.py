@@ -260,7 +260,7 @@ def issue(id):
 
         # 2. Call the Atomic Brain Logic
         # (This will handle status, snapshot, PDF generation, and Audit)
-        quote, status = QuoteService.issue_quote(id, transient_notes)
+        quote, status, filename = QuoteService.issue_quote(id, transient_notes)
         
         if not quote:
             flash("Quote record not found.", "error")
@@ -272,7 +272,7 @@ def issue(id):
             flash(f"Status updated: {status['before'].upper()} → {status['after'].upper()}", "info")
 
         # 4. Final Redirect to the View page
-        return redirect(url_for('quotes.view', id=id))
+        return redirect(url_for('static', filename=f'uploads/quotes/{filename}'))
 
     except Exception as e:
         # Rollback and show OOB error if the PDF generation or commit fails

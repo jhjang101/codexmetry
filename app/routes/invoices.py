@@ -450,7 +450,7 @@ def issue(id):
 
         # 2. Call The Atomic issue_invoice
         # Returns: (obj, invoice_status_dict, po_status_dict)
-        invoice, invoice_status, po_status = InvoiceService.issue_invoice(id, notes)
+        invoice, invoice_status, po_status, filename = InvoiceService.issue_invoice(id, notes)
         
         if not invoice:
             flash("Invoice record not found.", "error")
@@ -481,7 +481,7 @@ def issue(id):
             elif action == 'DELETE':
                 flash(f"System Write-off Adjustment {adjustment_name} removed (Invoice settled or re-opened).", "info")
 
-        return redirect(url_for('invoices.view', id=id))
+        return redirect(url_for('static', filename = f'uploads/invoices/{filename}'))
 
     except Exception as e:
         return handle_post_error(e, "invoices.issue")

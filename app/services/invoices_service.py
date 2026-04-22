@@ -429,7 +429,7 @@ class InvoiceService(BaseService):
         # 1. Fetch hydrated object (includes .balance and .po_total_prepayment)
         invoice = cls.get_invoice_by_id(id)
         if not invoice or not invoice.is_active:
-            return None, None, None
+            return None, None, None, None
         
         # 2. Preparation: Internal Item Bucketing & Ledger Math
         line_display_items = []
@@ -528,7 +528,7 @@ class InvoiceService(BaseService):
         po_status_ripple = sync_po_status(invoice.po_id, parent_id=parent_audit_id)
 
         db.session.commit()
-        return invoice, invoice_status_ripple, po_status_ripple
+        return invoice, invoice_status_ripple, po_status_ripple, filename
     
         
         # before = invoice.status

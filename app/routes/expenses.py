@@ -304,7 +304,7 @@ def issue(id):
         transient_notes = request.form.get('transient_notes', '')
 
         # 2. Brain Call: Atomic Issuance
-        expense, status = ExpenseService.issue_expense(id, transient_notes)
+        expense, status, filename = ExpenseService.issue_expense(id, transient_notes)
         
         if not expense:
             flash("Expense record not found.", "error")
@@ -315,7 +315,7 @@ def issue(id):
         if status and status['before'] != status['after']:
             flash(f"Status updated: {status['before'].upper()} → {status['after'].upper()}", "info")
 
-        return redirect(url_for('expenses.view', id=id))
+        return redirect(url_for('static', filename=f'uploads/expenses/{filename}'))
 
     except Exception as e:
         return handle_post_error(e, "expenses.issue")

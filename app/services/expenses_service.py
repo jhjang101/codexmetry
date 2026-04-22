@@ -219,7 +219,7 @@ class ExpenseService(BaseService):
         # 1. Fetch hydrated object
         expense = cls.get_expense_by_id(id)
         if not expense or not expense.is_active:
-            return None, None
+            return None, None, None
         
         # 2. Preparation: Recalculate Subtotal for PDF context
         subtotal = sum(item.quantity * item.unit_price for item in expense.items)
@@ -286,7 +286,7 @@ class ExpenseService(BaseService):
         )
 
         db.session.commit()
-        return expense, {"before": before_status, "after": expense.status}
+        return expense, {"before": before_status, "after": expense.status}, filename
 
 
 

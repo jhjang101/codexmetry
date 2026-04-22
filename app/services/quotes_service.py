@@ -234,7 +234,7 @@ class QuoteService(BaseService):
         # 1. Fetch hydrated object
         quote = cls.get_quote_by_id(id)
         if not quote or not quote.is_active:
-            return None, None
+            return None, None, None
         
         # 2. Preparation: Internal Item Bucketing for PDF Accuracy
         line_display_items = []
@@ -316,7 +316,7 @@ class QuoteService(BaseService):
         )
 
         db.session.commit()
-        return quote, {"before": old_snapshot['status'], "after": quote.status}
+        return quote, {"before": old_snapshot['status'], "after": quote.status}, filename
 
     # --- INTERNAL HELPERS ---
 

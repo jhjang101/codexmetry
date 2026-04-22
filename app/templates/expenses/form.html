@@ -44,7 +44,6 @@
 
                             <a href="{{ url_for('expenses.print_view', id=expense.id) }}" 
                                 target="_blank"
-                                onclick="armFocusSync('{{ url_for('expenses.view', id=expense.id) }}')"
                                 class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">
                                 <i class="fa-solid fa-print w-2"></i>
                                 Print / Save PDF

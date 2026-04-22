@@ -58,6 +58,17 @@ function armFocusSync(url) {
     }, 100);
 }
 
+/* --- Cross-Tab Sync Engine (BroadcastChannel API) --- */
+const syncChannel = new BroadcastChannel('codexmetry_sync');
+
+syncChannel.onmessage = (event) => {
+    // Logic: If we hear an 'issue_success' signal, arm the focus sync
+    if (event.data.command === 'issue_success') {
+        console.log("Sync Engine: Broadcast received from document terminal.");
+        armFocusSync(event.data.url);
+    }
+};
+
 /**
  * Universal Chart.js Initializer
  * Logic: Reads data from DOM, destroys old instances, and applies professional styling.
@@ -140,3 +151,4 @@ document.addEventListener('htmx:afterSettle', function(evt) {
         });
     }, 50);
 });
+
