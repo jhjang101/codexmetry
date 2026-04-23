@@ -184,6 +184,11 @@ def view(id):
         print('item.product.name:', item.product.name)
         print('item.quantity:', item.quantity)
         print('item.unit_price:', item.agreed_unit_price)
+        print('item.allocated_qty:', item.allocated_qty)
+
+        
+
+
 
     print('po.balance_tobe_invoiced:', po.balance_tobe_invoiced)
 

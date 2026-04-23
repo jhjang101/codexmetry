@@ -1,4 +1,6 @@
 {% set row_id = row_id if row_id else (item.id if item else timestamp) %}
+{# Identify if this Product line has any active Invoice reservations #}
+{% set is_allocated = item.allocated_qty > 0 if (item and item.allocated_qty is defined) else False %}
 
 <tr class="item-row group align-top">
     <input type="hidden" name="row_ids[]" value="{{ row_id }}">
@@ -11,13 +13,37 @@
     <td class="py-2 pr-2">
         {% if mode == 'view' %}
             <div class="bg-gray-100 border rounded-lg p-2">
-                <p class="text-sm">{{ item.product.name }}</p>
+                <div class="flex justify-between items-start">
+                    <p class="text-sm">{{ item.product.name }}</p>
+                    {% if is_allocated %}
+                        <span class="text-[9px] font-bold text-blue-500 uppercase"><i class="fa-solid fa-link mr-1"></i>Invoice Link</span>
+                    {% endif %}
+                </div>
                 {% if item and item.description %}
                     <p class="text-xs mt-1 whitespace-pre-wrap border-t border-gray-200 pt-1">{{ item.description }}</p>
                 {% endif %}
             </div>
+        
+        {% elif is_allocated %}
+            <!-- LOCKED STATE: Included in one or more Invoices -->
+            <div class="block bg-gray-100 border rounded-lg p-2 text-sm text-gray-700">
+                <div class="flex justify-between items-center">
+                    <span>{{ item.product.name }}</span>
+                    <span title="Reserved in active Invoice(s)" class="text-blue-500 text-[10px]">
+                        <i class="fa-solid fa-link mr-1"></i>Invoice Link
+                    </span>
+                </div>
+            </div>
+            <!-- Persistence: Send the ID even though the UI is locked -->
+            <input type="hidden" name="product_ids[]" value="{{ item.product_id }}">
+
+            <textarea name="descriptions[]" rows="1"
+                    class="mt-1 block w-full border rounded-lg p-1 text-xs focus:ring-1 focus:ring-blue-300 outline-none overflow-hidden transition-all"
+                    placeholder="Specific item details...">{{ item.description if item else '' }}</textarea>
+        
+
         {% else %}
-            <!-- 1. Nested Product Dropdown -->
+            <!--  Standard Product Dropdown: Editable Product -->
             <div class="relative">
                 <select name="product_ids[]" 
                         class="block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none appearance-none bg-transparent cursor-pointer pr-10"
@@ -37,7 +63,7 @@
                 </div>
             </div>
 
-            <!-- 2. Nested Description -->
+            <!-- Description -->
             <textarea name="descriptions[]" 
                     rows="1"
                     class="mt-1 block w-full border rounded-lg p-1 text-xs focus:ring-1 focus:ring-blue-300 outline-none overflow-hidden transition-all"
@@ -51,6 +77,12 @@
             <p class="block bg-gray-100 border rounded-lg p-2 text-sm text-right">{{ item.quantity }}</p>
         {% else %}
             <input type="number" name="quantities[]" value="{{ item.quantity if item else 1 }}" 
+                    {# Force Quantity Floor if invoices exist #}
+                    {% if is_allocated %}
+                        min="{{ item.allocated_qty }}"
+                    {% else %}
+                        min="1"
+                    {% endif %}
                     class="block w-full border rounded-lg p-2 text-sm text-center focus:ring-1 focus:ring-blue-300 outline-none"
                     hx-post="{{ url_for('purchase_orders.calculate') }}"
                     hx-vals='{"row_id": "{{ row_id }}"}'
@@ -65,6 +97,12 @@
     <td class="py-2 px-2" id="unit-price-cell-{{ row_id }}">
         {% if mode == 'view' %}
             <p class="block bg-gray-100 border rounded-lg p-2 text-sm text-right">{{ item.agreed_unit_price | usd if item else '$0.00' }}</p>
+        {% elif is_allocated %}
+            <!-- LOCKED STATE: Fixed Price -->
+            <input type="text" name="unit_prices[]" 
+                   value="{{ item.agreed_unit_price | usd }}" 
+                   class="block w-full bg-gray-100 border rounded-lg p-2 text-sm text-right outline-none cursor-not-allowed" 
+                   readonly>
         {% else %}
             {# Even though it's a separate file for HTMX, we 'include' it to keep it inline #}
             {% include 'purchase_orders/partials/unit_price_input.html' %}
@@ -80,10 +118,18 @@
 
     <td class="py-2 pl-2 text-center">
         {% if mode != 'view' %}
-        <button type="button" class="text-red-400 hover:text-red-800 remove-row"
-                onclick="this.closest('.item-row').remove(); htmx.trigger('body', 'recalculate')">
-            <i class="fa-solid fa-xmark"></i>
-        </button>
+            {# Only allow deletion if no invoices are linked #}
+            {% if not is_allocated %}
+                <button type="button" class="text-red-400 hover:text-red-800"
+                        onclick="this.closest('.item-row').remove(); htmx.trigger('body', 'recalculate')">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            {% else %}
+                <button type="button" class="text-red-400 hover:text-red-800 remove-row"
+                        onclick="this.closest('.item-row').remove(); htmx.trigger('body', 'recalculate')">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            {% endif %}
         {% endif %}
     </td>
 </tr>

@@ -483,7 +483,6 @@ class PurchaseOrderService(BaseService):
             .where(
                 Invoice.po_id == po.id,
                 Invoice.is_active == True,
-                Invoice.status != 'draft', # NEW: Ignore Drafts in the fulfillment map
                 Invoice.id != exclude_invoice_id,
                 InvoiceItem.po_item_id != None
             )
@@ -809,40 +808,40 @@ class PurchaseOrderService(BaseService):
     
 
 
-        db.session.execute(db.delete(PoItem).where(PoItem.po_id == po.id))
+        # db.session.execute(db.delete(PoItem).where(PoItem.po_id == po.id))
 
-        total_cents = 0
-        fingerprint = []
+        # total_cents = 0
+        # fingerprint = []
 
-        for idx, row in enumerate(items_data, start=1):
-            product_id = row.get('product_id')
-            if product_id:
-                description = row.get('description', '').strip()
-                qty = int(row.get('quantity', 1))
-                price = parse_to_cents(str(row.get('unit_price', 0)))
-                total_cents += (qty * price)
+        # for idx, row in enumerate(items_data, start=1):
+        #     product_id = row.get('product_id')
+        #     if product_id:
+        #         description = row.get('description', '').strip()
+        #         qty = int(row.get('quantity', 1))
+        #         price = parse_to_cents(str(row.get('unit_price', 0)))
+        #         total_cents += (qty * price)
 
-                po_item = PoItem()
-                po_item.po_id = po.id
-                po_item.product_id = int(product_id)
-                po_item.quantity = qty
-                po_item.agreed_unit_price = price
-                po_item.description = description
-                po_item.sort_order = idx 
-                db.session.add(po_item)
+        #         po_item = PoItem()
+        #         po_item.po_id = po.id
+        #         po_item.product_id = int(product_id)
+        #         po_item.quantity = qty
+        #         po_item.agreed_unit_price = price
+        #         po_item.description = description
+        #         po_item.sort_order = idx 
+        #         db.session.add(po_item)
 
-                # Generate fingerprint
-                product = db.session.get(Product, product_id)
-                fingerprint.append({
-                    'product_id': int(product_id), 
-                    'product': product.name if product else "Unknown",
-                    'quantity': qty, 
-                    'unit_price': price,
-                    'description': description,
-                    'sort_order': idx,
-                    'po_item_id': None # Added for audit symmetry
-                })
+        #         # Generate fingerprint
+        #         product = db.session.get(Product, product_id)
+        #         fingerprint.append({
+        #             'product_id': int(product_id), 
+        #             'product': product.name if product else "Unknown",
+        #             'quantity': qty, 
+        #             'unit_price': price,
+        #             'description': description,
+        #             'sort_order': idx,
+        #             'po_item_id': None # Added for audit symmetry
+        #         })
 
-        po.total_amount = total_cents
+        # po.total_amount = total_cents
 
-        return sorted(fingerprint, key=lambda x: x['sort_order'])
+        # return sorted(fingerprint, key=lambda x: x['sort_order'])
