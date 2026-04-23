@@ -463,14 +463,16 @@ def _parse_items_form(form_data):
     quantities = form_data.getlist('quantities[]')
     unit_prices = form_data.getlist('unit_prices[]')
     descriptions = form_data.getlist('descriptions[]')
+    po_item_ids = form_data.getlist('po_item_ids[]') # NEW: Capture DB IDs
     
     items = []
-    for product_id, qty, price, description in zip(product_ids, quantities, unit_prices, descriptions):
+    for product_id, qty, price, description, po_item_id in zip(product_ids, quantities, unit_prices, descriptions, po_item_ids):
         if product_id:
             items.append({
                 'product_id': product_id,
                 'quantity': int(qty) if qty else 1,
                 'unit_price': price, # Service handles parse_to_cents
-                'description': description.strip() if description else ''
+                'description': description.strip() if description else '',
+                'po_item_id': int(po_item_id) if (po_item_id and str(po_item_id).isdigit()) else None
             })
     return items

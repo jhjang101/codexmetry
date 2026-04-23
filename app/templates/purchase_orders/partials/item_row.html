@@ -2,6 +2,8 @@
 
 <tr class="item-row group align-top">
     <input type="hidden" name="row_ids[]" value="{{ row_id }}">
+    {# Track physical DB identity to prevent ForeignKey violations #}
+    <input type="hidden" name="po_item_ids[]" value="{{ item.id if item.id else '' }}">
 
     <!-- NEW: CSS Driven Line Number Cell -->
     <td class="py-3 pl-2 line-number text-center"></td>

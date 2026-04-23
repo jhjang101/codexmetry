@@ -696,7 +696,91 @@ class PurchaseOrderService(BaseService):
     
     @classmethod
     def _stage_items(cls, po: PurchaseOrder, items_data: list[dict]):
-        """Manages PoItem rows and updates total_amount."""
+        """
+        Manages PoItem rows and updates total_amount.
+        Updates existing item lines, adds new ones, and guards deletions against Invoice links.
+        """
+        # 1. Map Current DB State: {id: PoItem_Object}
+        po_items = {po_item.id: po_item for po_item in po.items}
+        incoming_ids = set()
+        total_cents = 0
+        fingerprint = []
+
+        # 2. THE RECONCILIATION LOOP
+        for idx, row in enumerate(items_data, start=1):
+            product_id = int(row.get('product_id'))
+            qty = int(row.get('quantity', 1))
+            price = parse_to_cents(str(row.get('unit_price', 0)))
+            description = row.get('description', '').strip()
+            po_item_id = row.get('po_item_id')
+
+            total_cents += (qty * price)
+
+            # PATH A: UPDATE EXISTING ROW
+            if po_item_id and po_item_id in po_items:
+                po_item = po_items[po_item_id]
+                incoming_ids.add(po_item_id)
+
+                # INTEGRITY GUARD 1: Product Swap
+                # You cannot change the SKU of a line that has already been invoiced
+                if po_item.product_id != product_id:
+                    is_invoiced = db.session.query(exists().where(InvoiceItem.po_item_id == po_item.id)).scalar()
+                    if is_invoiced:
+                        raise ValueError(
+                            f"Integrity Violation: Cannot change the product for line #{idx} ('{po_item.product.name}'). "
+                            "This item has already been referenced in one or more active Invoices."
+                        )
+                
+                # Apply Updates
+                po_item.product_id = product_id
+                po_item.quantity = qty
+                po_item.agreed_unit_price = price
+                po_item.description = description
+                po_item.sort_order = idx
+
+            # PATH B: CREATE NEW ROW
+            else:
+                po_item = PoItem()
+                po_item.po_id = po.id
+                po_item.product_id = product_id
+                po_item.quantity = qty
+                po_item.agreed_unit_price = price
+                po_item.description = description
+                po_item.sort_order = idx
+                db.session.add(po_item)
+            
+            # Prepare Audit Metadata
+            # (Note: We fetch product name for the fingerprint if needed)
+            product = db.session.get(Product, product_id)
+            fingerprint.append({
+                'product_id': product_id, 
+                'product': product.name if product else "Unknown",
+                'quantity': qty, 'unit_price': price,
+                'description': description, 'sort_order': idx
+            })
+
+        # 3. PATH C: GUARDED DELETION
+        # Find IDs that exist in DB but were missing from the form
+        orphan_ids = set(po_items.keys()) - incoming_ids
+        for oid in orphan_ids:
+            # INTEGRITY GUARD 2: Check for Invoice Links
+            is_invoiced = db.session.query(exists().where(InvoiceItem.po_item_id == oid)).scalar()
+            if is_invoiced:
+                linked_item = po_items[oid]
+                raise ValueError(
+                    f"Integrity Violation: Cannot remove '{linked_item.product.name}' from this Purchase Order. "
+                    "It has already been fulfilled in an active Invoice. Archive the Invoice first."
+                )
+            
+            # Safe to delete
+            db.session.delete(po_items[oid])
+
+        # 4. Finalize Header
+        po.total_amount = total_cents
+        return sorted(fingerprint, key=lambda x: x['sort_order'])
+    
+
+
         db.session.execute(db.delete(PoItem).where(PoItem.po_id == po.id))
 
         total_cents = 0
@@ -710,14 +794,14 @@ class PurchaseOrderService(BaseService):
                 price = parse_to_cents(str(row.get('unit_price', 0)))
                 total_cents += (qty * price)
 
-                item = PoItem()
-                item.po_id = po.id
-                item.product_id = int(product_id)
-                item.quantity = qty
-                item.agreed_unit_price = price
-                item.description = description
-                item.sort_order = idx 
-                db.session.add(item)
+                po_item = PoItem()
+                po_item.po_id = po.id
+                po_item.product_id = int(product_id)
+                po_item.quantity = qty
+                po_item.agreed_unit_price = price
+                po_item.description = description
+                po_item.sort_order = idx 
+                db.session.add(po_item)
 
                 # Generate fingerprint
                 product = db.session.get(Product, product_id)

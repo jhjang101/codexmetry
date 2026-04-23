@@ -663,7 +663,7 @@ class InvoiceService(BaseService):
             'tracking_number': data.get('tracking_number', '').strip(),
             'status': data.get('status', 'draft'),
             'note': data.get('note', '').strip(),
-            'terms': resolved_terms
+            'terms_snapshot': resolved_terms
         }
 
         return clean_data
