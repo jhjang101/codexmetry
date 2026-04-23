@@ -472,7 +472,13 @@ class PurchaseOrderService(BaseService):
         # 7.1. Fetch all invoiced quantities for THIS PO deal, grouped by PO Item ID
         # This one query replaces the loop-based queries for high efficiency.
         qty_stmt = (
-            select(InvoiceItem.po_item_id, func.sum(InvoiceItem.quantity))
+            select(
+                InvoiceItem.po_item_id,
+                # 'Issued': Non-drafts only
+                func.sum(case((Invoice.status != 'draft', InvoiceItem.quantity), else_=0)).label('issued'),
+                # 'Allocated': All active invoices (including drafts)
+                func.sum(InvoiceItem.quantity).label('allocated')
+            )
             .join(Invoice)
             .where(
                 Invoice.po_id == po.id,
@@ -483,15 +489,22 @@ class PurchaseOrderService(BaseService):
             )
             .group_by(InvoiceItem.po_item_id)
         )
-        # Create a lookup map: {po_item_id: total_qty_fulfilled}
-        fulfillment_map = {row[0]: row[1] for row in db.session.execute(qty_stmt).all()}
+        # Create a lookup map: {po_item_id: (issued_val, allocated_val)}
+        fulfillment_results = db.session.execute(qty_stmt).all()
+        fulfillment_map = {row[0]: (row[1], row[2]) for row in fulfillment_results}
 
-        # 7.2. Calculate Fulfillment (Items left to ship)
+        # 7.2. Anchor fulfillment attributes to the PoItem objects
+        for po_item in po.items:
+            res = fulfillment_map.get(po_item.id, (0, 0))
+            po_item.invoiced_qty = res[0]  # Standard Billed (Status-driving)
+            po_item.allocated_qty = res[1] # Reservation (UI Lock-driving)
+
+        # 7.3. Calculate Fulfillment (Items left to ship for the Backlog logic)
+        # Note: We use 'invoiced_qty' here so backlog math excludes drafts.
         remaining_items = []
         for po_item in po.items:
             # Look up how much has been fulfilled for this specific LINE ID
-            already_invoiced = fulfillment_map.get(po_item.id, 0)
-            qty_left = po_item.quantity - already_invoiced
+            qty_left = po_item.quantity - po_item.invoiced_qty # type: ignore (Dynamic attribute)
 
             if qty_left > 0:
                 remaining_items.append({
@@ -721,15 +734,32 @@ class PurchaseOrderService(BaseService):
                 po_item = po_items[po_item_id]
                 incoming_ids.add(po_item_id)
 
-                # INTEGRITY GUARD 1: Product Swap
-                # You cannot change the SKU of a line that has already been invoiced
-                if po_item.product_id != product_id:
-                    is_invoiced = db.session.query(exists().where(InvoiceItem.po_item_id == po_item.id)).scalar()
-                    if is_invoiced:
+                # INTEGRITY GUARD 1: Contractual Identity (Product & Price)
+                # Logic: If SKU or Price changes, verify no Invoices (including drafts) exist.
+                if po_item.product_id != product_id or po_item.agreed_unit_price != price:
+                    is_allocated = db.session.query(exists().where(InvoiceItem.po_item_id == po_item.id)).scalar()
+                    if is_allocated:
                         raise ValueError(
-                            f"Integrity Violation: Cannot change the product for line #{idx} ('{po_item.product.name}'). "
-                            "This item has already been referenced in one or more active Invoices."
+                            f"Integrity Violation: Cannot change the Product or Price for line #{idx} ('{po_item.product.name}'). "
+                            "This line has already been included in one or more active Invoices. "
+                            "Remove the Invoices first to unlock these fields."
                         )
+
+                # --- NEW: INTEGRITY GUARD 3: Quantity Floor ---
+                # Check how many units are currently 'Allocated' (reserved across all active invoices)
+                allocated_qty = db.session.query(func.sum(InvoiceItem.quantity)).filter(
+                    InvoiceItem.po_item_id == po_item.id
+                ).scalar() or 0
+
+                if qty < allocated_qty:
+                    from ..utils.money import format_usd
+                    raise ValueError(
+                        f"Integrity Violation: Cannot reduce quantity for '{po_item.product.name}' to {qty}. "
+                        f"At least {allocated_qty} units are already reserved across active Invoices. "
+                        "Edit or Archive the Invoices first to reduce this quantity."
+                    )
+
+                    
                 
                 # Apply Updates
                 po_item.product_id = product_id
