@@ -759,8 +759,6 @@ class PurchaseOrderService(BaseService):
                         "Edit or Archive the Invoices first to reduce this quantity."
                     )
 
-                    
-                
                 # Apply Updates
                 po_item.product_id = product_id
                 po_item.quantity = qty
