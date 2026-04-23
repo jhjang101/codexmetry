@@ -215,7 +215,7 @@ class AdjustmentService(BaseService):
             # Calculate the Gap (Receipts - Billed Amount)
             # Example: $998 received - $1000 billed = -$2 write-off
             total_paid = sum(p.amount for p in invoice.payments if p.is_active)
-            gap = total_paid - invoice.total_amount
+            gap = total_paid - invoice.total_due
 
             # A: If gap exists, create or update
             if gap != 0:

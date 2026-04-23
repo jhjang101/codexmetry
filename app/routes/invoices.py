@@ -99,7 +99,7 @@ def add():
             adjustment_status = invoice_status.get('adjustment')
             if isinstance(adjustment_status, dict):
                 action = adjustment_status.get('action')
-                adjustment_number = adjustment_status.get('adjustment_number')
+                adjustment_number = adjustment_status.get('number')
                 raw_amount = adjustment_status.get('amount', 0)
                 amount = int(raw_amount) if raw_amount is not None else 0
                 amount_str = format_usd(amount)
@@ -300,7 +300,7 @@ def edit(id):
 
             if isinstance(adjustment_status, dict):
                 action = adjustment_status.get('action')
-                adjustment_number = adjustment_status.get('adjustment_number')
+                adjustment_number = adjustment_status.get('number')
                 # Use adj.get('amount', 0) to ensure Pylance sees an int
                 raw_amount = adjustment_status.get('amount', 0)
                 amount = int(raw_amount) if raw_amount is not None else 0
@@ -470,7 +470,7 @@ def issue(id):
         adjustment_status = invoice_status.get('adjustment')
         if isinstance(adjustment_status, dict):
             action = adjustment_status.get('action')
-            adjustment_name = adjustment_status.get('adjustment_number')
+            adjustment_name = adjustment_status.get('number')
             raw_amount = adjustment_status.get('amount', 0)
             amount = int(raw_amount) if raw_amount is not None else 0
             amount_str = format_usd(amount)
