@@ -2,22 +2,27 @@
     <!-- VISUAL TREND: PERFORMANCE -->
     <section class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
         <div class="flex justify-between items-center mb-4">
-            <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest">Performance Analytics</h3>
+            <h3 class="text-xs font-bold text-gray-600 uppercase tracking-widest">Performance Analytics</h3>
             
             <!-- THE TRIGGER -->
             <div class="flex items-center gap-2">
-                <span class="text-[10px] font-bold text-gray-400 uppercase">View Mode:</span>
-                <select name="mode" 
-                        hx-get="{{ url_for('reports.accrual_history') }}"
-                        hx-target="#pane-accrual"
-                        hx-swap="innerHTML"
-                        class="text-[10px] font-bold border rounded-lg p-1 px-2 outline-none focus:ring-1 focus:ring-blue-500 bg-gray-50 cursor-pointer">
-                    <option value="monthly" {{ 'selected' if current_mode == 'monthly' }}>Month-over-Month</option>
-                    <option value="quarterly" {{ 'selected' if current_mode == 'quarterly' }}>Quarterly Summary</option>
-                    <option value="yearly" {{ 'selected' if current_mode == 'yearly' }}>Yearly Comparison</option>
-                    <option value="yearly_comparison" {{ 'selected' if current_mode == 'yearly_comparison' }}>Seasonal Performance (YoY)</option>
-                    <option value="seasonal_cumulative" {{ 'selected' if current_mode == 'seasonal_cumulative' }}>Seasonal Cumulative</option>
-                </select>
+                <h3 class="text-xs font-bold text-gray-600 uppercase tracking-widest">View Mode:</h3>
+                <div class="relative">
+                    <select name="mode" 
+                            hx-get="{{ url_for('reports.accrual_history') }}"
+                            hx-target="#pane-accrual"
+                            hx-swap="innerHTML"
+                            class="border rounded-lg p-1.5 text-xs outline-none focus:ring-1 focus:ring-blue-300 bg-gray-50 appearance-none pr-10">
+                        <option value="monthly" {{ 'selected' if current_mode == 'monthly' }}>Month-over-Month</option>
+                        <option value="quarterly" {{ 'selected' if current_mode == 'quarterly' }}>Quarterly Summary</option>
+                        <option value="yearly" {{ 'selected' if current_mode == 'yearly' }}>Yearly Comparison</option>
+                        <option value="yearly_comparison" {{ 'selected' if current_mode == 'yearly_comparison' }}>Seasonal Performance (YoY)</option>
+                        <option value="seasonal_cumulative" {{ 'selected' if current_mode == 'seasonal_cumulative' }}>Seasonal Cumulative</option>
+                    </select>
+                    <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-400">
+                        <i class="fa-solid fa-chevron-down text-[10px]"></i>
+                    </div>
+                </div>
             </div>
         </div>
 

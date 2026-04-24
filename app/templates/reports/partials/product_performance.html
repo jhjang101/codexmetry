@@ -5,11 +5,16 @@
         <div class="flex items-center gap-4">
             <h3 class="text-xs font-bold text-gray-600 uppercase tracking-widest">Product & Category Analytics</h3>
             <div class="flex gap-2" id="product-filter-form">
-                <select name="year" class="text-[10px] font-bold border rounded-lg p-1.5 outline-none focus:ring-1 focus:ring-blue-500 bg-gray-50 cursor-pointer">
-                    {% for y in range(now.year, now.year - 5, -1) %}
-                        <option value="{{ y }}" {{ 'selected' if y == current_year }}>Year: {{ y }}</option>
-                    {% endfor %}
-                </select>
+                <div class="relative">
+                    <select name="year" class="text-xs border rounded-lg p-1.5 outline-none focus:ring-1 focus:ring-blue-300 bg-gray-50 appearance-none pr-10">
+                        {% for y in range(now.year, now.year - 5, -1) %}
+                            <option value="{{ y }}" {{ 'selected' if y == current_year }}>FY {{ y }}</option>
+                        {% endfor %}
+                    </select>
+                    <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-400">
+                        <i class="fa-solid fa-chevron-down text-[10px]"></i>
+                    </div>
+                </div>
                 <button hx-get="{{ url_for('reports.product_performance') }}"
                         hx-target="#pane-products"
                         hx-include="#product-filter-form select"
@@ -20,7 +25,7 @@
             </div>
         </div>
         <div class="text-right">
-            <span class="text-[9px] font-bold text-gray-400 uppercase tracking-wider block">Total Revenue:</span>
+            <span class="text-[9px] font-bold text-gray-600 uppercase tracking-wider block">Total Revenue:</span>
             <span class="text-sm font-black text-blue-700">{{ data.grand_total | usd }}</span>
         </div>
     </section>

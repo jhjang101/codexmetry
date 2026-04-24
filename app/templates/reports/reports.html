@@ -119,18 +119,30 @@
             <!-- 1. DATE SELECTOR (Standard GET Form) -->
             <div class="p-4 border-b border-gray-100 flex justify-between items-center">
                 <div class="flex items-center gap-4">
-                    <h2 class="text-xs font-bold text-gray-600 uppercase tracking-wider">Report Period</h2>
+                    <h3 class="text-xs font-bold text-gray-600 uppercase tracking-widest">Report Period</h3>
                     <form method="GET" action="{{ url_for('reports.index') }}" class="flex gap-2">
-                        <select name="month" class="border rounded-lg p-1.5 text-xs outline-none focus:ring-1 focus:ring-blue-500 bg-gray-50">
-                            {% for m in range(1, 13) %}
-                                <option value="{{ m }}" {{ 'selected' if m == month }}>{{ calendar.month_name[m] }}</option>
-                            {% endfor %}
-                        </select>
-                        <select name="year" class="border rounded-lg p-1.5 text-xs outline-none focus:ring-1 focus:ring-blue-500 bg-gray-50">
-                            {% for y in range(now.year, now.year - 6, -1) %}
-                                <option value="{{ y }}" {{ 'selected' if y == year }}>{{ y }}</option>
-                            {% endfor %}
-                        </select>
+                        <div class="relative">
+                            <select name="month" 
+                                    class="border rounded-lg p-1.5 text-xs outline-none focus:ring-1 focus:ring-blue-300 bg-gray-50 appearance-none pr-10">
+                                {% for m in range(1, 13) %}
+                                    <option value="{{ m }}" {{ 'selected' if m == month }}>{{ calendar.month_name[m] }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-400">
+                                <i class="fa-solid fa-chevron-down text-[10px]"></i>
+                            </div>
+                        </div>
+                        <div class="relative">
+                            <select name="year" 
+                                    class="border rounded-lg p-1.5 text-xs outline-none focus:ring-1 focus:ring-blue-300 bg-gray-50 appearance-none pr-10">
+                                {% for y in range(now.year, now.year - 6, -1) %}
+                                    <option value="{{ y }}" {{ 'selected' if y == year }}>{{ y }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-400">
+                                <i class="fa-solid fa-chevron-down text-[10px]"></i>
+                            </div>
+                        </div>
                         <button type="submit" 
                                 class="bg-blue-600 text-white px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-blue-700 transition-colors">
                             Update Report
