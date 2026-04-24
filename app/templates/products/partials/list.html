@@ -3,12 +3,12 @@
 <table class="min-w-full divide-y divide-gray-200">
     <thead class="bg-gray-50">
         <tr>
-            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-20">Image</th>
+            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-20">Image</th>
             {{ sort_header('Product Name', 'name', pagination, 'products.index')}}
             {{ sort_header('Catalog #', 'catalog', pagination, 'products.index')}}
             {{ sort_header('Category', 'category', pagination, 'products.index')}}
             {{ sort_header('Unit Price', 'price', pagination, 'products.index', align='right')}}
-            <th class="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+            <th class="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
         </tr>
     </thead>
     <tbody class="divide-y divide-gray-100 bg-white">

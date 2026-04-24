@@ -12,7 +12,7 @@
             <i id="icon-{{ id_prefix }}" class="fa-solid fa-chevron-right text-[8px] text-gray-300 group-hover:text-blue-500 transition-transform"></i>
             <span class="text-gray-600">{{ label }}</span>
         </td>
-        <td class="px-4 py-2 text-right font-bold {{ text_color }}">
+        <td class="px-4 py-2 text-right font-medium {{ text_color }}">
             {{ data.total | usd }}
         </td>
     </tr>
@@ -24,7 +24,7 @@
                 {% for item in data.breakdown %}
                 <tr class="border-b border-gray-100 last:border-0">
                     <td class="py-1 text-gray-500">{{ item.category }}</td>
-                    <td class="py-1 text-right font-medium {{ text_color }} opacity-80">
+                    <td class="py-1 text-right {{ text_color }} opacity-80">
                         {{ item.amount | usd }}
                     </td>
                 </tr>
@@ -45,7 +45,7 @@
         <button onclick="switchTab('monthly')" id="tab-btn-monthly"
            class="tab-btn px-6 py-2.5 text-[10px] font-black 
            uppercase tracking-widest transition-all 
-           border-t border-l border-r rounded-t-lg z-10 bg-white border-gray-200 text-blue-600">
+           border-t border-l border-r rounded-t-lg z-10 bg-white border-gray-200 text-blue-600 hover:bg-gray-50">
             Monthly Statement
         </button>
 
@@ -117,9 +117,9 @@
 
 
             <!-- 1. DATE SELECTOR (Standard GET Form) -->
-            <div class="p-4 border-b border-gray-100 bg-gray-50/30 flex justify-between items-center">
+            <div class="p-4 border-b border-gray-100 flex justify-between items-center">
                 <div class="flex items-center gap-4">
-                    <h2 class="text-sm font-bold text-gray-600 uppercase tracking-wider">Report Period:</h2>
+                    <h2 class="text-xs font-bold text-gray-600 uppercase tracking-wider">Report Period</h2>
                     <form method="GET" action="{{ url_for('reports.index') }}" class="flex gap-2">
                         <select name="month" class="border rounded-lg p-1.5 text-xs outline-none focus:ring-1 focus:ring-blue-500 bg-gray-50">
                             {% for m in range(1, 13) %}
@@ -131,7 +131,8 @@
                                 <option value="{{ y }}" {{ 'selected' if y == year }}>{{ y }}</option>
                             {% endfor %}
                         </select>
-                        <button type="submit" class="bg-slate-800 text-white px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-slate-700 transition-colors">
+                        <button type="submit" 
+                                class="bg-blue-600 text-white px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-blue-700 transition-colors">
                             Update Report
                         </button>
                     </form>
@@ -139,7 +140,7 @@
                     
                 </div>
                 <div class="flex flex-col items-end">
-                    <span class="text-[10px] font-mono text-gray-400 uppercase tracking-widest">Financial Fortress Engine v3.3</span>
+                    <span class="text-[10px] font-mono text-gray-400 uppercase tracking-widest">Monthly Financial Statement</span>
                     <span class="text-[9px] text-blue-500 font-bold uppercase italic">Dual-Perspective: Accrual & Cash</span>
                 </div>
             </div>
@@ -150,8 +151,8 @@
                 <!-- Table 1: Performance Statement (Accrual) -->
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                     <div class="px-4 py-2 bg-slate-100 border-b border-gray-200 flex justify-between items-center">
-                        <h3 class="font-bold text-slate-700 uppercase text-[10px] tracking-widest">1. Performance Statement (Accrual)</h3>
-                        <span class="text-[9px] text-slate-400 font-bold uppercase">Issued Documents</span>
+                        <h3 class="font-bold text-gray-600 uppercase text-xs tracking-widest">Performance Statement (Accrual Basis)</h3>
+                        <span class="text-[9px] text-gray-400 font-bold uppercase">Issued Documents</span>
                     </div>
                     <table class="min-w-full text-xs">
                         <tbody class="divide-y divide-gray-100">
@@ -162,25 +163,25 @@
                                         'text-red-600' if data.accrual.cogs.total >= 0 else 'text-green-700') }}
                             
                             <!-- Static Summary Row -->
-                            <tr class="bg-gray-50 font-bold text-gray-800 uppercase text-[10px]">
+                            <tr class="bg-gray-50 font-bold text-gray-600 uppercase text-xs">
                                 <td class="px-4 py-2">Gross Profit</td>
-                                <td class="px-4 py-2 text-right">{{ data.accrual.gross_profit | usd }}</td>
+                                <td class="px-4 py-2 text-right text-sm">{{ data.accrual.gross_profit | usd }}</td>
                             </tr>
 
                             {# OPEX: Red if spending, Green if refund #}
                             {{ fold_row('Operating Expenses (OPEX)', 'acc-opex', data.accrual.opex, 
                                         'text-red-600' if data.accrual.opex.total >= 0 else 'text-green-700') }}
 
-                            <tr class="font-bold text-gray-900 uppercase text-[10px] border-t-2 border-gray-200">
+                            <tr class="bg-gray-50 font-bold text-gray-600 uppercase text-xs">
                                 <td class="px-4 py-2">Operating Profit (EBIT)</td>
-                                <td class="px-4 py-2 text-right">{{ data.accrual.operating_profit | usd }}</td>
+                                <td class="px-4 py-2 text-right text-sm">{{ data.accrual.operating_profit | usd }}</td>
                             </tr>
 
                             {# Adjustments: Green if gain, Red if loss #}
                             {{ fold_row('Adjustments', 'acc-adj', data.accrual.adjustments, 
                                         'text-green-700' if data.accrual.adjustments.total >= 0 else 'text-red-600') }}
 
-                            <tr class="bg-slate-900 text-white font-bold uppercase text-xs">
+                            <tr class="bg-gray-700 text-white font-bold uppercase text-xs">
                                 <td class="px-4 py-3 tracking-widest">Net Income</td>
                                 <td class="px-4 py-3 text-right text-lg">{{ data.accrual.net_income | usd }}</td>
                             </tr>
@@ -191,7 +192,7 @@
                 <!-- Table 2: Cash Flow Summary (Cash) -->
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                     <div class="px-4 py-2 bg-green-50 border-b border-green-100 flex justify-between items-center">
-                        <h3 class="font-bold text-green-800 uppercase text-[10px] tracking-widest">2. Cash Flow Summary (Cash)</h3>
+                        <h3 class="font-bold text-green-700 uppercase text-xs tracking-widest">Cash Flow Summary (Cash Basis)</h3>
                         <span class="text-[9px] text-green-600 font-bold uppercase">Settled Transactions</span>
                     </div>
                     <table class="min-w-full text-xs">
@@ -202,25 +203,25 @@
                             {{ fold_row('COGS Actually Paid', 'cash-cogs', data.cash.cogs, 
                                         'text-red-600' if data.cash.cogs.total >= 0 else 'text-green-700') }}
                             
-                            <tr class="bg-gray-50 font-bold text-gray-800 uppercase text-[10px]">
+                            <tr class="bg-gray-50 font-bold text-gray-600 uppercase text-xs">
                                 <td class="px-4 py-2">Gross Margin</td>
-                                <td class="px-4 py-2 text-right">{{ data.cash.gross_profit | usd }}</td>
+                                <td class="px-4 py-2 text-right text-sm">{{ data.cash.gross_margin | usd }}</td>
                             </tr>
                             
                             {# OPEX: Red if spending, Green if refund #}
                             {{ fold_row('OPEX Actually Paid', 'cash-opex', data.cash.opex, 
                                         'text-red-600' if data.cash.opex.total >= 0 else 'text-green-700') }}
 
-                            <tr class="font-bold text-gray-900 uppercase text-[10px] border-t-2 border-gray-200">
+                            <tr class="bg-gray-50 font-bold text-gray-600 uppercase text-xs">
                                 <td class="px-4 py-2">Operating Cash Flow</td>
-                                <td class="px-4 py-2 text-right">{{ data.cash.operating_profit | usd }}</td>
+                                <td class="px-4 py-2 text-right text-sm">{{ data.cash.operating_cash | usd }}</td>
                             </tr>
 
                             {# Manual Adjustments: Green if gain, Red if loss #}
                             {{ fold_row('Adjustments', 'cash-adj', data.cash.adjustments, 
                                         'text-green-700' if data.cash.adjustments.total >= 0 else 'text-red-600') }}
 
-                            <tr class="bg-slate-700 text-white font-bold uppercase text-xs">
+                            <tr class="bg-gray-700 text-white font-bold uppercase text-xs">
                                 <td class="px-4 py-3 tracking-widest">Net Cash Income</td>
                                 <td class="px-4 py-3 text-right text-lg">{{ data.cash.net_cash | usd }}</td>
                             </tr>
@@ -234,7 +235,7 @@
                 
                 <!-- Revenue Audit Table -->
                 <section>
-                    <h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 px-1">3. Revenue Audit (Invoices Issued)</h4>
+                    <h4 class="text-xs font-bold text-gray-600 uppercase tracking-widest mb-2 px-1">Revenue (Invoices Issued)</h4>
                     {% with rows=data.audit.invoices, month=month, year=year %}
                         {% include 'reports/partials/revenue_table.html' %}
                     {% endwith %}
@@ -242,7 +243,7 @@
 
                 <!-- Payment Audit Table -->
                 <section>
-                    <h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 px-1">4. Payment Audit (Raw Cash Received)</h4>
+                    <h4 class="text-xs font-bold text-gray-600 uppercase tracking-widest mb-2 px-1">Payment (Payments Received)</h4>
                     {% with rows=data.audit.payments, month=month, year=year %}
                         {% include 'reports/partials/payment_table.html' %}
                     {% endwith %}
@@ -250,7 +251,7 @@
 
                 <!-- Expense Audit Table -->
                 <section>
-                    <h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 px-1">5. Expense Audit (Committed Costs)</h4>
+                    <h4 class="text-xs font-bold text-gray-600 uppercase tracking-widest mb-2 px-1">Expenses (Committed Costs)</h4>
                     {% with rows=data.audit.expenses, month=month, year=year %}
                         {% include 'reports/partials/expense_table.html' %}
                     {% endwith %}
@@ -258,7 +259,7 @@
 
                 <!-- Adjustment Audit Table -->
                 <section>
-                    <h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 px-1">6. Adjustment Audit (Non-Operating)</h4>
+                    <h4 class="text-xs font-bold text-gray-600 uppercase tracking-widest mb-2 px-1">Adjustments (Non-Operating)</h4>
                     {% with rows=data.audit.adjustments, month=month, year=year %}
                         {% include 'reports/partials/adjustment_table.html' %}
                     {% endwith %}
@@ -303,7 +304,7 @@
 
 <!-- 3. TAB LOGIC & LOADING -->
 <div id="loading-spinner" class="htmx-indicator fixed bottom-4 right-4 bg-slate-900 text-white px-4 py-2 rounded-full text-[10px] font-bold shadow-xl animate-pulse z-50">
-    <i class="fa-solid fa-spinner fa-spin mr-2"></i> CALCULATING 5-YEAR HISTORY...
+    <i class="fa-solid fa-spinner fa-spin mr-2"></i> CALCULATING...
 </div>
 
 <script>

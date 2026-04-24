@@ -6,34 +6,36 @@
                 {% set current_dir = request.args.get('dir', 'asc') %}
                 {% set next_dir = 'desc' if current_dir == 'asc' else 'asc' %}
 
-                {% macro adj_header(label, key) %}
-                <th class="px-4 py-2 text-left cursor-pointer hover:bg-gray-100"
-                    hx-get="{{ url_for('reports.adjustment_audit', month=month, year=year, sort=key, dir=next_dir) }}"
-                    hx-target="#adjustment-audit-container" hx-swap="outerHTML" hx-push-url="false">
-                    <div class="flex items-center gap-1">
-                        {{ label }}
-                        {% if current_sort == key %}<i class="fa-solid fa-sort-{{ 'up' if current_dir == 'asc' else 'down' }}"></i>{% endif %}
-                    </div>
-                </th>
+                {% macro adj_header(label, key, align='left') %}
+                    {% set alignment_class = 'text-right' if align == 'right' else 'text-left' %}
+                    {% set justify_class = 'justify-end' if align == 'right' else 'justify-start' %}
+                    <th class="px-4 py-2 {{ alignment_class }} cursor-pointer hover:bg-gray-100"
+                        hx-get="{{ url_for('reports.adjustment_audit', month=month, year=year, sort=key, dir=next_dir) }}"
+                        hx-target="#adjustment-audit-container" hx-swap="outerHTML" hx-push-url="false">
+                        <div class="flex items-center gap-1 {{ justify_class }}">
+                            {{ label }}
+                            {% if current_sort == key %}<i class="fa-solid fa-sort-{{ 'up' if current_dir == 'asc' else 'down' }}"></i>{% endif %}
+                        </div>
+                    </th>
                 {% endmacro %}
 
                 {{ adj_header('Date', 'date') }}
                 {{ adj_header('Adj #', 'number') }}
                 {{ adj_header('Category', 'category') }}
                 <th class="px-4 py-2 text-left">Description</th>
-                {{ adj_header('Amount', 'amount') }}
+                {{ adj_header('Amount', 'amount', align='right') }}
             </tr>
         </thead>
-        <tbody class="divide-y divide-gray-100 text-gray-600">
+        <tbody class="divide-y divide-gray-100">
             {% for adj in rows %}
             <tr class="hover:bg-gray-50 transition-colors">
                 <td class="px-4 py-1.5">{{ adj.adjustment_date }}</td>
-                <td class="px-4 py-1.5 font-mono">
+                <td class="px-4 py-1.5 font-bold">
                     <a href="{{ url_for('adjustments.view', id=adj.id) }}" class="hover:underline text-blue-600">{{ adj.adjustment_number }}</a>
                 </td>
-                <td class="px-4 py-1.5 font-bold uppercase text-[9px]">{{ adj.category.type }}</td>
+                <td class="px-4 py-1.5 uppercase text-[9px]">{{ adj.category.type }}</td>
                 <td class="px-4 py-1.5 truncate max-w-[300px]">{{ adj.description }}</td>
-                <td class="px-4 py-1.5 text-right font-bold {{ 'text-green-600' if adj.amount >= 0 else 'text-red-500' }}">
+                <td class="px-4 py-1.5 text-right font-bold {{ 'text-green-600' if adj.amount >= 0 else 'text-red-600' }}">
                     {{ adj.amount | usd }}
                 </td>
             </tr>

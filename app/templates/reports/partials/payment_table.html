@@ -6,32 +6,34 @@
                 {% set current_dir = request.args.get('dir', 'asc') %}
                 {% set next_dir = 'desc' if current_dir == 'asc' else 'asc' %}
                 
-                {% macro pay_header(label, key) %}
-                <th class="px-4 py-2 text-left cursor-pointer hover:bg-green-100/50"
-                    hx-get="{{ url_for('reports.payment_audit', month=month, year=year, sort=key, dir=next_dir) }}"
-                    hx-target="#payment-audit-container" hx-swap="outerHTML" hx-push-url="false">
-                    <div class="flex items-center gap-1">
-                        {{ label }}
-                        {% if current_sort == key %}<i class="fa-solid fa-sort-{{ 'up' if current_dir == 'asc' else 'down' }}"></i>{% endif %}
-                    </div>
-                </th>
+                {% macro pay_header(label, key , align='left') %}
+                    {% set alignment_class = 'text-right' if align == 'right' else 'text-left' %}
+                    {% set justify_class = 'justify-end' if align == 'right' else 'justify-start' %}
+                    <th class="px-4 py-2 {{ alignment_class }} cursor-pointer hover:bg-green-100/50"
+                        hx-get="{{ url_for('reports.payment_audit', month=month, year=year, sort=key, dir=next_dir) }}"
+                        hx-target="#payment-audit-container" hx-swap="outerHTML" hx-push-url="false">
+                        <div class="flex items-center gap-1 {{ justify_class }}">
+                            {{ label }}
+                            {% if current_sort == key %}<i class="fa-solid fa-sort-{{ 'up' if current_dir == 'asc' else 'down' }}"></i>{% endif %}
+                        </div>
+                    </th>
                 {% endmacro %}
 
                 {{ pay_header('Date', 'date') }}
                 {{ pay_header('Payment #', 'number') }}
-                <th class="px-4 py-2 text-left">Ref Doc</th>
+                <th class="px-4 py-2 text-left">Invoice #</th>
                 {{ pay_header('Client', 'client') }}
-                {{ pay_header('Amount Received', 'amount') }}
+                {{ pay_header('Amount Received', 'amount', align='right') }}
             </tr>
         </thead>
         <tbody class="divide-y divide-gray-100">
             {% for pay in rows %}
             <tr class="hover:bg-green-50/40 transition-colors">
-                <td class="px-4 py-1.5 text-gray-500">{{ pay.payment_date }}</td>
-                <td class="px-4 py-1.5 font-mono font-bold text-green-700">
+                <td class="px-4 py-1.5">{{ pay.payment_date }}</td>
+                <td class="px-4 py-1.5 font-bold text-green-700">
                     <a href="{{ url_for('payments.view', id=pay.id) }}" class="hover:underline">{{ pay.payment_number }}</a>
                 </td>
-                <td class="px-4 py-1.5 text-gray-400">{{ pay.invoice.invoice_number if pay.invoice else 'Prepayment' }}</td>
+                <td class="px-4 py-1.5">{{ pay.invoice.invoice_number if pay.invoice else 'Prepayment' }}</td>
                 <td class="px-4 py-1.5 truncate max-w-[250px]">{{ pay.client.company_name }}</td>
                 <td class="px-4 py-1.5 text-right font-black text-green-700">{{ pay.amount | usd }}</td>
             </tr>

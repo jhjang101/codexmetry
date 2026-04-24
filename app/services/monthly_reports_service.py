@@ -31,9 +31,9 @@ class MonthlyReportService:
         accrual_net_income = accrual_operating_profit + accrual_adjustments['total']
 
         # Cash Perspective
-        cash_gross_profit = cash_payments['total'] - cash_expenses['cogs']['total']
-        cash_operating_profit = cash_gross_profit - cash_expenses['opex']['total']
-        cash_net_cash = cash_operating_profit + cash_adjustments['total']
+        cash_gross_margin = cash_payments['total'] - cash_expenses['cogs']['total']
+        cash_operating_cash = cash_gross_margin - cash_expenses['opex']['total']
+        cash_net_cash = cash_operating_cash + cash_adjustments['total']
 
         return {
             'accrual': {
@@ -48,9 +48,9 @@ class MonthlyReportService:
             'cash': {
                 'payments': cash_payments,
                 'cogs': cash_expenses['cogs'],
-                'gross_profit': cash_gross_profit,
+                'gross_margin': cash_gross_margin,
                 'opex': cash_expenses['opex'],
-                'operating_profit': cash_operating_profit,
+                'operating_cash': cash_operating_cash,
                 'adjustments': cash_adjustments,
                 'net_cash': cash_net_cash
             },
