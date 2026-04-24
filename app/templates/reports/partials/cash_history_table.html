@@ -11,11 +11,11 @@
                             hx-get="{{ url_for('reports.cash_history') }}"
                             hx-target="#pane-cash"
                             hx-swap="innerHTML"
-                            class="border rounded-lg p-1.5 text-xs outline-none focus:ring-1 focus:ring-blue-300 bg-gray-50 appearance-none pr-10r">
+                            class="border rounded-lg p-1.5 text-xs outline-none focus:ring-1 focus:ring-blue-300 bg-gray-50 appearance-none pr-10">
                         <option value="monthly" {{ 'selected' if current_mode == 'monthly' }}>Month-over-Month</option>
-                        <option value="quarterly" {{ 'selected' if current_mode == 'quarterly' }}>Quarterly Summary</option>
-                        <option value="yearly" {{ 'selected' if current_mode == 'yearly' }}>Yearly Comparison</option>
-                        <option value="yearly_comparison" {{ 'selected' if current_mode == 'yearly_comparison' }}>Seasonal Performance (YoY)</option>
+                        <option value="quarterly" {{ 'selected' if current_mode == 'quarterly' }}>Quarter-over-Quarter</option>
+                        <option value="yearly" {{ 'selected' if current_mode == 'yearly' }}>Year-over-Year</option>
+                        <option value="yearly_comparison" {{ 'selected' if current_mode == 'yearly_comparison' }}>Seasonal Performance</option>
                         <option value="seasonal_cumulative" {{ 'selected' if current_mode == 'seasonal_cumulative' }}>Seasonal Cumulative</option>
                     </select>
                     <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-400">
@@ -37,7 +37,7 @@
             <h3 class="text-xs font-bold text-green-100 uppercase tracking-widest flex items-center gap-2">
                 <i class="fa-solid fa-money-bill-transfer"></i> 60-Month Liquidity (Cash Basis)
             </h3>
-            <span class="text-[9px] text-green-400 font-bold uppercase tracking-wider">Liquidity Truth • Cleared Funds</span>
+            <span class="text-[9px] text-green-400 font-bold uppercase tracking-wider">Liquidity Truth • Settled Documents</span>
         </div>
 
         <div class="overflow-x-auto">

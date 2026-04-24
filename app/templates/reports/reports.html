@@ -193,7 +193,7 @@
                             {{ fold_row('Adjustments', 'acc-adj', data.accrual.adjustments, 
                                         'text-green-700' if data.accrual.adjustments.total >= 0 else 'text-red-600') }}
 
-                            <tr class="bg-gray-700 text-white font-bold uppercase text-xs">
+                            <tr class="bg-gray-700 text-gray-100 font-bold uppercase text-xs">
                                 <td class="px-4 py-3 tracking-widest">Net Income</td>
                                 <td class="px-4 py-3 text-right text-lg">{{ data.accrual.net_income | usd }}</td>
                             </tr>
@@ -233,7 +233,7 @@
                             {{ fold_row('Adjustments', 'cash-adj', data.cash.adjustments, 
                                         'text-green-700' if data.cash.adjustments.total >= 0 else 'text-red-600') }}
 
-                            <tr class="bg-gray-700 text-white font-bold uppercase text-xs">
+                            <tr class="bg-green-900 text-green-100 font-bold uppercase text-xs">
                                 <td class="px-4 py-3 tracking-widest">Net Cash Income</td>
                                 <td class="px-4 py-3 text-right text-lg">{{ data.cash.net_cash | usd }}</td>
                             </tr>
