@@ -43,47 +43,46 @@
 
         <div class="overflow-x-auto">
             <table class="min-w-full text-[11px]">
-                <thead class="bg-gray-50 text-[9px] font-bold text-gray-500 uppercase border-b border-gray-200">
+                <thead class="bg-gray-50 text-[10px] font-bold text-gray-600 uppercase border-b border-gray-200">
                     <tr>
-                        <th class="px-4 py-3 text-left bg-gray-100 w-24">Month</th>
+                        <th class="px-4 py-3 text-left bg-gray-100/70">Month</th>
                         <th class="px-4 py-3 text-right">Revenue</th>
                         <th class="px-4 py-3 text-right">COGS</th>
-                        <th class="px-4 py-3 text-right text-blue-600 border-l border-gray-100">Gross Profit</th>
+                        <th class="px-4 py-3 text-right bg-gray-100/70">Gross Profit</th>
                         <th class="px-4 py-3 text-right">OPEX</th>
-                        <th class="px-4 py-3 text-right text-blue-800 border-l border-gray-100">OP (EBIT)</th>
+                        <th class="px-4 py-3 text-right bg-gray-100/70">Operating Profit (EBIT)</th>
                         <th class="px-4 py-3 text-right">Adjustments</th>
-                        <th class="px-4 py-3 text-right bg-slate-50 border-l-2 border-slate-200">Net Income</th>
+                        <th class="px-4 py-3 text-right bg-gray-100/70">Net Income</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
                     {% for m in history %}
                     <tr class="hover:bg-blue-50/30 transition-colors">
                         <!-- Date Label -->
-                        <td class="px-4 py-2 font-bold text-gray-700 bg-gray-50/50 italic">{{ m.month_label }}</td>
+                        <td class="px-4 py-2 font-bold text-gray-700 bg-gray-100/70">{{ m.month_label }}</td>
                         
                         <!-- Top-Line Metrics -->
-                        <td class="px-4 py-2 text-right text-blue-700">{{ m.accrual.revenue | usd }}</td>
+                        <td class="px-4 py-2 text-right text-blue-600">{{ m.accrual.revenue | usd }}</td>
                         <td class="px-4 py-2 text-right text-red-600">{{ m.accrual.cogs | usd }}</td>
                         
                         <!-- Gross Profit Margin -->
-                        <td class="px-4 py-2 text-right font-bold text-blue-600 border-l border-gray-100 bg-blue-50/20">
+                        <td class="px-4 py-2 text-right font-bold text-blue-600 bg-gray-100/70">
                             {{ m.accrual.gross_profit | usd }}
                         </td>
                         
                         <!-- Operating Metrics -->
                         <td class="px-4 py-2 text-right text-red-600">{{ m.accrual.opex | usd }}</td>
-                        <td class="px-4 py-2 text-right font-bold text-blue-800 border-l border-gray-100 bg-blue-50/30">
+                        <td class="px-4 py-2 text-right font-bold text-blue-600 bg-gray-100/70">
                             {{ m.accrual.operating_profit | usd }}
                         </td>
                         
                         <!-- Non-Operating Adjustments -->
-                        <td class="px-4 py-2 text-right {{ 'text-green-600' if m.accrual.total_adj >= 0 else 'text-red-500' }}">
+                        <td class="px-4 py-2 text-right {{ 'text-green-700' if m.accrual.total_adj >= 0 else 'text-red-600' }}">
                             {{ m.accrual.total_adj | usd }}
                         </td>
 
                         <!-- Bottom Line (Net Income) -->
-                        <td class="px-4 py-2 text-right font-black border-l-2 border-slate-200 bg-slate-50 
-                                   {{ 'text-green-700' if m.accrual.net_income >= 0 else 'text-red-600' }}">
+                        <td class="px-4 py-2 text-right font-black bg-gray-100/70">
                             {{ m.accrual.net_income | usd }}
                         </td>
                     </tr>

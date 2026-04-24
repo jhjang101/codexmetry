@@ -42,23 +42,23 @@
 
         <div class="overflow-x-auto">
             <table class="min-w-full text-[11px]">
-                <thead class="bg-green-50/50 text-[9px] font-bold text-green-700 uppercase border-b border-green-100">
+                <thead class="bg-green-50/50 text-[10px] font-bold text-green-700 uppercase border-b border-green-100">
                     <tr>
                         <th class="px-4 py-3 text-left bg-green-50 w-24">Month</th>
                         <th class="px-4 py-3 text-right">Payments In</th>
                         <th class="px-4 py-3 text-right">COGS Paid</th>
-                        <th class="px-4 py-3 text-right text-green-600 border-l border-green-100">Gross Margin</th>
+                        <th class="px-4 py-3 text-right bg-green-50">Gross Margin</th>
                         <th class="px-4 py-3 text-right">OPEX Paid</th>
-                        <th class="px-4 py-3 text-right text-green-800 border-l border-green-100">Op. Cash Flow</th>
-                        <th class="px-4 py-3 text-right">Manual ADJ</th>
-                        <th class="px-4 py-3 text-right bg-green-50 border-l-2 border-green-200">Net Cash In</th>
+                        <th class="px-4 py-3 text-right bg-green-50">Operating Cash Flow</th>
+                        <th class="px-4 py-3 text-right">Manual Adjustments</th>
+                        <th class="px-4 py-3 text-right bg-green-50">Net Cash Income</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
                     {% for m in history %}
                     <tr class="hover:bg-green-50/30 transition-colors">
                         <!-- Date Label -->
-                        <td class="px-4 py-2 font-bold text-gray-700 bg-gray-50/30 italic">{{ m.month_label }}</td>
+                        <td class="px-4 py-2 font-bold text-gray-700 bg-green-50">{{ m.month_label }}</td>
                         
                         <!-- Cash-In -->
                         <td class="px-4 py-2 text-right text-green-700 font-medium">{{ m.cash.payments | usd }}</td>
@@ -67,7 +67,7 @@
                         <td class="px-4 py-2 text-right text-red-600">{{ m.cash.cogs_paid | usd }}</td>
                         
                         <!-- Liquidity Margin -->
-                        <td class="px-4 py-2 text-right font-bold text-green-600 border-l border-green-50 bg-green-50/10">
+                        <td class="px-4 py-2 text-right font-bold text-green-700 bg-green-50">
                             {{ m.cash.gross_margin | usd }}
                         </td>
                         
@@ -75,18 +75,17 @@
                         <td class="px-4 py-2 text-right text-red-600">{{ m.cash.opex_paid | usd }}</td>
                         
                         <!-- Operating Cash -->
-                        <td class="px-4 py-2 text-right font-bold text-green-800 border-l border-green-50 bg-green-50/20">
+                        <td class="px-4 py-2 text-right font-bold text-green-700 bg-green-50">
                             {{ m.cash.operating_cash | usd }}
                         </td>
                         
                         <!-- Manual Adjustments (Non-System) -->
-                        <td class="px-4 py-2 text-right {{ 'text-green-600' if m.cash.manual_adj >= 0 else 'text-red-500' }}">
+                        <td class="px-4 py-2 text-right {{ 'text-green-700' if m.cash.manual_adj >= 0 else 'text-red-500' }}">
                             {{ m.cash.manual_adj | usd }}
                         </td>
 
                         <!-- Final Net Cash Flow -->
-                        <td class="px-4 py-2 text-right font-black border-l-2 border-green-200 bg-green-50 
-                                   {{ 'text-green-700' if m.cash.net_cash >= 0 else 'text-red-600' }}">
+                        <td class="px-4 py-2 text-right font-black bg-green-50">
                             {{ m.cash.net_cash | usd }}
                         </td>
                     </tr>
