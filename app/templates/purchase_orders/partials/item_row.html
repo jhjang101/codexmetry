@@ -1,11 +1,16 @@
+{# Prevents crash if 'item' is not passed from the route #}
+{% set item = item if item is defined else None %}
+
+{# ROW ID: Fallback to timestamp for new rows #}
 {% set row_id = row_id if row_id else (item.id if item else timestamp) %}
+
 {# Identify if this Product line has any active Invoice reservations #}
-{% set is_allocated = item.allocated_qty > 0 if (item and item.allocated_qty is defined) else False %}
+{% set is_allocated = (item.allocated_qty > 0) if (item and item.allocated_qty is defined) else False %}
 
 <tr class="item-row group align-top">
     <input type="hidden" name="row_ids[]" value="{{ row_id }}">
     {# Track physical DB identity to prevent ForeignKey violations #}
-    <input type="hidden" name="po_item_ids[]" value="{{ item.id if item.id else '' }}">
+    <input type="hidden" name="po_item_ids[]" value="{{ item.id if (item and item.id) else '' }}">
 
     <!-- NEW: CSS Driven Line Number Cell -->
     <td class="py-3 pl-2 line-number text-center"></td>
