@@ -145,12 +145,12 @@ class HistoryReportService:
             kpi_keys = ['revenue', 'cogs', 'gross_profit', 'opex', 'operating_profit', 'total_adj', 'net_income']
             sub_key = 'accrual'
             focus_kpi = 'net_income'
-            primary_color = '#3b82f6' # Blue spectrum
+            primary_color = '#2563eb' # Blue spectrum
         else:
             kpi_keys = ['payments', 'cogs_paid', 'gross_margin', 'opex_paid', 'operating_cash', 'manual_adj', 'net_cash']
             sub_key = 'cash'
             focus_kpi = 'net_cash'
-            primary_color = '#10b981' # Green spectrum
+            primary_color = '#15803d' # Green spectrum
 
          # ---------------------------------------------------------
         # MODE A: OVERLAY VIEWS (Seasonal Performance & Growth)
@@ -163,8 +163,8 @@ class HistoryReportService:
             
             overlay_styles = [
                 {'label': f"{this_year}", 'color': primary_color, 'width': 3, 'dash': []},
-                {'label': f"{this_year - 1}", 'color': primary_color + '88', 'width': 2, 'dash': []},
-                {'label': f"{this_year - 2}", 'color': '#94a3b8', 'width': 1, 'dash': [5, 5]}
+                {'label': f"{this_year - 1}", 'color': primary_color + '90', 'width': 3, 'dash': []},
+                {'label': f"{this_year - 2}", 'color': primary_color + '70', 'width': 3, 'dash': [5, 5]}
             ]
 
             for i, year in enumerate(target_years):
@@ -223,18 +223,20 @@ class HistoryReportService:
 
         datasets = []
         style_map = {
-            'revenue': {'color': '#3b82f6', 'width': 3, 'dash': []},
-            'payments': {'color': '#10b981', 'width': 3, 'dash': []},
+            'revenue': {'color': '#2563eb', 'width': 1, 'dash': []},
+            'payments': {'color': '#15803d', 'width': 1, 'dash': []},
             'net_income': {'color': '#0f172a', 'width': 3, 'dash': []},
             'net_cash': {'color': '#064e3b', 'width': 3, 'dash': []},
             'cogs': {'color': '#ef4444', 'width': 1, 'dash': [5, 5]},
             'cogs_paid': {'color': '#ef4444', 'width': 1, 'dash': [5, 5]},
-            'opex': {'color': '#f59e0b', 'width': 1, 'dash': [2, 2]},
-            'opex_paid': {'color': '#f59e0b', 'width': 1, 'dash': [2, 2]},
+            'opex': {'color': '#f59e0b', 'width': 1, 'dash': [5, 5]},
+            'opex_paid': {'color': '#f59e0b', 'width': 1, 'dash': [5, 5]},
+            'total_adj': {'color': '#9058a1', 'width': 1, 'dash': [5, 5]},
+            'manual_adj': {'color': "#9058a1", 'width': 1, 'dash': [5, 5]},
         }
 
         for k in kpi_keys:
-            style = style_map.get(k, {'color': '#94a3b8', 'width': 1, 'dash': [5, 5]})
+            style = style_map.get(k, {'color': '#4b5563', 'width': 1, 'dash': []})
             datasets.append({
                 'label': k.replace('_', ' ').capitalize(),
                 'data': [aggregated[l][k] for l in labels],

@@ -104,7 +104,7 @@ def client_performance():
 
     # 3. Chart Prep (Top 10)
     top_10 = data['clients'][:10]
-    bar_color = '#3b82f6' if mode == 'revenue' else '#10b981'
+    bar_color = '#2563eb' if mode == 'revenue' else '#15803d'
     
     chart_json = {
         'labels': [c['name'] for c in top_10],

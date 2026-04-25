@@ -111,22 +111,24 @@ function initReportChart(canvasId) {
                 legend: { 
                     display: !isBar, // Bar charts hide legend, Doughnut/Line show them
                     position: isDoughnut ? 'right' : 'bottom',
-                    labels: { boxWidth: 10, font: { size: 9, weight: 'bold' } }
+                    labels: { boxWidth: 10, font: { size: 10, weight: 'bold' } }
                 }
             },
             // Only define scales if NOT a doughnut (Doughnuts have no axes)
             scales: isDoughnut ? {} : {
                 x: { 
-                    grid: { color: '#f8fafc' }, // Subtle grid lines
+                    grid: { color: '#f3f4f6' }, // Subtle grid lines
                     ticks: { 
-                        font: { size: 9 },
+                        font: { size: 10 },
+                        color: '#4b5563',
                         callback: function(v) { return isBar ? '$' + v.toLocaleString() : this.getLabelForValue(v); }
                     } 
                 },
                 y: { 
-                    grid: { color: '#f1f5f9' }, // Subtle grid lines
+                    grid: { color: '#f3f4f6' }, // Subtle grid lines
                     ticks: { 
                         font: { size: 10, weight: isBar ? 'bold' : 'normal' },
+                        color: '#4b5563',
                         callback: function(v) { return isBar ? this.getLabelForValue(v) : '$' + v.toLocaleString(); }
                     } 
                 }
