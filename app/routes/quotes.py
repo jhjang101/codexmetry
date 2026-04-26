@@ -256,11 +256,11 @@ def issue(id):
     """
     try:
         # 1. Capture user-typed terms from the Preview form
-        transient_notes = request.form.get('transient_notes', '')
+        transient_terms = request.form.get('transient_terms', '')
 
         # 2. Call the Atomic Brain Logic
         # (This will handle status, snapshot, PDF generation, and Audit)
-        quote, status, filename = QuoteService.issue_quote(id, transient_notes)
+        quote, status, filename = QuoteService.issue_quote(id, transient_terms)
         
         if not quote:
             flash("Quote record not found.", "error")
@@ -277,47 +277,6 @@ def issue(id):
     except Exception as e:
         # Rollback and show OOB error if the PDF generation or commit fails
         return handle_post_error(e, "quotes.issue")
-
-# --- TESTING ---
-
-from ..utils.pdf import save_pdf_from_html
-
-@bp.route('/test-pdf-fidelity/<int:id>', methods=['POST'])
-def test_pdf_fidelity(id):
-    """Temporary Route to verify WeasyPrint rendering accuracy."""
-    
-    # 1. Fetch data (Mirroring the print_view logic)
-    quote = QuoteService.get_quote_by_id(id)
-    transient_notes = request.form.get('transient_notes', '')
-
-    # 2. Re-bucket items for the template
-    line_display_items = []
-    subtotal = tax_total = shipping_total = 0
-    for item in quote.items:
-        val = item.quantity * item.quoted_unit_price
-        p = item.product.document_placement
-        if p == 'Tax': tax_total += val
-        elif p == 'Shipping': shipping_total += val
-        else:
-            line_display_items.append(item)
-            subtotal += val
-
-    # Pack data for the WeasyPrint
-    context_data = {
-        'quote': quote,
-        'line_display_items': line_display_items,
-        'subtotal': subtotal,
-        'tax_total': tax_total,
-        'shipping_total': shipping_total,
-        'transient_notes': transient_notes
-    }
-
-    # 4. Generate PDF
-    filename = f"TEST_Fidelity_{quote.quote_number}.pdf"
-    save_pdf_from_html('quotes/print.html', context_data, filename, subfolder='quotes')
-
-    flash(f"Test PDF generated: static/uploads/quotes/{filename}", "info")
-    return redirect(url_for('quotes.print_view', id=id))
 
 # --- HTMX PARTIALS & LIVE MATH ---
 

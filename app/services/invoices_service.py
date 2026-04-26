@@ -422,7 +422,7 @@ class InvoiceService(BaseService):
         return db.session.execute(stmt).scalars().all()
     
     @classmethod
-    def issue_invoice(cls, id: int, notes: str):
+    def issue_invoice(cls, id: int, terms: str):
         """
         Transitions Invoice and save PDF as Attatchment.
         Performs item bucketing, versioned PDF generation, triggers system ripples, and Audit logging.
@@ -487,7 +487,7 @@ class InvoiceService(BaseService):
             'active_payments': active_payments,
             'due_date': due_date,
             'net_days': net_days,
-            'transient_notes': notes
+            'transient_terms': terms
         }
 
         # Select template based on current payment status
@@ -498,7 +498,7 @@ class InvoiceService(BaseService):
         before = invoice.status
         if before == 'draft':
             invoice.status = 'open'
-        invoice.terms = notes
+        invoice.terms = terms
 
         # Create the Forensic Attachment record
         new_snapshot = Attachment()
@@ -517,7 +517,7 @@ class InvoiceService(BaseService):
             old_data=old_snapshot,
             new_data={
                 'status': invoice.status,
-                'terms': notes,
+                'terms': terms,
                 'snapshot_file': filename
             }
         )

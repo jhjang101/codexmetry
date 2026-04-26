@@ -446,7 +446,7 @@ def issue(id):
     """
     try:
         # 1. Capture terms from preview
-        notes = request.form.get('transient_notes', '')
+        notes = request.form.get('transient_terms', '')
 
         # 2. Call The Atomic issue_invoice
         # Returns: (obj, invoice_status_dict, po_status_dict)

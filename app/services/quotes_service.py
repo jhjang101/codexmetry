@@ -226,7 +226,7 @@ class QuoteService(BaseService):
         return db.session.execute(stmt).scalars().all()
     
     @classmethod
-    def issue_quote(cls, id: int, notes: str):
+    def issue_quote(cls, id: int, terms: str):
         """
         Issue the Quote and save PDF as Attatchment.
         Performs item bucketing, versioned PDF generation, and Audit logging.
@@ -282,7 +282,7 @@ class QuoteService(BaseService):
             'subtotal': subtotal,
             'tax_total': tax_total,
             'shipping_total': shipping_total,
-            'transient_notes': notes
+            'transient_terms': terms
         }
 
         # The utility handles rendering and physical saving
@@ -291,7 +291,7 @@ class QuoteService(BaseService):
         # 6. Database Updates (State & Linkage)
         if quote.status == 'draft':
             quote.status = 'sent'
-        quote.terms = notes
+        quote.terms = terms
 
         # Create the Forensic Attachment record
         new_snapshot = Attachment()
@@ -310,7 +310,7 @@ class QuoteService(BaseService):
             old_data=old_snapshot,
             new_data={
                 'status': quote.status,
-                'terms': notes,
+                'terms': terms,
                 'snapshot_file': filename # Link for the history timeline
             }
         )

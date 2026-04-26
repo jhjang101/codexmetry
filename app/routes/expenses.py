@@ -301,10 +301,10 @@ def issue(id):
     """
     try:
         # 1. Capture user-typed instructions from the Preview form
-        transient_notes = request.form.get('transient_notes', '')
+        transient_terms = request.form.get('transient_terms', '')
 
         # 2. Brain Call: Atomic Issuance
-        expense, status, filename = ExpenseService.issue_expense(id, transient_notes)
+        expense, status, filename = ExpenseService.issue_expense(id, transient_terms)
         
         if not expense:
             flash("Expense record not found.", "error")

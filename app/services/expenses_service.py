@@ -211,7 +211,7 @@ class ExpenseService(BaseService):
         return db.session.execute(stmt).scalar_one_or_none()
     
     @classmethod
-    def issue_expense(cls, id: int, notes: str):
+    def issue_expense(cls, id: int, terms: str):
         """
         Brain: Commits the Expense to the legal record (Vendor PO).
         Performs versioned PDF generation and Audit logging.
@@ -252,7 +252,7 @@ class ExpenseService(BaseService):
         context_data = {
             'expense': expense,
             'subtotal': subtotal,
-            'transient_notes': notes
+            'transient_terms': terms
         }
 
         # The utility handles rendering and physical saving
@@ -261,7 +261,7 @@ class ExpenseService(BaseService):
         # 6. Database Updates (State & Linkage)
         if before_status == 'draft':
             expense.status = 'open'
-        expense.terms = notes
+        expense.terms = terms
 
         # Create the Forensic Attachment record
         new_snapshot = Attachment()
@@ -280,7 +280,7 @@ class ExpenseService(BaseService):
             old_data=old_snapshot,
             new_data={
                 'status': expense.status,
-                'terms': notes,
+                'terms': terms,
                 'snapshot_file': filename
                 }
         )
