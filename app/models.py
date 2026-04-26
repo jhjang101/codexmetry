@@ -124,7 +124,7 @@ class SettingsMetadata(db.Model):
     company_logo: Mapped[str | None] = mapped_column(String(255))
     timezone: Mapped[str] = mapped_column(String(100), default='America/Chicago')
     invoice_threshold: Mapped[int] = mapped_column(Integer, default=10000)
-    doc_padding: Mapped[int] = mapped_column(Integer, default=4)
+    doc_padding: Mapped[int] = mapped_column(Integer, default=3, server_default='3')
 
     # New Identity Fields
     company_email: Mapped[str | None] = mapped_column(String(255))
@@ -292,7 +292,7 @@ class Product(db.Model, AuditMixin):
 class OrderRegistry(db.Model, AuditMixin):
     __tablename__ = 'orders'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    order_number: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
+    order_number: Mapped[str] = mapped_column(String(100), unique=True, index=True, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.current_timestamp())
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
@@ -369,7 +369,7 @@ class Quote(db.Model, AuditMixin):
     __tablename__ = 'quotes'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     client_id: Mapped[int] = mapped_column(ForeignKey('clients.id'), nullable=False)
-    quote_number: Mapped[str] = mapped_column(String(100), nullable=False) # Not unique
+    quote_number: Mapped[str] = mapped_column(String(100), unique=True, index=True, nullable=False)
     total_amount: Mapped[int] = mapped_column(Integer, default=0)
     quote_date: Mapped[date] = mapped_column(Date, server_default=func.current_date())
     expiration_date: Mapped[date | None] = mapped_column(Date)
@@ -498,7 +498,7 @@ class Invoice(db.Model, AuditMixin):
     po_id: Mapped[int] = mapped_column(ForeignKey('purchase_orders.id'), nullable=False)
     client_id: Mapped[int] = mapped_column(ForeignKey('clients.id'), nullable=False)
     bill_to_id: Mapped[int] = mapped_column(ForeignKey('clients.id'), nullable=False)
-    invoice_number: Mapped[str] = mapped_column(String(100), nullable=False) # Not unique
+    invoice_number: Mapped[str] = mapped_column(String(100), unique=True, index=True, nullable=False)
     customer_po_number: Mapped[str | None] = mapped_column(String(100)) # Distributor's ref
     net_days: Mapped[int | None] = mapped_column(Integer) # Terms override
     total_amount: Mapped[int] = mapped_column(Integer, default=0)
@@ -550,7 +550,7 @@ class Invoice(db.Model, AuditMixin):
 class Payment(db.Model, AuditMixin):
     __tablename__ = 'payments'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    payment_number: Mapped[str] = mapped_column(String(100), nullable=False) # Not unique
+    payment_number: Mapped[str] = mapped_column(String(100), unique=True, index=True, nullable=False)
     order_id: Mapped[int] = mapped_column(ForeignKey('orders.id'), nullable=False)
     po_id: Mapped[int] = mapped_column(ForeignKey('purchase_orders.id'), nullable=False)
     invoice_id: Mapped[int | None] = mapped_column(ForeignKey('invoices.id'))
@@ -578,7 +578,7 @@ class Payment(db.Model, AuditMixin):
 class Expense(db.Model, AuditMixin):
     __tablename__ = 'expenses'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    expense_number: Mapped[str] = mapped_column(String(100), nullable=False) # Not unique
+    expense_number: Mapped[str] = mapped_column(String(100), unique=True, index=True, nullable=False)
     vendor_id: Mapped[int] = mapped_column(ForeignKey('vendors.id'), nullable=False)
     client_id: Mapped[int | None] = mapped_column(ForeignKey('clients.id'))
     order_id: Mapped[int | None] = mapped_column(ForeignKey('orders.id'))
@@ -611,7 +611,7 @@ class Expense(db.Model, AuditMixin):
 class Adjustment(db.Model, AuditMixin):
     __tablename__ = 'adjustments'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    adjustment_number: Mapped[str] = mapped_column(String(100), nullable=False) # Not unique
+    adjustment_number: Mapped[str] = mapped_column(String(100), unique=True, index=True, nullable=False)
     description: Mapped[str] = mapped_column(String(255), nullable=False)
     amount: Mapped[int] = mapped_column(Integer, nullable=False)
     adjustment_date: Mapped[date] = mapped_column(Date, server_default=func.current_date())
