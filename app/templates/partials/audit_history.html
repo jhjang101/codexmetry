@@ -54,7 +54,7 @@
                                     <span class="text-blue-700 font-medium">{{ values[1] | usd }}</span>
                                 
                                 {# Sub-form Summary Logic #}
-                                {% elif field in ['line_items', 'items', 'contacts', 'attachments', 'terms_snapshot', 'note'] %}
+                                {% elif field in ['line_items', 'items', 'contacts', 'attachments', 'terms', 'note'] %}
                                     <span class="text-blue-700 font-medium italic">
                                         {{ field | replace('_', ' ') | capitalize }} modified.
                                     </span>

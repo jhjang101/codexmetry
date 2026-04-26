@@ -252,7 +252,7 @@ def print_view(id):
 def issue(id):
     """
     Messenger: Commits the document to the legal record.
-    Action: Flips status, persists terms_snapshot, and archives the PDF.
+    Action: Flips status, persists terms, and archives the PDF.
     """
     try:
         # 1. Capture user-typed terms from the Preview form

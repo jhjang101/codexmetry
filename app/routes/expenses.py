@@ -297,7 +297,7 @@ def print_view(id):
 def issue(id):
     """
     Messenger: Commits the Expense to the legal record.
-    Action: Flips status to 'open', persists terms_snapshot, and archives the PDF.
+    Action: Flips status to 'open', persists terms, and archives the PDF.
     """
     try:
         # 1. Capture user-typed instructions from the Preview form

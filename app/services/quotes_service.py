@@ -291,7 +291,7 @@ class QuoteService(BaseService):
         # 6. Database Updates (State & Linkage)
         if quote.status == 'draft':
             quote.status = 'sent'
-        quote.terms_snapshot = notes
+        quote.terms = notes
 
         # Create the Forensic Attachment record
         new_snapshot = Attachment()
@@ -310,7 +310,7 @@ class QuoteService(BaseService):
             old_data=old_snapshot,
             new_data={
                 'status': quote.status,
-                'terms_snapshot': notes,
+                'terms': notes,
                 'snapshot_file': filename # Link for the history timeline
             }
         )
@@ -355,8 +355,8 @@ class QuoteService(BaseService):
             raise ValueError("Expiration date cannot be before quote date.")
         
         # 3. Terms Resolution
-        if quote and quote.terms_snapshot:
-            resolved_terms = quote.terms_snapshot
+        if quote and quote.terms:
+            resolved_terms = quote.terms
         else:
             resolved_terms = default_terms
 
@@ -368,7 +368,7 @@ class QuoteService(BaseService):
             'expiration_date': expiration_date,
             'status': data.get('status', 'draft'),
             'note': data.get('note', '').strip(),
-            'terms_snapshot': resolved_terms
+            'terms': resolved_terms
         }
 
         return clean_data

@@ -261,7 +261,7 @@ class ExpenseService(BaseService):
         # 6. Database Updates (State & Linkage)
         if before_status == 'draft':
             expense.status = 'open'
-        expense.terms_snapshot = notes
+        expense.terms = notes
 
         # Create the Forensic Attachment record
         new_snapshot = Attachment()
@@ -280,7 +280,7 @@ class ExpenseService(BaseService):
             old_data=old_snapshot,
             new_data={
                 'status': expense.status,
-                'terms_snapshot': notes,
+                'terms': notes,
                 'snapshot_file': filename
                 }
         )
@@ -384,8 +384,8 @@ class ExpenseService(BaseService):
         # Note: If only client_id was provided, it remains as captured from data.get
 
         # 5. Terms Resolution
-        if expense and expense.terms_snapshot:
-            resolved_terms = expense.terms_snapshot
+        if expense and expense.terms:
+            resolved_terms = expense.terms
         else:
             resolved_terms = default_terms
 
@@ -402,7 +402,7 @@ class ExpenseService(BaseService):
             'expense_date': expense_date,
             'status': data.get('status', 'open'),
             'note': data.get('note', '').strip(),
-            'terms_snapshot': resolved_terms
+            'terms': resolved_terms
         }
 
         return clean_data

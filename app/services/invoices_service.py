@@ -498,7 +498,7 @@ class InvoiceService(BaseService):
         before = invoice.status
         if before == 'draft':
             invoice.status = 'open'
-        invoice.terms_snapshot = notes
+        invoice.terms = notes
 
         # Create the Forensic Attachment record
         new_snapshot = Attachment()
@@ -517,7 +517,7 @@ class InvoiceService(BaseService):
             old_data=old_snapshot,
             new_data={
                 'status': invoice.status,
-                'terms_snapshot': notes,
+                'terms': notes,
                 'snapshot_file': filename
             }
         )
@@ -644,8 +644,8 @@ class InvoiceService(BaseService):
         carrier_id = data.get('carrier_id')
 
         # 5. Terms Resolution
-        if invoice and invoice.terms_snapshot:
-            resolved_terms = invoice.terms_snapshot
+        if invoice and invoice.terms:
+            resolved_terms = invoice.terms
         else:
             resolved_terms = default_terms
 
@@ -664,7 +664,7 @@ class InvoiceService(BaseService):
             'tracking_number': data.get('tracking_number', '').strip(),
             'status': data.get('status', 'draft'),
             'note': data.get('note', '').strip(),
-            'terms_snapshot': resolved_terms
+            'terms': resolved_terms
         }
 
         return clean_data

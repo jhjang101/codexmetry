@@ -355,7 +355,7 @@
                                 <div class="mt-1 text-[10px] text-gray-500 flex flex-wrap gap-x-3">
                                     {% for field, values in log.changes.items() %}
                                         <span class="">
-                                            {% if field in ['terms_snapshot', 'note'] %}
+                                            {% if field in ['terms', 'note'] %}
                                                 {{ field | replace('_', ' ') | capitalize }}:
                                                 <span class="text-gray-700 font-medium "> modified.
                                                 </span>
@@ -396,7 +396,7 @@
                                 {% if child.changes %}
                                     <span class="ml-2 text-gray-600 italic">
                                         {% for field, values in child.changes.items() %}
-                                            {% if field in ['terms_snapshot', 'note'] %}
+                                            {% if field in ['terms', 'note'] %}
                                                 {{ field | replace('_', ' ') | capitalize }}: modified.
                                             {% else %}
                                                 {{ field | replace('_id', '') | replace('_', ' ') }}: {{ values[1] | usd if ('amount' in field or 'price' in field or 'total' in field) else values[1] }}{{ ", " if not loop.last }}
