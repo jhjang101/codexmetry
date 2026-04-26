@@ -232,13 +232,9 @@ class ExpenseService(BaseService):
                 "Please edit and re-save the Expense before issuing."
             )
 
-        # 3. Versioning Logic: Count existing generated snapshots
-        v_count = db.session.query(func.count(Attachment.id)).filter_by(
-            entity_type='Expense', 
-            entity_id=id, 
-            is_generated=True
-        ).scalar() or 0
-        version = v_count + 1
+        # 3. Versioning Logic: Read current, then increment version number
+        version = expense.version_counter + 1
+        expense.version_counter = version
 
         # 4. Capture current state for Audit
         old_snapshot = cls._get_snapshot(expense)

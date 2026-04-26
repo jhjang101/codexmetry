@@ -378,7 +378,7 @@ class Quote(db.Model, AuditMixin):
     note: Mapped[str | None] = mapped_column(Text)
     terms: Mapped[str | None] = mapped_column(Text)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
-    
+    version_counter: Mapped[int] = mapped_column(Integer, default=0, server_default='0')
     order: Mapped["OrderRegistry"] = relationship(back_populates="quote")
     purchase_order: Mapped["PurchaseOrder | None"] = relationship(back_populates="quote")
     client: Mapped["Client"] = relationship(back_populates="quotes")
@@ -509,6 +509,7 @@ class Invoice(db.Model, AuditMixin):
     status: Mapped[str] = mapped_column(String(20), default='draft')
     note: Mapped[str | None] = mapped_column(Text)
     terms: Mapped[str | None] = mapped_column(Text)
+    version_counter: Mapped[int] = mapped_column(Integer, default=0, server_default='0')
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
     order: Mapped["OrderRegistry"] = relationship(back_populates="invoices")
@@ -590,6 +591,7 @@ class Expense(db.Model, AuditMixin):
     status: Mapped[str] = mapped_column(String(20), default='open') # New: draft, open, completed
     note: Mapped[str | None] = mapped_column(Text)
     terms: Mapped[str | None] = mapped_column(Text)
+    version_counter: Mapped[int] = mapped_column(Integer, default=0, server_default='0')
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
     vendor: Mapped["Vendor"] = relationship(back_populates="expenses")

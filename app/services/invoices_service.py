@@ -461,13 +461,9 @@ class InvoiceService(BaseService):
         net_days = invoice.net_days if invoice.net_days is not None else (metadata.default_net_days if metadata else 30)
         due_date = invoice.invoice_date + timedelta(days=net_days)
 
-        # 4. Versioning Logic: Count existing generated snapshots
-        v_count = db.session.query(func.count(Attachment.id)).filter_by(
-            entity_type='Invoice', 
-            entity_id=id, 
-            is_generated=True
-        ).scalar() or 0
-        version = v_count + 1
+        # 4. Versioning Logic: Read current, then increment version number
+        version = invoice.version_counter + 1
+        invoice.version_counter = version
         
         # 5. Capture current state for Audit
         old_snapshot = cls._get_snapshot(invoice)
