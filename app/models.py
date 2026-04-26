@@ -196,7 +196,7 @@ class Client(db.Model, AuditMixin):
     
     @property
     def full_display(self):
-        """Returns 'Company Name (Contact Name)' or just 'Company Name'"""
+        """Returns 'Client Label (Contact Name)' or just 'Client Label'"""
         if self.contacts:
             contact = self.contacts[0]
             name = f"{contact.first_name or ''} {contact.last_name or ''}".strip()

@@ -175,7 +175,7 @@ class VendorService(BaseService):
         # 1. Validation
         company_name = data.get('company_name', '').strip()
         if not company_name:
-            raise ValueError("Vendor Company Name is required.")
+            raise ValueError("Vendor Label is required.")
         
         # 2. Transform data
         clean_data ={

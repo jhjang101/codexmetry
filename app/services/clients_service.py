@@ -205,7 +205,7 @@ class ClientService(BaseService):
         # 1. Validation
         company_name = data.get('company_name', '').strip()
         if not company_name:
-            raise ValueError("Company Name is required.")
+            raise ValueError("Client Label is required.")
         
         # 2. Transform data
         clean_data = {
