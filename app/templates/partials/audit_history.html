@@ -35,7 +35,7 @@
                 {% elif log.action == 'ISSUE' %}
                     <span class="italic text-gray-500 font-medium">Document issued.</span>
                 {% elif log.action == 'ARCHIVE' %}
-                    <span class="italic text-red-500 font-medium">Record moved to archives.</span>
+                    <span class="italic text-red-500 font-medium">Record archived.</span>
                 {% elif log.action == 'DELETE' %}
                     <span class="italic text-red-900 font-medium">Record deleted.</span>
                 {% elif log.changes %}
@@ -54,7 +54,7 @@
                                     <span class="text-blue-700 font-medium">{{ values[1] | usd }}</span>
                                 
                                 {# Sub-form Summary Logic #}
-                                {% elif field in ['line_items', 'items', 'contacts', 'attachments'] %}
+                                {% elif field in ['line_items', 'items', 'contacts', 'attachments', 'terms_snapshot', 'note'] %}
                                     <span class="text-blue-700 font-medium italic">
                                         {{ field | replace('_', ' ') | capitalize }} modified.
                                     </span>

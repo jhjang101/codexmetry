@@ -445,7 +445,8 @@ class ExpenseService(BaseService):
                     'item': item_text, 
                     'cat_no': catalog_number,
                     'quantity': qty, 
-                    'unit_price': price,
+                    'unit_price': format_usd(price),
+                    'line_total': format_usd(line_total),
                     'description': description,
                     'sort_order': idx
                 })
@@ -466,16 +467,18 @@ class ExpenseService(BaseService):
         Specialized Fingerprint for Expenses:
         Uses the 'item' string and 'catalog_number' instead of product_id.
         """
-        data = [
-            {
+        data = []
+        
+        for item in items_collection:
+            data.append({
                 'item': item.item, 
                 'cat_no': item.catalog_number,
                 'quantity': item.quantity, 
-                'unit_price': item.unit_price,
+                'unit_price': format_usd(item.unit_price),
+                'line_total': format_usd(item.quantity * item.unit_price),
                 'description': item.description,
                 'sort_order': item.sort_order
-            }
-            for item in items_collection
-        ]
+            })
+        
         # Sort by item name so the audit log doesn't think the order change is a data change
         return sorted(data, key=lambda x: x['sort_order'])

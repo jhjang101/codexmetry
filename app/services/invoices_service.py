@@ -166,7 +166,7 @@ class InvoiceService(BaseService):
         # 7. Prepare the Snapshot for the log
         new_snapshot = clean_data.copy()
         new_snapshot['line_items'] = new_items_fingerprint
-        new_snapshot['total_amount'] = invoice.total_amount
+        new_snapshot['total_due'] = invoice.total_due
         new_snapshot['attachments'] = AttachmentService._get_fingerprint(invoice.attachments)
 
         # 8. Record 'CREATE' Audit
@@ -223,6 +223,7 @@ class InvoiceService(BaseService):
         # 3. Original State Capture
         old_po_id = invoice.po_id
         old_snapshot = cls._get_snapshot(invoice)
+        old_snapshot['total_due'] = invoice.total_due
         old_snapshot['line_items'] = cls._get_items_fingerprint(invoice.items, 'quantity', 'billed_unit_price')
         old_snapshot['attachments'] = AttachmentService._get_fingerprint(invoice.attachments)
         
@@ -243,7 +244,7 @@ class InvoiceService(BaseService):
         # 8. Prepare the Snapshot for the log
         new_snapshot = clean_data.copy()
         new_snapshot['line_items'] = new_items_fingerprint
-        new_snapshot['total_amount'] = invoice.total_amount
+        new_snapshot['total_due'] = invoice.total_due
         new_snapshot['attachments'] = AttachmentService._get_fingerprint(invoice.attachments)
 
         # 9. Record 'UPDATE' Audit
@@ -698,13 +699,13 @@ class InvoiceService(BaseService):
                 # Generate fingerprint
                 product = db.session.get(Product, product_id)
                 fingerprint.append({
-                    'product_id': int(product_id),
                     'product': product.name if product else "Unknown",
                     'quantity': qty, 
-                    'unit_price': price,
+                    'unit_price': format_usd(price),
+                    'line_total': format_usd(line_total),
                     'description': description,
                     'sort_order': idx,
-                    'po_item_id': item.po_item_id
+                    # 'po_item_id': item.po_item_id
                 })
 
         invoice.total_amount = total_cents

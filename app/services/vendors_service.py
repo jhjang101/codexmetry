@@ -213,9 +213,9 @@ class VendorService(BaseService):
                 db.session.add(contact)
 
                 fingerprint.append({
-                'name': f"{first} {last}".strip(),
-                'email': email,
-                'phone': phone
-            })
+                    'name': f"{first} {last}".strip() or "Unnamed Contact",
+                    'email': email or 'No Email',
+                    'phone': phone or 'No Phone'
+                })
                 
-        return sorted(fingerprint, key=lambda x: x['email'])
+        return sorted(fingerprint, key=lambda x: x['name'])

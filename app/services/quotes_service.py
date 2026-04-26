@@ -406,16 +406,16 @@ class QuoteService(BaseService):
                 # Generate fingerprint
                 product = db.session.get(Product, product_id)
                 fingerprint.append({
-                    'product_id': int(product_id), 
                     'product': product.name if product else "Unknown",
                     'quantity': qty, 
-                    'unit_price': price,
+                    'unit_price': format_usd(price),
+                    'line_total': format_usd(line_total),
                     'description': description,
                     'sort_order': idx,
-                    'po_item_id': None # Added for audit symmetry
+                    # 'po_item_id': None # Added for audit symmetry
                 })
 
-        # 3. Update the snapshot total on the header
+        # 3. Update the total on the header
         quote.total_amount = total_cents
 
         return sorted(fingerprint, key=lambda x: x['sort_order'])

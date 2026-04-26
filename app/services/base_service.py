@@ -1,6 +1,7 @@
 from sqlalchemy import desc, asc, select
 from .audit_service import AuditLogService
 from ..extensions import db
+from ..utils.money import format_usd
 
 class BaseService:
     model: type = db.Model
@@ -138,29 +139,32 @@ class BaseService:
         Brain: Converts a collection of line items into a comparable list.
         Example: [{'product_id': 5, 'quantity': 10, 'unit_price': 500}, ...]
         """
-        data = [
-            {
-                'product_id': item.product_id, 
+        data = []
+
+        for item in items_collection:
+            qty = getattr(item, qty_attr)
+            price = getattr(item, price_attr)
+            data.append({
                 'product': item.product.name if item.product else "Unknown",
-                'quantity': getattr(item, qty_attr), 
-                'unit_price': getattr(item, price_attr),
+                'quantity': qty,
+                'unit_price': format_usd(price),
+                'line_total': format_usd(qty * price),
                 'description': item.description,
                 'sort_order': item.sort_order,
-                'po_item_id': getattr(item, 'po_item_id', None)
-            }
-            for item in items_collection
-        ]
+            })
+
         return sorted(data, key=lambda x: x['sort_order'])
     
     @classmethod
     def _get_contacts_fingerprint(cls, contacts_collection):
         """Brain: Converts a collection of contacts into a comparable list."""
-        data = [
-            {
-                'name': f"{c.first_name} {c.last_name}".strip(),
-                'email': c.email,
-                'phone': c.phone_number
-            }
-            for c in contacts_collection
-        ]
-        return sorted(data, key=lambda x: x['email'] or '')
+        data = []
+        for c in contacts_collection:
+            data.append({
+                'name': f"{c.first_name or ''} {c.last_name or ''}".strip() or "Unnamed Contact",
+                'email': c.email or 'No Email',
+                'phone': c.phone_number or 'No Phone'
+            })
+        
+        # Sort by name for a predictable, human-readable order in the JSON delta
+        return sorted(data, key=lambda x: x['name'])

@@ -5,7 +5,7 @@ from .attachment_service import AttachmentService
 from .adjustments_service import AdjustmentService
 from ..extensions import db
 from ..utils.docs import generate_doc_number
-from ..utils.money import parse_to_cents
+from ..utils.money import parse_to_cents, format_usd
 from ..utils.manual_pagination import ManualPagination
 from sqlalchemy import select, or_, func, and_, exists, case
 from sqlalchemy.orm import contains_eager, joinedload, selectinload
@@ -751,7 +751,6 @@ class PurchaseOrderService(BaseService):
                 ).scalar() or 0
 
                 if qty < allocated_qty:
-                    from ..utils.money import format_usd
                     raise ValueError(
                         f"Integrity Violation: Cannot reduce quantity for '{po_item.product.name}' to {qty}. "
                         f"At least {allocated_qty} units are already reserved across active Invoices. "
@@ -779,11 +778,15 @@ class PurchaseOrderService(BaseService):
             # Prepare Audit Metadata
             # (Note: We fetch product name for the fingerprint if needed)
             product = db.session.get(Product, product_id)
+            line_total_cents = qty * price
             fingerprint.append({
-                'product_id': product_id, 
                 'product': product.name if product else "Unknown",
-                'quantity': qty, 'unit_price': price,
-                'description': description, 'sort_order': idx
+                'quantity': qty, 
+                'unit_price': format_usd(price),
+                'line_total': format_usd(line_total_cents),
+                'description': description, 
+                'sort_order': idx,
+                # 'po_item_id': po_item.id if po_item_id else None
             })
 
         # 3. PATH C: GUARDED DELETION
