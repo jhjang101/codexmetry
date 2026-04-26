@@ -1264,6 +1264,10 @@ video {
   width: 58.333333%;
 }
 
+.w-72 {
+  width: 18rem;
+}
+
 .w-8 {
   width: 2rem;
 }
@@ -1425,6 +1429,10 @@ video {
 
 .animate-pulse {
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.cursor-help {
+  cursor: help;
 }
 
 .cursor-not-allowed {

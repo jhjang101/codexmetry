@@ -115,10 +115,26 @@
                             <label class="block text-xs font-medium text-gray-500">Invoice Threshold</label>
                             <input type="text" name="invoice_threshold" value="{{ metadata.invoice_threshold | usd }}" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">
                         </div>
-                        <div>
-                            <label class="block text-xs font-medium text-gray-500">Doc Padding</label>
-                            <input type="number" name="doc_padding" value="{{ metadata.doc_padding }}" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">
+                        <!-- Doc Padding -->
+                        <div class="relative">
+                            <div class="flex items-center gap-1 mb-1 group">
+                                <label class="block text-xs font-medium text-gray-500">Doc Padding</label>
+                                <i class="fa-solid fa-circle-info text-amber-600 text-xs cursor-help"></i>
+                                <!-- Tooltip Box (Visible on Hover) -->
+                                <div class="invisible group-hover:visible absolute bottom-full left-0 mb-1 w-72 p-2 
+                                            bg-slate-700 text-white text-[10px] rounded-lg shadow-xl z-10">
+                                    Default is 3 (e.g., CDX-YYQSSSV). Where YY is year, Q quarter, SSS sequential number padding, and V checksum. 
+                                    <br><br>
+                                    Chaning this affects new records only. 
+                                    <br><br>
+                                    <span class="text-amber-600 font-bold">Warning:</span> 
+                                    Changing this mid-year disrupts chronological sorting. For consistent lists, only update on January 1st.
+                                </div>
+                            </div>
+                            <input type="number" name="doc_padding" value="{{ metadata.doc_padding }}" min="2" max="10"
+                                   class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">
                         </div>
+
                         <div>
                             <label class="block text-xs font-medium text-gray-500">Net Days (Invoices)</label>
                             <input type="number" name="default_net_days" value="{{ metadata.default_net_days }}" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">
