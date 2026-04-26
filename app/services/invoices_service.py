@@ -531,38 +531,6 @@ class InvoiceService(BaseService):
         db.session.commit()
         return invoice, invoice_status_ripple, po_status_ripple, filename
     
-        
-        # before = invoice.status
-        # if before == 'draft':
-        #     # 1. CAPTURE FULL FORENSIC SNAPSHOT (Matching Quote pattern)
-        #     snapshot = cls._get_snapshot(invoice)
-        #     snapshot['line_items'] = cls._get_items_fingerprint(invoice.items, 'quantity', 'billed_unit_price')
-        #     # We manually set the target status for the notarized record
-        #     snapshot['status'] = 'open' 
-
-        #     # 2. RECORD THE PARENT "ISSUE" ACTION (Full dump)
-        #     parent_audit_id = AuditLogService.record(
-        #         target_id=id,
-        #         target_type=cls.model.__name__,
-        #         action='ISSUE',
-        #         old_data={}, # Forces full snapshot
-        #         new_data=snapshot
-        #     )
-
-        #     # 3. ADVANCE STATUS & RIPPLE
-        #     invoice.status = 'open'
-            
-        #     # 4. RUN SYSTEM RIPPLES (Linked to Parent)
-        #     invoice_status = sync_invoice_status(invoice, original_status='open', parent_id=parent_audit_id)
-        #     invoice_status['before'] = before # Correct UI feedback (Draft -> Final Status)
-            
-        #     po_status = sync_po_status(invoice.po_id, parent_id=parent_audit_id)
-
-        #     db.session.commit()
-        #     return invoice, invoice_status, po_status
-        
-        # return invoice, None, None
-    
     @classmethod
     def _validate_pure_prepayment(cls, items_data: list[dict]) -> bool:
         """
