@@ -26,9 +26,10 @@ def generate_doc_number(prefix: str, model: type, column_name: str) -> str:
     
     # 2. Performance: Calculate the starting point (N)
     # Count existing records for this Year + (Standard Q1-4, Overflow Q5-6, or Emergency 9)
-    q_std = f"{year_str}{q_base}%"
-    q_ovr = f"{year_str}{q_base + 4}%"
-    q_emg = f"{year_str}9%"
+    # Logic: Only count records belonging to THIS specific document type
+    q_std = f"{prefix}-{year_str}{q_base}%"
+    q_ovr = f"{prefix}-{year_str}{q_base + 4}%"
+    q_emg = f"{prefix}-9%" # Match Year-independent emergency block
     
     count_stmt = select(func.count()).select_from(model).where(
         or_(
@@ -58,12 +59,14 @@ def generate_doc_number(prefix: str, model: type, column_name: str) -> str:
         sss_val = n % max_per_block
         sss_str = str(sss_val).zfill(padding)
         
-        # Assemble Payload and Checksum
-        payload = f"{year_str}{active_q}{sss_str}"
-        candidate = f"{payload}{_calculate_v_digit(payload)}"
+        # Assemble Numeric Body
+        body = f"{year_str}{active_q}{sss_str}"
+        
+        # FINAL IDENTITY: Prefix + Hyphen + Body + Checksum
+        candidate = f"{prefix}-{body}{_calculate_v_digit(body)}"
         
         # 4. Physical Uniqueness Verification
-        # Verifies if this candidate is free (handling manual entry gaps)
+        # Checks if 'I-2610018' is taken
         check_stmt = select(exists().where(getattr(model, column_name) == candidate))
         is_taken = db.session.execute(check_stmt).scalar()
         
