@@ -21,6 +21,8 @@ def humanize_error(e):
     # 2. If the message is long/ugly, perform surgical humanization.   
     if category == 'db':
         err_msg = raw_msg.lower()
+        if 'duplicate key value violates unique constraint' in err_msg:
+            return "Collision Detected: This document number is already in use. Please refresh the form to get a new suggestion.", category
         if 'unique constraint failed' in err_msg:
             return "This identifier (Number, Email, Catalog #,...) is already in use.", category
         if 'not null constraint failed' in err_msg:
