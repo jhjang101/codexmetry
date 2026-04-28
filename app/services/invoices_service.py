@@ -680,7 +680,10 @@ class InvoiceService(BaseService):
     def _validate_deposit_usage(cls, po_id: int, items_data: list[dict], invoice_id: int | None = None):
         """Brain: Prevents over-spending the credit pool (Double-Spending guard)."""
         system_product = db.session.execute(
-            select(Product.id).where(Product.is_system == True, Product.name == 'Applied Deposit')
+            select(Product.id).where(
+                Product.is_system == True, 
+                Product.catalog_number == 'SYS-DEP'
+            )
         ).scalar()
 
         # 1. Calc Proposed Consumption (Current Invoice)
@@ -720,12 +723,21 @@ class InvoiceService(BaseService):
         other_lines = db.session.execute(
             select(func.sum(InvoiceItem.quantity * InvoiceItem.billed_unit_price))
             .join(Invoice).join(Product)
-            .where(Invoice.po_id == po_id, Invoice.is_active == True, Product.name == 'Applied Deposit', Invoice.id != invoice_id)
+            .where(
+                Invoice.po_id == po_id, 
+                Invoice.is_active == True, 
+                Product.catalog_number == 'SYS-DEP', 
+                Invoice.id != invoice_id
+            )
         ).scalar() or 0
 
         other_negs = db.session.execute(
-            select(func.sum(Invoice.total_amount)).where(
-                Invoice.po_id == po_id, Invoice.is_active == True, Invoice.total_amount < 0, Invoice.id != invoice_id
+            select(func.sum(Invoice.total_amount))
+            .where(
+                Invoice.po_id == po_id, 
+                Invoice.is_active == True, 
+                Invoice.total_amount < 0, 
+                Invoice.id != invoice_id
             )
         ).scalar() or 0
         

@@ -107,7 +107,7 @@ class PurchaseOrderService(BaseService):
                 func.sum(InvoiceItem.quantity * InvoiceItem.billed_unit_price).label('total_applied_deposits')
             )
             .join(InvoiceItem).join(Product)
-            .where(Invoice.is_active == True, Product.name == 'Applied Deposit')
+            .where(Invoice.is_active == True, Product.catalog_number == 'SYS-DEP')
             .group_by(Invoice.po_id)
             .subquery()
         )
@@ -447,7 +447,7 @@ class PurchaseOrderService(BaseService):
             .join(Invoice).join(Product)
             .where(Invoice.po_id == po.id, 
                    Invoice.is_active == True, 
-                   Product.name == 'Applied Deposit', # Hard check for consumption line
+                   Product.catalog_number == 'SYS-DEP', # Hard check for consumption line
                    Invoice.id != exclude_invoice_id)
         )
         total_applied_deposit = db.session.execute(applied_stmt).scalar() or 0
@@ -518,8 +518,10 @@ class PurchaseOrderService(BaseService):
         # 8. Add Applied Deposit row for Invoice automation if remaining credit exists
         if po.remaining_credit > 0:
             system_product = db.session.execute(
-                select(Product).where(Product.is_system == True, 
-                                      Product.name == 'Applied Deposit')
+                select(Product).where(
+                    Product.is_system == True, 
+                    Product.catalog_number == 'SYS-DEP'
+                )
             ).scalar_one_or_none()
             if system_product:
                 remaining_items.append({
@@ -720,7 +722,7 @@ class PurchaseOrderService(BaseService):
 
         # 2. THE RECONCILIATION LOOP
         for idx, row in enumerate(items_data, start=1):
-            product_id = int(row.get('product_id'))
+            product_id = int(row.get('product_id')) # type: ignore
             qty = int(row.get('quantity', 1))
             price = parse_to_cents(str(row.get('unit_price', 0)))
             description = row.get('description', '').strip()
