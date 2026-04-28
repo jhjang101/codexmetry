@@ -1,8 +1,8 @@
-"""initial baseline
+"""Initial baseline
 
-Revision ID: a156e9220171
+Revision ID: bf2e5ef1619e
 Revises: 
-Create Date: 2026-04-15 10:21:31.382059
+Create Date: 2026-04-27 22:22:23.855656
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'a156e9220171'
+revision = 'bf2e5ef1619e'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -68,7 +68,7 @@ def upgrade():
     sa.Column('company_logo', sa.String(length=255), nullable=True),
     sa.Column('timezone', sa.String(length=100), nullable=False),
     sa.Column('invoice_threshold', sa.Integer(), nullable=False),
-    sa.Column('doc_padding', sa.Integer(), nullable=False),
+    sa.Column('doc_padding', sa.Integer(), server_default='3', nullable=False),
     sa.Column('company_email', sa.String(length=255), nullable=True),
     sa.Column('company_phone', sa.String(length=50), nullable=True),
     sa.Column('company_fax', sa.String(length=50), nullable=True),
@@ -140,9 +140,11 @@ def upgrade():
     sa.Column('updated_by_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['created_by_id'], ['users.id'], name=op.f('fk_orders_created_by_id_users')),
     sa.ForeignKeyConstraint(['updated_by_id'], ['users.id'], name=op.f('fk_orders_updated_by_id_users')),
-    sa.PrimaryKeyConstraint('id', name=op.f('pk_orders')),
-    sa.UniqueConstraint('order_number', name=op.f('uq_orders_order_number'))
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_orders'))
     )
+    with op.batch_alter_table('orders', schema=None) as batch_op:
+        batch_op.create_index(batch_op.f('ix_orders_order_number'), ['order_number'], unique=True)
+
     op.create_table('products',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(length=255), nullable=False),
@@ -213,7 +215,9 @@ def upgrade():
     sa.Column('status', sa.String(length=20), nullable=False),
     sa.Column('order_id', sa.Integer(), nullable=True),
     sa.Column('note', sa.Text(), nullable=True),
+    sa.Column('terms', sa.Text(), nullable=True),
     sa.Column('is_active', sa.Boolean(), nullable=False),
+    sa.Column('version_counter', sa.Integer(), server_default='0', nullable=False),
     sa.Column('created_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
     sa.Column('updated_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
     sa.Column('created_by_id', sa.Integer(), nullable=True),
@@ -224,6 +228,9 @@ def upgrade():
     sa.ForeignKeyConstraint(['updated_by_id'], ['users.id'], name=op.f('fk_quotes_updated_by_id_users')),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_quotes'))
     )
+    with op.batch_alter_table('quotes', schema=None) as batch_op:
+        batch_op.create_index(batch_op.f('ix_quotes_quote_number'), ['quote_number'], unique=True)
+
     op.create_table('vendor_contacts',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('vendor_id', sa.Integer(), nullable=False),
@@ -290,6 +297,8 @@ def upgrade():
     sa.Column('tracking_number', sa.String(length=100), nullable=True),
     sa.Column('status', sa.String(length=20), nullable=False),
     sa.Column('note', sa.Text(), nullable=True),
+    sa.Column('terms', sa.Text(), nullable=True),
+    sa.Column('version_counter', sa.Integer(), server_default='0', nullable=False),
     sa.Column('is_active', sa.Boolean(), nullable=False),
     sa.Column('created_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
     sa.Column('updated_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
@@ -304,6 +313,9 @@ def upgrade():
     sa.ForeignKeyConstraint(['updated_by_id'], ['users.id'], name=op.f('fk_invoices_updated_by_id_users')),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_invoices'))
     )
+    with op.batch_alter_table('invoices', schema=None) as batch_op:
+        batch_op.create_index(batch_op.f('ix_invoices_invoice_number'), ['invoice_number'], unique=True)
+
     op.create_table('po_items',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('po_id', sa.Integer(), nullable=False),
@@ -343,6 +355,9 @@ def upgrade():
     sa.ForeignKeyConstraint(['updated_by_id'], ['users.id'], name=op.f('fk_adjustments_updated_by_id_users')),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_adjustments'))
     )
+    with op.batch_alter_table('adjustments', schema=None) as batch_op:
+        batch_op.create_index(batch_op.f('ix_adjustments_adjustment_number'), ['adjustment_number'], unique=True)
+
     op.create_table('expenses',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('expense_number', sa.String(length=100), nullable=False),
@@ -357,6 +372,8 @@ def upgrade():
     sa.Column('expense_date', sa.Date(), server_default=sa.text('CURRENT_DATE'), nullable=False),
     sa.Column('status', sa.String(length=20), nullable=False),
     sa.Column('note', sa.Text(), nullable=True),
+    sa.Column('terms', sa.Text(), nullable=True),
+    sa.Column('version_counter', sa.Integer(), server_default='0', nullable=False),
     sa.Column('is_active', sa.Boolean(), nullable=False),
     sa.Column('created_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
     sa.Column('updated_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
@@ -372,6 +389,9 @@ def upgrade():
     sa.ForeignKeyConstraint(['vendor_id'], ['vendors.id'], name=op.f('fk_expenses_vendor_id_vendors')),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_expenses'))
     )
+    with op.batch_alter_table('expenses', schema=None) as batch_op:
+        batch_op.create_index(batch_op.f('ix_expenses_expense_number'), ['expense_number'], unique=True)
+
     op.create_table('invoice_items',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('invoice_id', sa.Integer(), nullable=False),
@@ -413,6 +433,9 @@ def upgrade():
     sa.ForeignKeyConstraint(['updated_by_id'], ['users.id'], name=op.f('fk_payments_updated_by_id_users')),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_payments'))
     )
+    with op.batch_alter_table('payments', schema=None) as batch_op:
+        batch_op.create_index(batch_op.f('ix_payments_payment_number'), ['payment_number'], unique=True)
+
     op.create_table('expense_items',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('expense_id', sa.Integer(), nullable=False),
@@ -431,20 +454,38 @@ def upgrade():
 def downgrade():
     # ### commands auto generated by Alembic - please adjust! ###
     op.drop_table('expense_items')
+    with op.batch_alter_table('payments', schema=None) as batch_op:
+        batch_op.drop_index(batch_op.f('ix_payments_payment_number'))
+
     op.drop_table('payments')
     op.drop_table('invoice_items')
+    with op.batch_alter_table('expenses', schema=None) as batch_op:
+        batch_op.drop_index(batch_op.f('ix_expenses_expense_number'))
+
     op.drop_table('expenses')
+    with op.batch_alter_table('adjustments', schema=None) as batch_op:
+        batch_op.drop_index(batch_op.f('ix_adjustments_adjustment_number'))
+
     op.drop_table('adjustments')
     op.drop_table('po_items')
+    with op.batch_alter_table('invoices', schema=None) as batch_op:
+        batch_op.drop_index(batch_op.f('ix_invoices_invoice_number'))
+
     op.drop_table('invoices')
     op.drop_table('quote_items')
     op.drop_table('purchase_orders')
     op.drop_table('vendor_contacts')
+    with op.batch_alter_table('quotes', schema=None) as batch_op:
+        batch_op.drop_index(batch_op.f('ix_quotes_quote_number'))
+
     op.drop_table('quotes')
     op.drop_table('client_contacts')
     op.drop_table('audit_logs')
     op.drop_table('vendors')
     op.drop_table('products')
+    with op.batch_alter_table('orders', schema=None) as batch_op:
+        batch_op.drop_index(batch_op.f('ix_orders_order_number'))
+
     op.drop_table('orders')
     op.drop_table('clients')
     op.drop_table('attachments')
