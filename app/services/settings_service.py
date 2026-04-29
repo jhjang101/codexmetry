@@ -9,14 +9,61 @@ from ..extensions import db
 from ..utils.money import parse_to_cents
 from sqlalchemy import select, or_
 
+# --- SHARED REACTIVATION LOGIC ---
+def _upsert_lookup(cls, **kwargs):
+    """
+    Helper: Implements the Reactivation Pattern.
+    Checks for existence (active or archived) by the 'type' field.
+    """
+    name = kwargs.get('type')
+    # 1. Look for existing record (ignoring is_active filter)
+    stmt = select(cls.model).where(cls.model.type == name)
+    existing = db.session.execute(stmt).scalar_one_or_none()
+
+    if existing:
+        if not existing.is_active:
+            # 2. Forensic Reactivation
+            old_snapshot = cls._get_snapshot(existing)
+            existing.is_active = True
+            
+            # Update extra flags (is_cogs, is_revenue) if provided in kwargs
+            for key, value in kwargs.items():
+                setattr(existing, key, value)
+            
+            db.session.flush()
+            AuditLogService.record(
+                target_id=existing.id,
+                target_type=cls.model.__name__,
+                action='UPDATE', # Treat reactivation as an update to is_active
+                old_data=old_snapshot,
+                new_data=cls._get_snapshot(existing)
+            )
+            db.session.commit()
+            return existing
+        else:
+            # 3. Guard against duplicate active records
+            raise ValueError(f"The value '{name}' is already active in the list.")
+
+    # 4. Standard path: Create brand new record via BaseService
+    return super(cls, cls).add(**kwargs)
+
 class CarrierService(BaseService):
     model = Carrier
+    @classmethod
+    def add(cls, **kwargs):
+        return _upsert_lookup(cls, **kwargs)
 
 class PoTypeService(BaseService):
     model = PoType
+    @classmethod
+    def add(cls, **kwargs):
+        return _upsert_lookup(cls, **kwargs)
 
 class ProductCategoryService(BaseService):
     model = ProductCategory
+    @classmethod
+    def add(cls, **kwargs):
+        return _upsert_lookup(cls, **kwargs)
 
     @classmethod
     def get_all(cls):
@@ -40,9 +87,15 @@ class ProductCategoryService(BaseService):
 
 class PaymentTypeService(BaseService):
     model = PaymentType
+    @classmethod
+    def add(cls, **kwargs):
+        return _upsert_lookup(cls, **kwargs)
 
 class AdjustmentCategoryService(BaseService):
     model = AdjustmentCategory
+    @classmethod
+    def add(cls, **kwargs):
+        return _upsert_lookup(cls, **kwargs)
 
     @classmethod
     def get_all(cls, include_id=None):
@@ -58,6 +111,9 @@ class AdjustmentCategoryService(BaseService):
 
 class ExpenseCategoryService(BaseService):
     model = ExpenseCategory
+    @classmethod
+    def add(cls, **kwargs):
+        return _upsert_lookup(cls, **kwargs)
 
     @classmethod
     def toggle_cogs(cls, category_id: int) -> ExpenseCategory:

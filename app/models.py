@@ -51,6 +51,7 @@ class AuditLog(db.Model):
 
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
+    __identity_attr__ = 'username'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     username: Mapped[str] = mapped_column(String(80), unique=True, nullable=False)
     email: Mapped[str] = mapped_column(String(120), unique=True, nullable=False)
@@ -77,12 +78,14 @@ def load_user(user_id):
 # --- 2. LOOKUP TABLES ---
 class PoType(db.Model):
     __tablename__ = 'po_types'
+    __identity_attr__ = 'type'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    type: Mapped[str] = mapped_column(String(50), nullable=False)
+    type: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
 class ProductCategory(db.Model):
     __tablename__ = 'product_categories'
+    __identy_attr__ = 'type'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     type: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
@@ -91,6 +94,7 @@ class ProductCategory(db.Model):
 
 class ExpenseCategory(db.Model):
     __tablename__ = 'expense_categories'
+    __identity_attr__ = 'type'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     type: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
@@ -98,12 +102,14 @@ class ExpenseCategory(db.Model):
 
 class PaymentType(db.Model):
     __tablename__ = 'payment_types'
+    __identity_attr__ = 'type'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    type: Mapped[str] = mapped_column(String(50), nullable=False)
+    type: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
 class AdjustmentCategory(db.Model):
     __tablename__ = 'adjustment_categories'
+    __identity_attr__ = 'type'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     type: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
     is_system: Mapped[bool] = mapped_column(Boolean, default=False, server_default='false')
@@ -111,13 +117,15 @@ class AdjustmentCategory(db.Model):
 
 class Carrier(db.Model):
     __tablename__ = 'carriers'
+    __identity_attr__ = 'type'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    type: Mapped[str] = mapped_column(String(50), nullable=False)
+    type: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
 # --- 3. SETTINGS ---
 class SettingsMetadata(db.Model):
     __tablename__ = 'settings_metadata'
+    __identity_attr__ = 'company_name'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     company_name: Mapped[str] = mapped_column(String(255), default='Codexmetry Corp')
     address: Mapped[str | None] = mapped_column(Text)
@@ -149,8 +157,9 @@ class SettingsMetadata(db.Model):
 # --- 4. MASTER DATA ---
 class Client(db.Model, AuditMixin):
     __tablename__ = 'clients'
+    __identity_attr__ = 'company_name'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    company_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    company_name: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
     address: Mapped[str | None] = mapped_column(Text)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     
@@ -227,8 +236,9 @@ class ClientContact(db.Model):
 
 class Vendor(db.Model, AuditMixin):
     __tablename__ = 'vendors'
+    __identity_attr__ = 'company_name'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    company_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    company_name: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
     url: Mapped[str | None] = mapped_column(String(255))
     address: Mapped[str | None] = mapped_column(Text)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
@@ -277,6 +287,7 @@ class VendorContact(db.Model):
 
 class Product(db.Model, AuditMixin):
     __tablename__ = 'products'
+    __identity_attr__ = 'name'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     catalog_number: Mapped[str | None] = mapped_column(String(100), unique=True)
@@ -291,6 +302,7 @@ class Product(db.Model, AuditMixin):
 # --- 5. REGISTRY & SALES ---
 class OrderRegistry(db.Model, AuditMixin):
     __tablename__ = 'orders'
+    __identity_attr__ = 'order_number'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     order_number: Mapped[str] = mapped_column(String(100), unique=True, index=True, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.current_timestamp())
@@ -367,6 +379,7 @@ class OrderRegistry(db.Model, AuditMixin):
 
 class Quote(db.Model, AuditMixin):
     __tablename__ = 'quotes'
+    __identity_attr__ = 'quote_number'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     client_id: Mapped[int] = mapped_column(ForeignKey('clients.id'), nullable=False)
     quote_number: Mapped[str] = mapped_column(String(100), unique=True, index=True, nullable=False)
@@ -392,6 +405,7 @@ class Quote(db.Model, AuditMixin):
 
 class PurchaseOrder(db.Model, AuditMixin):
     __tablename__ = 'purchase_orders'
+    __identity_attr__ = 'po_number'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     order_id: Mapped[int] = mapped_column(ForeignKey('orders.id'), nullable=False)
     quote_id: Mapped[int | None] = mapped_column(ForeignKey('quotes.id'))
@@ -493,6 +507,7 @@ class PurchaseOrder(db.Model, AuditMixin):
 
 class Invoice(db.Model, AuditMixin):
     __tablename__ = 'invoices'
+    __identity_attr__ = 'invoice_number'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     order_id: Mapped[int] = mapped_column(ForeignKey('orders.id'), nullable=False)
     po_id: Mapped[int] = mapped_column(ForeignKey('purchase_orders.id'), nullable=False)
@@ -549,6 +564,7 @@ class Invoice(db.Model, AuditMixin):
     
 class Payment(db.Model, AuditMixin):
     __tablename__ = 'payments'
+    __identity_attr__ = 'payment_number'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     payment_number: Mapped[str] = mapped_column(String(100), unique=True, index=True, nullable=False)
     order_id: Mapped[int] = mapped_column(ForeignKey('orders.id'), nullable=False)
@@ -577,6 +593,7 @@ class Payment(db.Model, AuditMixin):
 
 class Expense(db.Model, AuditMixin):
     __tablename__ = 'expenses'
+    __identity_attr__ = 'expense_number'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     expense_number: Mapped[str] = mapped_column(String(100), unique=True, index=True, nullable=False)
     vendor_id: Mapped[int] = mapped_column(ForeignKey('vendors.id'), nullable=False)
@@ -610,6 +627,7 @@ class Expense(db.Model, AuditMixin):
 
 class Adjustment(db.Model, AuditMixin):
     __tablename__ = 'adjustments'
+    __identity_attr__ = 'adjustment_number'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     adjustment_number: Mapped[str] = mapped_column(String(100), unique=True, index=True, nullable=False)
     description: Mapped[str] = mapped_column(String(255), nullable=False)
