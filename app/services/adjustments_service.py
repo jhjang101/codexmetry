@@ -201,7 +201,11 @@ class AdjustmentService(BaseService):
 
         # 2. Find any existing linked adjustment
         existing_adj = db.session.execute(
-            select(Adjustment).filter_by(invoice_id=invoice.id, is_system=True)
+            select(Adjustment).filter_by(
+                invoice_id=invoice.id, 
+                is_system=True, 
+                is_active=True
+            )
         ).scalar_one_or_none()
 
         # 3. Audit_logs snapshot
