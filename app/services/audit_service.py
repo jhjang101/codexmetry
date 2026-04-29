@@ -24,23 +24,23 @@ class AuditLogService:
 
     # Maps foreign key fields to their Model and identifying Label
     RELATION_MAP = {
-        'order_id': (OrderRegistry, 'order_number'),
-        'client_id': (Client, 'company_name'),
-        'vendor_id': (Vendor, 'company_name'), # Use Client or Vendor model accordingly
-        'po_type_id': (PoType, 'type'),
         # 'category_id': (ProductCategory, 'type'), # Note: We need logic to distinguish between Prod/Exp/Adj categories
-        'product_id': (Product, 'name'),
-        'quote_id': (Quote, 'quote_number'),
-        'po_id': (PurchaseOrder, 'po_number'),
-        'invoice_id': (Invoice, 'invoice_number'),
-        'user_id': (User, 'username'),
-        'bill_to_id': (Client, 'company_name'),
-        'paid_from_id': (Client, 'company_name'),
-        'payment_type_id': (PaymentType, 'type'),
-        'adjustment_category_id': (AdjustmentCategory, 'type'),
-        'carrier_id': (Carrier, 'type'),
-        'created_by_id': (User, 'username'),
-        'updated_by_id': (User, 'username')
+        'order_id': OrderRegistry,
+        'client_id': Client,
+        'vendor_id': Vendor,
+        'po_type_id': PoType,
+        'product_id': Product,
+        'quote_id': Quote,
+        'po_id': PurchaseOrder,
+        'invoice_id': Invoice,
+        'user_id': User,
+        'bill_to_id': Client,
+        'paid_from_id': Client,
+        'payment_type_id': PaymentType,
+        'adjustment_category_id': AdjustmentCategory,
+        'carrier_id': Carrier,
+        'created_by_id': User,
+        'updated_by_id': User
     }
 
     # Maps target_type string to the imported Model Class
@@ -59,26 +59,12 @@ class AuditLogService:
         'SettingsMetadata': SettingsMetadata
     }
 
-
-    # Maps target_type to the column we use for the human label
-    TARGET_MAP = {
-        'Quote': 'quote_number',
-        'PurchaseOrder': 'po_number', # or we can logic-fallback to order.order_number
-        'Invoice': 'invoice_number',
-        'Payment': 'payment_number',
-        'Expense': 'expense_number',
-        'Adjustment': 'adjustment_number',
-        'OrderRegistry': 'order_number',
-        'Client': 'company_name',
-        'Vendor': 'company_name',
-        'Product': 'name',
-        'User': 'username',
-        'SettingsMetadata': 'company_name'
-    }    
-
     @classmethod
-    def _resolve_label(cls, field: str, val, target_type: str):
-        """Brain: Converts an ID into a human string (e.g., 2 -> 'Standard')."""
+    def _resolve_label(cls, field: str, val, target_type: str, cache: dict):
+        """
+        Brain: Converts an ID into a human string (e.g., 2 -> 'Standard').
+        Performance: Uses identity_cache to prevent N+1 queries during bulk saves.
+        """
         if val is None or val == "" or val == "None":
             return "None"
         
@@ -87,7 +73,8 @@ class AuditLogService:
         if isinstance(val, str) and not val.isdigit():
             return val
         
-        # 1. Explicit Branching for 'category_id'
+        # 1. Determine Model Class 
+        # Explicit Branching for 'category_id'
         if field == 'category_id':
             label_attr = 'type'
             if target_type == 'Product':
@@ -100,16 +87,34 @@ class AuditLogService:
                 # If a category_id appears on an unexpected model, return the raw ID
                 return val 
         else:
-            # 2. Standard Lookup
-            map_entry = cls.RELATION_MAP.get(field)
-            if not map_entry:
+            # Standard Lookup
+            model_class = cls.RELATION_MAP.get(field)
+            if not model_class:
                 return val # No map? Return raw ID
-            model_class, label_attr = map_entry
+        
+        # 2. Check Scoped Cache (lives for one record() call)
+        cache_key = (model_class, int(val))
+        if cache_key in cache:
+            return cache[cache_key]
 
         # 3. Database Fetch
         try:
             obj = db.session.get(model_class, int(val))
-            return getattr(obj, label_attr) if obj else f"Unknown ({val})"
+            if obj:
+                # Use the new __identity_attr__ metadata from models.py
+                label_attr = getattr(model_class, '__identity_attr__', 'id')
+                label = str(getattr(obj, label_attr))
+
+                # Special Case: PO Fallback (Use CDX if PO Number is blank)
+                if field == 'po_id' and not label:
+                    label = obj.order.order_number if obj.order else f"#{val}" # type: ignore
+            else:
+                label = f"Unknown ({val})"
+            
+            # Store in cache and return
+            cache[cache_key] = label
+            return label
+        
         except (ValueError, TypeError):
             return str(val) # Final fallback: return it as a string
 
@@ -127,6 +132,9 @@ class AuditLogService:
         changes = {}
         old_data = old_data or {}
         new_data = new_data or {}
+        
+        # Initialize Scoped Identity Cache for this recording event
+        identity_cache = {}
 
         # 1. Forensic Comparison Loop
         for key, new_val in new_data.items():
@@ -135,10 +143,10 @@ class AuditLogService:
 
             old_val = old_data.get(key)
 
-            # 2. ID-to-Label Resolution
+            # 2. ID-to-Label Resolution (Cached)
             if key.endswith('_id') or key in ['client_id', 'vendor_id']:
-                norm_old = cls._resolve_label(key, old_val, target_type)
-                norm_new = cls._resolve_label(key, new_val, target_type)
+                norm_old = cls._resolve_label(key, old_val, target_type, identity_cache)
+                norm_new = cls._resolve_label(key, new_val, target_type, identity_cache)
             else:
                 # Standard JSON Normalization (Dates/Times)
                 norm_old = old_val.isoformat() if isinstance(old_val, (date, datetime)) else old_val
@@ -152,9 +160,8 @@ class AuditLogService:
         if changes or action in ['CREATE', 'ISSUE', 'ARCHIVE', 'DELETE']:
             user_id = int(current_user.get_id()) if (has_request_context() and current_user.is_authenticated) else None
 
-            # Fetch the object to get the Label and the Order ID
+            # Fetch class for metadata retrieval
             model_class = cls.MODEL_MAP.get(target_type)
-            label_attr = cls.TARGET_MAP.get(target_type)
             obj = db.session.get(model_class, target_id) if model_class else None
 
             # 1. RESOLVE ORDER ID (The Order Anchor)
@@ -169,9 +176,10 @@ class AuditLogService:
 
             # 2. GENERATE THE TARGET LABEL
             target_label = f"{target_type} #{target_id}" # Default fallback
-
-            if obj and label_attr:
-                val = getattr(obj, label_attr, None)
+            if obj and model_class:
+                label_attr = getattr(model_class, '__identity_attr__', None)
+                if label_attr:
+                    val = getattr(obj, label_attr, None)
                     
                 # SPECIAL CASE: PO Number Fallback
                 # If client PO ref is blank, use the CDX number for historical clarity
@@ -213,7 +221,7 @@ class AuditLogService:
         """Brain: Fetches all forensic records for a specific document."""
         stmt = (
             select(AuditLog)
-            .options(joinedload(AuditLog.user)) # Eager load the actor
+            .options(joinedload(AuditLog.user))
             .where(
                 AuditLog.target_type == target_type,
                 AuditLog.target_id == target_id
