@@ -17,9 +17,6 @@
 {% block content %}
 <div class="max-w-5xl mx-auto">
     
-    {# one-time refresh trigger when the window gains focus #}
-    <div id="focus-sync-container"></div>
-    
     <!-- 1. HEADER ACTION BAR -->
     <div class="flex justify-between items-center mb-2">
         <a href="{{ session.get('quotes_last_url', url_for('quotes.index')) }}" class="text-blue-600 hover:underline text-sm font-medium flex items-center gap-1">
@@ -48,7 +45,6 @@
                             </a>
 
                             <a href="{{ url_for('quotes.print_view', id=quote.id) }}" 
-                                target="_blank"
                                 class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">
                                 <i class="fa-solid fa-print w-2"></i>
                                 Print / Save PDF
@@ -304,4 +300,15 @@
     {% endif %}
 
 </div>
+
+{# AUTO-OPEN ISSUED PDF: Handles Chrome race conditions by ensuring the page settles before opening the file #}
+    {% if request.args.get('issued') %}
+    <script>
+        (function() {
+            const pdfUrl = "{{ url_for('static', filename='uploads/quotes/' + request.args.get('issued')) }}";
+            window.open(pdfUrl, '_blank');
+        })();
+    </script>
+{% endif %}
+
 {% endblock %}

@@ -267,12 +267,12 @@ def issue(id):
             return redirect(url_for('quotes.index'))
 
         # 3. Success Feedback
-        flash(f"Quote {quote.quote_number} has been issued and attached as PDF.", "success")
+        flash(f"Quote {quote.quote_number} has been issued and attached as PDF: {filename}", "success")
         if status and status['before'] != status['after']:
             flash(f"Status updated: {status['before'].upper()} → {status['after'].upper()}", "info")
 
         # 4. Final Redirect to the View page
-        return redirect(url_for('static', filename=f'uploads/quotes/{filename}'))
+        return redirect(url_for('quotes.view', id=id, issued=filename))
 
     except Exception as e:
         # Rollback and show OOB error if the PDF generation or commit fails

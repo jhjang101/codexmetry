@@ -457,7 +457,7 @@ def issue(id):
             return redirect(url_for('invoices.index'))
         
         # 3. SUCCESS FEEDBACK
-        flash(f"Invoice {invoice.invoice_number} has been issued and attached as PDF.", "success")
+        flash(f"Invoice {invoice.invoice_number} has been issued and attached as PDF: {filename}", "success")
         if invoice_status and invoice_status['before'] != invoice_status['after']:
             flash(f"Invoice status updated: {invoice_status['before'].upper()} → {invoice_status['after'].upper()}", "info")
 
@@ -481,7 +481,7 @@ def issue(id):
             elif action == 'DELETE':
                 flash(f"System Write-off Adjustment {adjustment_name} removed (Invoice settled or re-opened).", "info")
 
-        return redirect(url_for('static', filename = f'uploads/invoices/{filename}'))
+        return redirect(url_for('invoices.view', id=id, issued=filename))
 
     except Exception as e:
         return handle_post_error(e, "invoices.issue")

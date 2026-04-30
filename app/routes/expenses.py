@@ -311,11 +311,11 @@ def issue(id):
             return redirect(url_for('expenses.index'))
 
         # 3. Success Feedback
-        flash(f"Expense {expense.expense_number} has been issued and attached as PDF.", "success")
+        flash(f"Expense {expense.expense_number} has been issued and attached as PDF: {filename}", "success")
         if status and status['before'] != status['after']:
             flash(f"Status updated: {status['before'].upper()} → {status['after'].upper()}", "info")
 
-        return redirect(url_for('static', filename=f'uploads/expenses/{filename}'))
+        return redirect(url_for('expenses.view', id=id, issued=filename))
 
     except Exception as e:
         return handle_post_error(e, "expenses.issue")

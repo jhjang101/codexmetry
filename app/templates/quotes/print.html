@@ -50,7 +50,6 @@
             <div class="flex gap-3">
                 <!-- The Issue Button -->
                 <button type="submit" 
-                        onclick="new BroadcastChannel('codexmetry_sync').postMessage({command: 'issue_success', url: '{{ url_for('quotes.view', id=quote.id) }}'})"
                         class="px-4 py-1.5 bg-green-600 hover:bg-green-500 rounded text-xs font-bold transition-colors shadow-sm">
                     <i class="fa-solid fa-file-export mr-2"></i> Issue & Archive PDF
                 </button>

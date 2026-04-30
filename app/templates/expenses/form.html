@@ -15,9 +15,6 @@
 
 {% block content %}
 <div class="max-w-5xl mx-auto">
-
-    {# one-time refresh trigger when the window gains focus #}
-    <div id="focus-sync-container"></div>
      
     <div class="flex justify-between items-center mb-2">
         <a href="{{ session.get('expenses_last_url', url_for('expenses.index')) }}" class="text-blue-600 text-sm font-medium"><i class="fa-solid fa-arrow-left"></i> Back to Expenses List</a>
@@ -43,7 +40,6 @@
                             </a>
 
                             <a href="{{ url_for('expenses.print_view', id=expense.id) }}" 
-                                target="_blank"
                                 class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">
                                 <i class="fa-solid fa-print w-2"></i>
                                 Print / Save PDF
@@ -383,4 +379,15 @@
     {% endif %}
 
 </div>
+
+{# AUTO-OPEN ISSUED PDF #}
+{% if request.args.get('issued') %}
+    <script>
+        (function() {
+            const pdfUrl = "{{ url_for('static', filename='uploads/expenses/' + request.args.get('issued')) }}";
+            window.open(pdfUrl, '_blank');
+        })();
+    </script>
+{% endif %}
+
 {% endblock %}
