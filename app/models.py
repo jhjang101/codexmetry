@@ -125,7 +125,7 @@ class Carrier(db.Model):
 # --- 3. SETTINGS ---
 class SettingsMetadata(db.Model):
     __tablename__ = 'settings_metadata'
-    __identity_attr__ = 'company_name'
+    __identity_attr__ = 'audit_label'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     company_name: Mapped[str] = mapped_column(String(255), default='Codexmetry Corp')
     address: Mapped[str | None] = mapped_column(Text)
@@ -156,6 +156,14 @@ class SettingsMetadata(db.Model):
 
     # Maintenance Switch
     is_maintenance_mode: Mapped[bool] = mapped_column(Boolean, default=False, server_default='false')
+
+    # Quote PDF Toggles
+    show_quote_signature: Mapped[bool] = mapped_column(Boolean, default=True, server_default='true')
+
+    @property
+    def audit_label(self):
+        """Returns a static label for forensic logs."""
+        return "Company Configuration"
 
 # --- 4. MASTER DATA ---
 class Client(db.Model, AuditMixin):

@@ -253,52 +253,57 @@
 
             <!-- 6. SIGNATURE & CTA SECTION (FOOTER) -->
             <div class="mt-auto">
-                <!-- Customer Acceptance Block -->
-                <p class="text-[10px] font-bold text-gray-800 underline">Customer Acceptance (Submit PO or sign below)</p>
+                {% if metadata.show_quote_signature %}
+                    <!-- Customer Acceptance Block -->
+                    <p class="text-[10px] font-bold text-gray-800 underline">Customer Acceptance (Submit PO or sign below)</p>
 
-                {% if is_pdf_mode %}
-                <div class="grid grid-cols-10 gap-6 mb-6">
-                    <div class="col-span-4">
-                        <input type="text" class="w-full mt-2 resize-none mb-1"></textarea>
-                        <p class="text-[9px] text-gray-800 ">Name & Title</p>
+                    {% if is_pdf_mode %}
+                    <div class="grid grid-cols-10 gap-6 mb-6">
+                        <div class="col-span-4">
+                            <input type="text" class="w-full mt-2 resize-none mb-1"></textarea>
+                            <p class="text-[9px] text-gray-800 ">Name & Title</p>
+                        </div>
+                        <div class="col-span-4">
+                            <p class="text-[10px]">&nbsp;</p>
+                            <div class="sig-line mb-1"></div>
+                            <p class="text-[9px] text-gray-800 ">Signature</p>
+                        </div>
+                        <div class="col-span-2">
+                            <input type="date" class="w-full mt-2 resize-none mb-1">
+                            <p class="text-[9px] text-gray-800 ">Date</p>
+                        </div>
                     </div>
-                    <div class="col-span-4">
-                        <p class="text-[10px]">&nbsp;</p>
-                        <div class="sig-line mb-1"></div>
-                        <p class="text-[9px] text-gray-800 ">Signature</p>
-                    </div>
-                    <div class="col-span-2">
-                        <input type="date" class="w-full mt-2 resize-none mb-1">
-                        <p class="text-[9px] text-gray-800 ">Date</p>
-                    </div>
-                </div>
 
-                {% else %}
+                    {% else %}
 
-                <div class="grid grid-cols-10 gap-6 mb-6">
-                    <div class="col-span-4">
-                        <p class="text-[10px] mb-6">&nbsp;</p>
-                        <div class="sig-line mb-1"></div>
-                        <p class="text-[9px] text-gray-800 ">Name & Title</p>
+                    <div class="grid grid-cols-10 gap-6 mb-6">
+                        <div class="col-span-4">
+                            <p class="text-[10px] mb-6">&nbsp;</p>
+                            <div class="sig-line mb-1"></div>
+                            <p class="text-[9px] text-gray-800 ">Name & Title</p>
+                        </div>
+                        <div class="col-span-4">
+                            <p class="text-[10px] mb-6">&nbsp;</p>
+                            <div class="sig-line mb-1"></div>
+                            <p class="text-[9px] text-gray-800 ">Signature</p>
+                        </div>
+                        <div class="col-span-2">
+                            <p class="text-[10px] mb-6">&nbsp;</p>
+                            <div class="sig-line mb-1"></div>
+                            <p class="text-[9px] text-gray-800 ">Date</p>
+                        </div>
                     </div>
-                    <div class="col-span-4">
-                        <p class="text-[10px] mb-6">&nbsp;</p>
-                        <div class="sig-line mb-1"></div>
-                        <p class="text-[9px] text-gray-800 ">Signature</p>
-                    </div>
-                    <div class="col-span-2">
-                        <p class="text-[10px] mb-6">&nbsp;</p>
-                        <div class="sig-line mb-1"></div>
-                        <p class="text-[9px] text-gray-800 ">Date</p>
-                    </div>
-                </div>
+                    {% endif %}
                 {% endif %}
-
 
                 <!-- Call to Action & Contact -->
                 <div class="text-[10px] text-gray-800 space-y-1">
                     <p class="font-bold text-gray-800 underline">To proceed with this order:</p>
+                    {% if metadata.show_quote_signature %}
                     <p>Please submit a Purchase Order referencing this Quotation number, or return a signed copy of this document.</p>
+                    {% else %}
+                    <p>Please submit a Purchase Order referencing this Quotation number.</p>
+                    {% endif %}
                     <p>If you have any questions, please contact <span class="font-medium">{{ quote.creator.full_name or quote.creator.username }}</span> at <span class="text-blue-600">{{ quote.creator.email }}</span>{% if quote.creator.phone_number %} or <span class="font-medium">{{ quote.creator.phone_number }}</span>{% elif metadata.company_phone %} or <span class="font-medium">{{ metadata.company_phone }}</span> {% endif %}.</p>
                 </div>
             </div>

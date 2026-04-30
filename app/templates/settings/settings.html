@@ -143,6 +143,17 @@
                             <label class="block text-xs font-medium text-gray-500">Quote Expiry (Days)</label>
                             <input type="number" name="default_quote_expiry_days" value="{{ metadata.default_quote_expiry_days }}" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">
                         </div>
+                        <!-- Quote Signature Toggle -->
+                        <div class="col-span-2 pt-2 border-t border-gray-50">
+                            <label class="flex items-center gap-2 cursor-pointer group w-fit px-1">
+                                <input type="checkbox" name="show_quote_signature" value="1"
+                                       {{ 'checked' if metadata.show_quote_signature else '' }}
+                                       class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest group-hover:text-gray-600 transition-colors">
+                                    Include Signature Block on Quotes
+                                </span>
+                            </label>
+                        </div>
                     </div>
                 </section>
             </div>

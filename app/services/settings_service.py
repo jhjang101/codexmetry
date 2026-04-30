@@ -216,7 +216,10 @@ class MetadataService(BaseService):
             'default_quote_expiry_days': int(data.get('default_quote_expiry_days', 30)),
             'default_quote_terms': data.get('default_quote_terms', '').strip(),
             'default_invoice_terms': data.get('default_invoice_terms', '').strip(),
-            'default_po_terms': data.get('default_po_terms', '').strip()
+            'default_po_terms': data.get('default_po_terms', '').strip(),
+
+            # Quote PDF Toggles
+            'show_quote_signature': True if data.get('show_quote_signature') else False
         }
         
         # 5. Handle Optional Logo (only update if provided)
