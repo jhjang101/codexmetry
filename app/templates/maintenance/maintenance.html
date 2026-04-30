@@ -6,6 +6,38 @@
 <div class="max-w-5xl mx-auto px-4 pb-12">
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+        <!-- CARD 0: SYSTEM LOCK (High Stakes) -->
+        <section class="md:col-span-2 bg-white rounded-xl shadow-md border-2 {{ 'border-red-500' if metadata.is_maintenance_mode else 'border-blue-500' }} overflow-hidden">
+            <div class="px-6 py-4 flex justify-between items-center {{ 'bg-red-50' if metadata.is_maintenance_mode else 'bg-blue-50' }}">
+                <div class="flex items-center gap-4">
+                    <div class="p-3 rounded-full {{ 'bg-red-100 text-red-600' if metadata.is_maintenance_mode else 'bg-blue-100 text-blue-600' }}">
+                        <i class="fa-solid {{ 'fa-lock' if metadata.is_maintenance_mode else 'fa-lock-open' }} text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-black uppercase tracking-widest text-slate-800">
+                            System Access: {{ 'LOCKED' if metadata.is_maintenance_mode else 'OPERATIONAL' }}
+                        </h3>
+                        <p class="text-xs text-slate-500 leading-tight">
+                            {% if metadata.is_maintenance_mode %}
+                                <b>Maintenance Mode Active.</b> Non-admin users are restricted to read-only access.
+                            {% else %}
+                                <b>Normal Operations.</b> All users can create and edit records based on their roles.
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+
+                <form action="{{ url_for('maintenance.toggle_lock') }}" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" 
+                            class="px-6 py-2.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all shadow-md active:scale-95
+                            {{ 'bg-green-600 hover:bg-green-700 text-white' if metadata.is_maintenance_mode else 'bg-red-600 hover:bg-red-700 text-white' }}">
+                        {{ 'Release System Lock' if metadata.is_maintenance_mode else 'Activate Maintenance Mode' }}
+                    </button>
+                </form>
+            </div>
+        </section>
         
         <!-- CARD 1: DATABASE HEALTH -->
         <section class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">

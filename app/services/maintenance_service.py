@@ -7,7 +7,8 @@ from datetime import datetime
 from flask import current_app
 from sqlalchemy import text
 from ..extensions import db
-from ..models import Client, Vendor, Product, PurchaseOrder, Invoice, Payment, Expense, Adjustment
+from ..models import Client, Vendor, Product, PurchaseOrder, Invoice, Payment, Expense, Adjustment, SettingsMetadata
+from .audit_service import AuditLogService
 
 class MaintenanceService:
 
@@ -147,3 +148,32 @@ class MaintenanceService:
                 writer.writerow([r.adjustment_date, r.adjustment_number, r.category.type if r.category else 'N/A', r.description, r.amount / 100])
 
         return output.getvalue()
+    
+    # --- 4. MAINTENANCE MODE ---
+
+    @classmethod
+    def toggle_maintenance_mode(cls):
+        """Brain: Flips the global system lock and records the event."""
+        # Fetch the singleton record
+        settings = db.session.get(SettingsMetadata, 1)
+        if not settings:
+            raise ValueError("System settings not initialized. Run seed-db.")
+
+        # Capture old state for the forensic record
+        old_mode = settings.is_maintenance_mode
+        new_mode = not old_mode
+
+        # Apply change
+        settings.is_maintenance_mode = new_mode
+
+        # Record Audit
+        AuditLogService.record(
+            target_id=1,
+            target_type='SettingsMetadata',
+            action='UPDATE',
+            old_data={'is_maintenance_mode': old_mode},
+            new_data={'is_maintenance_mode': new_mode}
+        )
+
+        db.session.commit()
+        return settings

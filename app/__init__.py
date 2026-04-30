@@ -2,6 +2,7 @@ import os
 from dotenv import load_dotenv
 import logging
 from flask import Flask, render_template, request, redirect, url_for, flash, make_response, g
+from flask_login import current_user
 from sqlalchemy.exc import SQLAlchemyError
 from datetime import datetime
 from zoneinfo import ZoneInfo
@@ -83,6 +84,32 @@ def create_app():
         # Store in 'g' (Request Global) to prevent redundant DB queries
         g.metadata = MetadataService.get_by_id(1)
         g.office_tz = g.metadata.timezone if g.metadata else 'America/Chicago'
+    
+    @app.before_request
+    def maintenance_mode_guard():
+        """The Guard: Blocks write actions if the Fortress is in Maintenance Mode."""
+        # 1. Exemptions (The "Safe" paths)
+        # Always allow GET requests (Read-only)
+        # Always allow Admins (The mechanics)
+        # Always allow Login/Logout and Static files
+        if (request.method == 'GET' or 
+            (current_user.is_authenticated and current_user.role == 'admin') or
+            request.blueprint in ['auth', 'static']):
+            return
+
+        # 2. Enforcement
+        if g.metadata and g.metadata.is_maintenance_mode:
+            message = "System Locked: The application is currently undergoing maintenance. Please try again later."
+            
+            if request.headers.get('HX-Request'):
+                # HTMX Response: Return an OOB Error Notification
+                return render_template('partials/error_notification.html', 
+                                     message=message, 
+                                     category='system'), 200
+            
+            # Standard Response
+            flash(message, "warning")
+            return redirect(url_for('dashboard.index'))
     
     # 3. Register CLI Commands
     from .utils.cli import seed_db_command

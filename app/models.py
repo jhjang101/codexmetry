@@ -154,6 +154,9 @@ class SettingsMetadata(db.Model):
     default_invoice_terms: Mapped[str | None] = mapped_column(Text)
     default_po_terms: Mapped[str | None] = mapped_column(Text)
 
+    # Maintenance Switch
+    is_maintenance_mode: Mapped[bool] = mapped_column(Boolean, default=False, server_default='false')
+
 # --- 4. MASTER DATA ---
 class Client(db.Model, AuditMixin):
     __tablename__ = 'clients'
