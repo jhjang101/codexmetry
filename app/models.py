@@ -9,8 +9,8 @@ from datetime import datetime, date
 # --- 1. AUTH ---
 class AuditMixin:
     """Mixin to automatically track creation and updates."""
-    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.current_timestamp())
-    updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.current_timestamp(), onupdate=func.current_timestamp())
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.current_timestamp())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.current_timestamp(), onupdate=func.current_timestamp())
     
     @declared_attr
     def created_by_id(cls) -> Mapped[int | None]:
@@ -34,7 +34,7 @@ class AuditLog(db.Model):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     parent_id: Mapped[int | None] = mapped_column(Integer, ForeignKey('audit_logs.id'))
     order_id: Mapped[int | None] = mapped_column(ForeignKey('orders.id'))
-    timestamp: Mapped[datetime] = mapped_column(DateTime, server_default=func.current_timestamp())
+    timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.current_timestamp())
     user_id: Mapped[int | None] = mapped_column(ForeignKey('users.id'))
     action: Mapped[str] = mapped_column(String(20)) # CREATE, UPDATE, ARCHIVE, DELETE
     target_type: Mapped[str] = mapped_column(String(50)) # 'Invoice', 'Product', etc.
@@ -61,8 +61,8 @@ class User(UserMixin, db.Model):
     role: Mapped[str] = mapped_column(String(20), default='user')
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     is_root: Mapped[bool] = mapped_column(Boolean, default=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.current_timestamp())
-    updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.current_timestamp(), onupdate=func.current_timestamp())
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.current_timestamp())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.current_timestamp(), onupdate=func.current_timestamp())
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -308,7 +308,7 @@ class OrderRegistry(db.Model, AuditMixin):
     __identity_attr__ = 'order_number'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     order_number: Mapped[str] = mapped_column(String(100), unique=True, index=True, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.current_timestamp())
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.current_timestamp())
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
     quote: Mapped["Quote | None"] = relationship(back_populates="order")
@@ -721,7 +721,7 @@ class Attachment(db.Model, AuditMixin):
     entity_id: Mapped[int] = mapped_column(Integer, nullable=False)
     file_path: Mapped[str] = mapped_column(String(255), nullable=False)
     file_name: Mapped[str] = mapped_column(String(255), nullable=False)
-    uploaded_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.current_timestamp())
+    uploaded_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.current_timestamp())
     is_generated: Mapped[bool] = mapped_column(Boolean, default=False, server_default='false') # PDF Snapshot flag
 
 # --- 8. AUDIT EVENT LISTENERS ---

@@ -149,8 +149,15 @@ def create_app():
             return None
 
         tz_name = g.office_tz
-        # Ensure the naive datetime from DB is treated as UTC, then convert
-        return dt.replace(tzinfo=ZoneInfo('UTC')).astimezone(ZoneInfo(tz_name))
+        
+        # 1. Forensic Check: If the object is naive, attach UTC.
+        # This handles records saved before the timezone=True migration.
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=ZoneInfo('UTC'))
+
+        # 2. Conversion: Convert to the Office Timezone.
+        # If it was already aware, .astimezone() performs the proper shift.
+        return dt.astimezone(ZoneInfo(tz_name))
 
     # 6. Error Handling
     @app.errorhandler(SQLAlchemyError)
