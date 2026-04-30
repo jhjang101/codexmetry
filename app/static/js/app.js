@@ -29,6 +29,34 @@ function switchTab(tabName) {
 }
 
 /**
+ * THE AUTO-OPEN ENGINE
+ * Logic: Scans URL for 'issued' parameter and automatically opens the PDF.
+ * Forensic: Resolves the target folder dynamically from the current path.
+ */
+(function autoOpenIssuedDocument() {
+    const params = new URLSearchParams(window.location.search);
+    const filename = params.get('issued');
+
+    if (filename) {
+        // 1. Identify the module folder (quotes, invoices, expenses)
+        // Logic: Path is usually /quotes/view/10 - we grab segment 1
+        const pathSegments = window.location.pathname.split('/');
+        const folder = pathSegments[1]; 
+
+        if (folder && filename) {
+            const pdfUrl = `/static/uploads/${folder}/${filename}`;
+            console.log("Auto-Open: Triggering PDF preview for:", pdfUrl);
+            window.open(pdfUrl, '_blank');
+
+            // 2. Forensic Cleanup: Strip the parameter from the URL 
+            // This prevents the PDF from re-opening if the user refreshes the page manually.
+            const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+            window.history.replaceState({path: cleanUrl}, '', cleanUrl);
+        }
+    }
+})();
+
+/**
  * Universal Chart.js Initializer
  * Logic: Reads data from DOM, destroys old instances, and applies professional styling.
  */
@@ -104,7 +132,8 @@ document.addEventListener('htmx:afterSettle', function(evt) {
     const charts = [
         'accrualChart', 'cashChart', 'clientChart', 
         'categoryChart', 'productChart', 
-        'expenseCategoryChart', 'vendorChart'
+        'expenseCategoryChart', 'vendorChart',
+        'performanceChart' // <--- Added this ID
     ];
     setTimeout(() => {
         charts.forEach(id => {
@@ -112,4 +141,3 @@ document.addEventListener('htmx:afterSettle', function(evt) {
         });
     }, 50);
 });
-

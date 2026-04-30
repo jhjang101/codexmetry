@@ -480,14 +480,4 @@
 
 </div>
 
-{# AUTO-OPEN ISSUED PDF #}
-{% if request.args.get('issued') %}
-    <script>
-        (function() {
-            const pdfUrl = "{{ url_for('static', filename='uploads/invoices/' + request.args.get('issued')) }}";
-            window.open(pdfUrl, '_blank');
-        })();
-    </script>
-{% endif %}
-
 {% endblock %}
