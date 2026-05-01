@@ -10,10 +10,22 @@
     <tbody class="divide-y divide-gray-100">
         {% for backup in backups %}
         <tr class="hover:bg-gray-50 transition-colors group">
-            <td class="px-6 py-3 font-mono text-blue-700 font-medium">{{ backup.filename }}</td>
+            <td class="px-6 py-3 font-mono text-sm flex items-center gap-3">
+                {% if backup.type == 'full' %}
+                    <i class="fa-solid fa-file-zipper text-green-600" title="Full System Archive"></i>
+                    <span class="text-green-700 font-bold">{{ backup.filename }}</span>
+                {% else %}
+                    <i class="fa-solid fa-database text-blue-500" title="Database Snapshot"></i>
+                    <span class="text-blue-700 font-medium">{{ backup.filename }}</span>
+                {% endif %}
+            </td>
             <td class="px-6 py-3 text-gray-500">{{ backup.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
             <td class="px-6 py-3 text-right text-gray-400 font-mono">
-                {{ (backup.size / 1024 / 1024) | round(2) }} MB
+                {% if backup.size > 1024 * 1024 * 100 %} {# Over 100MB #}
+                    {{ (backup.size / 1024 / 1024) | round(1) }} MB
+                {% else %}
+                    {{ (backup.size / 1024 / 1024) | round(2) }} MB
+                {% endif %}
             </td>
             <td class="px-6 py-3 text-right">
                 <div class="flex justify-end gap-4">

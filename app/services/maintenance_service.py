@@ -3,6 +3,8 @@ import logging
 import subprocess
 import csv
 import io
+import shutil
+import tempfile
 from datetime import datetime
 from flask import current_app
 from sqlalchemy import text
@@ -40,8 +42,11 @@ class MaintenanceService:
         return path
 
     @classmethod
-    def create_backup(cls):
-        """Brain: Generates a 'Self-Healing' SQL snapshot using pg_dump."""
+    def create_backup(cls, target_folder=None):
+        """
+        Brain: Generates a PostgreSQL dump.
+        target_folder: Optional path to save the SQL file (used by Full Backup).
+        """
         # 1. Pull modular variables directly from environment
         db_user = os.getenv('DB_USER')
         db_password = os.getenv('DB_PASSWORD')
@@ -54,8 +59,11 @@ class MaintenanceService:
         
         # 2. Setup File Identity
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        filename = f"codexmetry_backup_{timestamp}.sql"
-        target_path = os.path.join(cls.get_backup_dir(), filename)
+        filename = f"codexmetry_db_{timestamp}.sql"
+
+        # Determine path: Use provided folder or default backups directory
+        save_dir = target_folder if target_folder else cls.get_backup_dir()
+        target_path = os.path.join(save_dir, filename)
 
         try:
             # 3. Execute pg_dump
@@ -86,18 +94,47 @@ class MaintenanceService:
         except Exception as e:
             logging.error(f"Postgres Backup Failure: {str(e)}", exc_info=True)
             raise ValueError(f"Backup failed: {str(e)}")
+        
+    @classmethod
+    def create_full_backup(cls):
+        """
+        Brain: Generates a single .zip containing the DB SQL and the Uploads folder.
+        This is the ultimate forensic snapshot for disaster recovery.
+        """
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        zip_filename = f"codexmetry_full_{timestamp}" # .zip added by shutil
+        final_path = os.path.join(cls.get_backup_dir(), zip_filename)
+        
+        # 1. Create a temporary staging area
+        with tempfile.TemporaryDirectory() as staging_dir:
+            # 2. Generate DB Dump into staging
+            cls.create_backup(target_folder=staging_dir)
+            
+            # 3. Copy the Uploads folder into staging
+            uploads_src = current_app.config['UPLOAD_FOLDER']
+            uploads_dest = os.path.join(staging_dir, 'uploads')
+            if os.path.exists(uploads_src):
+                shutil.copytree(uploads_src, uploads_dest)
+            
+            # 4. Create Zip from staging
+            # base_name is the path without extension, root_dir is what to zip
+            shutil.make_archive(final_path, 'zip', staging_dir)
+
+        return f"{zip_filename}.zip"
 
     @classmethod
     def list_backups(cls):
-        """Returns a list of backup files, newest first."""
+        """Returns a list of backup files (.sql and .zip), newest first."""
         directory = cls.get_backup_dir()
         files = []
         for f in os.listdir(directory):
-            if f.endswith('.sql'):
+            # Track both DB-only and Full snapshots
+            if f.endswith('.sql') or f.endswith('.zip'):
                 path = os.path.join(directory, f)
                 stats = os.stat(path)
                 files.append({
                     'filename': f,
+                    'type': 'full' if f.endswith('.zip') else 'db',
                     'size': stats.st_size,
                     'created_at': datetime.fromtimestamp(stats.st_ctime)
                 })

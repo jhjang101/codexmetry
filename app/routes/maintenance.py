@@ -38,10 +38,10 @@ def vacuum():
 
 @bp.route('/backup/create', methods=['POST'])
 def create_backup():
-    """Messenger: Creates a new backup and triggers a list refresh."""
+    """Messenger: Creates a new DB backup and triggers a list refresh."""
     try:
         filename = MaintenanceService.create_backup()
-        flash(f"Backup created: {filename}", "success")
+        flash(f"Database Backup created: {filename}", "success")
         
         # SUCCESS: Force a full refresh so the Flash appears and the list updates
         response = make_response("", 200)
@@ -51,6 +51,21 @@ def create_backup():
     except Exception as e:
         # FAILURE: Rollback (if needed), Log, and show OOB error banner
         return handle_post_error(e, "maintenance.create_backup")
+    
+@bp.route('/backup/full', methods=['POST'])
+def create_full_backup():
+    """Messenger: Creates a Full System ZIP (DB + Uploads)."""
+    try:
+        # This may take several seconds depending on upload folder size
+        filename = MaintenanceService.create_full_backup()
+        flash(f"Full System Backup created: {filename}", "success")
+        
+        response = make_response("", 200)
+        response.headers['HX-Redirect'] = url_for('maintenance.index')
+        return response
+
+    except Exception as e:
+        return handle_post_error(e, "maintenance.create_full_backup")
 
 @bp.route('/backup/download/<filename>')
 def download_backup(filename):

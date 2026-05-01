@@ -95,20 +95,36 @@
         <section class="md:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <div class="px-4 py-3 border-b border-gray-200 flex justify-between items-center bg-slate-50">
                 <h3 class="text-xs font-bold text-slate-700 uppercase tracking-widest flex items-center gap-2">
-                    <i class="fa-solid fa-database"></i> Database Backups (SQL Dumps)
+                    <i class="fa-solid fa-clock-rotate-left"></i> System Snapshots
                 </h3>
-                <button hx-post="{{ url_for('maintenance.create_backup') }}"
-                        hx-target="#backup-table-container"
-                        hx-indicator="#backup-indicator"
-                        class="bg-green-600 hover:bg-green-700 text-white px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest shadow-sm transition-all">
-                    <i class="fa-solid fa-plus mr-1"></i> Create New Snapshot
-                </button>
+                
+                <div class="flex gap-2">
+                    <!-- DB Only -->
+                    <button hx-post="{{ url_for('maintenance.create_backup') }}"
+                            hx-target="#backup-table-container"
+                            hx-indicator="#backup-indicator"
+                            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest shadow-sm transition-all">
+                        <i class="fa-solid fa-database mr-1"></i> DB Snapshot
+                    </button>
+
+                    <!-- Full Archive -->
+                    <button hx-post="{{ url_for('maintenance.create_full_backup') }}"
+                            hx-target="#backup-table-container"
+                            hx-indicator="#backup-indicator"
+                            class="bg-green-600 hover:bg-green-700 text-white px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest shadow-sm transition-all">
+                        <i class="fa-solid fa-file-zipper mr-1"></i> Full System Archive
+                    </button>
+                </div>
             </div>
 
             <!-- Redundancy Policy Helper -->
             <div class="px-6 py-4 bg-blue-50/30 border-b border-gray-100">
                 <p class="text-[11px] text-slate-600 leading-relaxed">
-                    Snapshots are <b>Self-Healing SQL files</b> generated via <code>pg_dump</code>. They contain the complete structure, data, and sequences required to rebuild the "Financial Fortress" on a standby server (PC-2).
+                    <b>DB Snapshots</b> are Self-Healing SQL files generated via <code>pg_dump</code>. They contain the complete structure, data, and sequences required to rebuild the DB on a standby server (PC-2).
+                    <br>
+                    <b>Full System Archive</b> creates a ZIP file including the DB Snapshot and Assets in the Uploads folder. 
+                    <br><br>
+                    <b>Forensic Policy:</b> Use <u>DB Snapshots</u> for daily data protection. Use <u>Full System Archives</u> (SQL + Uploads folder) weekly or before major server migrations to ensure physical documents remain synced with database records.
                 </p>
             </div>
             
