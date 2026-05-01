@@ -126,6 +126,9 @@ class QuoteService(BaseService):
         quote = cls.get_by_id(quote_id)
         if not quote:
             raise ValueError("Quote not found.")
+        # --- PO Link Lock ---
+        if quote.order_id:
+            raise ValueError("Integrity Lock: This Quote cannot be edited because it is currently linked to a Purchase Order. Unlink it from the PO to unlock.")
         
         # 1. Validate & transform
         clean_data = cls._validate_and_transform(data, quote)

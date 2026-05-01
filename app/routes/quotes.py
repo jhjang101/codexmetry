@@ -148,7 +148,12 @@ def edit(id):
     quote = QuoteService.get_quote_by_id(id)
     if not quote:
         flash("Quote not found.", "error")
-        return redirect(url_for('quotes.index'))
+        return redirect(url_for('quotes.index'))\
+    
+    # --- PO Link Lock ---
+    if quote.order_id:
+        flash("Access Denied: This Quote is locked because it is linked to a Purchase Order. Please unlink PO and try again.", "warning")
+        return redirect(url_for('quotes.view', id=id))
     
     if request.method == 'POST':
         try:

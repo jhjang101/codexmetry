@@ -38,11 +38,27 @@
                     <div class="absolute right-0 mt-1 w-56 bg-white border border-gray-200 rounded-xl shadow-xl z-20 invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-all duration-100 ease-in-out">
                         <div class="py-1">
                             {# 1. Primary Edit Action #}
+                            {% if quote.order_id %}
+                                <div class="relative group/edit">
+                                    <div class="flex items-center gap-3 px-4 py-2 text-sm text-gray-400">
+                                        <i class="fa-solid fa-lock w-2"></i>
+                                        Edit Quote Details
+                                    </div>
+                                    <!-- Tooltip -->
+                                    <div class="invisible group-hover/edit:visible absolute left-full top-0 ml-2 w-48 p-2 
+                                                bg-slate-700 text-white text-[10px] rounded-lg shadow-xl z-30">
+                                        <b>Quote is Locked</b><br>
+                                        Linked to Order: {{ quote.purchase_order.po_number or quote.order.order_number }}. Unlink from PO to edit.
+                                    </div>
+                                </div>
+                            {% else %}
                             <a href="{{ url_for('quotes.edit', id=quote.id) }}" 
                                class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">
                                 <i class="fa-regular fa-pen-to-square w-2"></i>
                                 Edit Quote Details
                             </a>
+                            {% endif %}
+
 
                             <a href="{{ url_for('quotes.print_view', id=quote.id) }}" 
                                 class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">

@@ -62,12 +62,27 @@
                 </span>
 
                 {% if current_user.role in ['admin', 'user'] %}
+                    {% if quote.order_id %}
+                    <span class="relative group">
+                        <span class="text-gray-300 font-medium">
+                            <i class="fa-regular fa-pen-to-square m-1" title="edit"></i>
+                        </span>
+                        <!-- Tooltip -->
+                        <div class="invisible group-hover:visible absolute bottom-full right-0 mb-2 w-48 p-2 
+                                        bg-slate-700 text-white text-[10px] rounded-lg shadow-xl z-10 
+                                        whitespace-normal leading-relaxed text-left border border-slate-700">
+                            <b>Quote is Locked</b><br>
+                            Linked to Order: {{ quote.purchase_order.po_number or quote.order.order_number }}. Unlink from PO to edit.
+                        </div>
+                    </div>
+                    {% else %}
                     <span class="text-gray-400 font-medium hover:text-yellow-600 cursor-pointer"
                         hx-get="{{ url_for('quotes.edit', id=quote.id) }}"
                         hx-target="body"
                         hx-push-url="true">
                         <i class="fa-regular fa-pen-to-square m-1" title="edit"></i>
                     </span>
+                    {% endif %}
                 {% endif %}
 
             </td>
