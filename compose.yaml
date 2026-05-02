@@ -25,6 +25,7 @@ services:
     volumes:
       - ./data/uploads:/app/app/static/uploads
       - ./data/backups:/app/app/backups
+      - ./data/logs:/app/app/logs
     depends_on:
       db:
         condition: service_healthy

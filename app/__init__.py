@@ -1,6 +1,7 @@
 import os
 from dotenv import load_dotenv
-import logging
+import logging 
+from logging.handlers import RotatingFileHandler
 from flask import Flask, render_template, request, redirect, url_for, flash, make_response, g
 from flask_login import current_user
 from sqlalchemy.exc import SQLAlchemyError
@@ -13,7 +14,8 @@ def create_app():
     load_dotenv()
     app = Flask(__name__)
 
-    # 1. Configuration
+    # --- CONFIGURATION ---
+    # 1. DB Configuration
     db_user = os.getenv('DB_USER')
     db_pass = os.getenv('DB_PASSWORD')
     db_name = os.getenv('DB_NAME')
@@ -28,24 +30,40 @@ def create_app():
     
     db_url = f"postgresql+psycopg://{db_user}:{db_pass}@{db_host}:{db_port}/{db_name}"
 
+    # 2. Folder Configuration
     UPLOAD_FOLDER = os.path.join(app.root_path, 'static', 'uploads')
     BACKUP_FOLDER = os.path.join(app.root_path, 'backups')
+    LOG_FOLDER = os.path.join(app.root_path, 'logs')
+
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)
     os.makedirs(BACKUP_FOLDER, exist_ok=True)
+    os.makedirs(LOG_FOLDER, exist_ok=True)
 
+    # 3. App Configurtion
     app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'generate-a-long-random-string-here')
     app.config['SQLALCHEMY_DATABASE_URI'] = db_url
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['BACKUP_FOLDER'] = BACKUP_FOLDER 
     app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-    # 2. Initialize extensions
+    # 4. Audit Logger (Rotating File)
+    # maxBytes=5MB, backupCount=10 (Keeps 50MB of historical logs total)
+    audit_file = os.path.join(LOG_FOLDER, 'audit.log')
+    audit_handler = RotatingFileHandler(audit_file, maxBytes=5*1024*1024, backupCount=10)
+    audit_handler.setFormatter(logging.Formatter('%(asctime)s | %(message)s'))
+    
+    audit_logger = logging.getLogger('audit_engine')
+    audit_logger.setLevel(logging.INFO)
+    audit_logger.addHandler(audit_handler)
+    audit_logger.propagate = False # Prevent audit logs from leaking into standard system logs
+
+    # --- INITIALIZE EXTENSIONS ---
     db.init_app(app)
     csrf.init_app(app)
     login_manager.init_app(app)
     migrate.init_app(app, db)
 
-     # Configure Login Manager
+    # Configure Login Manager
     login_manager.login_view = 'auth.login' # type: ignore
     login_manager.login_message_category = 'info' # type: ignore
 
@@ -111,11 +129,12 @@ def create_app():
             flash(message, "warning")
             return redirect(url_for('dashboard.index'))
     
-    # 3. Register CLI Commands
+    # --- REGISTER ---
+    # 1. Register CLI Commands
     from .utils.cli import seed_db_command
     app.cli.add_command(seed_db_command)
 
-    # 4. Register Blueprints
+    # 2. Register Blueprints
     from . import models
     from .routes import (dashboard, quotes, purchase_orders, invoices, 
                          payments, expenses, clients, products, vendors, 
@@ -136,12 +155,13 @@ def create_app():
     app.register_blueprint(maintenance.bp, url_prefix='/maintenance')
     app.register_blueprint(auth.bp, url_prefix='/auth')
 
-    # 5. Register Jinja Filter
+    # 3. Register Jinja Filter
     from .utils.money import format_usd
     @app.template_filter('usd')
     def usd_filter(cents):
         return format_usd(cents)
     
+    # 4. Register Jinja Helper
     @app.template_filter('localize')
     def localize_filter(dt):
         """Converts UTC database datetime to Business Timezone."""
@@ -159,7 +179,7 @@ def create_app():
         # If it was already aware, .astimezone() performs the proper shift.
         return dt.astimezone(ZoneInfo(tz_name))
 
-    # 6. Error Handling
+    # 5. Error Handling
     @app.errorhandler(SQLAlchemyError)
     def handle_db_error(error):
         # 1. Atomic Safeguard
@@ -195,7 +215,7 @@ def create_app():
         flash(message, "error")
         return redirect(url_for('dashboard.index'))
     
-    # 7. Global Context Processors (For now, and Metadata)
+    # 6. Global Context Processors (For now, and Metadata)
     @app.context_processor
     def inject_global_vars():
         """Injects shared variables into every Jinja template."""

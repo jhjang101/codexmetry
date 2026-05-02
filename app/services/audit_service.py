@@ -1,3 +1,5 @@
+import logging
+import json
 from flask_login import current_user
 from flask import has_request_context
 from datetime import datetime, date
@@ -190,13 +192,32 @@ class AuditLogService:
                     target_label = str(val)
             
 
-            # 3. Forensic Print for Debugging
-            import pprint
-            user_name = current_user.username if (has_request_context() and current_user.is_authenticated) else 'Anonymous'
-            print(f"--- AUDIT LOG: {action} on {target_type} [{target_label}] by User {user_name} ---")
-            if changes: pprint.pprint(changes, indent=4)
-            print("----------------")
+            # # 3. Forensic Print for Debugging
+            # import pprint
+            # user_name = current_user.username if (has_request_context() and current_user.is_authenticated) else 'Anonymous'
+            # print(f"--- AUDIT LOG: {action} on {target_type} [{target_label}] by User {user_name} ---")
+            # if changes: pprint.pprint(changes, indent=4)
+            # print("----------------")
 
+            # 3. Forensic File Logging (The Black Box)
+            user_name = current_user.username if (has_request_context() and current_user.is_authenticated) else 'Anonymous'
+            
+            # Prepare a single-line structured string for easy parsing/searching
+            # Format: USER | ACTION | TARGET [LABEL] | ID | CHANGES
+            log_payload = {
+                "user": user_name,
+                "action": action,
+                "type": target_type,
+                "label": target_label,
+                "id": target_id,
+                "changes": changes if changes else None
+            }
+            
+            # Write to the rotating file
+            logger = logging.getLogger('audit_engine')
+            logger.info(json.dumps(log_payload))
+
+            # 4. Database Recording
             log = AuditLog()
             log.user_id = user_id
             log.parent_id = parent_id # Assign the parent link
