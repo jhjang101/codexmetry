@@ -226,9 +226,10 @@
                             <td class="px-6 py-2 font-bold text-blue-700">{{ pay.payment_number }}</td>
                             <td class="px-6 py-2 text-gray-700">{{ pay.payment_date }}</td>
                             <td class="px-6 py-2 text-gray-700">
-                                <span class="{{ 'text-gray-500 line-through' if not pay.purchase_order.is_active else '' }}">
+                                {% set is_ref_archived = (not pay.invoice.is_active) if pay.invoice else (not pay.purchase_order.is_active) %}
+                                <span class="{{ 'text-gray-500 line-through' if is_ref_archived else '' }}">
                                     {{ pay.invoice.invoice_number if pay.invoice else 'Prepayment'}}
-                                </span>
+                                </span>                                 
                             </td>
                             <td class="px-6 py-2 text-right font-bold text-green-700">{{ pay.amount | usd }}</td>
                             <td class="px-6 py-2 text-gray-700">{{ pay.paid_from.full_display }}</td>
