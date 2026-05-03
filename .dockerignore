@@ -27,3 +27,8 @@ app/backups/*
 *.log
 Thumbs.db
 .DS_Store
+
+# --- Documentation ---
+documentation/
+docs/
+mkdocs.yml

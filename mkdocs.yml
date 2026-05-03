@@ -1,0 +1,48 @@
+site_name: Codexmetry
+site_url: https://jhjang101.github.io/codexmetry/
+
+# 1. Pathing (The Forensic Anchor)
+docs_dir: documentation    # Where you write your Markdown
+site_dir: docs/documentation # Where MkDocs outputs the HTML
+
+# 2. Theme & Branding (Mirrors App)
+theme:
+  name: material
+  logo: assets/logo_default.svg
+  favicon: assets/favicon.svg
+  palette: 
+    - media: "(prefers-color-scheme: light)"
+      primary: slate
+      accent: indigo
+      scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      primary: slate
+      accent: indigo
+      scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+
+# 3. Content Navigation Structure
+nav:
+  - Overview: index.md
+  - How-To Guides:
+    - Deployment: guides/deployment.md
+    - Workflow: guides/workflow.md
+  - Technical Reference:
+    - Orders (CDX): reference/orders.md
+    - Invoices: reference/invoices.md
+
+# 4. Plugins
+plugins:
+  - search
