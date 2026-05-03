@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Codexmetry | The Financial Fortress of Order Management</title>
+    <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg">
+    <!-- Tailwind Play CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.2.4"></script>
+    <!-- GLightbox CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/glightbox/dist/css/glightbox.min.css" />
+    <script src="https://cdn.jsdelivr.net/gh/mcstudios/glightbox/dist/js/glightbox.min.js"></script>
+    <!-- Font: Roboto (Mirrors App) -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <style>
+        body { font-family: 'Roboto', sans-serif; }
+        .pillar-card:hover .pillar-icon { transform: scale(1.05); }
+        
+        /* Browser Frame Effect */
+        .browser-frame {
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+            transition: transform 0.3s ease;
+        }
+        .browser-frame:hover { transform: scale(1.02); }
+
+    </style>
+
+</head>
+<body class="bg-slate-50 text-slate-800 selection:bg-blue-100 selection:text-blue-900">
+
+    <!-- 1. STICKY NAVIGATION -->
+    <nav class="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-200">
+        <div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <img src="./assets/logo_default.svg" alt="Codexmetry Logo" class="h-8 w-auto">
+                <span class="text-lg font-black tracking-tighter uppercase text-slate-900 hidden md:block"></span>
+            </div>
+            <div class="flex items-center gap-8">
+                <a href="./how-to.html" class="text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-blue-600 transition-colors">Guide</a>
+                <a href="./technical.html" class="text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-blue-600 transition-colors">Reference</a>
+                <a href="https://github.com/jhjang101/codexmetry" class="text-slate-900 hover:text-blue-600 transition-colors">
+                    <i class="fa-brands fa-github text-xl"></i>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 2. HERO SECTION (The Meaning) -->
+    <header class="relative overflow-hidden pt-20 pb-16 border-b border-slate-200 bg-white">
+        <div class="max-w-4xl mx-auto px-6 text-center relative z-10">
+            <h1 class="text-4xl md:text-6xl font-black text-slate-900 tracking-tighter mb-6 leading-[1.1]">
+                The Financial <span class="text-blue-600">Fortress</span> of Order Management
+            </h1>
+            <p class="text-lg text-slate-500 leading-relaxed mb-10 max-w-2xl mx-auto">
+                Precision-engineered for startups and small businesses requiring absolute data integrity and lifecycle accountability.
+            </p>
+
+
+
+
+
+
+
+                <!-- Primary Hero Visual -->
+            <div class="relative mt-12 max-w-5xl mx-auto">
+                <a href="./assets/dashboard.png" class="glightbox" data-gallery="screenshots" data-title="System Dashboard" data-description="A high-density overview of outstanding orders, invoices, and recent activity.">
+                    <div class="browser-frame bg-white">
+                        <img src="./assets/dashboard.png" alt="Codexmetry Dashboard" class="w-full">
+                    </div>
+                </a>
+            </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            
+        </div>
+    </header>
+            
+    <!-- 3. THE TWO PILLARS -->
+    <section class="py-20 px-6">
+        <div class="max-w-6xl mx-auto">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-12">
+                
+                <!-- PILLAR 1: CODEX -->
+                <div class="pillar-card group bg-white p-10 rounded-3xl border border-slate-200 shadow-sm hover:shadow-xl transition-all">
+                    <div class="pillar-icon w-14 h-14 bg-slate-500 text-white rounded-2xl flex items-center justify-center text-2xl mb-2 transition-transform duration-300">
+                        <i class="fa-solid fa-timeline"></i>
+                    </div>
+                    <h3 class="text-3xl font-black text-slate-900 mb-4">Lifecycle Accountability</h3>
+                    <p class="text-slate-500 leading-relaxed mb-6">
+                        Experience an unbroken chain of documents. From Quote and Purchase Order through to Invoice and final Payment, every event is tracked within a unified codex.
+                    </p>
+                    <ul class="space-y-3">
+                        <li class="flex items-center gap-3 text-sm font-medium text-slate-700">
+                            <i class="fa-solid fa-check text-blue-500"></i> Order History Codex
+                        </li>
+                        <li class="flex items-center gap-3 text-sm font-medium text-slate-700">
+                            <i class="fa-solid fa-check text-blue-500"></i> Multi-document Linking
+                        </li>
+                        <li class="flex items-center gap-3 text-sm font-medium text-slate-700">
+                            <i class="fa-solid fa-check text-blue-500"></i> Automated Status Sync
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- PILLAR 2: METRY -->
+                <div class="pillar-card group bg-white p-10 rounded-3xl border border-slate-200 shadow-sm hover:shadow-xl transition-all">
+                    <div class="pillar-icon w-14 h-14 bg-blue-500 text-white rounded-2xl flex items-center justify-center text-2xl mb-2 transition-transform duration-300">
+                        <i class="fa-solid fa-chart-pie"></i>
+                    </div>
+                    <h3 class="text-3xl font-black text-slate-900 mb-4">Precision Metrics Representation</h3>
+                    <p class="text-slate-500 leading-relaxed mb-6">
+                        Financial clarity through a dual-perspective lens. Switch between Accrual-based performance and Cash-based liquidity with a single click.
+                    </p>
+                    <ul class="space-y-3">
+                        <li class="flex items-center gap-3 text-sm font-medium text-slate-700">
+                            <i class="fa-solid fa-check text-blue-600"></i> Monthly Financial Statements
+                        </li>
+                        <li class="flex items-center gap-3 text-sm font-medium text-slate-700">
+                            <i class="fa-solid fa-check text-blue-600"></i> Categorized Revenue Analysis
+                        </li>
+                        <li class="flex items-center gap-3 text-sm font-medium text-slate-700">
+                            <i class="fa-solid fa-check text-blue-600"></i> 60-Month Performance Trends
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- PILLAR 3: Integrity -->
+                 <div class="pillar-card group bg-white p-10 rounded-3xl border border-slate-200 shadow-sm hover:shadow-xl transition-all">
+                    <div class="pillar-icon w-14 h-14 bg-[#00adea] text-white rounded-2xl flex items-center justify-center text-2xl mb-2 transition-transform duration-300">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                    </div>
+                    <h3 class="text-3xl font-black text-slate-900 mb-4">Uncompromising Integrity</h3>
+                    <p class="text-slate-500 leading-relaxed mb-6">
+                        A true "Black-Box" for your business. Nested audit logs capture the "who, when, and why" of every field change, ensuring your records remain beyond reproach.
+                    </p>
+                    <ul class="space-y-3">
+                        <li class="flex items-center gap-3 text-sm font-medium text-slate-700">
+                            <i class="fa-solid fa-check text-blue-600"></i> Nested Order Time Line
+                        </li>
+                        <li class="flex items-center gap-3 text-sm font-medium text-slate-700">
+                            <i class="fa-solid fa-check text-blue-600"></i> PDF Snapshot Document Issue
+                        </li>
+                        <li class="flex items-center gap-3 text-sm font-medium text-slate-700">
+                            <i class="fa-solid fa-check text-blue-600"></i> Comprehensive User Audit Logs
+                        </li>
+                    </ul>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+
+
+
+    <!-- 3.5. THE FEATURE SHOWCASE (Gallery) -->
+    <section class="pb-24 px-6 hidden">
+        <div class="max-w-6xl mx-auto">
+            <div class="text-center mb-12">
+                <h2 class="text-xs font-black uppercase tracking-[0.3em] text-blue-500 mb-2">Visual Evidence</h2>
+                <h3 class="text-2xl font-bold text-slate-900">Explore the Financial Fortress</h3>
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+                
+                <!-- 1. Order Tree -->
+                <a href="./assets/order_tree.png" class="glightbox block group" data-gallery="screenshots" data-title="Order Tree" data-description="The unbroken document chain mapping the full lifecycle of a deal.">
+                    <div class="browser-frame bg-white aspect-video flex flex-col">
+                        <div class="browser-header py-1"><div class="dot bg-slate-200 w-1.5 h-1.5"></div><div class="dot bg-slate-200 w-1.5 h-1.5"></div></div>
+                        <div class="flex-1 overflow-hidden">
+                            <img src="./assets/order_tree.png" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500">
+                        </div>
+                        <div class="p-2 bg-white border-t border-slate-100">
+                            <p class="text-[9px] font-bold uppercase tracking-widest text-slate-400 group-hover:text-blue-600">Order Tree</p>
+                        </div>
+                    </div>
+                </a>
+
+                <!-- 2. Timeline -->
+                <a href="./assets/timeline.png" class="glightbox block group" data-gallery="screenshots" data-title="Audit Trail" data-description="Nested forensic change logs capturing every field-level modification.">
+                    <div class="browser-frame bg-white aspect-video flex flex-col">
+                        <div class="browser-header py-1"><div class="dot bg-slate-200 w-1.5 h-1.5"></div><div class="dot bg-slate-200 w-1.5 h-1.5"></div></div>
+                        <div class="flex-1 overflow-hidden">
+                            <img src="./assets/timeline.png" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500">
+                        </div>
+                        <div class="p-2 bg-white border-t border-slate-100">
+                            <p class="text-[9px] font-bold uppercase tracking-widest text-slate-400 group-hover:text-blue-600">Audit Trail</p>
+                        </div>
+                    </div>
+                </a>
+
+                <!-- 3. Statement -->
+                <a href="./assets/statement.png" class="glightbox block group" data-gallery="screenshots" data-title="Financials" data-description="Dual-perspective monthly P&L reporting for Accrual and Cash views.">
+                    <div class="browser-frame bg-white aspect-video flex flex-col">
+                        <div class="browser-header py-1"><div class="dot bg-slate-200 w-1.5 h-1.5"></div><div class="dot bg-slate-200 w-1.5 h-1.5"></div></div>
+                        <div class="flex-1 overflow-hidden">
+                            <img src="./assets/statement.png" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500">
+                        </div>
+                        <div class="p-2 bg-white border-t border-slate-100">
+                            <p class="text-[9px] font-bold uppercase tracking-widest text-slate-400 group-hover:text-blue-600">Financials</p>
+                        </div>
+                    </div>
+                </a>
+
+                <!-- 4. Analysis -->
+                <a href="./assets/analysis.png" class="glightbox block group" data-gallery="screenshots" data-title="Analytics" data-description="Deep-dive analytics on product category and client performance.">
+                    <div class="browser-frame bg-white aspect-video flex flex-col">
+                        <div class="browser-header py-1"><div class="dot bg-slate-200 w-1.5 h-1.5"></div><div class="dot bg-slate-200 w-1.5 h-1.5"></div></div>
+                        <div class="flex-1 overflow-hidden">
+                            <img src="./assets/analysis.png" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500">
+                        </div>
+                        <div class="p-2 bg-white border-t border-slate-100">
+                            <p class="text-[9px] font-bold uppercase tracking-widest text-slate-400 group-hover:text-blue-600">Analytics</p>
+                        </div>
+                    </div>
+                </a>
+
+                <!-- 5. Trend -->
+                <a href="./assets/trend.png" class="glightbox block group" data-gallery="screenshots" data-title="Trends" data-description="60-month linear growth tracking and historical performance trends.">
+                    <div class="browser-frame bg-white aspect-video flex flex-col">
+                        <div class="browser-header py-1"><div class="dot bg-slate-200 w-1.5 h-1.5"></div><div class="dot bg-slate-200 w-1.5 h-1.5"></div></div>
+                        <div class="flex-1 overflow-hidden">
+                            <img src="./assets/trend.png" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500">
+                        </div>
+                        <div class="p-2 bg-white border-t border-slate-100">
+                            <p class="text-[9px] font-bold uppercase tracking-widest text-slate-400 group-hover:text-blue-600">Trends</p>
+                        </div>
+                    </div>
+                </a>
+
+            </div>
+        </div>
+    </section>
+
+
+
+
+
+
+    <!-- 4. TECH STACK GRID -->
+    <section class="bg-slate-900 py-20 px-6 text-white">
+        <div class="max-w-6xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="text-xs font-black uppercase tracking-[0.3em] text-blue-400 mb-2">The Architecture</h2>
+                <h3 class="text-3xl font-bold">Forensic-First Technology Stack</h3>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
+                <div class="text-center p-6 border border-slate-800 rounded-2xl">
+                    <i class="fa-brands fa-python text-3xl mb-4 text-blue-400"></i>
+                    <h4 class="font-bold">Python & Flask</h4>
+                    <p class="text-xs text-slate-500 mt-2">Modular Application Factory</p>
+                </div>
+                <div class="text-center p-6 border border-slate-800 rounded-2xl">
+                    <i class="fa-solid fa-database text-3xl mb-4 text-blue-400"></i>
+                    <h4 class="font-bold">PostgreSQL 17</h4>
+                    <p class="text-xs text-slate-500 mt-2">Timezone-Aware Durability</p>
+                </div>
+                <div class="text-center p-6 border border-slate-800 rounded-2xl">
+                    <i class="fa-solid fa-bolt text-3xl mb-4 text-blue-400"></i>
+                    <h4 class="font-bold">HTMX</h4>
+                    <p class="text-xs text-slate-500 mt-2">Zero-Latency Fragment Engine</p>
+                </div>
+                <div class="text-center p-6 border border-slate-800 rounded-2xl">
+                    <i class="fa-brands fa-docker text-3xl mb-4 text-blue-400"></i>
+                    <h4 class="font-bold">Docker</h4>
+                    <p class="text-xs text-slate-500 mt-2">Single-Command Deployment</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 5. DOCUMENTATION GATEWAY (CTAs) -->
+    <section id="guides" class="py-24 px-6 bg-white">
+        <div class="max-w-5xl mx-auto">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                
+                <a href="./how-to.html" class="group p-8 bg-slate-50 rounded-2xl border border-slate-200 hover:border-blue-600 transition-all">
+                    <span class="block text-[10px] font-black uppercase text-blue-600 tracking-widest mb-2">Guide</span>
+                    <h4 class="text-xl font-bold text-slate-900 group-hover:text-blue-600">How-To Guides</h4>
+                    <p class="text-sm text-slate-500 mt-4 leading-relaxed">Step-by-step instructions for deployment, backup, and workflow.</p>
+                </a>
+
+                <a href="./technical.html" class="group p-8 bg-slate-50 rounded-2xl border border-slate-200 hover:border-blue-600 transition-all">
+                    <span class="block text-[10px] font-black uppercase text-blue-600 tracking-widest mb-2">Reference</span>
+                    <h4 class="text-xl font-bold text-slate-900 group-hover:text-blue-600">Technical Reference</h4>
+                    <p class="text-sm text-slate-500 mt-4 leading-relaxed">Deep-dive into every field, ripple logic, and database constraint.</p>
+                </a>
+
+                <a href="https://demo.codexmetry.com" class="group p-8 bg-blue-600 rounded-2xl shadow-xl shadow-blue-200 hover:bg-blue-700 transition-all">
+                    <span class="block text-[10px] font-black uppercase text-blue-200 tracking-widest mb-2 text-white/70">Sandbox</span>
+                    <h4 class="text-xl font-bold text-white">Live Sandbox</h4>
+                    <p class="text-sm text-blue-100 mt-4 leading-relaxed">Try the application yourself. Environments are wiped every hour.</p>
+                </a>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="py-12 border-t border-slate-200 text-center">
+        <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">
+            &copy; 2026 Codexmetry. Built for Forensic Integrity.
+        </p>
+    </footer>
+
+
+    <script>
+        const lightbox = GLightbox({
+            selector: '.glightbox',
+            touchNavigation: true,
+            loop: true,
+            autoplayVideos: true
+        });
+    </script>
+
+</body>
+</html>
