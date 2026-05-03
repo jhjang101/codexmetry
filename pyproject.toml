@@ -16,3 +16,9 @@ dependencies = [
     "python-dotenv>=1.2.1",
     "weasyprint>=68.1",
 ]
+
+[dependency-groups]
+dev = [
+    "mkdocs>=1.6.1",
+    "mkdocs-material>=9.7.6",
+]
