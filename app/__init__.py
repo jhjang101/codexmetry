@@ -46,8 +46,10 @@ def create_app():
     app.config['BACKUP_FOLDER'] = BACKUP_FOLDER 
     app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-    # 4. Audit Logger (Rotating File)
+    # 4. Logger (Rotating File)
     # maxBytes=5MB, backupCount=10 (Keeps 50MB of historical logs total)
+
+    # --- LOG A: Audit Engine (User Actions) ---
     audit_file = os.path.join(LOG_FOLDER, 'audit.log')
     audit_handler = RotatingFileHandler(audit_file, maxBytes=5*1024*1024, backupCount=10)
     audit_handler.setFormatter(logging.Formatter('%(asctime)s | %(message)s'))
@@ -56,6 +58,20 @@ def create_app():
     audit_logger.setLevel(logging.INFO)
     audit_logger.addHandler(audit_handler)
     audit_logger.propagate = False # Prevent audit logs from leaking into standard system logs
+
+    # --- LOG B: System Engine (App Errors & Lifecycle) ---
+    system_file = os.path.join(LOG_FOLDER, 'system.log')
+    system_handler = RotatingFileHandler(system_file, maxBytes=5*1024*1024, backupCount=10)
+    formatter = logging.Formatter('%(asctime)s | %(levelname)s | %(message)s')
+    system_handler.setFormatter(formatter)
+    system_handler.setLevel(logging.INFO)
+
+    # Attach to the main Flask app logger
+    app.logger.addHandler(system_handler)
+    app.logger.setLevel(logging.INFO)
+    
+    # Capture all general Python logs (including third-party libraries) into system.log
+    logging.getLogger().addHandler(system_handler)
 
     # --- INITIALIZE EXTENSIONS ---
     db.init_app(app)
