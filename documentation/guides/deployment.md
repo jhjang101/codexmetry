@@ -73,7 +73,7 @@ Codexmetry is designed for data durability. By default, your data is mapped to a
 
 | Container Path | Host Path (Local) | Forensic Purpose |
 | :--- | :--- | :--- |
-| `/var/lib/postgresql/data` | `./data/postgres` | Physical Database storage. |
+| `/var/lib/postgresql/data` | `./postgres` | Physical Database storage. (Protected) |
 | `/app/app/static/uploads` | `./data/uploads` | Documents, Images, and Attachments. |
 | `/app/app/backups` | `./data/backups` | SQL Snapshots and System Archives. |
 | `/app/app/logs` | `./data/logs` | Forensic Audit and System Logs. |
