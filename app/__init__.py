@@ -2,7 +2,7 @@ import os
 from dotenv import load_dotenv
 import logging 
 from logging.handlers import RotatingFileHandler
-from flask import Flask, render_template, request, redirect, url_for, flash, make_response, g
+from flask import Flask, render_template, request, redirect, url_for, flash, make_response, g, send_from_directory
 from flask_login import current_user
 from sqlalchemy.exc import SQLAlchemyError
 from datetime import datetime
@@ -31,9 +31,13 @@ def create_app():
     db_url = f"postgresql+psycopg://{db_user}:{db_pass}@{db_host}:{db_port}/{db_name}"
 
     # 2. Folder Configuration
-    UPLOAD_FOLDER = os.path.join(app.root_path, 'static', 'uploads')
-    BACKUP_FOLDER = os.path.join(app.root_path, 'backups')
-    LOG_FOLDER = os.path.join(app.root_path, 'logs')
+    # BASE_DIR is the project root (codexmetry/)
+    BASE_DIR = os.path.abspath(os.path.join(app.root_path, '..'))
+    DATA_DIR = os.path.join(BASE_DIR, 'data')
+
+    UPLOAD_FOLDER = os.path.join(DATA_DIR, 'uploads')
+    BACKUP_FOLDER = os.path.join(DATA_DIR, 'backups')
+    LOG_FOLDER = os.path.join(DATA_DIR, 'logs')
 
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)
     os.makedirs(BACKUP_FOLDER, exist_ok=True)
@@ -72,6 +76,12 @@ def create_app():
     
     # Capture all general Python logs (including third-party libraries) into system.log
     logging.getLogger().addHandler(system_handler)
+
+    # --- STATIC ASSET PROXY ---
+    # This ensures <img src="/static/uploads/..."> still works even though files moved to /data/uploads
+    @app.route('/static/uploads/<path:filename>')
+    def uploaded_file(filename):
+        return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
     # --- INITIALIZE EXTENSIONS ---
     db.init_app(app)

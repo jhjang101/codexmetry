@@ -70,7 +70,7 @@
                     {% if metadata.company_logo %}
                         {# Logic: Use physical drive path for PDF engine, URL path for browser #}
                         {% if is_pdf_mode %}
-                            <img src="{{ physical_root }}/static/uploads/logos/{{ metadata.company_logo }}" class="h-16 mb-1">
+                            <img src="file://{{ physical_upload_root }}/logos/{{ metadata.company_logo }}" class="h-16 mb-1">
                         {% else %}
                             <img src="{{ url_for('static', filename='uploads/logos/' + metadata.company_logo) }}" class="h-16 mb-1">
                         {% endif %}

@@ -26,9 +26,9 @@ services:
       - "5001:5001"
     env_file: .env
     volumes:
-      - ./data/uploads:/app/app/static/uploads
-      - ./data/backups:/app/app/backups
-      - ./data/logs:/app/app/logs
+      - ./data/uploads:/app/data/uploads
+      - ./data/backups:/app/data/backups
+      - ./data/logs:/app/data/logs
     depends_on:
       db:
         condition: service_healthy

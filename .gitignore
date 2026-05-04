@@ -21,6 +21,8 @@ instance/config.py
 app/instance/*
 app/backups/*
 test/
+tests/
+*.sql
 
 # --- Docker Data Anchor ---
 data/

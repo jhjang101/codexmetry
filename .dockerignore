@@ -12,6 +12,7 @@ __pycache__
 data/
 logo/
 test/
+tests/
 *.sql
 
 # --- Storage Folders ---

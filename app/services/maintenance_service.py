@@ -61,12 +61,11 @@ class MaintenanceService:
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         filename = f"codexmetry_db_{timestamp}.sql"
 
-        # Determine path: Use provided folder or default backups directory
-        save_dir = target_folder if target_folder else cls.get_backup_dir()
-        target_path = os.path.join(save_dir, filename)
+        # 3. Create a temporary path outside the project root
+        temp_path = os.path.join(tempfile.gettempdir(), filename)
 
         try:
-            # 3. Execute pg_dump
+            # 4. Execute pg_dump
             # PGPASSWORD ensures the process doesn't hang waiting for input
             env = os.environ.copy()
             env['PGPASSWORD'] = db_password or ""
@@ -80,7 +79,7 @@ class MaintenanceService:
                 '--clean',      # Drops objects before creating
                 '--if-exists',  # Prevents errors during drop
                 '--no-owner',   # Makes the file portable across different users/PCs
-                '-f', target_path
+                '-f', temp_path
             ]
 
             result = subprocess.run(command, env=env, capture_output=True, text=True)
@@ -88,11 +87,16 @@ class MaintenanceService:
             if result.returncode != 0:
                 logging.error(f"pg_dump error: {result.stderr}")
                 raise ValueError(f"Database dump failed: {result.stderr}")
-
+            
+            # 5. Success: Move the finished file to the final destination
+            final_dir = target_folder if target_folder else cls.get_backup_dir()
+            shutil.move(temp_path, os.path.join(final_dir, filename))
             return filename
 
         except Exception as e:
             logging.error(f"Postgres Backup Failure: {str(e)}", exc_info=True)
+            if os.path.exists(temp_path): 
+                os.remove(temp_path)
             raise ValueError(f"Backup failed: {str(e)}")
         
     @classmethod
@@ -102,25 +106,28 @@ class MaintenanceService:
         This is the ultimate forensic snapshot for disaster recovery.
         """
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        zip_filename = f"codexmetry_full_{timestamp}" # .zip added by shutil
-        final_path = os.path.join(cls.get_backup_dir(), zip_filename)
+        zip_base_name = f"codexmetry_full_{timestamp}" # .zip added by shutil
         
         # 1. Create a temporary staging area
         with tempfile.TemporaryDirectory() as staging_dir:
-            # 2. Generate DB Dump into staging
+            # Generate DB Dump directly into the temporary staging folder
             cls.create_backup(target_folder=staging_dir)
             
-            # 3. Copy the Uploads folder into staging
+            # Copy Uploads into the temporary staging folder
             uploads_src = current_app.config['UPLOAD_FOLDER']
             uploads_dest = os.path.join(staging_dir, 'uploads')
             if os.path.exists(uploads_src):
                 shutil.copytree(uploads_src, uploads_dest)
-            
-            # 4. Create Zip from staging
-            # base_name is the path without extension, root_dir is what to zip
-            shutil.make_archive(final_path, 'zip', staging_dir)
 
-        return f"{zip_filename}.zip"
+            # 2. Archive Staging: Write the ZIP to system temp first
+            temp_zip_base = os.path.join(tempfile.gettempdir(), zip_base_name)
+            temp_zip_path = shutil.make_archive(temp_zip_base, 'zip', staging_dir)
+            
+            # 3. Commit: Move the 100% finished ZIP to the backups folder
+            final_destination = os.path.join(cls.get_backup_dir(), f"{zip_base_name}.zip")
+            shutil.move(temp_zip_path, final_destination)
+
+        return f"{zip_base_name}.zip"
 
     @classmethod
     def list_backups(cls):
