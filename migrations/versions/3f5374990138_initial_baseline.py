@@ -1,8 +1,8 @@
 """Initial baseline
 
-Revision ID: bf2e5ef1619e
+Revision ID: 3f5374990138
 Revises: 
-Create Date: 2026-04-27 22:22:23.855656
+Create Date: 2026-05-04 15:09:18.340880
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'bf2e5ef1619e'
+revision = '3f5374990138'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -30,7 +30,8 @@ def upgrade():
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('type', sa.String(length=50), nullable=False),
     sa.Column('is_active', sa.Boolean(), nullable=False),
-    sa.PrimaryKeyConstraint('id', name=op.f('pk_carriers'))
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_carriers')),
+    sa.UniqueConstraint('type', name=op.f('uq_carriers_type'))
     )
     op.create_table('expense_categories',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -44,13 +45,15 @@ def upgrade():
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('type', sa.String(length=50), nullable=False),
     sa.Column('is_active', sa.Boolean(), nullable=False),
-    sa.PrimaryKeyConstraint('id', name=op.f('pk_payment_types'))
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_payment_types')),
+    sa.UniqueConstraint('type', name=op.f('uq_payment_types_type'))
     )
     op.create_table('po_types',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('type', sa.String(length=50), nullable=False),
     sa.Column('is_active', sa.Boolean(), nullable=False),
-    sa.PrimaryKeyConstraint('id', name=op.f('pk_po_types'))
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_po_types')),
+    sa.UniqueConstraint('type', name=op.f('uq_po_types_type'))
     )
     op.create_table('product_categories',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -83,6 +86,8 @@ def upgrade():
     sa.Column('default_quote_terms', sa.Text(), nullable=True),
     sa.Column('default_invoice_terms', sa.Text(), nullable=True),
     sa.Column('default_po_terms', sa.Text(), nullable=True),
+    sa.Column('is_maintenance_mode', sa.Boolean(), server_default='false', nullable=False),
+    sa.Column('show_quote_signature', sa.Boolean(), server_default='true', nullable=False),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_settings_metadata'))
     )
     op.create_table('users',
@@ -95,8 +100,8 @@ def upgrade():
     sa.Column('role', sa.String(length=20), nullable=False),
     sa.Column('is_active', sa.Boolean(), nullable=False),
     sa.Column('is_root', sa.Boolean(), nullable=False),
-    sa.Column('created_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
-    sa.Column('updated_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_users')),
     sa.UniqueConstraint('email', name=op.f('uq_users_email')),
     sa.UniqueConstraint('username', name=op.f('uq_users_username'))
@@ -107,10 +112,10 @@ def upgrade():
     sa.Column('entity_id', sa.Integer(), nullable=False),
     sa.Column('file_path', sa.String(length=255), nullable=False),
     sa.Column('file_name', sa.String(length=255), nullable=False),
-    sa.Column('uploaded_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
+    sa.Column('uploaded_at', sa.DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
     sa.Column('is_generated', sa.Boolean(), server_default='false', nullable=False),
-    sa.Column('created_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
-    sa.Column('updated_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
     sa.Column('created_by_id', sa.Integer(), nullable=True),
     sa.Column('updated_by_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['created_by_id'], ['users.id'], name=op.f('fk_attachments_created_by_id_users')),
@@ -122,20 +127,21 @@ def upgrade():
     sa.Column('company_name', sa.String(length=255), nullable=False),
     sa.Column('address', sa.Text(), nullable=True),
     sa.Column('is_active', sa.Boolean(), nullable=False),
-    sa.Column('created_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
-    sa.Column('updated_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
     sa.Column('created_by_id', sa.Integer(), nullable=True),
     sa.Column('updated_by_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['created_by_id'], ['users.id'], name=op.f('fk_clients_created_by_id_users')),
     sa.ForeignKeyConstraint(['updated_by_id'], ['users.id'], name=op.f('fk_clients_updated_by_id_users')),
-    sa.PrimaryKeyConstraint('id', name=op.f('pk_clients'))
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_clients')),
+    sa.UniqueConstraint('company_name', name=op.f('uq_clients_company_name'))
     )
     op.create_table('orders',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('order_number', sa.String(length=100), nullable=False),
-    sa.Column('created_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
     sa.Column('is_active', sa.Boolean(), nullable=False),
-    sa.Column('updated_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
     sa.Column('created_by_id', sa.Integer(), nullable=True),
     sa.Column('updated_by_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['created_by_id'], ['users.id'], name=op.f('fk_orders_created_by_id_users')),
@@ -155,8 +161,8 @@ def upgrade():
     sa.Column('is_active', sa.Boolean(), nullable=False),
     sa.Column('is_system', sa.Boolean(), nullable=False),
     sa.Column('document_placement', sa.String(length=20), server_default='Lineitem', nullable=False),
-    sa.Column('created_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
-    sa.Column('updated_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
     sa.Column('created_by_id', sa.Integer(), nullable=True),
     sa.Column('updated_by_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['category_id'], ['product_categories.id'], name=op.f('fk_products_category_id_product_categories')),
@@ -171,19 +177,20 @@ def upgrade():
     sa.Column('url', sa.String(length=255), nullable=True),
     sa.Column('address', sa.Text(), nullable=True),
     sa.Column('is_active', sa.Boolean(), nullable=False),
-    sa.Column('created_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
-    sa.Column('updated_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
     sa.Column('created_by_id', sa.Integer(), nullable=True),
     sa.Column('updated_by_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['created_by_id'], ['users.id'], name=op.f('fk_vendors_created_by_id_users')),
     sa.ForeignKeyConstraint(['updated_by_id'], ['users.id'], name=op.f('fk_vendors_updated_by_id_users')),
-    sa.PrimaryKeyConstraint('id', name=op.f('pk_vendors'))
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_vendors')),
+    sa.UniqueConstraint('company_name', name=op.f('uq_vendors_company_name'))
     )
     op.create_table('audit_logs',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('parent_id', sa.Integer(), nullable=True),
     sa.Column('order_id', sa.Integer(), nullable=True),
-    sa.Column('timestamp', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
+    sa.Column('timestamp', sa.DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=True),
     sa.Column('action', sa.String(length=20), nullable=False),
     sa.Column('target_type', sa.String(length=50), nullable=False),
@@ -218,8 +225,8 @@ def upgrade():
     sa.Column('terms', sa.Text(), nullable=True),
     sa.Column('is_active', sa.Boolean(), nullable=False),
     sa.Column('version_counter', sa.Integer(), server_default='0', nullable=False),
-    sa.Column('created_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
-    sa.Column('updated_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
     sa.Column('created_by_id', sa.Integer(), nullable=True),
     sa.Column('updated_by_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['client_id'], ['clients.id'], name=op.f('fk_quotes_client_id_clients')),
@@ -256,8 +263,8 @@ def upgrade():
     sa.Column('status', sa.String(length=20), nullable=False),
     sa.Column('note', sa.Text(), nullable=True),
     sa.Column('is_active', sa.Boolean(), nullable=False),
-    sa.Column('created_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
-    sa.Column('updated_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
     sa.Column('created_by_id', sa.Integer(), nullable=True),
     sa.Column('updated_by_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['bill_to_id'], ['clients.id'], name=op.f('fk_purchase_orders_bill_to_id_clients')),
@@ -300,8 +307,8 @@ def upgrade():
     sa.Column('terms', sa.Text(), nullable=True),
     sa.Column('version_counter', sa.Integer(), server_default='0', nullable=False),
     sa.Column('is_active', sa.Boolean(), nullable=False),
-    sa.Column('created_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
-    sa.Column('updated_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
     sa.Column('created_by_id', sa.Integer(), nullable=True),
     sa.Column('updated_by_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['bill_to_id'], ['clients.id'], name=op.f('fk_invoices_bill_to_id_clients')),
@@ -342,8 +349,8 @@ def upgrade():
     sa.Column('note', sa.Text(), nullable=True),
     sa.Column('is_system', sa.Boolean(), server_default='false', nullable=False),
     sa.Column('is_active', sa.Boolean(), nullable=False),
-    sa.Column('created_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
-    sa.Column('updated_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
     sa.Column('created_by_id', sa.Integer(), nullable=True),
     sa.Column('updated_by_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['category_id'], ['adjustment_categories.id'], name=op.f('fk_adjustments_category_id_adjustment_categories')),
@@ -375,8 +382,8 @@ def upgrade():
     sa.Column('terms', sa.Text(), nullable=True),
     sa.Column('version_counter', sa.Integer(), server_default='0', nullable=False),
     sa.Column('is_active', sa.Boolean(), nullable=False),
-    sa.Column('created_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
-    sa.Column('updated_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
     sa.Column('created_by_id', sa.Integer(), nullable=True),
     sa.Column('updated_by_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['category_id'], ['expense_categories.id'], name=op.f('fk_expenses_category_id_expense_categories')),
@@ -419,8 +426,8 @@ def upgrade():
     sa.Column('payment_date', sa.Date(), server_default=sa.text('CURRENT_DATE'), nullable=False),
     sa.Column('note', sa.Text(), nullable=True),
     sa.Column('is_active', sa.Boolean(), nullable=False),
-    sa.Column('created_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
-    sa.Column('updated_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
     sa.Column('created_by_id', sa.Integer(), nullable=True),
     sa.Column('updated_by_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['client_id'], ['clients.id'], name=op.f('fk_payments_client_id_clients')),
