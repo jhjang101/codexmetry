@@ -69,22 +69,28 @@ Once the containers are active, you can verify the integrity of the installation
 
 ## 4. Data Persistence & Volumes
 
-Codexmetry is designed for data durability. By default, your data is mapped to a `./data` directory within your project folder:
+Codexmetry is designed for data durability. By default, your data is mapped to specific directories on your host machine to ensure it survives container updates.
 
-| Container Path | Host Path (Local) | Forensic Purpose |
+| Container Path | Host Path (Local) | Logical Purpose |
 | :--- | :--- | :--- |
-| `/var/lib/postgresql/data` | `./postgres` | Physical Database storage. (Protected) |
+| `/var/lib/postgresql/data` | `./postgres` | Physical Database storage. **(Protected)** |
 | `/app/app/static/uploads` | `./data/uploads` | Documents, Images, and Attachments. |
 | `/app/app/backups` | `./data/backups` | SQL Snapshots and System Archives. |
-| `/app/app/logs` | `./data/logs` | Forensic Audit and System Logs. |
+| `/app/app/logs` | `./data/logs` | Audit Trails and System Activity Logs. |
 
-!!! warning "Permissions"
-    If the application cannot save uploads or backups, ensure the host directory permissions are correctly aligned with your Docker user:
-    `sudo chown -R $USER:$USER ./data`
+!!! warning "Permissions & Data Access"
+    If the application cannot save uploads or generates "Permission Denied" errors in the logs, synchronize the host directory permissions for the **asset subdirectories** only:
+    
+    ```bash
+    sudo chown -R $USER:$USER ./data/uploads ./data/backups ./data/logs
+    ```
+    
+    !!! danger "Engine Protection"
+        **Never** run `chown` on the `./postgres` directory. This folder is managed exclusively by the database engine. Changing its ownership will cause the database to crash and refuse to restart.
 
 ---
 
-## 5. Maintenance Commands
+## 5. Basic Operations
 
 | Action             | Command                                               |
 | :----------------- | :---------------------------------------------------- |
@@ -103,6 +109,6 @@ docker compose down -v
 ```
 
 !!! danger "Critical Data Warning"
-    The -v flag instructs Docker to permanently delete the internal database volumes. While your mapped host data (backups/logs) will remain on your physical disk, the live state of the application will be destroyed.
+    The -v flag instructs Docker to **permanently delete the internal database volumes**. While your mapped host data (backups/logs) will remain on your physical disk, the live state of the application will be destroyed.
 
     **Ensure you have a validated Full System Archive (.zip) before performing this action.**
