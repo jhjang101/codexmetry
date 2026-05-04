@@ -51,6 +51,8 @@
       
     
     
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
     <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
@@ -76,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#deployment-guide" class="md-skip">
+        <a href="#deployment-installation" class="md-skip">
           Skip to content
         </a>
       
@@ -397,6 +399,24 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
@@ -413,6 +433,130 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-step-by-step-installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Step-by-Step Installation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Step-by-Step Installation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-1-create-the-project-environment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: Create the Project Environment
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-acquire-orchestration-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: Acquire Orchestration Files
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3-configure-environment-variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: Configure Environment Variables
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-4-launch-the-fortress" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 4: Launch the Fortress
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-post-deployment-verification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Post-Deployment Verification
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-data-persistence-volumes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Data Persistence &amp; Volumes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-maintenance-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Maintenance Commands
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -589,6 +733,119 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-step-by-step-installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Step-by-Step Installation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Step-by-Step Installation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-1-create-the-project-environment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: Create the Project Environment
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-acquire-orchestration-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: Acquire Orchestration Files
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3-configure-environment-variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: Configure Environment Variables
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-4-launch-the-fortress" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 4: Launch the Fortress
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-post-deployment-verification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Post-Deployment Verification
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-data-persistence-volumes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Data Persistence &amp; Volumes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-maintenance-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Maintenance Commands
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -604,7 +861,119 @@
 
 
 
-<h1 id="deployment-guide">Deployment Guide</h1>
+<h1 id="deployment-installation">Deployment &amp; Installation</h1>
+<p>This guide covers the standard procedure for deploying the <strong>Codexmetry</strong> using Docker Compose. </p>
+<h2 id="1-prerequisites">1. Prerequisites</h2>
+<p>Before initializing the installation, ensure your host environment meets the following requirements:</p>
+<ul>
+<li><strong>Docker &amp; Docker Compose:</strong> Installed and running.</li>
+<li><strong>Network Ports:</strong> <ul>
+<li><code>5001</code>: Application Interface.</li>
+<li><code>5432</code>: Internal Database Engine (isolated by default).</li>
+</ul>
+</li>
+<li><strong>Architecture:</strong> x86_64 or ARM64 (PostgreSQL 17 compatible).</li>
+</ul>
+<hr />
+<h2 id="2-step-by-step-installation">2. Step-by-Step Installation</h2>
+<h3 id="step-1-create-the-project-environment">Step 1: Create the Project Environment</h3>
+<p>Establish a dedicated directory to serve as the host anchor for your data volumes and configuration files.</p>
+<pre><code class="language-bash">mkdir codexmetry &amp;&amp; cd codexmetry
+</code></pre>
+<h3 id="step-2-acquire-orchestration-files">Step 2: Acquire Orchestration Files</h3>
+<p>Download the mandatory environment template and the Docker Compose manifest directly from the official repository.</p>
+<pre><code class="language-bash"># Download the environment template
+curl -L https://raw.githubusercontent.com/jhjang101/codexmetry/main/.env.example -o .env
+
+# Download the compose file
+curl -L https://raw.githubusercontent.com/jhjang101/codexmetry/main/compose.yaml -o compose.yaml
+</code></pre>
+<h3 id="step-3-configure-environment-variables">Step 3: Configure Environment Variables</h3>
+<p>Edit the <code>.env</code> file to establish your unique system credentials. </p>
+<p>!!! danger "Security Requirement"
+    You must change the <code>INITIAL_ADMIN_PASSWORD</code> and generate a unique <code>SECRET_KEY</code>. To generate a high-entropy key, run the following command in your terminal:
+    <code>python3 -c 'import secrets; print(secrets.token_hex(32))'</code></p>
+<pre><code class="language-bash">nano .env
+</code></pre>
+<h3 id="step-4-launch-the-fortress">Step 4: Launch the Fortress</h3>
+<p>Initialize the containers. The engine will automatically detect the empty database and perform the initial schema migration and system record seeding.</p>
+<pre><code class="language-bash">docker compose up -d
+</code></pre>
+<hr />
+<h2 id="3-post-deployment-verification">3. Post-Deployment Verification</h2>
+<p>Once the containers are active, you can verify the integrity of the installation:</p>
+<ol>
+<li><strong>UI Access:</strong> Navigate to <code>http://localhost:5001</code>.</li>
+<li><strong>Logs:</strong> Check the system initialization log for any database errors:
+    <code>bash
+    docker compose logs -f app</code></li>
+<li><strong>Root Login:</strong> Use the credentials defined in your <code>.env</code> file to access the Admin dashboard.</li>
+</ol>
+<hr />
+<h2 id="4-data-persistence-volumes">4. Data Persistence &amp; Volumes</h2>
+<p>Codexmetry is designed for data durability. By default, your data is mapped to a <code>./data</code> directory within your project folder:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Container Path</th>
+<th style="text-align: left;">Host Path (Local)</th>
+<th style="text-align: left;">Forensic Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>/var/lib/postgresql/data</code></td>
+<td style="text-align: left;"><code>./data/postgres</code></td>
+<td style="text-align: left;">Physical Database storage.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>/app/app/static/uploads</code></td>
+<td style="text-align: left;"><code>./data/uploads</code></td>
+<td style="text-align: left;">Documents, Images, and Attachments.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>/app/app/backups</code></td>
+<td style="text-align: left;"><code>./data/backups</code></td>
+<td style="text-align: left;">SQL Snapshots and System Archives.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>/app/app/logs</code></td>
+<td style="text-align: left;"><code>./data/logs</code></td>
+<td style="text-align: left;">Forensic Audit and System Logs.</td>
+</tr>
+</tbody>
+</table>
+<p>!!! warning "Permissions"
+    If the application cannot save uploads or backups, ensure the host directory permissions are correctly aligned with your Docker user:
+    <code>sudo chown -R $USER:$USER ./data</code></p>
+<hr />
+<h2 id="5-maintenance-commands">5. Maintenance Commands</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Action</th>
+<th style="text-align: left;">Command</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Stop System</strong></td>
+<td style="text-align: left;"><code>docker compose stop</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Restart System</strong></td>
+<td style="text-align: left;"><code>docker compose restart</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Update Image</strong></td>
+<td style="text-align: left;"><code>docker compose pull &amp;&amp; docker compose up -d</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Complete Wipe</strong></td>
+<td style="text-align: left;"><code>docker compose down -v</code> (Warning: Deletes all data!)</td>
+</tr>
+</tbody>
+</table>
 
 
 

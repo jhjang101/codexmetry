@@ -36,6 +36,8 @@ theme:
     - search.suggest
     - search.highlight
     - content.code.copy
+extra_css:
+  - stylesheets/extra.css
 
 # 3. Content Navigation Structure
 nav:
@@ -43,6 +45,7 @@ nav:
   - How-To Guides:
     - Deployment: guides/deployment.md
     - Workflow: guides/workflow.md
+    - Restoration: guides/restore.md
   - Technical Reference:
     - Orders (CDX): reference/orders.md
     - Invoices: reference/invoices.md
@@ -50,3 +53,8 @@ nav:
 # 4. Plugins
 plugins:
   - search
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
