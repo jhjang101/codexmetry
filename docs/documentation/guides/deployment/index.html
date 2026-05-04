@@ -14,7 +14,7 @@
         <link rel="prev" href="../..">
       
       
-        <link rel="next" href="../../reference/orders/">
+        <link rel="next" href="../restore/">
       
       
         
@@ -554,6 +554,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#6-complete-system-reset-destructive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Complete System Reset (Destructive)
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -578,6 +589,34 @@
     
   
     Workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../restore/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Restoration
   
 
     
@@ -844,6 +883,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#6-complete-system-reset-destructive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Complete System Reset (Destructive)
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -878,35 +928,37 @@
 <h2 id="2-step-by-step-installation">2. Step-by-Step Installation</h2>
 <h3 id="step-1-create-the-project-environment">Step 1: Create the Project Environment</h3>
 <p>Establish a dedicated directory to serve as the host anchor for your data volumes and configuration files.</p>
-<pre><code class="language-bash">mkdir codexmetry &amp;&amp; cd codexmetry
-</code></pre>
+<div class="highlight"><pre><span></span><code>mkdir<span class="w"> </span>codexmetry<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">cd</span><span class="w"> </span>codexmetry
+</code></pre></div>
 <h3 id="step-2-acquire-orchestration-files">Step 2: Acquire Orchestration Files</h3>
 <p>Download the mandatory environment template and the Docker Compose manifest directly from the official repository.</p>
-<pre><code class="language-bash"># Download the environment template
-curl -L https://raw.githubusercontent.com/jhjang101/codexmetry/main/.env.example -o .env
+<div class="highlight"><pre><span></span><code><span class="c1"># Download the environment template</span>
+curl<span class="w"> </span>-L<span class="w"> </span>https://raw.githubusercontent.com/jhjang101/codexmetry/main/.env.example<span class="w"> </span>-o<span class="w"> </span>.env
 
-# Download the compose file
-curl -L https://raw.githubusercontent.com/jhjang101/codexmetry/main/compose.yaml -o compose.yaml
-</code></pre>
+<span class="c1"># Download the compose file</span>
+curl<span class="w"> </span>-L<span class="w"> </span>https://raw.githubusercontent.com/jhjang101/codexmetry/main/compose.yaml<span class="w"> </span>-o<span class="w"> </span>compose.yaml
+</code></pre></div>
 <h3 id="step-3-configure-environment-variables">Step 3: Configure Environment Variables</h3>
 <p>Edit the <code>.env</code> file to establish your unique system credentials. </p>
-<p>!!! danger "Security Requirement"
-    You must change the <code>INITIAL_ADMIN_PASSWORD</code> and generate a unique <code>SECRET_KEY</code>. To generate a high-entropy key, run the following command in your terminal:
-    <code>python3 -c 'import secrets; print(secrets.token_hex(32))'</code></p>
-<pre><code class="language-bash">nano .env
-</code></pre>
+<div class="admonition warning">
+<p class="admonition-title">Security Requirement</p>
+<p>You must change the <code>INITIAL_ADMIN_PASSWORD</code> and generate a unique <code>SECRET_KEY</code>. To generate a high-entropy key, run the following command in your terminal:
+<code>python3 -c 'import secrets; print(secrets.token_hex(32))'</code></p>
+</div>
+<div class="highlight"><pre><span></span><code>nano<span class="w"> </span>.env
+</code></pre></div>
 <h3 id="step-4-launch-the-fortress">Step 4: Launch the Fortress</h3>
 <p>Initialize the containers. The engine will automatically detect the empty database and perform the initial schema migration and system record seeding.</p>
-<pre><code class="language-bash">docker compose up -d
-</code></pre>
+<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>compose<span class="w"> </span>up<span class="w"> </span>-d
+</code></pre></div>
 <hr />
 <h2 id="3-post-deployment-verification">3. Post-Deployment Verification</h2>
 <p>Once the containers are active, you can verify the integrity of the installation:</p>
 <ol>
 <li><strong>UI Access:</strong> Navigate to <code>http://localhost:5001</code>.</li>
 <li><strong>Logs:</strong> Check the system initialization log for any database errors:
-    <code>bash
-    docker compose logs -f app</code></li>
+    <div class="highlight"><pre><span></span><code>docker<span class="w"> </span>compose<span class="w"> </span>logs<span class="w"> </span>-f<span class="w"> </span>app
+</code></pre></div></li>
 <li><strong>Root Login:</strong> Use the credentials defined in your <code>.env</code> file to access the Admin dashboard.</li>
 </ol>
 <hr />
@@ -923,8 +975,8 @@ curl -L https://raw.githubusercontent.com/jhjang101/codexmetry/main/compose.yaml
 <tbody>
 <tr>
 <td style="text-align: left;"><code>/var/lib/postgresql/data</code></td>
-<td style="text-align: left;"><code>./data/postgres</code></td>
-<td style="text-align: left;">Physical Database storage.</td>
+<td style="text-align: left;"><code>./postgres</code></td>
+<td style="text-align: left;">Physical Database storage. (Protected)</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>/app/app/static/uploads</code></td>
@@ -943,9 +995,11 @@ curl -L https://raw.githubusercontent.com/jhjang101/codexmetry/main/compose.yaml
 </tr>
 </tbody>
 </table>
-<p>!!! warning "Permissions"
-    If the application cannot save uploads or backups, ensure the host directory permissions are correctly aligned with your Docker user:
-    <code>sudo chown -R $USER:$USER ./data</code></p>
+<div class="admonition warning">
+<p class="admonition-title">Permissions</p>
+<p>If the application cannot save uploads or backups, ensure the host directory permissions are correctly aligned with your Docker user:
+<code>sudo chown -R $USER:$USER ./data</code></p>
+</div>
 <hr />
 <h2 id="5-maintenance-commands">5. Maintenance Commands</h2>
 <table>
@@ -968,12 +1022,18 @@ curl -L https://raw.githubusercontent.com/jhjang101/codexmetry/main/compose.yaml
 <td style="text-align: left;"><strong>Update Image</strong></td>
 <td style="text-align: left;"><code>docker compose pull &amp;&amp; docker compose up -d</code></td>
 </tr>
-<tr>
-<td style="text-align: left;"><strong>Complete Wipe</strong></td>
-<td style="text-align: left;"><code>docker compose down -v</code> (Warning: Deletes all data!)</td>
-</tr>
 </tbody>
 </table>
+<hr />
+<h2 id="6-complete-system-reset-destructive">6. Complete System Reset (Destructive)</h2>
+<p>In scenarios where a total environment wipe is required (e.g., preparing for a fresh production deployment or clearing a test environment), use the following command:</p>
+<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>compose<span class="w"> </span>down<span class="w"> </span>-v
+</code></pre></div>
+<div class="admonition danger">
+<p class="admonition-title">Critical Data Warning</p>
+<p>The -v flag instructs Docker to permanently delete the internal database volumes. While your mapped host data (backups/logs) will remain on your physical disk, the live state of the application will be destroyed.</p>
+<p><strong>Ensure you have a validated Full System Archive (.zip) before performing this action.</strong></p>
+</div>
 
 
 
