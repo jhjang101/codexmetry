@@ -576,8 +576,8 @@ class PurchaseOrderService(BaseService):
             target_id=id, 
             target_type=cls.model.__name__, 
             action='ARCHIVE', 
-            old_data={'is_active': True}, 
-            new_data={'is_active': False}
+            old_data={'is_active': True, 'quote_id': po.quote_id}, 
+            new_data={'is_active': False, 'quote_id': None}
         )
 
         # 3. Archive the Registry (frees the CDX number)
@@ -624,6 +624,10 @@ class PurchaseOrderService(BaseService):
 
         # 7. Archive the PO itself
         po.is_active = False
+        # --- NEW: SERVICE HARDENING ---
+        # Physically break the link from the PO side so archived POs 
+        # don't trigger "Multiple rows returned" warnings.
+        po.quote_id = None
 
         db.session.commit()
         return results
