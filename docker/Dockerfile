@@ -46,8 +46,11 @@ COPY --from=builder /app/.venv /app/.venv
 COPY . .
 
 # 8. Security & Execution
+# Explicitly copy the entrypoint from the docker/ subfolder to the container root
+COPY docker/entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
+
 # Update PATH so the app uses the virtualenv's Python/Flask automatically
 ENV PATH="/app/.venv/bin:$PATH"
-RUN chmod +x entrypoint.sh
 
-ENTRYPOINT ["./entrypoint.sh"]
+ENTRYPOINT ["/app/entrypoint.sh"]
