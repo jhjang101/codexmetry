@@ -26,7 +26,7 @@ class AuditLogService:
 
     # Maps foreign key fields to their Model and identifying Label
     RELATION_MAP = {
-        # 'category_id': (ProductCategory, 'type'), # Note: We need logic to distinguish between Prod/Exp/Adj categories
+        # 'category_id' is shared with ProductCategory, ExpenseCategory, and AdjustmentCategory. It is revolved in _resolve_label
         'order_id': OrderRegistry,
         'client_id': Client,
         'vendor_id': Vendor,
@@ -39,7 +39,6 @@ class AuditLogService:
         'bill_to_id': Client,
         'paid_from_id': Client,
         'payment_type_id': PaymentType,
-        'adjustment_category_id': AdjustmentCategory,
         'carrier_id': Carrier,
         'created_by_id': User,
         'updated_by_id': User
@@ -58,7 +57,13 @@ class AuditLogService:
         'Vendor': Vendor,
         'Product': Product, 
         'User': User, 
-        'SettingsMetadata': SettingsMetadata
+        'SettingsMetadata': SettingsMetadata,
+        'PoType': PoType,
+        'ProductCategory': ProductCategory,
+        'ExpenseCategory': ExpenseCategory,
+        'PaymentType': PaymentType,
+        'AdjustmentCategory': AdjustmentCategory,
+        'Carrier': Carrier
     }
 
     @classmethod
@@ -78,7 +83,6 @@ class AuditLogService:
         # 1. Determine Model Class 
         # Explicit Branching for 'category_id'
         if field == 'category_id':
-            label_attr = 'type'
             if target_type == 'Product':
                 model_class = ProductCategory
             elif target_type == 'Expense':

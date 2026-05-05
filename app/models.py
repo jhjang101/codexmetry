@@ -85,7 +85,7 @@ class PoType(db.Model):
 
 class ProductCategory(db.Model):
     __tablename__ = 'product_categories'
-    __identy_attr__ = 'type'
+    __identity_attr__ = 'type'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     type: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
