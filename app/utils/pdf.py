@@ -1,6 +1,12 @@
 import os
+import logging
 from flask import current_app, render_template
 from weasyprint import HTML, CSS
+
+# --- NOISE REDUCTION ---
+# WeasyPrint is very chatty with Tailwind CSS variables. 
+# We silence it here at the source to ensure clean system logs.
+logging.getLogger('weasyprint').setLevel(logging.ERROR)
 
 def save_pdf_from_html(template_path: str, context: dict, filename: str, subfolder: str):
     """

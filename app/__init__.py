@@ -64,24 +64,33 @@ def create_app():
     audit_logger.propagate = False # Prevent audit logs from leaking into standard system logs
 
     # --- LOG B: System Engine (App Errors & Lifecycle) ---
+    formatter = logging.Formatter('%(asctime)s | %(levelname)s | %(name)s | %(message)s')
     system_file = os.path.join(LOG_FOLDER, 'system.log')
     system_handler = RotatingFileHandler(system_file, maxBytes=5*1024*1024, backupCount=10)
-    formatter = logging.Formatter('%(asctime)s | %(levelname)s | %(message)s')
     system_handler.setFormatter(formatter)
     system_handler.setLevel(logging.INFO)
 
-    # Attach to the main Flask app logger
+    # Attach to the main Flask app logger and the Root logger
     app.logger.addHandler(system_handler)
-    app.logger.setLevel(logging.INFO)
-    
-    # Capture all general Python logs (including third-party libraries) into system.log
     logging.getLogger().addHandler(system_handler)
+    app.logger.setLevel(logging.INFO)
+
+    # --- NOISE REDUCTION: Silence Document Rendering Engines ---
+    # We set these to ERROR so they only speak if the system is actually breaking.
+    # logging.getLogger('weasyprint').setLevel(logging.ERROR) # Implemented in utils/pdf.py
 
     # --- STATIC ASSET PROXY ---
     # This ensures <img src="/static/uploads/..."> still works even though files moved to /data/uploads
     @app.route('/static/uploads/<path:filename>')
     def uploaded_file(filename):
         return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+    
+    # NEW: LEGACY FAVICON ROUTE
+    # Prevents browsers from triggering 404 errors when viewing PDFs
+    @app.route('/favicon.ico')
+    def favicon():
+        return send_from_directory(os.path.join(app.root_path, 'static', 'images'),
+                                   'favicon.svg', mimetype='image/svg+xml')
 
     # --- INITIALIZE EXTENSIONS ---
     db.init_app(app)

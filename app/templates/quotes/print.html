@@ -27,13 +27,12 @@
             font-weight: 700;
             font-style: normal;
         }
-
     </style>
     {% endif %}
 
-
-
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/tailwind.css') }}">
+    {% if not is_pdf_mode %}
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/tailwind.css') }}">
+    {% endif %}
     
 </head>
 <body class="bg-gray-100 font-sans p-4">
