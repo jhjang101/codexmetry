@@ -18,4 +18,9 @@ flask seed-db
 # 4. Start Gunicorn (Production Server)
 # Binding to 0.0.0.0 is mandatory for Docker
 echo "Launching Gunicorn production server..."
-exec gunicorn --bind 0.0.0.0:5001 run:app
+exec gunicorn --bind 0.0.0.0:5001 \
+              --access-logfile /app/data/logs/system.log \
+              --error-logfile /app/data/logs/system.log \
+              --log-level info \
+              --capture-output \
+              run:app
