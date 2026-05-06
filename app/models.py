@@ -71,9 +71,9 @@ class User(UserMixin, db.Model):
             return False
         return check_password_hash(self.password_hash, password)
 
-@login_manager.user_loader
-def load_user(user_id):
-    return db.session.get(User, int(user_id))
+# @login_manager.user_loader # Moved to init_auth_loaders in utils/auth.py
+# def load_user(user_id):
+#     return db.session.get(User, int(user_id))
 
 # --- 2. LOOKUP TABLES ---
 class PoType(db.Model):

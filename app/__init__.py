@@ -9,6 +9,7 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 from .extensions import db, csrf, login_manager,migrate
 from .utils.errors import humanize_error
+from .utils.auth import init_auth_loaders
 
 def create_app():
     load_dotenv()
@@ -97,6 +98,9 @@ def create_app():
     csrf.init_app(app)
     login_manager.init_app(app)
     migrate.init_app(app, db)
+
+    # NEW: Register Identity Loaders (Session & SSO)
+    init_auth_loaders(login_manager)
 
     # Configure Login Manager
     login_manager.login_view = 'auth.login' # type: ignore

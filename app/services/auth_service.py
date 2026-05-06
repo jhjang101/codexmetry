@@ -26,3 +26,16 @@ class AuthService:
             return None
 
         return user
+    
+    @classmethod
+    def authenticate_by_email(cls, email: str) -> User | None:
+        """
+        SSO Bridge: Looks up a user by verified email from a trusted proxy.
+        """
+        if not email:
+            return None
+
+        # Standard identity lookup (SA 2.0 syntax)
+        stmt = select(User).where(User.email == email, User.is_active == True)
+        user = db.session.execute(stmt).scalar_one_or_none()
+        return user
