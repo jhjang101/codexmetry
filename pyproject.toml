@@ -19,6 +19,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "mike>=2.2.0",
     "mkdocs>=1.6.1",
     "mkdocs-material>=9.7.6",
 ]

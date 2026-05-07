@@ -31,5 +31,8 @@ Thumbs.db
 
 # --- Documentation ---
 documentation/
+landing/
 docs/
+site/
 mkdocs.yml
+build_site.sh
