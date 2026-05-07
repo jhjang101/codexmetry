@@ -51,4 +51,5 @@ Thumbs.db
 *.log
 
 # --- Documentation ---
+dist/   # Ignore local build output
 .cache/

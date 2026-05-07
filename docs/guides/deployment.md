@@ -82,10 +82,10 @@ Codexmetry is designed for data durability. By default, your data is mapped to s
     If the application cannot save uploads or generates "Permission Denied" errors in the logs, synchronize the host directory permissions for the **asset subdirectories** only:
     
     ```bash
-    sudo chown -R $USER:$USER ./data/uploads ./data/backups ./data/logs
+    sudo chown -R $USER:$USER ./data
     ```
     
-    !!! danger "Engine Protection"
+    !!! danger "Database Protection"
         **Never** run `chown` on the `./postgres` directory. This folder is managed exclusively by the database engine. Changing its ownership will cause the database to crash and refuse to restart.
 
 ---

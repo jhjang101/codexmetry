@@ -3,7 +3,7 @@ site_url: https://jhjang101.github.io/codexmetry/
 
 # 1. Pathing Configuration
 docs_dir: docs    # Where you write your Markdown
-site_dir: site/documentation # Where MkDocs outputs the HTML
+site_dir: dist # Where MkDocs outputs the HTML
 
 # 2. Theme & Branding
 theme:
