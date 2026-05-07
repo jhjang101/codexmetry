@@ -45,8 +45,8 @@ nav:
   - Overview: index.md
   - How-To Guides:
     - Deployment: guides/deployment.md
-    # - Workflow: guides/workflow.md
-    # - Maintenance: guides/maintenance.md
+    - The Document Lifecycle: guides/workflow.md 
+    - Maintenance: guides/maintenance.md
     - Restoration: guides/restore.md
   - Technical Reference:
     - Orders (CDX): reference/orders.md
