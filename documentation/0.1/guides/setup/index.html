@@ -8,13 +8,13 @@
       
       
       
-        <link rel="canonical" href="https://jhjang101.github.io/codexmetry/0.1/guides/restore/">
+        <link rel="canonical" href="https://jhjang101.github.io/codexmetry/0.1/guides/setup/">
       
       
-        <link rel="prev" href="../maintenance/">
+        <link rel="prev" href="../deployment/">
       
       
-        <link rel="next" href="../../reference/orders/">
+        <link rel="next" href="../workflow/">
       
       
         
@@ -25,7 +25,7 @@
     
     
       
-        <title>Restoration - Codexmetry</title>
+        <title>Initial Setup - Codexmetry</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#restoration-disaster-recovery" class="md-skip">
+        <a href="#initial-setup-configuration" class="md-skip">
           Skip to content
         </a>
       
@@ -115,7 +115,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Restoration
+              Initial Setup
             
           </span>
         </div>
@@ -419,10 +419,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../setup/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Initial Setup
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -438,6 +465,81 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-company-identity-branding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Company Identity &amp; Branding
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-system-logic-defaults" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. System Logic &amp; Defaults
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-defining-categories-lookups" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Defining Categories (Lookups)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-building-the-catalog-products" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Building the Catalog (Products)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-establishing-the-accounts-clients-vendors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Establishing the Accounts (Clients &amp; Vendors)
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -503,37 +605,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Restoration
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../restore/" class="md-nav__link">
         
   
   
@@ -549,98 +624,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#1-restoring-the-database-sql" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        1. Restoring the Database (SQL)
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="1. Restoring the Database (SQL)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#method-a-using-docker-exec-recommended" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Method A: Using docker exec (Recommended)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#method-b-using-local-psql" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Method B: Using Local psql
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#2-synchronize-auto-upgrade" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. Synchronize &amp; Auto-Upgrade
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#3-full-system-restoration-zip" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Full System Restoration (.zip)
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#4-post-restoration-checklist" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4. Post-Restoration Checklist
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -795,49 +778,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#1-restoring-the-database-sql" class="md-nav__link">
+  <a href="#1-company-identity-branding" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Restoring the Database (SQL)
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="1. Restoring the Database (SQL)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#method-a-using-docker-exec-recommended" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Method A: Using docker exec (Recommended)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#method-b-using-local-psql" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Method B: Using Local psql
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#2-synchronize-auto-upgrade" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. Synchronize &amp; Auto-Upgrade
+        1. Company Identity &amp; Branding
       
     </span>
   </a>
@@ -845,10 +789,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#3-full-system-restoration-zip" class="md-nav__link">
+  <a href="#2-system-logic-defaults" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3. Full System Restoration (.zip)
+        2. System Logic &amp; Defaults
       
     </span>
   </a>
@@ -856,10 +800,32 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#4-post-restoration-checklist" class="md-nav__link">
+  <a href="#3-defining-categories-lookups" class="md-nav__link">
     <span class="md-ellipsis">
       
-        4. Post-Restoration Checklist
+        3. Defining Categories (Lookups)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-building-the-catalog-products" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Building the Catalog (Products)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-establishing-the-accounts-clients-vendors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Establishing the Accounts (Clients &amp; Vendors)
       
     </span>
   </a>
@@ -883,78 +849,69 @@
 
 
 
-<h1 id="restoration-disaster-recovery">Restoration &amp; Disaster Recovery</h1>
-<p>This guide provides the procedures for restoring the Codexmetry environment from a previously generated <strong>Database Snapshot (.sql)</strong> or <strong>Full System Archive (.zip)</strong>.</p>
-<h2 id="1-restoring-the-database-sql">1. Restoring the Database (SQL)</h2>
-<p>If you have a standard <code>.sql</code> snapshot located in your <code>backups/</code> directory, use one of the following  methods to inject the data into the PostgreSQL engine.</p>
-<h3 id="method-a-using-docker-exec-recommended">Method A: Using <code>docker exec</code> (Recommended)</h3>
-<p>This is the cleanest method as it uses the tools already inside the database container.</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># 1. Identify your backup file (e.g., codexmetry_db_20260427_153000.sql)</span>
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="c1"># 2. Run the injection command</span>
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-i<span class="w"> </span>codexmetry_db<span class="w"> </span>psql<span class="w"> </span>-U<span class="w"> </span>admin<span class="w"> </span>-d<span class="w"> </span>codexmetry<span class="w"> </span>&lt;<span class="w"> </span>./data/backups/your_backup_file.sql
-</span></code></pre></div>
-<h3 id="method-b-using-local-psql">Method B: Using Local psql</h3>
-<p>Use this method if you have the PostgreSQL client installed on your host machine.</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>psql<span class="w"> </span>-h<span class="w"> </span>localhost<span class="w"> </span>-p<span class="w"> </span><span class="m">5432</span><span class="w"> </span>-U<span class="w"> </span>admin<span class="w"> </span>-d<span class="w"> </span>codexmetry<span class="w"> </span>&lt;<span class="w"> </span>./data/backups/your_backup_file.sql
-</span></code></pre></div>
-<h2 id="2-synchronize-auto-upgrade">2. Synchronize &amp; Auto-Upgrade</h2>
-<div class="admonition info">
-<p class="admonition-title">Automatic Schema Alignment</p>
-<p>After a restoration, your database version might be behind your current application code. Codexmetry features a self-healing entrypoint that automatically aligns the restored data with the latest system requirements.</p>
-</div>
-<p>To trigger the synchronization and apply any missing database migrations:</p>
-<ol>
-<li>
-<p><strong>Restart the System:</strong>
-    <div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>docker<span class="w"> </span>compose<span class="w"> </span>restart
-</span></code></pre></div></p>
-</li>
-<li>
-<p><strong>Verify the Sync:</strong>
-    Monitor the logs to ensure the migration completed successfully:
-    <div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>docker<span class="w"> </span>compose<span class="w"> </span>logs<span class="w"> </span>-f<span class="w"> </span>app
-</span></code></pre></div>
-    <em>You should see "Applying database migrations..." followed by "PostgreSQL started".</em></p>
-</li>
-</ol>
+<h1 id="initial-setup-configuration">Initial Setup &amp; Configuration</h1>
+<p>Once the Codexmetry environment is deployed, an Administrator must configure the system's identity and master data. This ensures that all generated documents and financial reports reflect the unique requirements of your business.</p>
 <hr />
-<h2 id="3-full-system-restoration-zip">3. Full System Restoration (.zip)</h2>
-<p>To restore from a <strong>Full System Archive</strong> (which includes both the database and physical attachments like product images and invoice PDFs):</p>
-<ol>
-<li>
-<p><strong>Unzip the Archive:</strong>
-    Extract the contents on your host machine. You will see a <code>.sql</code> file and an <code>uploads/</code> folder.</p>
-</li>
-<li>
-<p><strong>Restore Uploads:</strong>
-    Copy the extracted <code>uploads/</code> folder into your mapped host directory:
-    <div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>cp<span class="w"> </span>-r<span class="w"> </span>./extracted_path/uploads/*<span class="w"> </span>./data/uploads/
-</span></code></pre></div></p>
-</li>
-<li>
-<p><strong>Restore Database:</strong>
-    Follow the SQL injection steps in <strong>Section 1</strong> using the extracted <code>.sql</code> file.</p>
-</li>
-<li>
-<p><strong>Finalize &amp; Sync:</strong>
-    Perform the system restart to align the data:
-    <div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>docker<span class="w"> </span>compose<span class="w"> </span>restart
-</span></code></pre></div></p>
-</li>
-<li>
-<p><strong>Fix Asset Permissions:</strong>
-    If you encounter "Permission Denied" errors when viewing attachments, reset the ownership of the asset directories:
-    <div class="language-bash highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>sudo<span class="w"> </span>chown<span class="w"> </span>-R<span class="w"> </span><span class="nv">$USER</span>:<span class="nv">$USER</span><span class="w"> </span>./data/uploads<span class="w"> </span>./data/backups<span class="w"> </span>./data/logs
-</span></code></pre></div></p>
-</li>
-</ol>
-<hr />
-<h2 id="4-post-restoration-checklist">4. Post-Restoration Checklist</h2>
-<p>Perform these checks to ensure the "Fortress" is stable:</p>
+<h2 id="1-company-identity-branding">1. Company Identity &amp; Branding</h2>
+<p>Navigate to <strong>Settings</strong> to establish the "Face" of your Fortress. These fields are used to populate the headers and footers of all issued PDFs (Quotes, Invoices, and Expenses).</p>
 <ul>
-<li><strong>Order Hub:</strong> Open an existing deal and verify the <strong>Order Tree</strong> accurately displays the document chain.</li>
-<li><strong>Asset Linkage:</strong> Open an older Invoice and verify that the generated PDF snapshot opens correctly.</li>
-<li><strong>Version Verification:</strong> Run <code>docker exec -it codexmetry_app flask db current</code> to confirm the database is at the latest migration ID.</li>
+<li><strong>Company Name &amp; Logo:</strong> Your official business name and brand.</li>
+<li><strong>Addresses:</strong> <ul>
+<li><em>Office Address</em>: Your primary physical location.</li>
+<li><em>Payable Address</em>: Where clients should mail checks.</li>
+<li><em>Shipping Address</em>: Where vendors should deliver items.</li>
+</ul>
+</li>
+<li><strong>Banking (Wire Transfer):</strong> Provide your Bank Name, SWIFT, Routing, and Account numbers to ensure payment instructions are included on Invoices.</li>
+</ul>
+<hr />
+<h2 id="2-system-logic-defaults">2. System Logic &amp; Defaults</h2>
+<p>Configure the core behavioral rules of the application under <strong>System Defaults</strong>:</p>
+<ul>
+<li><strong>Invoice Threshold:</strong> The maximum remaining balance at which an Invoice will automatically move to "Completed" status.</li>
+<li><strong>Doc Padding:</strong> Determines the length of the sequential part of your document IDs (e.g., Padding of 3 results in <code>CDX-2620011</code>).</li>
+<li><strong>Net Days (Invoices):</strong> Set default "Net Days" that will pre-populate new documents.</li>
+<li><strong>Quote Expiry (Days):</strong> Set default validity period for new quotes, used to automatically calculate the expiration date.</li>
+<li><strong>Default document Terms:</strong> Standard terms that pre-populates the "Terms &amp; Notes" section in PDFs (Quotes, Invoices, and Expenses).</li>
+</ul>
+<hr />
+<h2 id="3-defining-categories-lookups">3. Defining Categories (Lookups)</h2>
+<p>Lookup tables categorize your data for accurate reporting. Configure these to match your business and industry requirements:</p>
+<ul>
+<li><strong>PO Types:</strong> (Recommended) Used to distinguish different order types or sales channels. </li>
+<li><strong>Product Categories:</strong><ul>
+<li><em>Revenue Flag</em>: If checked, sales of products in this category will be aggregated into the <strong>Sales Revenue</strong> section of your financial reports.</li>
+</ul>
+</li>
+<li><strong>Expense Categories:</strong><ul>
+<li><em>COGS vs. OPEX</em>: Mark categories as <strong>COGS</strong> (Cost of Goods Sold) for direct costs or leave unmarked for <strong>OPEX</strong> (Operating Expenses). This allows the system to calculate <strong>Gross Profit</strong> accurately.</li>
+</ul>
+</li>
+<li><strong>Payment Types:</strong> (Required) Define your accepted methods (e.g., Credit Card, Wire Transfer, Check).</li>
+<li><strong>Adjustment Categories:</strong> (Required) Define non-operating events (e.g., Bank Interest, Processing Fee).</li>
+<li><strong>Shipping Carriers:</strong> Define the shipping providers used for fulfillment and tracking.</li>
+</ul>
+<hr />
+<h2 id="4-building-the-catalog-products">4. Building the Catalog (Products)</h2>
+<p>The Product Catalog is the source of truth for your Sales documents.</p>
+<ul>
+<li><strong>Catalog Number:</strong> Your internal SKU or part number.</li>
+<li><strong>Default Unit Price:</strong> Pre-populates Quotes and Purchase Orders (can be overridden).</li>
+<li><strong>Document Placement:</strong> <strong>(Critical)</strong><ul>
+<li><code>Standard Line Item</code>: Standard goods/services.</li>
+<li><code>Shipping (Footer)</code>: Items assigned to this placement will appear in the "Shipping" section on PDFs.</li>
+<li><code>Sales Tax (Footer)</code>: Items assigned to this placement will appear in the "Sales Tax" section on PDFs.</li>
+</ul>
+</li>
+</ul>
+<hr />
+<h2 id="5-establishing-the-accounts-clients-vendors">5. Establishing the Accounts (Clients &amp; Vendors)</h2>
+<p>Before creating orders, you must define your external relationships.</p>
+<ul>
+<li><strong>Account Labels:</strong> Use a unique and descriptive label for Client and Vendor (e.g., "General Electric-Billing").</li>
+<li><strong>Company Address:</strong> Provide the shipping or billing address for the account. This is used to populate the "Bill To" or "Vendor" sections on PDFs.</li>
+<li><strong>Personnel &amp; Contacts:</strong> Each account can contain multiple contacts. The system automatically identifies the <strong>Primary Contact</strong> (the topmost record) and display in the dropdown options when creating or editing documents.</li>
+<li><strong>Lifecycle Awareness:</strong> The Client view provides immediate visibility into whether an account has open POs or unpaid Invoices, guiding your daily priority. <em>(TODO)</em></li>
 </ul>
 
 
