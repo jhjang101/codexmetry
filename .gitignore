@@ -53,3 +53,6 @@ Thumbs.db
 # --- Documentation ---
 dist/   # Ignore local build output
 .cache/
+
+# --- gh-pages specific ---
+app/
