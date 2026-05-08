@@ -1,0 +1,55 @@
+# --- Python Core ---
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+env/
+build/
+dist/
+*.egg-info/
+
+# Virtual environments
+.venv
+
+# --- Environment & Secrets ---
+.env
+.flaskenv
+
+# Protect any local secret files
+instance/config.py
+
+# --- Database & Storage ---
+app/instance/*
+app/backups/*
+test/
+tests/
+*.sql
+
+# --- Docker Data Anchor ---
+data/
+
+# SQLite temporary/journal files
+*.db-journal
+*.db-shm
+*.db-wal
+
+# --- Uploads & Static Assets ---
+app/static/uploads/*
+tailwindcss
+
+# --- OS Specific ---
+.DS_Store
+Thumbs.db
+
+# --- IDE Specific (VS Code / PyCharm) ---
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# --- Logs ---
+*.log
+
+# --- Documentation ---
+dist/   # Ignore local build output
+.cache/
