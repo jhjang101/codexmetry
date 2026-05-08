@@ -45,6 +45,7 @@ nav:
   - Overview: index.md
   - How-To Guides:
     - Deployment: guides/deployment.md
+    - Initial Setup: guides/setup.md
     - The Document Lifecycle: guides/workflow.md 
     - Maintenance: guides/maintenance.md
     - Restoration: guides/restore.md
