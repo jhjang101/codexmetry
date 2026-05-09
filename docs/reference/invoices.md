@@ -12,8 +12,8 @@ The Invoices module manages the official payment requests and records the fulfil
 *   **Order Registry (CDX)** [System]: Inherited automatically from the linked Purchase Order. This immutable link ensures the invoice is correctly grouped in the Order History and financial reports.
 *   **Invoice Number** [Input/System]: The unique identifier for the document.
     *   *Logic:* Defaults to the `I-YYQSSSV` format (Year, Quarter, Sequence, Checksum) but allows manual override for custom numbering schemes.
-*   **Customer PO #** [Input]: A secondary reference field, typically used to store the client's internal tracking number. Inherited from the PO.
 *   **Bill To** [Input]: The specific department or entity within the client's organization responsible for payment. Defaults to the PO's Bill To selection.
+*   **Customer PO #** [Input]: A secondary reference field, typically used to store the client's internal tracking number. Inherited from the PO.
 
 ---
 
@@ -36,7 +36,7 @@ The Invoices module manages the official payment requests and records the fulfil
     *   `Draft`: Work-in-progress. Items do not yet count toward PO fulfillment or Revenue reports.
     *   `Open`: Issued to the client. Revenue is now recognized in Accrual reports.
     *   `Completed`: Payment received. The balance is settled. 
-*   **Total Amount** [System]: The raw mathematical sum of all line items (in cents). 
+*   **Grand Total** [System]: The raw mathematical sum of all line items (in cents). 
     *   *Logic:* This value can be **negative** if the "Applied Deposit" line item exceeds the value of billed products.
 *   **Total Due** [Property]: The actual billable amount requested from the client.
     *   *Math:* Calculated as `max(0, Total Amount)`. It is never negative.
@@ -49,7 +49,7 @@ The Invoices module manages the official payment requests and records the fulfil
 
 ## 4. Line Item Details (Sub-form)
 
-*   **Product** [Input]: The SKU from your catalog. 
+*   **Product** [Input]: The Product from product catalog. 
     *   *Logic:* Selection pulls the default unit price and determines **Document Placement** (Standard, Tax, or Shipping).
 *   **Description** [Input]: Specific details for this line. Prefilled from the source PO line.
 *   **Quantity** [Input]: The number of units being fulfilled. 
@@ -63,6 +63,7 @@ The Invoices module manages the official payment requests and records the fulfil
 ## 5. Metadata & Auditing
 
 *   **Internal Note** [Input]: Private comments for internal use. Not visible on the printed PDF.
-*   **Terms & Notes** [Input]: Displayed in print preview and included in the PDF footer. Defaults to global system terms on creation but is editable.
+*   **Terms & Notes** [Input]: The legal text and instructions included in the PDF footer. Defaults to global system terms on creation but is editable.
 *   **Version Counter** [System]: Increments every time the document is "Issued." Used to track the version of issued PDFs in the attachment zone.
-*   **Created/Updated By** [System]: Automatically tracks the user responsible for creating or modifying the record.
+-   **Attachments** [Input/System]: Manual files added by the user (e.g., proof of delivery), and system generated PDFs during the "Issue" process.
+*   **Activity Log** [System]: Displays the timestamp and user identity for the creation and most recent modification of the record.

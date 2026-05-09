@@ -52,8 +52,10 @@ nav:
     - Restoration: guides/restore.md
   - Technical Reference:
     - Order Registry (CDX): reference/orders.md
+    - Quotes: reference/quotes.md
     - Purchase Orders: reference/purchase_orders.md
     - Invoices: reference/invoices.md
+    - Payments: reference/payments.md
 
 # 4. Plugins
 plugins:

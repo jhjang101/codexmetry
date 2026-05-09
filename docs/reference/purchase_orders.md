@@ -6,7 +6,7 @@ The Purchase Order (PO) represents the formal commitment between the business an
 
 ## 1. Identification & Relationship Fields
 
-* **Order Ref (CDX)** [System]: The project’s unique identifier. Assigned automatically upon creation of the PO.
+* **Order Ref (CDX)** [System]: The order’s unique identifier. Assigned automatically upon creation of the PO.
 * **Quote Number** [Input/System]: Links the PO to its source proposal.
 
   * *Handshake Logic:* Linking a Quote automatically sets that Quote's status to **Accepted**. Unlinking or archiving the PO reverts the Quote to **Sent** status and clears its `order_id`.
@@ -66,6 +66,7 @@ The line items within a PO are protected by strict **Lifecycle Locks** once bill
 ## 5. Metadata & Auditing
 
 * **Internal Note** [Input]: Private comments for internal use.
+- **Attachments** [Input]: Standard file upload. Commonly used for storing scanned copies of PO documents.
 * **Active Status (is_active)** [System]: Boolean flag used for soft-deletion.
 
   * *Ripple:* Setting this value to `False` triggers a cascading deactivation of the **Order Registry**, including all linked **Invoices** and system-generated Write-offs.
