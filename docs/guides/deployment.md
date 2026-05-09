@@ -41,11 +41,8 @@ Edit the `.env` file to establish your unique system credentials.
     You must change the `INITIAL_ADMIN_PASSWORD` and generate a unique `SECRET_KEY`. To generate a high-entropy key, run the following command in your terminal:
     `python3 -c 'import secrets; print(secrets.token_hex(32))'`
 
-```bash
-nano .env
-```
 
-### Step 4: Launch the Fortress
+### Step 4: Launch the Codexmetry App
 Initialize the containers. The engine will automatically detect the empty database and perform the initial schema migration and system record seeding.
 
 ```bash

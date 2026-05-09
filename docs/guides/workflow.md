@@ -3,7 +3,7 @@
 The lifecycle typically begins with a **Quote**, your formal offer to a client.
 
 1.  **Drafting:** Select a Client and add Products from your catalog. The system automatically pulls default unit prices.
-2.  **Issuing:** Open the **Print Preview** and click **Issue**. The system generates a versioned PDF snapshot and attaches it to the record.
+2.  **Issuing:** Open the **Print Preview** and click **Issue**. The system generates a versioned PDF and attaches it to the record.
 3.  **Outcome:**
     *   **Draft:** Initial state while preparing the quote.
     *   **Sent:** Updated automatically upon issuance.
