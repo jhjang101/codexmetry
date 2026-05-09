@@ -580,6 +580,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../reports/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Financial Reporting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../maintenance/" class="md-nav__link">
         
   
@@ -702,7 +730,7 @@
   <span class="md-ellipsis">
     
   
-    Orders (CDX)
+    Order Registry (CDX)
   
 
     
@@ -723,7 +751,35 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/invoices.md" class="md-nav__link">
+      <a href="../../reference/purchase_orders/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Purchase Orders
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/invoices/" class="md-nav__link">
         
   
   
@@ -853,7 +909,7 @@
 <p>Once the Codexmetry environment is deployed, an Administrator must configure the system's identity and master data. This ensures that all generated documents and financial reports reflect the unique requirements of your business.</p>
 <hr />
 <h2 id="1-company-identity-branding">1. Company Identity &amp; Branding</h2>
-<p>Navigate to <strong>Settings</strong> to establish the "Face" of your Fortress. These fields are used to populate the headers and footers of all issued PDFs (Quotes, Invoices, and Expenses).</p>
+<p>Navigate to <strong>Settings</strong> to establish the identity of your business. These fields are used to populate the headers and footers of all issued PDFs (Quotes, Invoices, and Expenses).</p>
 <ul>
 <li><strong>Company Name &amp; Logo:</strong> Your official business name and brand.</li>
 <li><strong>Addresses:</strong> <ul>
@@ -869,10 +925,10 @@
 <p>Configure the core behavioral rules of the application under <strong>System Defaults</strong>:</p>
 <ul>
 <li><strong>Invoice Threshold:</strong> The maximum remaining balance at which an Invoice will automatically move to "Completed" status.</li>
-<li><strong>Doc Padding:</strong> Determines the length of the sequential part of your document IDs (e.g., Padding of 3 results in <code>CDX-2620011</code>).</li>
-<li><strong>Net Days (Invoices):</strong> Set default "Net Days" that will pre-populate new documents.</li>
-<li><strong>Quote Expiry (Days):</strong> Set default validity period for new quotes, used to automatically calculate the expiration date.</li>
-<li><strong>Default document Terms:</strong> Standard terms that pre-populates the "Terms &amp; Notes" section in PDFs (Quotes, Invoices, and Expenses).</li>
+<li><strong>Doc Padding:</strong> Determines the length of the sequential portion of your document IDs (e.g., Padding of 3 results in <code>CDX-2620011</code>).</li>
+<li><strong>Net Days (Invoices):</strong> Set the default payment terms that automatically populate new documents.</li>
+<li><strong>Quote Expiry (Days):</strong> Set the default validity period for new Quotes and automatically calculate the expiration date.</li>
+<li><strong>Default document Terms:</strong> Standard terms that automatically populate the "Terms &amp; Notes" section of PDFs (Quotes, Invoices, and Expenses).</li>
 </ul>
 <hr />
 <h2 id="3-defining-categories-lookups">3. Defining Categories (Lookups)</h2>
@@ -893,12 +949,12 @@
 </ul>
 <hr />
 <h2 id="4-building-the-catalog-products">4. Building the Catalog (Products)</h2>
-<p>The Product Catalog is the source of truth for your Sales documents.</p>
+<p>The Product Catalog serves as the system of record for your Sales documents.</p>
 <ul>
 <li><strong>Catalog Number:</strong> Your internal SKU or part number.</li>
-<li><strong>Default Unit Price:</strong> Pre-populates Quotes and Purchase Orders (can be overridden).</li>
+<li><strong>Default Unit Price:</strong> Pre-populates Quotes and Purchase Orders, but can be overridden when creating or editing documents. </li>
 <li><strong>Document Placement:</strong> <strong>(Critical)</strong><ul>
-<li><code>Standard Line Item</code>: Standard goods/services.</li>
+<li><code>Standard Line Item</code>: Standard goods or services.</li>
 <li><code>Shipping (Footer)</code>: Items assigned to this placement will appear in the "Shipping" section on PDFs.</li>
 <li><code>Sales Tax (Footer)</code>: Items assigned to this placement will appear in the "Sales Tax" section on PDFs.</li>
 </ul>

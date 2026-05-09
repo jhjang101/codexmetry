@@ -8,13 +8,13 @@
       
       
       
-        <link rel="canonical" href="https://jhjang101.github.io/codexmetry/0.1/guides/restore/">
+        <link rel="canonical" href="https://jhjang101.github.io/codexmetry/0.1/guides/reports/">
       
       
-        <link rel="prev" href="../maintenance/">
+        <link rel="prev" href="../workflow/">
       
       
-        <link rel="next" href="../../reference/orders/">
+        <link rel="next" href="../maintenance/">
       
       
         
@@ -25,7 +25,7 @@
     
     
       
-        <title>Restoration - Codexmetry</title>
+        <title>Financial Reporting - Codexmetry</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#restoration-disaster-recovery" class="md-skip">
+        <a href="#financial-reporting" class="md-skip">
           Skip to content
         </a>
       
@@ -115,7 +115,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Restoration
+              Financial Reporting
             
           </span>
         </div>
@@ -475,10 +475,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../reports/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Financial Reporting
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -494,6 +521,98 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-the-dual-perspective-lens" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. The Dual-Perspective Lens
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. The Dual-Perspective Lens">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#a-performance-statement-accrual-basis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A. Performance Statement (Accrual Basis)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#b-cash-flow-summary-cash-basis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        B. Cash Flow Summary (Cash Basis)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-validating-the-numbers-data-tables" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Validating the Numbers (Data Tables)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-historical-seasonal-trends" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Historical &amp; Seasonal Trends
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-performance-rankings-deep-analytics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Performance Rankings (Deep Analytics)
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -531,37 +650,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Restoration
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../restore/" class="md-nav__link">
         
   
   
@@ -577,98 +669,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#1-restoring-the-database-sql" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        1. Restoring the Database (SQL)
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="1. Restoring the Database (SQL)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#method-a-using-docker-exec-recommended" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Method A: Using docker exec (Recommended)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#method-b-using-local-psql" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Method B: Using Local psql
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#2-synchronize-auto-upgrade" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. Synchronize &amp; Auto-Upgrade
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#3-full-system-restoration-zip" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Full System Restoration (.zip)
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#4-post-restoration-checklist" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4. Post-Restoration Checklist
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -851,22 +851,22 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#1-restoring-the-database-sql" class="md-nav__link">
+  <a href="#1-the-dual-perspective-lens" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Restoring the Database (SQL)
+        1. The Dual-Perspective Lens
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="1. Restoring the Database (SQL)">
+    <nav class="md-nav" aria-label="1. The Dual-Perspective Lens">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#method-a-using-docker-exec-recommended" class="md-nav__link">
+  <a href="#a-performance-statement-accrual-basis" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Method A: Using docker exec (Recommended)
+        A. Performance Statement (Accrual Basis)
       
     </span>
   </a>
@@ -874,10 +874,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#method-b-using-local-psql" class="md-nav__link">
+  <a href="#b-cash-flow-summary-cash-basis" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Method B: Using Local psql
+        B. Cash Flow Summary (Cash Basis)
       
     </span>
   </a>
@@ -890,10 +890,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#2-synchronize-auto-upgrade" class="md-nav__link">
+  <a href="#2-validating-the-numbers-data-tables" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Synchronize &amp; Auto-Upgrade
+        2. Validating the Numbers (Data Tables)
       
     </span>
   </a>
@@ -901,10 +901,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#3-full-system-restoration-zip" class="md-nav__link">
+  <a href="#3-historical-seasonal-trends" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3. Full System Restoration (.zip)
+        3. Historical &amp; Seasonal Trends
       
     </span>
   </a>
@@ -912,10 +912,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#4-post-restoration-checklist" class="md-nav__link">
+  <a href="#4-performance-rankings-deep-analytics" class="md-nav__link">
     <span class="md-ellipsis">
       
-        4. Post-Restoration Checklist
+        4. Performance Rankings (Deep Analytics)
       
     </span>
   </a>
@@ -939,78 +939,47 @@
 
 
 
-<h1 id="restoration-disaster-recovery">Restoration &amp; Disaster Recovery</h1>
-<p>This guide provides the procedures for restoring the Codexmetry environment from a previously generated <strong>Database Snapshot (.sql)</strong> or <strong>Full System Archive (.zip)</strong>.</p>
-<h2 id="1-restoring-the-database-sql">1. Restoring the Database (SQL)</h2>
-<p>If you have a standard <code>.sql</code> snapshot located in your <code>backups/</code> directory, use one of the following  methods to inject the data into the PostgreSQL engine.</p>
-<h3 id="method-a-using-docker-exec-recommended">Method A: Using <code>docker exec</code> (Recommended)</h3>
-<p>This is the cleanest method as it uses the tools already inside the database container.</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># 1. Identify your backup file (e.g., codexmetry_db_20260427_153000.sql)</span>
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="c1"># 2. Run the injection command</span>
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-i<span class="w"> </span>codexmetry_db<span class="w"> </span>psql<span class="w"> </span>-U<span class="w"> </span>admin<span class="w"> </span>-d<span class="w"> </span>codexmetry<span class="w"> </span>&lt;<span class="w"> </span>./data/backups/your_backup_file.sql
-</span></code></pre></div>
-<h3 id="method-b-using-local-psql">Method B: Using Local psql</h3>
-<p>Use this method if you have the PostgreSQL client installed on your host machine.</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>psql<span class="w"> </span>-h<span class="w"> </span>localhost<span class="w"> </span>-p<span class="w"> </span><span class="m">5432</span><span class="w"> </span>-U<span class="w"> </span>admin<span class="w"> </span>-d<span class="w"> </span>codexmetry<span class="w"> </span>&lt;<span class="w"> </span>./data/backups/your_backup_file.sql
-</span></code></pre></div>
-<h2 id="2-synchronize-auto-upgrade">2. Synchronize &amp; Auto-Upgrade</h2>
-<div class="admonition info">
-<p class="admonition-title">Automatic Schema Alignment</p>
-<p>After a restoration, your database version might be behind your current application code. Codexmetry features a self-healing entrypoint that automatically aligns the restored data with the latest system requirements.</p>
-</div>
-<p>To trigger the synchronization and apply any missing database migrations:</p>
-<ol>
-<li>
-<p><strong>Restart the System:</strong>
-    <div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>docker<span class="w"> </span>compose<span class="w"> </span>restart
-</span></code></pre></div></p>
-</li>
-<li>
-<p><strong>Verify the Sync:</strong>
-    Monitor the logs to ensure the migration completed successfully:
-    <div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>docker<span class="w"> </span>compose<span class="w"> </span>logs<span class="w"> </span>-f<span class="w"> </span>app
-</span></code></pre></div>
-    <em>You should see "Applying database migrations..." followed by "PostgreSQL started".</em></p>
-</li>
-</ol>
+<h1 id="financial-reporting">Financial Reporting</h1>
+<p>The Reports module is the "Truth Engine" of Codexmetry. It provides a real-time metrics of your business health by separating operational performance from actual cash movement.</p>
 <hr />
-<h2 id="3-full-system-restoration-zip">3. Full System Restoration (.zip)</h2>
-<p>To restore from a <strong>Full System Archive</strong> (which includes both the database and physical attachments like product images and invoice PDFs):</p>
-<ol>
-<li>
-<p><strong>Unzip the Archive:</strong>
-    Extract the contents on your host machine. You will see a <code>.sql</code> file and an <code>uploads/</code> folder.</p>
-</li>
-<li>
-<p><strong>Restore Uploads:</strong>
-    Copy the extracted <code>uploads/</code> folder into your mapped host directory:
-    <div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>cp<span class="w"> </span>-r<span class="w"> </span>./extracted_path/uploads/*<span class="w"> </span>./data/uploads/
-</span></code></pre></div></p>
-</li>
-<li>
-<p><strong>Restore Database:</strong>
-    Follow the SQL injection steps in <strong>Section 1</strong> using the extracted <code>.sql</code> file.</p>
-</li>
-<li>
-<p><strong>Finalize &amp; Sync:</strong>
-    Perform the system restart to align the data:
-    <div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>docker<span class="w"> </span>compose<span class="w"> </span>restart
-</span></code></pre></div></p>
-</li>
-<li>
-<p><strong>Fix Asset Permissions:</strong>
-    If you encounter "Permission Denied" errors when viewing attachments, reset the ownership of the asset directories:
-    <div class="language-bash highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>sudo<span class="w"> </span>chown<span class="w"> </span>-R<span class="w"> </span><span class="nv">$USER</span>:<span class="nv">$USER</span><span class="w"> </span>./data/uploads<span class="w"> </span>./data/backups<span class="w"> </span>./data/logs
-</span></code></pre></div></p>
-</li>
-</ol>
-<hr />
-<h2 id="4-post-restoration-checklist">4. Post-Restoration Checklist</h2>
-<p>Perform these checks to ensure the "Fortress" is stable:</p>
+<h2 id="1-the-dual-perspective-lens">1. The Dual-Perspective Lens</h2>
+<p>Codexmetry reports each month through two distinct accounting perspectives. Understanding the difference between them is essential for accurate business management.</p>
+<h3 id="a-performance-statement-accrual-basis">A. Performance Statement (Accrual Basis)</h3>
+<p>This view tracks the value of <strong>Issued Documents</strong>. It reflects the economic performance of your business regardless of whether payment has been received.</p>
 <ul>
-<li><strong>Order Hub:</strong> Open an existing deal and verify the <strong>Order Tree</strong> accurately displays the document chain.</li>
-<li><strong>Asset Linkage:</strong> Open an older Invoice and verify that the generated PDF snapshot opens correctly.</li>
-<li><strong>Version Verification:</strong> Run <code>docker exec -it codexmetry_app flask db current</code> to confirm the database is at the latest migration ID.</li>
+<li><strong>Revenue</strong>: Sum of items on Invoices with an "Open" or "Completed" status.</li>
+<li><strong>COGS/OPEX</strong>: Sum of all non-draft Expenses.</li>
+<li><strong>Net Income</strong>: Your total profitability for the month.</li>
+</ul>
+<h3 id="b-cash-flow-summary-cash-basis">B. Cash Flow Summary (Cash Basis)</h3>
+<p>This view tracks the actual <strong>Movement of Funds</strong>. It reflects your business’s liquidity and overall cash position.</p>
+<ul>
+<li><strong>Payments Received</strong>: Actual cash received into the bank.</li>
+<li><strong>Expenses Paid</strong>: Only expenses with a "Completed" status.</li>
+<li><strong>Net Cash Income</strong>: The cash remaining after all settled transactions.</li>
+</ul>
+<hr />
+<h2 id="2-validating-the-numbers-data-tables">2. Validating the Numbers (Data Tables)</h2>
+<p>Every metric in a Codexmetry report is backed by supporting data. Below the summary matrices, the system provides <strong>Detailed Data Tables</strong>.</p>
+<ul>
+<li><strong>Drill-down</strong>: If you see a high Revenue figure, you can scroll down to the "Revenue Audit" table to view the exact invoices contributing to that amount.</li>
+<li><strong>Integrity</strong>: Each row in the tables includes a direct link to the original document, ensuring that all high-level reports remain fully traceable to their source transactions.</li>
+</ul>
+<hr />
+<h2 id="3-historical-seasonal-trends">3. Historical &amp; Seasonal Trends</h2>
+<p>Navigate to the <strong>History</strong> tabs to analyze your business performance over a 60-month horizon.</p>
+<ul>
+<li><strong>Linear Growth</strong>: Track your Revenue vs Net Income month-over-month, quater-over-quater, and year-over-year to identify long-term trends.</li>
+<li><strong>Seasonal Performance</strong>: Select the "Seasonal Performance" or "Seasonal Cumulative" view mode to overlay data from the last three years. This helps identify recurring trends (e.g., "Is April always our slowest month?").</li>
+<li><strong>Plot Aggregation</strong>: Use the legend selector to show or hide KPIs in to the chart for high-level executive analysis.</li>
+</ul>
+<hr />
+<h2 id="4-performance-rankings-deep-analytics">4. Performance Rankings (Deep Analytics)</h2>
+<p>The analytics panes provide rankings of your most significant business drivers.</p>
+<ul>
+<li><strong>Client Performance</strong>: Rank clients by either total revenue (Performance) or total cash received (Liquidity).</li>
+<li><strong>Product Analytics</strong>: View your "Market Mix" to identify which product categories represent the largest share of your sales.</li>
+<li><strong>Expense Breakdown</strong>: Analyze your spending mix to determine which vendors or cost categories (COGS vs OPEX) are consume the most resources.</li>
 </ul>
 
 

@@ -510,10 +510,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#step-4-launch-the-fortress" class="md-nav__link">
+  <a href="#step-4-launch-the-codexmetry-app" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Step 4: Launch the Fortress
+        Step 4: Launch the Codexmetry App
       
     </span>
   </a>
@@ -621,6 +621,34 @@
     
   
     The Document Lifecycle
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reports/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Financial Reporting
   
 
     
@@ -763,7 +791,7 @@
   <span class="md-ellipsis">
     
   
-    Orders (CDX)
+    Order Registry (CDX)
   
 
     
@@ -784,7 +812,35 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/invoices.md" class="md-nav__link">
+      <a href="../../reference/purchase_orders/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Purchase Orders
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/invoices/" class="md-nav__link">
         
   
   
@@ -895,10 +951,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#step-4-launch-the-fortress" class="md-nav__link">
+  <a href="#step-4-launch-the-codexmetry-app" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Step 4: Launch the Fortress
+        Step 4: Launch the Codexmetry App
       
     </span>
   </a>
@@ -1005,11 +1061,9 @@
 <p>You must change the <code>INITIAL_ADMIN_PASSWORD</code> and generate a unique <code>SECRET_KEY</code>. To generate a high-entropy key, run the following command in your terminal:
 <code>python3 -c 'import secrets; print(secrets.token_hex(32))'</code></p>
 </div>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>nano<span class="w"> </span>.env
-</span></code></pre></div>
-<h3 id="step-4-launch-the-fortress">Step 4: Launch the Fortress</h3>
+<h3 id="step-4-launch-the-codexmetry-app">Step 4: Launch the Codexmetry App</h3>
 <p>Initialize the containers. The engine will automatically detect the empty database and perform the initial schema migration and system record seeding.</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>docker<span class="w"> </span>compose<span class="w"> </span>up<span class="w"> </span>-d
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>docker<span class="w"> </span>compose<span class="w"> </span>up<span class="w"> </span>-d
 </span></code></pre></div>
 <hr />
 <h2 id="3-post-deployment-verification">3. Post-Deployment Verification</h2>
@@ -1017,7 +1071,7 @@
 <ol>
 <li><strong>UI Access:</strong> Navigate to <code>http://localhost:5001</code>.</li>
 <li><strong>Logs:</strong> Check the system initialization log for any database errors:
-    <div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>docker<span class="w"> </span>compose<span class="w"> </span>logs<span class="w"> </span>-f<span class="w"> </span>app
+    <div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>docker<span class="w"> </span>compose<span class="w"> </span>logs<span class="w"> </span>-f<span class="w"> </span>app
 </span></code></pre></div></li>
 <li><strong>Root Login:</strong> Use the credentials defined in your <code>.env</code> file to access the Admin dashboard.</li>
 </ol>
@@ -1058,7 +1112,7 @@
 <div class="admonition warning">
 <p class="admonition-title">Permissions &amp; Data Access</p>
 <p>If the application cannot save uploads or generates "Permission Denied" errors in the logs, synchronize the host directory permissions for the <strong>asset subdirectories</strong> only:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>sudo<span class="w"> </span>chown<span class="w"> </span>-R<span class="w"> </span><span class="nv">$USER</span>:<span class="nv">$USER</span><span class="w"> </span>./data
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>sudo<span class="w"> </span>chown<span class="w"> </span>-R<span class="w"> </span><span class="nv">$USER</span>:<span class="nv">$USER</span><span class="w"> </span>./data
 </span></code></pre></div>
 <div class="admonition danger">
 <p class="admonition-title">Database Protection</p>
@@ -1092,7 +1146,7 @@
 <hr />
 <h2 id="6-complete-system-reset-destructive">6. Complete System Reset (Destructive)</h2>
 <p>In scenarios where a total environment wipe is required (e.g., preparing for a fresh production deployment or clearing a test environment), use the following command:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>docker<span class="w"> </span>compose<span class="w"> </span>down<span class="w"> </span>-v
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>docker<span class="w"> </span>compose<span class="w"> </span>down<span class="w"> </span>-v
 </span></code></pre></div>
 <div class="admonition danger">
 <p class="admonition-title">Critical Data Warning</p>

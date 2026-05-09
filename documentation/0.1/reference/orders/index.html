@@ -14,6 +14,8 @@
         <link rel="prev" href="../../guides/restore/">
       
       
+        <link rel="next" href="../purchase_orders/">
+      
       
         
       
@@ -23,7 +25,7 @@
     
     
       
-        <title>Orders (CDX) - Codexmetry</title>
+        <title>Order Registry (CDX) - Codexmetry</title>
       
     
     
@@ -76,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#orders-reference" class="md-skip">
+        <a href="#order-registry-cdx-technical-reference" class="md-skip">
           Skip to content
         </a>
       
@@ -113,7 +115,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Orders (CDX)
+              Order Registry (CDX)
             
           </span>
         </div>
@@ -471,6 +473,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../guides/reports/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Financial Reporting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../guides/maintenance/" class="md-nav__link">
         
   
@@ -600,6 +630,24 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Order Registry (CDX)
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
@@ -607,7 +655,7 @@
   <span class="md-ellipsis">
     
   
-    Orders (CDX)
+    Order Registry (CDX)
   
 
     
@@ -616,6 +664,69 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-core-identity-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Core Identity Fields
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-relationship-mapping" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Relationship Mapping
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-aggregate-metrics-the-order-history" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Aggregate Metrics (The Order History)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-forensic-audit-full-order-timeline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Forensic Audit (Full Order Timeline)
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -629,7 +740,35 @@
   
   
     <li class="md-nav__item">
-      <a href="../invoices.md" class="md-nav__link">
+      <a href="../purchase_orders/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Purchase Orders
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../invoices/" class="md-nav__link">
         
   
   
@@ -677,6 +816,58 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-core-identity-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Core Identity Fields
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-relationship-mapping" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Relationship Mapping
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-aggregate-metrics-the-order-history" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Aggregate Metrics (The Order History)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-forensic-audit-full-order-timeline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Forensic Audit (Full Order Timeline)
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -692,7 +883,60 @@
 
 
 
-<h1 id="orders-reference">Orders Reference</h1>
+<h1 id="order-registry-cdx-technical-reference">Order Registry (CDX) Technical Reference</h1>
+<p>The Order Registry, represented by the <strong>CDX</strong> prefix, is the immutable anchor for a confirmed business deal. It provides a unified identity that bridges the gap between Sales (Quotes/POs), Fulfillment (Invoices), and Accounting (Payments/Expenses).</p>
+<hr />
+<h2 id="1-core-identity-fields">1. Core Identity Fields</h2>
+<ul>
+<li><strong>Order Number (CDX)</strong> [System]: The unique, permanent identifier for the project. <ul>
+<li><em>Logic:</em> Follows the <code>CDX-YYQSSSV</code> format (Year, Quarter, Sequence, Checksum). </li>
+<li><em>Integrity:</em> Generated automatically upon the creation of a Purchase Order. Once assigned, it cannot be manually modified.</li>
+</ul>
+</li>
+<li><strong>Creation Date</strong> [System]: The UTC timestamp of when the deal was first initialized in the registry.</li>
+<li><strong>Active Status (is_active)</strong> [System]: A boolean flag used for soft-deletion.<ul>
+<li><em>Ripple:</em> Setting this to <code>False</code> (Archiving) effectively deactivates the entire deal chain, including all linked Invoices and system-generated Write-offs.</li>
+<li><em>Exception:</em> <strong>Payments</strong> and <strong>Expenses</strong> associated with the deal are <strong>not</strong> automatically archived. Because these represent actual cash movements and vendor liabilities, they remain active to preserve the accuracy of the general ledger and cash-basis reports. If these financial records also need to be removed, they must be archived manually within their respective modules.</li>
+</ul>
+</li>
+</ul>
+<hr />
+<h2 id="2-relationship-mapping">2. Relationship Mapping</h2>
+<p>The Order Registry maintains a 1-to-N relationship with every document type in the system. These links are established via the <code>order_id</code> foreign key:</p>
+<ul>
+<li><strong>Linked Quote</strong>: The original proposal that led to the deal. (1-to-1)</li>
+<li><strong>Linked Purchase Order</strong>: The primary contract governing the deal. (1-to-1)</li>
+<li><strong>Child Invoices</strong>: Every invoice issued against the deal's Purchase Order.</li>
+<li><strong>Child Payments</strong>: Every cash receipt (linked or unlinked) associated with the deal.</li>
+<li><strong>Child Expenses</strong>: Every operational cost linked to the deal for profit tracking.</li>
+<li><strong>Child Adjustments</strong>: Every non-operating correction (like Write-offs) affecting the deal's balance.</li>
+</ul>
+<hr />
+<h2 id="3-aggregate-metrics-the-order-history">3. Aggregate Metrics (The Order History)</h2>
+<p>The Registry does not store financial values directly. Instead, it uses dynamic properties to aggregate data from all child documents in real time. These metrics power the <strong>Order History</strong> visualization:</p>
+<ul>
+<li><strong>PO Value</strong> [Property]: The total amount of the linked Purchase Order (the original contract value).</li>
+<li><strong>To Be Invoiced</strong> [Property]: The remaining balance to billed from the Purchase Order. <ul>
+<li><em>Math:</em> (Value of unfulfilled PO line items) minus (Unapplied Credit Pool). </li>
+<li><em>Logic:</em> This field effectively represents "Backlog" for the Purchase Order.</li>
+</ul>
+</li>
+<li><strong>Total Invoiced (Balance)</strong> [Property]: A dual metric representing both the total amount officially billed and the portion still outstanding.<ul>
+<li><em>Total Invoiced:</em> The sum of "Total Due" across all active invoices.</li>
+<li><em>Balance:</em> The sum of "Invoice Balances" (Total Due - Payments) across those same invoices.</li>
+</ul>
+</li>
+<li><strong>Total Received</strong> [Property]: The sum of all active payments received for this Order, including both invoice-linked payments and unapplied prepayments.</li>
+<li><strong>Total Linked Expenses</strong> [Property]: The sum of all active operational costs linked to this CDX number. This is the primary metric for tracking project-specific profitability (Job Costing).</li>
+<li><strong>Total Linked Adjustments</strong> [Property]: The sum of all non-operational gains or losses linked to the deal. This includes manual corrections and automated system write-offs.</li>
+</ul>
+<hr />
+<h2 id="4-forensic-audit-full-order-timeline">4. Forensic Audit (Full Order Timeline)</h2>
+<p>The Order Registry maintains a dedicated <strong>Audit Timeline</strong> that differs from standard module logs:</p>
+<ul>
+<li><strong>Nested History</strong>: The Full Order Timeline captures not only changes to the CDX record itself but also surfaces every action performed on its child documents.</li>
+<li><strong>Parent-Child Map</strong>: If an Admin archives a Purchase Order, the Registry log shows the primary action and the resulting "System Ripples" (e.g., the automatic archiving of linked Invoices) as a single, connected event chain.</li>
+</ul>
 
 
 

@@ -8,8 +8,10 @@
       
       
       
-        <link rel="canonical" href="https://jhjang101.github.io/codexmetry/0.1/guides/logic/">
+        <link rel="canonical" href="https://jhjang101.github.io/codexmetry/0.1/reference/invoices/">
       
+      
+        <link rel="prev" href="../purchase_orders/">
       
       
       
@@ -21,7 +23,7 @@
     
     
       
-        <title>The Document Lifecycle - Codexmetry</title>
+        <title>Invoices - Codexmetry</title>
       
     
     
@@ -74,7 +76,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#the-document-lifecycle" class="md-skip">
+        <a href="#invoices-technical-reference" class="md-skip">
           Skip to content
         </a>
       
@@ -111,7 +113,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              The Document Lifecycle
+              Invoices
             
           </span>
         </div>
@@ -233,7 +235,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../deployment/" class="md-tabs__link">
+        <a href="../../guides/deployment/" class="md-tabs__link">
           
   
   
@@ -249,11 +251,13 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
-        <a href="../../reference/orders/" class="md-tabs__link">
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../orders/" class="md-tabs__link">
           
   
   
@@ -383,7 +387,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../deployment/" class="md-nav__link">
+      <a href="../../guides/deployment/" class="md-nav__link">
         
   
   
@@ -411,7 +415,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../setup/" class="md-nav__link">
+      <a href="../../guides/setup/" class="md-nav__link">
         
   
   
@@ -439,7 +443,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../workflow/" class="md-nav__link">
+      <a href="../../guides/workflow/" class="md-nav__link">
         
   
   
@@ -467,7 +471,35 @@
   
   
     <li class="md-nav__item">
-      <a href="../maintenance/" class="md-nav__link">
+      <a href="../../guides/reports/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Financial Reporting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/maintenance/" class="md-nav__link">
         
   
   
@@ -495,7 +527,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../restore/" class="md-nav__link">
+      <a href="../../guides/restore/" class="md-nav__link">
         
   
   
@@ -527,26 +559,31 @@
       
   
   
+    
   
   
+  
     
     
     
     
+      
+        
+        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
         
           
-          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
             
   
   
@@ -564,7 +601,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_3">
             <span class="md-nav__icon md-icon"></span>
             
@@ -582,14 +619,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/orders/" class="md-nav__link">
+      <a href="../orders/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Orders (CDX)
+    Order Registry (CDX)
   
 
     
@@ -610,7 +647,62 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/invoices.md" class="md-nav__link">
+      <a href="../purchase_orders/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Purchase Orders
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Invoices
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -626,6 +718,81 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-identification-relationship-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Identification &amp; Relationship Fields
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-scheduling-logistics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Scheduling &amp; Logistics
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-financial-logic-status" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Financial Logic &amp; Status
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-line-item-details-sub-form" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Line Item Details (Sub-form)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-metadata-auditing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Metadata &amp; Auditing
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -665,10 +832,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#1-order-registry-codex" class="md-nav__link">
+  <a href="#1-identification-relationship-fields" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Order Registry (Codex)
+        1. Identification &amp; Relationship Fields
       
     </span>
   </a>
@@ -676,10 +843,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#2-the-proposal-quotes" class="md-nav__link">
+  <a href="#2-scheduling-logistics" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. The Proposal (Quotes)
+        2. Scheduling &amp; Logistics
       
     </span>
   </a>
@@ -687,10 +854,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#3-the-commitment-purchase-orders" class="md-nav__link">
+  <a href="#3-financial-logic-status" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3. The Commitment (Purchase Orders)
+        3. Financial Logic &amp; Status
       
     </span>
   </a>
@@ -698,10 +865,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#4-the-fulfillment-invoices" class="md-nav__link">
+  <a href="#4-line-item-details-sub-form" class="md-nav__link">
     <span class="md-ellipsis">
       
-        4. The Fulfillment (Invoices)
+        4. Line Item Details (Sub-form)
       
     </span>
   </a>
@@ -709,74 +876,13 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#5-the-settlement-payments" class="md-nav__link">
+  <a href="#5-metadata-auditing" class="md-nav__link">
     <span class="md-ellipsis">
       
-        5. The Settlement (Payments)
+        5. Metadata &amp; Auditing
       
     </span>
   </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#6-operational-spend-expenses" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        6. Operational Spend (Expenses)
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#7-non-operational-items-adjustments" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        7. Non-Operational Items (Adjustments)
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#6-shortcuts-skipping-steps" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        6. Shortcuts (Skipping Steps)
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#7-lifecycle-visibility" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        7. Lifecycle Visibility
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="7. Lifecycle Visibility">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#technical-note" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Technical Note:
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -797,91 +903,92 @@
 
 
 
-<h1 id="the-document-lifecycle">The Document Lifecycle</h1>
-<p>Codexmetry is designed to manage the "Chain of Documents" for a business deal. While each module can be used independently, the system is at its most powerful when following the <strong>Golden Path</strong> of document progression.</p>
-<h2 id="1-order-registry-codex">1. Order Registry (Codex)</h2>
-<p>The core of the system is the <strong>Order Registry</strong> also know as <strong>Codex</strong>. This provides a unique identity (the <strong>CDX</strong> number) that links every Quote, Purchase Order, Invoice(s), Payment(s), Expense(s), and Adjustment(s) together. The Codex is completly managed by system and is visible in detail view in any linked document.</p>
+<h1 id="invoices-technical-reference">Invoices Technical Reference</h1>
+<p>The Invoices module manages the official payment requests and records the fulfillment of goods or services. It is the primary driver of the system's <strong>Accrual Revenue</strong> metrics and acts as the gatekeeper for the <strong>Credit Pool</strong>.</p>
+<hr />
+<h2 id="1-identification-relationship-fields">1. Identification &amp; Relationship Fields</h2>
 <ul>
-<li><strong>Quotes</strong> exist outside the registry initially before linked to POs.</li>
-<li>The <strong>Registry ID</strong> is born the moment a Quote is accepted or a manual Purchase Order is created.</li>
+<li><strong>Client</strong> [Input]: The primary account holder for the deal. Selection filters the available Purchase Orders and defaults the "Ship To" address on the PDF.</li>
+<li><strong>Purchase Order (PO) Number</strong> [Input]: The source document for the invoice. <ul>
+<li><em>Ripple:</em> Selecting a PO automatically prefills the <strong>Bill To</strong>, <strong>Customer PO #</strong>, <strong>Terms</strong>, and all remaining unbilled <strong>Line Items</strong>.</li>
+</ul>
+</li>
+<li><strong>Order Registry (CDX)</strong> [System]: Inherited automatically from the linked Purchase Order. This immutable link ensures the invoice is correctly grouped in the Order History and financial reports.</li>
+<li><strong>Invoice Number</strong> [Input/System]: The unique identifier for the document.<ul>
+<li><em>Logic:</em> Defaults to the <code>I-YYQSSSV</code> format (Year, Quarter, Sequence, Checksum) but allows manual override for custom numbering schemes.</li>
+</ul>
+</li>
+<li><strong>Customer PO #</strong> [Input]: A secondary reference field, typically used to store the client's internal tracking number. Inherited from the PO.</li>
+<li><strong>Bill To</strong> [Input]: The specific department or entity within the client's organization responsible for payment. Defaults to the PO's Bill To selection.</li>
 </ul>
 <hr />
-<h2 id="2-the-proposal-quotes">2. The Proposal (Quotes)</h2>
-<p>The lifecycle typically begins with a <strong>Quote</strong>. This is your formal offer to a client.</p>
-<ol>
-<li><strong>Drafting:</strong> Add products and services. The system pulls default prices from your catalog.</li>
-<li><strong>Issuing:</strong> Clicking "Issue" in print preview automatically generates a versioned PDF snapshot.</li>
-<li><strong>Status:</strong> Until a Quote is linked to a Purchase Order, it remains a "Sent" and does not consume a CDX registry number.</li>
-</ol>
-<hr />
-<h2 id="3-the-commitment-purchase-orders">3. The Commitment (Purchase Orders)</h2>
-<p>When a client accepts a Quote, you convert it into a <strong>Purchase Order (PO)</strong>.</p>
+<h2 id="2-scheduling-logistics">2. Scheduling &amp; Logistics</h2>
 <ul>
-<li><strong>Conversion:</strong> Converting a Quote automatically copies all line items and links the Quote to the new Order Registry.</li>
-<li><strong>The Anchor:</strong> This is the legal foundation of the order. Once a PO is created, a unique <strong>CDX</strong> number is assigned, populating the linked documents and timeline.</li>
+<li><strong>Invoice Date</strong> [Input]: The date the fulfillment is recorded. Defaults to the current business day.<ul>
+<li><em>Ripple:</em> This date determines which <strong>Monthly Statement</strong> the revenue is attributed to.</li>
+</ul>
+</li>
+<li><strong>Terms (Net Days)</strong> [Input]: The number of days until payment is due.<ul>
+<li><em>Logic:</em> Defaults to the PO override or the global system default (e.g., 30 days). Used to calculate the <strong>Due Date</strong> on the printed PDF.</li>
+</ul>
+</li>
+<li><strong>Shipping Carrier</strong> [Input]: The service provider used for delivery. <ul>
+<li><em>Ripple:</em> Selecting a carrier enables the <strong>Ship Date</strong> and <strong>Tracking Number</strong> fields.</li>
+</ul>
+</li>
+<li><strong>Ship Date</strong> [Input]: The date the goods left the facility. Defaults to the current date upon carrier selection.</li>
+<li><strong>Tracking Number</strong> [Input]: The carrier-provided reference for the shipment.</li>
 </ul>
 <hr />
-<h2 id="4-the-fulfillment-invoices">4. The Fulfillment (Invoices)</h2>
-<p>Invoices represent the fulfillment of goods or the completion of services.</p>
+<h2 id="3-financial-logic-status">3. Financial Logic &amp; Status</h2>
 <ul>
-<li><strong>Source Driven:</strong> Every Invoice must stem from an active Purchase Order.</li>
-<li><strong>Partial Billing:</strong> You can invoice only a portion of a PO. The system tracks "Remaining Quantity" and prefill the line items with the next invoice.</li>
-<li><strong>Credit Utilization:</strong> If a client has a remining credit balance to the PO, you can apply it here using the <a href="../reference/invoices.md#the-credit-pool">Credit Pool logic</a>.</li>
+<li><strong>Status</strong> [System/Input]: The current lifecycle stage of the document.<ul>
+<li><code>Draft</code>: Work-in-progress. Items do not yet count toward PO fulfillment or Revenue reports.</li>
+<li><code>Open</code>: Issued to the client. Revenue is now recognized in Accrual reports.</li>
+<li><code>Completed</code>: Payment received. The balance is settled. </li>
 </ul>
-<hr />
-<h2 id="5-the-settlement-payments">5. The Settlement (Payments)</h2>
-<p>Payments represent the actual arrival of cash into the business.</p>
-<ul>
-<li><strong>Direct Link:</strong> Payments are linked to specific Invoices to "close the loop."</li>
-<li><strong>Prepayments:</strong> You can record a payment against a Purchase Order <strong>before</strong> an invoice has been issued. </li>
-<li><strong>Automation:</strong> When the unpaid balance of an Invoice falls below your global <strong>Invoice Threshold</strong>, the system automatically moves the status to "Completed." The system <strong>automatically generates a Write-off Adjustment</strong> for the underpayment gap.</li>
-<li><strong>Self-Healing:</strong> If a payment is archived, the linked Invoice and Purchase Order will automatically "re-open" to reflect the missing funds.</li>
+</li>
+<li><strong>Total Amount</strong> [System]: The raw mathematical sum of all line items (in cents). <ul>
+<li><em>Logic:</em> This value can be <strong>negative</strong> if the "Applied Deposit" line item exceeds the value of billed products.</li>
 </ul>
-<hr />
-<h2 id="6-operational-spend-expenses">6. Operational Spend (Expenses)</h2>
-<p>Expenses represent the costs incurred to run your business or fulfill a specific order. </p>
-<ul>
-<li><strong>Order Cost:</strong> Expenses can be linked to a <strong>CDX Order Registry</strong>. This allows you to track the exact profitability by comparing "Payments Received" vs "Costs Paid" for that specific order.</li>
-<li><strong>Itemized Records:</strong> Expenses use manual text descriptions for line items, allowing you to record specific vendor details without needing a pre-defined product in your catalog.</li>
-<li><strong>Issuance:</strong> Much like Quotes and Invoices, an Expense can be "Issued" to generate a professional PDF. This can serve as a Purchase Order you send out to your vendors.</li>
-<li><strong>Status Management:</strong> <ul>
-<li><code>Draft</code>: Planning/Estimating costs.</li>
-<li><code>Open</code>: Committed cost, but payment not yet finalized.</li>
-<li><code>Completed</code>: The expense is fully paid and settled.</li>
+</li>
+<li><strong>Total Due</strong> [Property]: The actual billable amount requested from the client.<ul>
+<li><em>Math:</em> Calculated as <code>max(0, Total Amount)</code>. It is never negative.</li>
+</ul>
+</li>
+<li><strong>Remaining Credit</strong> [Property]: If the total of items is negative (meaning more deposit was applied than goods billed), the excess is represented here.</li>
+<li><strong>Balance</strong> [Property]: The amount remaining to be paid.<ul>
+<li><em>Math:</em> <code>Total Due</code> minus <code>Sum of Active Payments</code>. </li>
+<li><em>Ripple:</em> If this value falls below the <strong>Invoice Threshold</strong>, the system automatically triggers the "Completed" status and generates a <strong>Write-off Adjustment</strong>.</li>
 </ul>
 </li>
 </ul>
 <hr />
-<h2 id="7-non-operational-items-adjustments">7. Non-Operational Items (Adjustments)</h2>
-<p>Adjustments are used to record financial events that do not involve traditional products or services. They are the "Final Reconciliation" tool of the system.</p>
+<h2 id="4-line-item-details-sub-form">4. Line Item Details (Sub-form)</h2>
 <ul>
-<li><strong>Financial Corrections:</strong> Use manual adjustments to record bank interest, annual fees, tax adjustments, or bad debt.</li>
-<li><strong>Dual-Nature:</strong> Adjustments support both positive values (Gains) and negative values (Losses).</li>
-<li><strong>System vs. Manual:</strong> <ul>
-<li><strong>Manual</strong>: Created by the user for general business gains/losses.</li>
-<li><strong>System-Generated</strong>: Automatically created by the <a href="../workflow/#5-the-settlement-payments">Payment Automation</a> when an invoice is completed with a minor balance gap.</li>
+<li><strong>Product</strong> [Input]: The SKU from your catalog. <ul>
+<li><em>Logic:</em> Selection pulls the default unit price and determines <strong>Document Placement</strong> (Standard, Tax, or Shipping).</li>
 </ul>
 </li>
-<li><strong>Reporting Impact:</strong> Adjustments are factored into your <strong>Net Income</strong> reports, ensuring that your financial metrics represent the absolute truth of your accounts, including non-operating items.</li>
+<li><strong>Description</strong> [Input]: Specific details for this line. Prefilled from the source PO line.</li>
+<li><strong>Quantity</strong> [Input]: The number of units being fulfilled. <ul>
+<li><em>Logic:</em> When generating from a PO, this defaults to the "Remaining Qty." </li>
 </ul>
-<h2 id="6-shortcuts-skipping-steps">6. Shortcuts (Skipping Steps)</h2>
-<p>Codexmetry is flexible. You are not required to start every deal with a Quote.</p>
-<ul>
-<li><strong>Manual PO:</strong> You can create a Purchase Order directly for a client. This will immediately generate a CDX registry number.</li>
-<li><strong>Direct Expense:</strong> You can record an Expense without linking it to a project if it is a general overhead cost (e.g., Office Supplies).</li>
-<li><strong>Independent Adjustment:</strong> You can record gains or losses (like Bank Interest) that have no relationship to a client or order.</li>
+</li>
+<li><strong>Unit Price</strong> [Input]: The price per unit in cents.</li>
+<li><strong>PO Line Link (po_item_id)</strong> [System]: A hidden database link to the specific row on the original Purchase Order.<ul>
+<li><em>Logic:</em> This link is <strong>critical</strong> for preventing "Double-Billing." It ensures the system knows exactly which units of a contract have been fulfilled.</li>
+</ul>
+</li>
 </ul>
 <hr />
-<h2 id="7-lifecycle-visibility">7. Lifecycle Visibility</h2>
-<p>At any point in the deal, you can view the <strong>Order Tree</strong> inside any document. This visualization provides a 360-degree view of the entire chain, showing exactly how much has been quoted, committed, invoiced, and received.
-```</p>
-<h3 id="technical-note">Technical Note:</h3>
-<ol>
-<li><strong>Registry Focus:</strong> I have emphasized the "Birth of the CDX" to help users understand why Quotes have a different numbering system than POs.</li>
-<li><strong>Inter-connectivity:</strong> I have included a cross-reference link to the "Credit Pool" section which we will define in the Technical Reference next.</li>
-<li><strong>Shortcuts:</strong> This section satisfies your requirement to explain how the system handles non-standard workflows.</li>
-</ol>
-<p><strong>Next Step:</strong> Are you ready to begin the <strong>Technical Reference</strong> (starting with the field-by-field breakdown for Invoices or Orders)? I await your permission.</p>
+<h2 id="5-metadata-auditing">5. Metadata &amp; Auditing</h2>
+<ul>
+<li><strong>Internal Note</strong> [Input]: Private comments for internal use. Not visible on the printed PDF.</li>
+<li><strong>Terms &amp; Notes</strong> [Input]: Displayed in print preview and included in the PDF footer. Defaults to global system terms on creation but is editable.</li>
+<li><strong>Version Counter</strong> [System]: Increments every time the document is "Issued." Used to track the version of issued PDFs in the attachment zone.</li>
+<li><strong>Created/Updated By</strong> [System]: Automatically tracks the user responsible for creating or modifying the record.</li>
+</ul>
 
 
 
