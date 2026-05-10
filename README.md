@@ -22,11 +22,10 @@ The name **Codexmetry** represents the dual-grip architecture of the system:
 
 ## Core Features
 
-*   **Registry-Centric Architecture:** All documents are tied to an immutable CDX anchor.
-*   **Forensic Audit Trails:** Nested logs capture the "Who, When, and Why" of every field-level change.
+*   **Registry-Centric Architecture:** All documents are tied to an immutable CDX anchor, ensuring a perfectly linked data structure.
+*   **Audit Trails:** Nested logs capture the "Who, When, and Why" of every field-level change.
 *   **Smart-Sync Automation:** Invoices and POs automatically update statuses based on payment fulfillment and threshold gaps.
-*   **Automated Reconciliation:** The system identifies underpayment gaps and generates automated write-offs to keep the ledger clean.
-
+*   **Deep Business Intelligence:** Comprehensive reporting suite featuring 60-month linear trends, dual-perspective statements (Accrual/Cash), and granular client/product performance analytics.
 
 ---
 
