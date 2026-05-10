@@ -6,12 +6,12 @@ The Order Registry, representing the **Codex** half of the system identity, prov
 
 ## 1. Core Identity Fields
 
-- **Order Number (CDX)** [System]: The unique, permanent identifier for the project.
+- **Order Number (CDX)** [System]: The unique, permanent [identifier](./settings.md#the-identifier-structure) for the project.
     *Logic:* Follows the `CDX-YYQSSSV` format (Year, Quarter, Sequence, Checksum).
   - *Integrity:* Generated automatically upon the creation of a Purchase Order. Once assigned, it cannot be manually modified.
 - **Creation Date** [System]: The UTC timestamp of when the deal was first initialized in the registry.
 - **Active Status (is_active)** [System]: A boolean flag used for soft-deletion.
-  - *Ripple:* Setting this to `False` (Archiving) effectively deactivates the entire deal chain, including all linked Invoices and system-generated Write-offs.
+  - *Ripple:* Setting this to `False` (Archiving) effectively deactivates the entire deal chain, including all linked Invoices and [system-generated Write-offs](./adjustments.md#4-system-protection-automation).
   - *Exception:* **Payments** and **Expenses** associated with the deal are **not** automatically archived. Because these represent actual cash movements and vendor liabilities, they remain active to preserve the accuracy of the general ledger and cash-basis reports. If these financial records also need to be removed, they must be archived manually within their respective modules.
 
 ---

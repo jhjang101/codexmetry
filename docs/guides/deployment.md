@@ -8,8 +8,8 @@ Before initializing the installation, ensure your host environment meets the fol
 
 - **[Docker](https://docs.docker.com/engine/){ target="_blank" } & Docker Compose:** Installed and running.
 - **Network Ports:**
-  - `5001`: Application Interface.
-  - `5432`: Internal Database Engine (isolated by default).
+    - `5001`: Application Interface.
+    - `5432`: Internal Database Engine (isolated by default).
 - **Architecture:** x86_64 or ARM64 (PostgreSQL 17 compatible).
 
 ---

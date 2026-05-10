@@ -22,7 +22,7 @@ The Purchase Order (PO) represents the formal commitment between the business an
 
 - **PO Date** [Input]: The legal date of the contract. Defaults to the current business day.
 - **PO Type** [Input]: A categorical lookup used to classify orders (e.g., Service, Product, Government).
-- **Terms (Net Days)** [Input]: Defaults to the global payment terms but can be overridden for this specific PO.
+- **Terms (Net Days)** [Input]: Defaults to the [global payment terms](./settings.md#c-transactional-defaults) but can be overridden for this specific PO.
   - *Ripple:* This value is inherited by every Invoice created from the PO.
 - **Status** [System]: The three-stage lifecycle of the PO:
   - `Open`: Items remain to be fulfilled and invoiced.
@@ -51,7 +51,7 @@ The line items within a PO are protected by strict **Lifecycle Locks** once bill
 - **Quantity:**
   - *Quantity Floor:* A line item’s quantity cannot be reduced below its "Allocated Quantity" (the total units already assigned to active Invoices).
 - **Remaining Items** [Property]: A dynamic calculation of all remaining billable items.
-  - *Automation:* If the deal contains a **Remaining Credit** balance, the system automatically adds an "Applied Deposit" line item to suggest credit consumption on the next Invoice.
+  - *Automation:* If the PO contains a [**Remaining Credit**](#3-financial-metrics) balance, the system automatically adds an "[Applied Deposit](./products.md#4-system-products-internal-logic)" line item to suggest credit consumption on the next Invoice.
 
 ---
 

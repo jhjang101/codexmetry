@@ -8,7 +8,7 @@ The Adjustments module manages non-operational financial events (e.g., Bank Inte
 
 - **Description** [Input]: A required label for the transaction (e.g., "Monthly Bank Interest").
 
-- **Adjustment Number** [Input/System]: The unique identifier for the record.
+- **Adjustment Number** [Input/System]: The unique [identifier](./settings.md#the-identifier-structure) for the record.
   - *Logic:* Defaults to the `A-YYQSSSV` format (Year, Quarter, Sequence, Checksum), but allows manual override for custom numbering schemes.
   - *Exception:* Manual overrides are permitted only for non-system records.
 - **Adjustment Category** [Input]: The classification of the event.
@@ -25,7 +25,7 @@ Adjustments can exist independently or be anchored to a specific deal to maintai
 - **Link to Client (Optional)** [Input]: Associates the gain or loss to a specific client account.
 - **Link to PO (Optional)** [Input]: Associates the adjustment to a specific Purchase Order.
   - *Ripple:* Selecting a Purchase Order automatically prefills the **Client** and **Order Registry (CDX)** links.
-- **Link to Invoice (Optional)** [System]: Associated primarily with automated write-offs. Links the adjustment to a specific Invoice.
+- **Link to Invoice (Optional)** [System]: Associated primarily with [automated write-offs](#4-system-protection-automation). Links the adjustment to a specific Invoice.
 - **Order Registry (CDX)** [System]: The permanent anchor for the order's history and metrics.
   - *Logic:* Inherited from the linked PO or Invoice. Required for the adjustment to appear in the "Total Linked Adjustments" metric within the **Order History**.
 
@@ -35,8 +35,8 @@ Adjustments can exist independently or be anchored to a specific deal to maintai
 
 - **Amount** [Input]: The value of the adjustment, recorded in cents.
   - *Logic:* Supports **Positive** values (Gains/Income) and **Negative** values (Losses/Write-offs).
-  - *Perspective Ripple (Accrual):* All active adjustments are aggregated into **Net Income**.
-  - *Perspective Ripple (Cash):* Only **Manual** adjustments are aggregated into **Net Cash**. System-generated write-offs are excluded from cash reports because they represent a loss of potential revenue, not a movement of actual funds.
+  - *Perspective Ripple ([Accrual](./reports.md#a-accrual-basis-performance-statement)):* All active adjustments are aggregated into **Net Income**.
+  - *Perspective Ripple ([Cash](./reports.md#b-cash-basis-cash-flow-summary)):* Only **Manual** adjustments are aggregated into **Net Cash**. System-generated write-offs are excluded from cash reports because they represent a loss of potential revenue, not a movement of actual funds.
 
 ---
 

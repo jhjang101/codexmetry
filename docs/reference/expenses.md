@@ -1,13 +1,13 @@
 # Expenses Technical Reference
 
-The Expenses module tracks the operational costs incurred to run the business or fulfill specific client orders. It is the primary driver of the system's **Operating Expense (OPEX)** and **Cost of Goods Sold (COGS)** metrics, and provides project-specific profitability analysis.
+The Expenses module tracks the operational costs incurred to run the business or fulfill specific client orders. It is the primary driver of the system's [**Operating Expense (OPEX)**](./reports.md#a-accrual-basis-performance-statement) and [**Cost of Goods Sold (COGS)**](./reports.md#a-accrual-basis-performance-statement) metrics, and provides project-specific profitability analysis.
 
 ---
 
 ## 1. Identification & Project Linking
 
 - **Vendor** [Input]: The supplier or service provider associated with the cost. This field is required.
-- **Expense Number** [Input/System]: The unique identifier for the document.
+- **Expense Number** [Input/System]: The unique [identifier](./settings.md#the-identifier-structure) for the document.
   - *Logic:* Defaults to the `E-YYQSSSV` format (Year, Quarter, Sequence, Checksum), but allows manual override for custom numbering schemes.
 
 - **Link to Client (Optional)** [Input]: Associates the cost with a specific client account.
@@ -29,8 +29,8 @@ The Expenses module tracks the operational costs incurred to run the business or
   - *Ripple:* This date determines which **Monthly Statement** and **Performance Trend** the cost is attributed to.
 - **Status** [Input/System]: Defines the accounting state of the expense:
   - `Draft`: Work-in-progress. Items do not yet count toward any financial reports.
-  - `Open`: The cost is committed or a Vendor PO has been issued. Recognized in **Accrual Basis** reports.
-  - `Completed`: The expense has been paid. This is the only status recognized in **Cash Basis** reports.
+  - `Open`: The cost is committed or a Vendor PO has been issued. Recognized in [**Accrual Basis**](./reports.md#a-accrual-basis-performance-statement) reports.
+  - `Completed`: The expense has been paid. This is the only status recognized in [**Cash Basis**](./reports.md#b-cash-basis-cash-flow-summary) reports.
 
 ---
 
@@ -59,7 +59,7 @@ Unlike Sales documents which use a fixed Product Catalog, Expenses use flexible 
 ## 5. Metadata & Accountability
 
 - **Internal Note** [Input]: Private comments for internal use. Not visible on the printed PDF.
-- **Terms & Notes** [Input]: Instructions or terms included in the PDF footer. Defaults to global system terms on creation but is editable.
+- **Terms & Notes** [Input]: Instructions or terms included in the PDF footer. Defaults to [global system terms](./settings.md#c-transactional-defaults) on creation but is editable.
 - **Attachments** [Input/System]: Standard file upload for receipts or vendor invoices, and system-generated PDFs during the "Issue" process.
 - **Version Counter** [System]: Increments every time the document is "Issued." Used to track the version of issued PDFs in the attachment zone.
 - **Activity Log** [System]: Displays the chronological record of every change made to the expense, including user identity and the modified fields.

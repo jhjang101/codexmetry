@@ -1,6 +1,6 @@
 # Financial Reporting
 
-The Reports module is the "Truth Engine" of Codexmetry. It provides a real-time metrics of your business health by separating operational performance from actual cash movement.
+The [Reports module](../reference/reports.md) is the "Truth Engine" of Codexmetry. It provides a real-time metrics of your business health by separating operational performance from actual cash movement.
 
 ---
 
@@ -8,16 +8,15 @@ The Reports module is the "Truth Engine" of Codexmetry. It provides a real-time 
 
 Codexmetry reports each month through two distinct accounting perspectives. Understanding the difference between them is essential for accurate business management.
 
-### A. Performance Statement (Accrual Basis)
+### A. Performance Statement ([Accrual Basis](../reference/reports.md#a-accrual-basis-performance-statement))
 
 This view tracks the value of **Issued Documents**. It reflects the economic performance of your business regardless of whether payment has been received.
 
 - **Revenue**: Sum of items on Invoices with an "Open" or "Completed" status.
-
 - **COGS/OPEX**: Sum of all non-draft Expenses.
 - **Net Income**: Your total profitability for the month.
 
-### B. Cash Flow Summary (Cash Basis)
+### B. Cash Flow Summary ([Cash Basis](../reference/reports.md#b-cash-basis-cash-flow-summary))
 
 This view tracks the actual **Movement of Funds**. It reflects your business’s liquidity and overall cash position.
 
@@ -27,7 +26,7 @@ This view tracks the actual **Movement of Funds**. It reflects your business’s
 
 ---
 
-## 2. Validating the Numbers (Data Tables)
+## 2. Validating the Numbers ([Data Tables](../reference/reports.md#3-drill-down-audit-tables))
 
 Every metric in a Codexmetry report is backed by supporting data. Below the summary matrices, the system provides **Detailed Data Tables**.
 
@@ -36,17 +35,17 @@ Every metric in a Codexmetry report is backed by supporting data. Below the summ
 
 ---
 
-## 3. Historical & Seasonal Trends
+## 3. Historical & Seasonal [Trends](../reference/reports.md#4-historical-trends)
 
 Navigate to the **History** tabs to analyze your business performance over a 60-month horizon.
 
 - **Linear Growth**: Track your Revenue vs Net Income month-over-month, quater-over-quater, and year-over-year to identify long-term trends.
 - **Seasonal Performance**: Select the "Seasonal Performance" or "Seasonal Cumulative" view mode to overlay data from the last three years. This helps identify recurring trends (e.g., "Is April always our slowest month?").
-- **Plot Aggregation**: Use the legend selector to show or hide KPIs in to the chart for high-level executive analysis.
+- **Plot Aggregation**: Use the [legend selector](../reference/reports.md#d-visual-visualization-interactivity) to show or hide KPIs in to the chart for high-level executive analysis.
 
 ---
 
-## 4. Performance Rankings (Deep Analytics)
+## 4. Performance Rankings ([Deep Analytics](../reference/reports.md#5-performance-analytics-metrics))
 
 The analytics panes provide rankings of your most significant business drivers.
 

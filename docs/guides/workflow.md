@@ -1,6 +1,8 @@
+# The Document Lifecycle
+
 ## 1. Quotes (The Proposal)
 
-The lifecycle typically begins with a **Quote**, your formal offer to a client.
+The lifecycle typically begins with a [**Quote**](../reference/quotes.md), your formal offer to a client.
 
 1. **Drafting:** Select a Client and add Products from your catalog. The system automatically pulls default unit prices.
 2. **Issuing:** Open the **Print Preview** and click **Issue**. The system generates a versioned PDF and attaches it to the record.
@@ -13,7 +15,7 @@ The lifecycle typically begins with a **Quote**, your formal offer to a client.
 
 ## 2. Purchase Orders (The Commitment)
 
-The **Purchase Order (PO)** represents a order received and initializes the **Order Registry (CDX)**.
+The [**Purchase Order (PO)**](../reference/purchase_orders.md) represents a order received and initializes the [**Order Registry (CDX)**](../reference/orders.md).
 
 1. **Initiation:** You can generate a PO in two ways:
     - **Convert from Quote:** Automatically copies all line items and links the documents.
@@ -28,32 +30,32 @@ The **Purchase Order (PO)** represents a order received and initializes the **Or
 
 ## 3. Invoices (The Fulfillment)
 
-Invoices represent the fulfillment of goods or services and the official request for payment.
+[Invoices](../reference/invoices.md) represent the fulfillment of goods or services and the official request for payment.
 
 1. **Fulfillment Selection:** Select an active PO. The system automatically prefills the items and quantities remaining to be billed. You can edit these quantities for partial billing.
 2. **Issuing:** Like Quotes, clicking **Issue** in the preview generates a versioned PDF snapshot for the client.
 3. **Outcome:**
     - **Draft:** Initial state while staging the shipment or billing.
     - **Open:** The invoice has been issued and is awaiting payment.
-    - **Completed:** The balance has been paid or falls within the **Invoice Threshold**.
+    - **Completed:** The balance has been paid or falls within the [**Invoice Threshold**](../reference/settings.md#a-financial-automation).
 
 ---
 
 ## 4. Payments (The Settlement)
 
-Payments record the arrival of cash and "close the loop" on outstanding balances.
+[Payments](../reference/payments.md) record the arrival of cash and "close the loop" on outstanding balances.
 
 1. **Receipt Entry:** Enter the amount received and select the payment type.
 2. **Auto-Reconciliation:**
     - **Invoice Link:** Apply the payment to a specific invoice to reduce its balance.
-    - **Prepayment:** Leave the invoice field blank to record a deposit. This cash enters the **Credit Pool** for that specific order.
-3. **Completion:** If an invoice's remaining balance falls below the **Invoice Threshold**, the system automatically moves it to **Completed** and generates a **System Write-off** to reconcile the gap.
+    - **Prepayment:** Leave the invoice field blank to record a deposit. This cash enters the [**Credit Pool**](../reference/payments.md#1-identification-linking) for that specific order.
+3. **Completion:** If an invoice's remaining balance falls below the **Invoice Threshold**, the system automatically moves it to **Completed** and generates a [**System Write-off**](../reference/adjustments.md#4-system-protection-automation) to reconcile the gap.
 
 ---
 
 ## 5. Expenses (Operational Spend)
 
-Expenses track the costs incurred to run the business or fulfill specific orders.
+[Expenses](../reference/expenses.md) track the costs incurred to run the business or fulfill specific orders.
 
 1. **Record Cost:** Select a Vendor and enter text descriptions for the items.
 2. **Issuing:** Open the **Print Preview** and click **Issue** to generate a professional PDF. This can be used as a formal Purchase Order for your vendors.
@@ -66,7 +68,7 @@ Expenses track the costs incurred to run the business or fulfill specific orders
 
 ## 6. Adjustments (Corrections)
 
-Adjustments are single-entry records used for non-operational financial events.
+[Adjustments](../reference/adjustments.md) are single-entry records used for non-operational financial events.
 
 1. **Manual Entry:** Record items like Bank Interest (Gain) or Annual Fees (Loss).
-2. **Balance Correction:** Automatically created by the Payment Automation when an invoice is completed with a minor balance gap.
+2. **Balance Correction:** Automatically created by the [Payment Automation](../reference/adjustments.md#4-system-protection-automation) when an invoice is completed with a minor balance gap.

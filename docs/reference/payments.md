@@ -1,12 +1,12 @@
 # Payments Technical Reference
 
-The Payments module records incoming cash and reconciles outstanding balances. It acts as the "Settlement" layer, transitioning documents from active debt into completed historical records.
+The Payments module records incoming cash and reconciles outstanding balances. It acts as the "Settlement" layer, and the primary driver of the system's [Cash Basis](./reports.md#b-cash-basis-cash-flow-summary) metrics.
 
 ---
 
 ## 1. Identification & Linking
 
-- **Payment Number** [Input/System]: The unique identifier for the transaction.
+- **Payment Number** [Input/System]: The unique [identifier](./settings.md#the-identifier-structure) for the transaction.
   - *Logic:* Defaults to the `P-YYQSSSV` format (Year, Quarter, Sequence, Checksum). Supports manual override for matching external banking reference numbers.
 - **Purchase Order (PO) Number** [Input]: The primary contract being paid.
   - *Requirement:* A PO link is mandatory for every payment to preserve order integrity.
@@ -40,13 +40,13 @@ Codexmetry distinguishes between the account owner and the actual source of fund
 The Payments module implements several ntegrity protections to preserve financial accuracy:
 
 - **Amount Reduction Guard**:
-  - *Logic:* For Prepayments (Deposits), the system blocks any attempt to reduce the payment amount if those funds have already been consumed through an "Applied Deposit" on an active invoice.
+  - *Logic:* For Prepayments (Deposits), the system blocks any attempt to reduce the payment amount if those funds have already been consumed through an "[Applied Deposit](./products.md#4-system-products-internal-logic)" on an active invoice.
 - **Archive Protection**:
-  - *Logic:* A payment cannot be archived if its removal would cause a deal's credit pool to become negative. Any invoices consuming that credit must be archived first.
+  - *Logic:* A payment cannot be archived if its removal would cause a PO's [credit pool](./purchase_orders.md#3-financial-metrics) to become negative. Any invoices consuming that credit must be archived first.
 - **Status Sync Trigger**:
   - *Ripple:* Saving or archiving a payment triggers the **Sync Engine**. The system automatically evaluates the linked Invoice balance and the PO fulfillment state, updating statuses to `Completed` or `Open` as needed.
 - **Write-off Automation**:
-  - *Ripple:* If a payment reduces an invoice balance within the global **Invoice Threshold**, the system automatically generates a "Write-off" Adjustment to settle the remaining gap.
+  - *Ripple:* If a payment reduces an invoice balance within the global **Invoice Threshold**, the system automatically generates a "[Write-off](./adjustments.md#4-system-protection-automation)" Adjustment to settle the remaining gap.
 
 ---
 

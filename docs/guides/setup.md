@@ -6,7 +6,7 @@ Once the Codexmetry environment is deployed, an Administrator must configure the
 
 ## 1. Company Identity & Branding
 
-Navigate to **Settings** to establish the identity of your business. These fields are used to populate the headers and footers of all issued PDFs (Quotes, Invoices, and Expenses).
+Navigate to [**Settings**](../reference/settings.md) to establish the identity of your business. These fields are used to populate the headers and footers of all issued PDFs (Quotes, Invoices, and Expenses).
 
 - **Company Name & Logo:** Your official business name and brand.
 
@@ -23,7 +23,7 @@ Navigate to **Settings** to establish the identity of your business. These field
 Configure the core behavioral rules of the application under **System Defaults**:
 
 - **Invoice Threshold:** The maximum remaining balance at which an Invoice will automatically move to "Completed" status.
-- **Doc Padding:** Determines the length of the sequential portion of your document IDs (e.g., Padding of 3 results in `CDX-2620011`).
+- **Doc Padding:** Determines the length of the [sequential portion](../reference/settings.md#b-document-padding-yyqsssv) of your document IDs (e.g., Padding of 3 results in `CDX-2620011`).
 - **Net Days (Invoices):** Set the default payment terms that automatically populate new documents.
 - **Quote Expiry (Days):** Set the default validity period for new Quotes and automatically calculate the expiration date.
 - **Default document Terms:** Standard terms that automatically populate the "Terms & Notes" section of PDFs (Quotes, Invoices, and Expenses).
@@ -36,7 +36,7 @@ Lookup tables categorize your data for accurate reporting. Configure these to ma
 
 - **PO Types:** (Recommended) Used to distinguish different order types or sales channels.
 - **Product Categories:**
-  - *Revenue Flag*: If checked, sales of products in this category will be aggregated into the **Sales Revenue** section of your financial reports.
+  - *Revenue Flag*: If checked, sales of products in this category will be aggregated into the **Sales Revenue** section of your [financial reports](../reference/reports.md).
 - **Expense Categories:**
   - *COGS vs. OPEX*: Mark categories as **COGS** (Cost of Goods Sold) for direct costs or leave unmarked for **OPEX** (Operating Expenses). This allows the system to calculate **Gross Profit** accurately.
 - **Payment Types:** (Required) Define your accepted methods (e.g., Credit Card, Wire Transfer, Check).
