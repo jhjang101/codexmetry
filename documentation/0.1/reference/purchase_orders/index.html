@@ -11,7 +11,7 @@
         <link rel="canonical" href="https://jhjang101.github.io/codexmetry/0.1/reference/purchase_orders/">
       
       
-        <link rel="prev" href="../orders/">
+        <link rel="prev" href="../quotes/">
       
       
         <link rel="next" href="../invoices/">
@@ -94,7 +94,9 @@
     
       
 
-<header class="md-header" data-md-component="header">
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
     <a href="../.." title="Codexmetry" class="md-header__button md-logo" aria-label="Codexmetry" data-md-component="logo">
       
@@ -198,14 +200,8 @@
     
   </nav>
   
-</header>
     
-    <div class="md-container" data-md-component="container">
       
-      
-        
-          
-            
 <nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
   <div class="md-grid">
     <ul class="md-tabs__list">
@@ -274,7 +270,13 @@
     </ul>
   </div>
 </nav>
-          
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
         
       
       <main class="md-main" data-md-component="main">
@@ -646,6 +648,34 @@
                 
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../quotes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quotes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
     
   
   
@@ -800,6 +830,230 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../payments/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Payments
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../expenses/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Expenses
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adjustments/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Adjustments
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../clients/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Clients
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../vendors/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vendors
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../products/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Products
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reports/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reports
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../settings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Settings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -899,6 +1153,54 @@
           
             <div class="md-content" data-md-component="content">
               
+                
+
+
+
+  
+
+
+  <nav class="md-path" aria-label="Navigation" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href="../.." class="md-path__link">
+        
+  <span class="md-ellipsis">
+    Overview
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../orders/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    Technical Reference
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
               <article class="md-content__inner md-typeset">
                 
                   
@@ -910,18 +1212,18 @@
 <hr />
 <h2 id="1-identification-relationship-fields">1. Identification &amp; Relationship Fields</h2>
 <ul>
-<li><strong>Order Ref (CDX)</strong> [System]: The project’s unique identifier. Assigned automatically upon creation of the PO.</li>
+<li>
+<p><strong>Order Ref (CDX)</strong> [System]: The order’s unique identifier. Assigned automatically upon creation of the PO.</p>
+</li>
 <li>
 <p><strong>Quote Number</strong> [Input/System]: Links the PO to its source proposal.</p>
+<ul>
+<li><em>Handshake Logic:</em> Linking a Quote automatically sets that Quote's status to <strong>Accepted</strong>. Unlinking or archiving the PO reverts the Quote to <strong>Sent</strong> status and clears its <code>order_id</code>.</li>
+</ul>
 </li>
-<li>
-<p><em>Handshake Logic:</em> Linking a Quote automatically sets that Quote's status to <strong>Accepted</strong>. Unlinking or archiving the PO reverts the Quote to <strong>Sent</strong> status and clears its <code>order_id</code>.</p>
-</li>
-<li>
-<p><strong>Client</strong> [Input]: The primary account holder.</p>
-</li>
-<li>
-<p><em>Integrity Lock:</em> This field becomes read-only once the PO has active child Invoices or Payments, preventing data orphaning.</p>
+<li><strong>Client</strong> [Input]: The primary account holder.<ul>
+<li><em>Integrity Lock:</em> This field becomes read-only once the PO has active child Invoices or Payments, preventing data orphaning.</li>
+</ul>
 </li>
 <li><strong>Bill To</strong> [Input]: The specific department or entity responsible for payment. Defaults to the Client but can be manually overridden.</li>
 <li><strong>PO Number</strong> [Input]: The client-provided document number or your internal reference number.</li>
@@ -932,74 +1234,59 @@
 <ul>
 <li><strong>PO Date</strong> [Input]: The legal date of the contract. Defaults to the current business day.</li>
 <li><strong>PO Type</strong> [Input]: A categorical lookup used to classify orders (e.g., Service, Product, Government).</li>
-<li>
-<p><strong>Terms (Net Days)</strong> [Input]: Defaults to the global payment terms but can be overridden for this specific PO.</p>
+<li><strong>Terms (Net Days)</strong> [Input]: Defaults to the <a href="../settings/#c-transactional-defaults">global payment terms</a> but can be overridden for this specific PO.<ul>
+<li><em>Ripple:</em> This value is inherited by every Invoice created from the PO.</li>
+</ul>
 </li>
-<li>
-<p><em>Ripple:</em> This value is inherited by every Invoice created from the PO.</p>
-</li>
-<li>
-<p><strong>Status</strong> [System]: The three-stage lifecycle of the PO:</p>
-</li>
-<li>
-<p><code>Open</code>: Items remain to be fulfilled and invoiced.</p>
-</li>
+<li><strong>Status</strong> [System]: The three-stage lifecycle of the PO:<ul>
+<li><code>Open</code>: Items remain to be fulfilled and invoiced.</li>
 <li><code>Invoiced</code>: All items have been moved to invoices, but invoice balances are not yet fully settled.</li>
 <li><code>Completed</code>: All items are billed and all invoices are fully paid.</li>
+</ul>
+</li>
 </ul>
 <hr />
 <h2 id="3-financial-metrics">3. Financial Metrics</h2>
 <ul>
 <li><strong>Total Amount</strong> [System]: The total sum of all PO line items (in cents).</li>
 <li><strong>Total Prepayment</strong> [Property]: The sum of all cash received for the deal that was not linked to a standard product invoice.</li>
-<li>
-<p><strong>Remaining Credit</strong> [Property]: The current available credit balance for the deal.</p>
+<li><strong>Remaining Credit</strong> [Property]: The current available credit balance for the deal.<ul>
+<li><em>Math:</em> <code>(Prepayments + Applied Deposits) - Negative Carryovers</code></li>
+</ul>
 </li>
-<li>
-<p><em>Math:</em> <code>(Prepayments + Applied Deposits) - Negative Carryovers</code></p>
-</li>
-<li>
-<p><strong>Balance To Be Invoiced</strong> [Property]: The total value of goods and services not yet billed.</p>
-</li>
-<li>
-<p><em>Logic:</em> Represents the remaining financial backlog of the PO.</p>
+<li><strong>Balance To Be Invoiced</strong> [Property]: The total value of goods and services not yet billed.<ul>
+<li><em>Logic:</em> Represents the remaining financial backlog of the PO.</li>
+</ul>
 </li>
 </ul>
 <hr />
 <h2 id="4-line-item-integrity-sub-form">4. Line Item Integrity (Sub-form)</h2>
 <p>The line items within a PO are protected by strict <strong>Lifecycle Locks</strong> once billing begins:</p>
 <ul>
-<li>
-<p><strong>Product &amp; Unit Price:</strong></p>
+<li><strong>Product &amp; Unit Price:</strong><ul>
+<li><em>Integrity Guard:</em> These fields become <strong>permanently locked</strong> for a specific line once that line has been included in an active Invoice (including Drafts). This ensures the original contract pricing remains consistent with billed pricing.</li>
+</ul>
 </li>
-<li>
-<p><em>Integrity Guard:</em> These fields become <strong>permanently locked</strong> for a specific line once that line has been included in an active Invoice (including Drafts). This ensures the original contract pricing remains consistent with billed pricing.</p>
+<li><strong>Quantity:</strong><ul>
+<li><em>Quantity Floor:</em> A line item’s quantity cannot be reduced below its "Allocated Quantity" (the total units already assigned to active Invoices).</li>
+</ul>
 </li>
-<li>
-<p><strong>Quantity:</strong></p>
-</li>
-<li>
-<p><em>Quantity Floor:</em> A line item’s quantity cannot be reduced below its "Allocated Quantity" (the total units already assigned to active Invoices).</p>
-</li>
-<li>
-<p><strong>Remaining Items</strong> [Property]: A dynamic calculation of all remaining billable items.</p>
-</li>
-<li>
-<p><em>Automation:</em> If the deal contains a <strong>Remaining Credit</strong> balance, the system automatically adds an "Applied Deposit" line item to suggest credit consumption on the next Invoice.</p>
+<li><strong>Remaining Items</strong> [Property]: A dynamic calculation of all remaining billable items.<ul>
+<li><em>Automation:</em> If the PO contains a <a href="#3-financial-metrics"><strong>Remaining Credit</strong></a> balance, the system automatically adds an "<a href="../products/#4-system-products-internal-logic">Applied Deposit</a>" line item to suggest credit consumption on the next Invoice.</li>
+</ul>
 </li>
 </ul>
 <hr />
 <h2 id="5-metadata-auditing">5. Metadata &amp; Auditing</h2>
 <ul>
 <li><strong>Internal Note</strong> [Input]: Private comments for internal use.</li>
-<li>
-<p><strong>Active Status (is_active)</strong> [System]: Boolean flag used for soft-deletion.</p>
-</li>
-<li>
-<p><em>Ripple:</em> Setting this value to <code>False</code> triggers a cascading deactivation of the <strong>Order Registry</strong>, including all linked <strong>Invoices</strong> and system-generated Write-offs.</p>
-</li>
+<li><strong>Attachments</strong> [Input]: Standard file upload. Commonly used for storing scanned copies of PO documents.</li>
+<li><strong>Active Status (is_active)</strong> [System]: Boolean flag used for soft-deletion.<ul>
+<li><em>Ripple:</em> Setting this value to <code>False</code> triggers a cascading deactivation of the <strong>Order Registry</strong>, including all linked <strong>Invoices</strong> and system-generated Write-offs.</li>
 <li><em>Exception:</em> <strong>Payments</strong> and <strong>Expenses</strong> associated with the deal are <strong>not</strong> automatically archived. Because these represent actual cash movements and vendor liabilities, they remain active to preserve the accuracy of the general ledger and cash-basis reports. If these financial records also need to be removed, they must be archived manually within their respective modules.</li>
-<li><strong>Activity Log</strong> [System]: Displays the timestamp and user identity for the creation and most recent modification of the record.</li>
+</ul>
+</li>
+<li><strong>Activity Log</strong> [System]: Displays the chronological record of every change made to the PO, including user identity and the modified fields.</li>
 </ul>
 
 
@@ -1056,7 +1343,7 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.path", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
     
     
       <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>

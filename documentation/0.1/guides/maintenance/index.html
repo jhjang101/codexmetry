@@ -94,7 +94,9 @@
     
       
 
-<header class="md-header" data-md-component="header">
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
     <a href="../.." title="Codexmetry" class="md-header__button md-logo" aria-label="Codexmetry" data-md-component="logo">
       
@@ -198,14 +200,8 @@
     
   </nav>
   
-</header>
     
-    <div class="md-container" data-md-component="container">
       
-      
-        
-          
-            
 <nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
   <div class="md-grid">
     <ul class="md-tabs__list">
@@ -274,7 +270,13 @@
     </ul>
   </div>
 </nav>
-          
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
         
       
       <main class="md-main" data-md-component="main">
@@ -818,6 +820,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../reference/quotes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quotes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../reference/purchase_orders/" class="md-nav__link">
         
   
@@ -854,6 +884,230 @@
     
   
     Invoices
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/payments/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Payments
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/expenses/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Expenses
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/adjustments/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Adjustments
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/clients/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Clients
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/vendors/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vendors
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/products/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Products
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/reports/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reports
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/settings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Settings
   
 
     
@@ -1033,6 +1287,54 @@
           
             <div class="md-content" data-md-component="content">
               
+                
+
+
+
+  
+
+
+  <nav class="md-path" aria-label="Navigation" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href="../.." class="md-path__link">
+        
+  <span class="md-ellipsis">
+    Overview
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../deployment/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    How-To Guides
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
               <article class="md-content__inner md-typeset">
                 
                   
@@ -1043,7 +1345,7 @@
 <p>The Maintenance module is the "Engine Room" of Codexmetry. Access is strictly restricted to Administrators and provides the tools necessary to ensure data integrity, optimize performance, and manage disaster recovery assets.</p>
 <hr />
 <h2 id="1-system-access-control-maintenance-mode">1. System Access Control (Maintenance Mode)</h2>
-<p>Maintenance Mode acts as a global "Master Lock" for the database. </p>
+<p>Maintenance Mode acts as a global "Master Lock" for the database.</p>
 <ul>
 <li><strong>Logic:</strong> When active, all non-admin users are restricted to <strong>Read-Only</strong> access. All <code>POST</code>, <code>PUT</code>, and <code>DELETE</code> requests are blocked at the application gateway.</li>
 <li><strong>Administrative Privilege:</strong> Administrators remain exempt from this lock, allowing them to perform optimizations or data corrections while the system is quiet.</li>
@@ -1062,15 +1364,19 @@
 <h2 id="3-snapshot-management">3. Snapshot Management</h2>
 <p>Codexmetry provides a tiered approach to data protection.</p>
 <h3 id="tier-1-database-snapshot-sql">Tier 1: Database Snapshot (.sql)</h3>
-<p>A lightweight text-based dump of your structured data. 
-*   <strong>Content:</strong> Tables, Rows, Sequences, and Audit Logs.
-*   <strong>Frequency:</strong> Daily.
-*   <strong>Impact:</strong> Near-zero. Can be run while users are active.</p>
+<p>A lightweight text-based dump of your structured data.</p>
+<ul>
+<li><strong>Content:</strong> Tables, Rows, Sequences, and Audit Logs.</li>
+<li><strong>Frequency:</strong> Daily.</li>
+<li><strong>Impact:</strong> Near-zero. Can be run while users are active.</li>
+</ul>
 <h3 id="tier-2-full-system-archive-zip">Tier 2: Full System Archive (.zip)</h3>
-<p>A complete "Point-in-Time" image of the entire Fortress.
-*   <strong>Content:</strong> The Database Snapshot + the entire <code>uploads/</code> folder (Product images, Invoice PDFs, etc.).
-*   <strong>Frequency:</strong> Weekly or before a server migration.
-*   <strong>Impact (Warning):</strong> Zipping large attachment folders is a resource-heavy operation. On systems with thousands of documents, this will cause a temporary spike in <strong>CPU usage</strong> and <strong>Disk I/O</strong>. It is best performed during off-hours.</p>
+<p>A complete "Point-in-Time" image of the entire Fortress.</p>
+<ul>
+<li><strong>Content:</strong> The Database Snapshot + the entire <code>uploads/</code> folder (Product images, Invoice PDFs, etc.).</li>
+<li><strong>Frequency:</strong> Weekly or before a server migration.</li>
+<li><strong>Impact (Warning):</strong> Zipping large attachment folders is a resource-heavy operation. On systems with thousands of documents, this will cause a temporary spike in <strong>CPU usage</strong> and <strong>Disk I/O</strong>. It is best performed during off-hours.</li>
+</ul>
 <hr />
 <h2 id="4-manual-plan-b-operations-host-level">4. Manual "Plan B" Operations (Host Level)</h2>
 <p>If the application UI is unreachable, you can perform maintenance directly from the host machine terminal.</p>
@@ -1185,7 +1491,7 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.path", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
     
     
       <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
