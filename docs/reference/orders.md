@@ -8,11 +8,11 @@ The Order Registry, representing the **Codex** half of the system identity, prov
 
 - **Order Number (CDX)** [System]: The unique, permanent [identifier](./settings.md#the-identifier-structure) for the project.
     *Logic:* Follows the `CDX-YYQSSSV` format (Year, Quarter, Sequence, Checksum).
-  - *Integrity:* Generated automatically upon the creation of a Purchase Order. Once assigned, it cannot be manually modified.
+    - *Integrity:* Generated automatically upon the creation of a Purchase Order. Once assigned, it cannot be manually modified.
 - **Creation Date** [System]: The UTC timestamp of when the deal was first initialized in the registry.
 - **Active Status (is_active)** [System]: A boolean flag used for soft-deletion.
-  - *Ripple:* Setting this to `False` (Archiving) effectively deactivates the entire deal chain, including all linked Invoices and [system-generated Write-offs](./adjustments.md#4-system-protection-automation).
-  - *Exception:* **Payments** and **Expenses** associated with the deal are **not** automatically archived. Because these represent actual cash movements and vendor liabilities, they remain active to preserve the accuracy of the general ledger and cash-basis reports. If these financial records also need to be removed, they must be archived manually within their respective modules.
+    - *Ripple:* Setting this to `False` (Archiving) effectively deactivates the entire deal chain, including all linked Invoices and [system-generated Write-offs](./adjustments.md#4-system-protection-automation).
+    - *Exception:* **Payments** and **Expenses** associated with the deal are **not** automatically archived. Because these represent actual cash movements and vendor liabilities, they remain active to preserve the accuracy of the general ledger and cash-basis reports. If these financial records also need to be removed, they must be archived manually within their respective modules.
 
 ---
 
@@ -35,11 +35,11 @@ The Registry does not store financial values directly. Instead, it uses dynamic 
 
 - **PO Value** [Property]: The total amount of the linked Purchase Order (the original contract value).
 - **To Be Invoiced** [Property]: The remaining balance to billed from the Purchase Order.
-  - *Math:* (Value of unfulfilled PO line items) minus (Unapplied Credit Pool).
-  - *Logic:* This field effectively represents "Backlog" for the Purchase Order.
+    - *Math:* (Value of unfulfilled PO line items) minus (Unapplied Credit Pool).
+    - *Logic:* This field effectively represents "Backlog" for the Purchase Order.
 - **Total Invoiced (Balance)** [Property]: A dual metric representing both the total amount officially billed and the portion still outstanding.
-  - *Total Invoiced:* The sum of "Total Due" across all active invoices.
-  - *Balance:* The sum of "Invoice Balances" (Total Due - Payments) across those same invoices.
+    - *Total Invoiced:* The sum of "Total Due" across all active invoices.
+    - *Balance:* The sum of "Invoice Balances" (Total Due - Payments) across those same invoices.
 - **Total Received** [Property]: The sum of all active payments received for this Order, including both invoice-linked payments and unapplied prepayments.
 - **Total Linked Expenses** [Property]: The sum of all active operational costs linked to this CDX number. This is the primary metric for tracking project-specific profitability.
 - **Total Linked Adjustments** [Property]: The sum of all non-operational gains or losses linked to the deal. This includes manual corrections and automated system write-offs.

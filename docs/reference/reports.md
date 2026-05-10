@@ -42,8 +42,8 @@ The aggregation of reports is driven by specific metadata flags defined in the *
 - **is_cogs (Expense Category)**: Determines if an expense is deducted before or after the "Gross Profit" calculation.
 - **is_system (Adjustment)**: System-generated write-offs are included in **Accrual** reports (to correct Net Income) but are excluded from **Cash** reports (as no money moved).
 - **Status Guard**:
-  - `Draft` documents are **excluded** from all reports.
-  - `Open` expenses are recognized as Accrual liabilities but not as Cash outgoings.
+    - `Draft` documents are **excluded** from all reports.
+    - `Open` expenses are recognized as Accrual liabilities but not as Cash outgoings.
 
 ---
 
@@ -74,9 +74,9 @@ The system aggregates raw document data into chronological "buckets" based on th
 Unlike linear views, Seasonal modes re-map historical data onto a single 12-month axis (January to December). This allows for direct comparison of specific months across the last three fiscal years.
 
 - **Seasonal Performance**: Overlays the absolute monthly performance of the current year against previous years.
-  - *Business Logic*: Answers "How did this April compare to last April?"
+    - *Business Logic*: Answers "How did this April compare to last April?"
 - **Seasonal Cumulative (YTD Growth)**: Calculates a running total of performance throughout each fiscal year.
-  - *Business Logic*: Visualizes the "Growth Velocity." It allows you to see if the current year is reaching financial targets faster or slower than previous years at the same point in time.
+    - *Business Logic*: Visualizes the "Growth Velocity." It allows you to see if the current year is reaching financial targets faster or slower than previous years at the same point in time.
 
 ### C. Perspective Integration
 
@@ -103,8 +103,8 @@ This pane provides a ranking of the most significant customer accounts based on 
 
 - **Rank by Volume**: Displays the Top 10 clients by volume in a horizontal bar chart, with a full-ranked list in the supporting data table.
 - **Perspective Switch**:
-  - *Revenue Perspective*: Ranks clients by the total value of invoices issued. Identifies the "highest value" accounts in terms of economic activity.
-  - *Payment Perspective*: Ranks clients by actual cash received. Identifies the most reliable sources of liquidity.
+    - *Revenue Perspective*: Ranks clients by the total value of invoices issued. Identifies the "highest value" accounts in terms of economic activity.
+    - *Payment Perspective*: Ranks clients by actual cash received. Identifies the most reliable sources of liquidity.
 - **Yearly Contribution**: Calculates each client's percentage share of the total business volume for the selected year.
 
 ### B. Product Analytics (Market Mix)
@@ -112,9 +112,9 @@ This pane provides a ranking of the most significant customer accounts based on 
 Product analytics provide a dual-level view of sales performance, aggregating data by both specific SKUs and high-level categories.
 
 - **Market Mix (Category Level)**: A doughnut visualization representing the distribution of revenue across product categories.
-  - *Logic*: Respects the **is_revenue** flag. Only categories marked as revenue drivers are included in this mix.
+    - *Logic*: Respects the **is_revenue** flag. Only categories marked as revenue drivers are included in this mix.
 - **SKU Ranking**: Identifies the specific products generating the most volume.
-  - *Metrics Captured*: Total Quantity Sold and Total Revenue Generated per unique Catalog Number.
+    - *Metrics Captured*: Total Quantity Sold and Total Revenue Generated per unique Catalog Number.
 - **Trend Alignment**: Ensures that product performance aligns with the **Accrual Statement**, providing the "Product Story" behind the monthly revenue figures.
 
 ### C. Expense Breakdown (Spend Mix)
@@ -123,7 +123,7 @@ The Expense pane analyzes the outward flow of capital, focusing on vendor concen
 
 - **Vendor Concentration**: Ranks the Top 10 vendors by total spend. Identifies the suppliers who consume the largest portion of operational cash.
 - **Spend Mix (Classification Level)**: A doughnut visualization that highlights the balance between **COGS** and **OPEX**.
-  - *Visual Logic*: Uses color-coded HSL gradients (Reds for COGS, Ambers for OPEX) to provide an immediate intuitive understanding of cost distribution.
+    - *Visual Logic*: Uses color-coded HSL gradients (Reds for COGS, Ambers for OPEX) to provide an immediate intuitive understanding of cost distribution.
 - **Operational Efficiency**: Helps identify if cost increases are driven by direct project costs (COGS) or rising business overhead (OPEX).
 
 ### D. Technical Implementation
@@ -132,4 +132,4 @@ The Expense pane analyzes the outward flow of capital, focusing on vendor concen
 
 - **Dynamic Gradients**: The system utilizes HSL (Hue, Saturation, Lightness) math to generate dynamic color palettes for charts based on the number of categories found, ensuring visualizations remain readable and aesthetically consistent as the business grows.
 - **State Persistence (HTMX OOB)**: Analytics panes are delivered via **HTMX Out-of-Band (OOB)** swaps. This architecture allows the user to switch between analytical lenses (e.g., from Product Analytics to Client Performance) while **retaining the currently selected period**.
-  - *Logic*: The system automatically includes the active Month/Year filters in every tab-switch request, ensuring the "Financial Truth" remains consistent across all views without requiring a full page refresh.
+    - *Logic*: The system automatically includes the active Month/Year filters in every tab-switch request, ensuring the "Financial Truth" remains consistent across all views without requiring a full page refresh.

@@ -11,14 +11,14 @@ Codexmetry utilizes a singleton data pattern (ID: 1) for system settings, ensuri
 ### A. Identity & Branding
 
 - **Company Name & Logo** [Input]: The official branding used in the sidebar and document headers.
-  - *File Logic*: Uploading a new logo automatically triggers a physical file cleanup of the previous asset to prevent storage bloat.
+    - *File Logic*: Uploading a new logo automatically triggers a physical file cleanup of the previous asset to prevent storage bloat.
 - **Addresses** [Input]: Three distinct blocks (Office, Payable, Shipping) used *"As-is"* to populate different address sections of issued PDFs.
 - **Timezone** [Input]: Defines the `office_tz` used by the system to calculate the "Business Today" date for all new documents.
 
 ### B. Banking & Remittance
 
 - **Wire Transfer Details** [Input]: Includes Bank Name, SWIFT, Routing, and Account numbers.
-  - *Logic*: These fields are dynamically injected into the footer of all issued Invoices to provide clear payment instructions to clients.
+    - *Logic*: These fields are dynamically injected into the footer of all issued Invoices to provide clear payment instructions to clients.
 
 ---
 
@@ -29,7 +29,7 @@ This section defines the automated logic of the application. These settings dete
 ### A. Financial Automation
 
 - **Invoice Threshold** [Input]: The maximum remaining balance (in cents) at which the system considers an invoice "fully paid."
-  - *Ripple*: If an invoice balance falls below this value, the system automatically triggers the `Completed` status and generates a **System Write-off** to reconcile the ledger.
+    - *Ripple*: If an invoice balance falls below this value, the system automatically triggers the `Completed` status and generates a **System Write-off** to reconcile the ledger.
 
 ### B. Document Padding (YYQSSSV)
 
@@ -76,8 +76,8 @@ These settings ensure consistency across the document lifecycle and reduce manua
 - **Net Days (Invoices)**: The default payment term assigned to new documents. Used to calculate the **Due Date** on the printed PDF.
 - **Quote Expiry (Days)**: The standard validity period for proposals.
 - **Default Document Terms**: Standard legal text or instructions for Quotes, Invoices, and Expenses.
-  - *Visibility Logic*: To maintain a clean data-entry interface, these terms are **hidden** during the primary Add/Edit modes.
-  - *Override Workflow*: Terms become visible and manually overridable only within the **Print Preview** screen. The final version is saved to the record only when the document is "Issued."
+    - *Visibility Logic*: To maintain a clean data-entry interface, these terms are **hidden** during the primary Add/Edit modes.
+    - *Override Workflow*: Terms become visible and manually overridable only within the **Print Preview** screen. The final version is saved to the record only when the document is "Issued."
 
 ---
 
@@ -112,9 +112,9 @@ Entries in Lookup tables drive specific system behaviors and reporting classific
 
 - **PO Types**: Used to segment the Order Registry by sales channel or contract type (e.g., "Service Contract" vs. "Government PO").
 - **Product Categories**:
-  - *Reporting Impact*: Each category carries an **is_revenue** flag. If enabled, all products within this category are aggregated into the "Sales Revenue" line of the Performance Statement.
+    - *Reporting Impact*: Each category carries an **is_revenue** flag. If enabled, all products within this category are aggregated into the "Sales Revenue" line of the Performance Statement.
 - **Expense Categories**:
-  - *Reporting Impact*: Each category carries an **is_cogs** flag. This determines if an expense is treated as a direct cost (Cost of Goods Sold) or indirect overhead (OPEX), directly affecting the **Gross Profit** metric.
+    - *Reporting Impact*: Each category carries an **is_cogs** flag. This determines if an expense is treated as a direct cost (Cost of Goods Sold) or indirect overhead (OPEX), directly affecting the **Gross Profit** metric.
 - **Payment Types**: Required for the **Cash Flow Summary**. These categories allow the business to analyze liquidity by source (e.g., "How much of our cash came via Wire Transfer vs. Credit Card?").
 - **Adjustment Categories**: Includes both manual categories (e.g., Bank Interest, Processing Fees) and the system-protected "Write-off" category used for automated balance reconciliation.
 - **Shipping Carriers**: Selection of a carrier within an Invoice dynamically enables the **Ship Date** and **Tracking Number** fields.

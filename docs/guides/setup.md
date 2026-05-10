@@ -11,9 +11,9 @@ Navigate to [**Settings**](../reference/settings.md) to establish the identity o
 - **Company Name & Logo:** Your official business name and brand.
 
 - **Addresses:**
-  - *Office Address*: Your primary physical location.
-  - *Payable Address*: Where clients should mail checks.
-  - *Shipping Address*: Where vendors should deliver items.
+    - *Office Address*: Your primary physical location.
+    - *Payable Address*: Where clients should mail checks.
+    - *Shipping Address*: Where vendors should deliver items.
 - **Banking (Wire Transfer):** Provide your Bank Name, SWIFT, Routing, and Account numbers to ensure payment instructions are included on Invoices.
 
 ---
@@ -36,9 +36,9 @@ Lookup tables categorize your data for accurate reporting. Configure these to ma
 
 - **PO Types:** (Recommended) Used to distinguish different order types or sales channels.
 - **Product Categories:**
-  - *Revenue Flag*: If checked, sales of products in this category will be aggregated into the **Sales Revenue** section of your [financial reports](../reference/reports.md).
+    - *Revenue Flag*: If checked, sales of products in this category will be aggregated into the **Sales Revenue** section of your [financial reports](../reference/reports.md).
 - **Expense Categories:**
-  - *COGS vs. OPEX*: Mark categories as **COGS** (Cost of Goods Sold) for direct costs or leave unmarked for **OPEX** (Operating Expenses). This allows the system to calculate **Gross Profit** accurately.
+    - *COGS vs. OPEX*: Mark categories as **COGS** (Cost of Goods Sold) for direct costs or leave unmarked for **OPEX** (Operating Expenses). This allows the system to calculate **Gross Profit** accurately.
 - **Payment Types:** (Required) Define your accepted methods (e.g., Credit Card, Wire Transfer, Check).
 - **Adjustment Categories:** (Required) Define non-operating events (e.g., Bank Interest, Processing Fee).
 - **Shipping Carriers:** Define the shipping providers used for fulfillment and tracking.
@@ -52,9 +52,9 @@ The Product Catalog serves as the system of record for your Sales documents.
 - **Catalog Number:** Your internal SKU or part number.
 - **Default Unit Price:** Pre-populates Quotes and Purchase Orders, but can be overridden when creating or editing documents.
 - **Document Placement:** **(Critical)**
-  - `Standard Line Item`: Standard goods or services.
-  - `Shipping (Footer)`: Items assigned to this placement will appear in the "Shipping" section on PDFs.
-  - `Sales Tax (Footer)`: Items assigned to this placement will appear in the "Sales Tax" section on PDFs.
+    - `Standard Line Item`: Standard goods or services.
+    - `Shipping (Footer)`: Items assigned to this placement will appear in the "Shipping" section on PDFs.
+    - `Sales Tax (Footer)`: Items assigned to this placement will appear in the "Sales Tax" section on PDFs.
 
 ---
 
