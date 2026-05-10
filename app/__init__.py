@@ -11,6 +11,16 @@ from .extensions import db, csrf, login_manager,migrate
 from .utils.errors import humanize_error
 from .utils.auth import init_auth_loaders
 
+"""
+CODEXMETRY: The Financial Fortress of Order Management
+------------------------------------------------------
+Version: 0.1.0
+Author:  Joon Hee Jang
+License: MIT
+"""
+__version__ = "0.1.0"
+
+
 def create_app():
     load_dotenv()
     app = Flask(__name__)
@@ -248,6 +258,9 @@ def create_app():
         """Injects shared variables into every Jinja template."""
         metadata = g.metadata
         now = datetime.now(ZoneInfo(g.office_tz))
-        return dict(metadata=metadata, now=now)
+        return dict(
+            metadata=metadata, 
+            now=now,
+            app_version=__version__,)
 
     return app
