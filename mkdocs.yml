@@ -71,6 +71,9 @@ plugins:
   - search
 
 markdown_extensions:
+  - attr_list
+  - def_list
+  - footnotes
   - admonition
   - pymdownx.details
   - pymdownx.superfences

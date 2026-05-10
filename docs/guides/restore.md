@@ -7,6 +7,7 @@ This guide provides the procedures for restoring the Codexmetry environment from
 If you have a standard `.sql` snapshot located in your `backups/` directory, use one of the following  methods to inject the data into the PostgreSQL engine.
 
 ### Method A: Using `docker exec` (Recommended)
+
 This is the cleanest method as it uses the tools already inside the database container.
 
 ```bash
@@ -30,16 +31,19 @@ psql -h localhost -p 5432 -U admin -d codexmetry < ./data/backups/your_backup_fi
 
 To trigger the synchronization and apply any missing database migrations:
 
-1.  **Restart the System:**
+1. **Restart the System:**
+
     ```bash
     docker compose restart
     ```
 
-2.  **Verify the Sync:**
+2. **Verify the Sync:**
     Monitor the logs to ensure the migration completed successfully:
+
     ```bash
     docker compose logs -f app
     ```
+
     *You should see "Applying database migrations..." followed by "PostgreSQL started".*
 
 ---
@@ -48,26 +52,29 @@ To trigger the synchronization and apply any missing database migrations:
 
 To restore from a **Full System Archive** (which includes both the database and physical attachments like product images and invoice PDFs):
 
-1.  **Unzip the Archive:**
+1. **Unzip the Archive:**
     Extract the contents on your host machine. You will see a `.sql` file and an `uploads/` folder.
 
-2.  **Restore Uploads:**
+2. **Restore Uploads:**
     Copy the extracted `uploads/` folder into your mapped host directory:
+
     ```bash
     cp -r ./extracted_path/uploads/* ./data/uploads/
     ```
 
-3.  **Restore Database:**
+3. **Restore Database:**
     Follow the SQL injection steps in **Section 1** using the extracted `.sql` file.
 
-4.  **Finalize & Sync:**
+4. **Finalize & Sync:**
     Perform the system restart to align the data:
+
     ```bash
     docker compose restart
     ```
 
-5.  **Fix Asset Permissions:**
+5. **Fix Asset Permissions:**
     If you encounter "Permission Denied" errors when viewing attachments, reset the ownership of the asset directories:
+
     ```bash
     sudo chown -R $USER:$USER ./data/uploads ./data/backups ./data/logs
     ```
@@ -78,6 +85,6 @@ To restore from a **Full System Archive** (which includes both the database and 
 
 Perform these checks to ensure the "Fortress" is stable:
 
-*   **Order Hub:** Open an existing deal and verify the **Order Tree** accurately displays the document chain.
-*   **Asset Linkage:** Open an older Invoice and verify that the generated PDF snapshot opens correctly.
-*   **Version Verification:** Run `docker exec -it codexmetry_app flask db current` to confirm the database is at the latest migration ID.
+- **Order Hub:** Open an existing deal and verify the **Order Tree** accurately displays the document chain.
+- **Asset Linkage:** Open an older Invoice and verify that the generated PDF snapshot opens correctly.
+- **Version Verification:** Run `docker exec -it codexmetry_app flask db current` to confirm the database is at the latest migration ID.

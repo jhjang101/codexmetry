@@ -1,22 +1,23 @@
 # Deployment & Installation
 
-This guide covers the standard procedure for deploying the **Codexmetry** using Docker Compose. 
+This guide covers the standard procedure for deploying the **Codexmetry** using Docker Compose.
 
 ## 1. Prerequisites
 
 Before initializing the installation, ensure your host environment meets the following requirements:
 
-*   **Docker & Docker Compose:** Installed and running.
-*   **Network Ports:** 
-    *   `5001`: Application Interface.
-    *   `5432`: Internal Database Engine (isolated by default).
-*   **Architecture:** x86_64 or ARM64 (PostgreSQL 17 compatible).
+- **[Docker](https://docs.docker.com/engine/){ target="_blank" } & Docker Compose:** Installed and running.
+- **Network Ports:**
+  - `5001`: Application Interface.
+  - `5432`: Internal Database Engine (isolated by default).
+- **Architecture:** x86_64 or ARM64 (PostgreSQL 17 compatible).
 
 ---
 
 ## 2. Step-by-Step Installation
 
 ### Step 1: Create the Project Environment
+
 Establish a dedicated directory to serve as the host anchor for your data volumes and configuration files.
 
 ```bash
@@ -24,6 +25,7 @@ mkdir codexmetry && cd codexmetry
 ```
 
 ### Step 2: Acquire Orchestration Files
+
 Download the mandatory environment template and the Docker Compose manifest directly from the official repository.
 
 ```bash
@@ -35,14 +37,15 @@ curl -L https://raw.githubusercontent.com/jhjang101/codexmetry/main/compose.yaml
 ```
 
 ### Step 3: Configure Environment Variables
-Edit the `.env` file to establish your unique system credentials. 
+
+Edit the `.env` file to establish your unique system credentials.
 
 !!! warning "Security Requirement"
     You must change the `INITIAL_ADMIN_PASSWORD` and generate a unique `SECRET_KEY`. To generate a high-entropy key, run the following command in your terminal:
     `python3 -c 'import secrets; print(secrets.token_hex(32))'`
 
-
 ### Step 4: Launch the Codexmetry App
+
 Initialize the containers. The engine will automatically detect the empty database and perform the initial schema migration and system record seeding.
 
 ```bash
@@ -55,12 +58,14 @@ docker compose up -d
 
 Once the containers are active, you can verify the integrity of the installation:
 
-1.  **UI Access:** Navigate to `http://localhost:5001`.
-2.  **Logs:** Check the system initialization log for any database errors:
+1. **UI Access:** Navigate to `http://localhost:5001`.
+2. **Logs:** Check the system initialization log for any database errors:
+
     ```bash
     docker compose logs -f app
     ```
-3.  **Root Login:** Use the credentials defined in your `.env` file to access the Admin dashboard.
+
+3. **Root Login:** Use the credentials defined in your `.env` file to access the Admin dashboard.
 
 ---
 
@@ -76,8 +81,8 @@ Codexmetry is designed for data durability. By default, your data is mapped to s
 | `/app/app/logs` | `./data/logs` | Audit Trails and System Activity Logs. |
 
 !!! warning "Permissions & Data Access"
-    If the application cannot save uploads or generates "Permission Denied" errors in the logs, synchronize the host directory permissions for the **asset subdirectories** only:
-    
+    If the application cannot save uploads or generates "Permission Denied" errors in the logs, synchronize the host directory permissions for the **asset sub-directories** only:
+
     ```bash
     sudo chown -R $USER:$USER ./data
     ```
