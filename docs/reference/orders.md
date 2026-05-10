@@ -1,13 +1,13 @@
 # Order Registry (CDX) Technical Reference
 
-The Order Registry, represented by the **CDX** prefix, is the immutable anchor for a confirmed business deal. It provides a unified identity that bridges the gap between Sales (Quotes/POs), Fulfillment (Invoices), and Accounting (Payments/Expenses).
+The Order Registry, representing the **Codex** half of the system identity, provides the immutable anchor by the **CDX** prefix for a confirmed business transaction. It provides a unified identity that bridges the gap between Sales (Quotes/POs), Fulfillment (Invoices), and Accounting (Payments/Expenses).
 
 ---
 
 ## 1. Core Identity Fields
 
 *   **Order Number (CDX)** [System]: The unique, permanent identifier for the project. 
-    *   *Logic:* Follows the `CDX-YYQSSSV` format (Year, Quarter, Sequence, Checksum). 
+    *Logic:* Follows the `CDX-YYQSSSV` format (Year, Quarter, Sequence, Checksum). 
     *   *Integrity:* Generated automatically upon the creation of a Purchase Order. Once assigned, it cannot be manually modified.
 *   **Creation Date** [System]: The UTC timestamp of when the deal was first initialized in the registry.
 *   **Active Status (is_active)** [System]: A boolean flag used for soft-deletion.
@@ -41,7 +41,7 @@ The Registry does not store financial values directly. Instead, it uses dynamic 
     *   *Total Invoiced:* The sum of "Total Due" across all active invoices.
     *   *Balance:* The sum of "Invoice Balances" (Total Due - Payments) across those same invoices.
 *   **Total Received** [Property]: The sum of all active payments received for this Order, including both invoice-linked payments and unapplied prepayments.
-*   **Total Linked Expenses** [Property]: The sum of all active operational costs linked to this CDX number. This is the primary metric for tracking project-specific profitability (Job Costing).
+*   **Total Linked Expenses** [Property]: The sum of all active operational costs linked to this CDX number. This is the primary metric for tracking project-specific profitability.
 *   **Total Linked Adjustments** [Property]: The sum of all non-operational gains or losses linked to the deal. This includes manual corrections and automated system write-offs.
 
 ---

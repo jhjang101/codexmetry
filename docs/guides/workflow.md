@@ -57,7 +57,7 @@ Expenses track the costs incurred to run the business or fulfill specific orders
 
 1.  **Record Cost:** Select a Vendor and enter text descriptions for the items.
 2.  **Issuing:** Open the **Print Preview** and click **Issue** to generate a professional PDF. This can be used as a formal Purchase Order for your vendors.
-3.  **Link to CDX:** (Optional) Link the expense to a CDX Registry number. This enables "Order Costing" in your Order Histoty to track the exact profitability of a specific deal.
+3.  **Link to CDX:** (Optional) Link the expense to a CDX Registry number. This enables "Order Costing" in your Order Histoty to track the exact profitability of a specific order.
 4.  **Outcome:**
     *   **Open:** The cost is committed/ordered but not yet paid.
     *   **Completed:** The expense is fully settled.
@@ -69,4 +69,4 @@ Expenses track the costs incurred to run the business or fulfill specific orders
 Adjustments are single-entry records used for non-operational financial events.
 
 1.  **Manual Entry:** Record items like Bank Interest (Gain) or Annual Fees (Loss).
-2.  **Balance Correction:** Automatically created by the [Payment Automation](./workflow.md#5-Payments-the-Settlement) when an invoice is completed with a minor balance gap.
+2.  **Balance Correction:** Automatically created by the Payment Automation when an invoice is completed with a minor balance gap.

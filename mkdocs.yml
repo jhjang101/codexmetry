@@ -31,7 +31,9 @@ theme:
         name: Switch to light mode
   features:
     - navigation.tabs
+    - navigation.tabs.sticky
     - navigation.sections
+    - navigation.path
     - navigation.top
     - search.suggest
     - search.highlight
@@ -56,6 +58,13 @@ nav:
     - Purchase Orders: reference/purchase_orders.md
     - Invoices: reference/invoices.md
     - Payments: reference/payments.md
+    - Expenses: reference/expenses.md
+    - Adjustments: reference/adjustments.md
+    - Clients: reference/clients.md
+    - Vendors: reference/vendors.md
+    - Products: reference/products.md
+    - Reports: reference/reports.md
+    - Settings: reference/settings.md
 
 # 4. Plugins
 plugins:

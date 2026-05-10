@@ -63,7 +63,7 @@ The Invoices module manages the official payment requests and records the fulfil
 ## 5. Metadata & Auditing
 
 *   **Internal Note** [Input]: Private comments for internal use. Not visible on the printed PDF.
-*   **Terms & Notes** [Input]: The legal text and instructions included in the PDF footer. Defaults to global system terms on creation but is editable.
+*   **Terms & Notes** [Input]: Instructions or terms included in the PDF footer. Defaults to global system terms on creation but is editable.
 *   **Version Counter** [System]: Increments every time the document is "Issued." Used to track the version of issued PDFs in the attachment zone.
 -   **Attachments** [Input/System]: Manual files added by the user (e.g., proof of delivery), and system generated PDFs during the "Issue" process.
-*   **Activity Log** [System]: Displays the timestamp and user identity for the creation and most recent modification of the record.
+*   **Activity Log** [System]: Displays the chronological record of every change made to the invoice, including user identity and the modified fields.
