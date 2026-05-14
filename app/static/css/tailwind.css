@@ -1256,24 +1256,24 @@ video {
   width: 2rem;
 }
 
-.w-\[16ch\] {
-  width: 16ch;
+.w-\[100px\] {
+  width: 100px;
 }
 
-.w-\[24ch\] {
-  width: 24ch;
+.w-\[120px\] {
+  width: 120px;
 }
 
-.w-\[25ch\] {
-  width: 25ch;
+.w-\[130px\] {
+  width: 130px;
 }
 
-.w-\[28ch\] {
-  width: 28ch;
+.w-\[240px\] {
+  width: 240px;
 }
 
-.w-\[52ch\] {
-  width: 52ch;
+.w-\[60px\] {
+  width: 60px;
 }
 
 .w-auto {
