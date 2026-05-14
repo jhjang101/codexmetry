@@ -38,10 +38,10 @@ The Registry does not store financial values directly. Instead, it uses dynamic 
     - *Math:* (Value of unfulfilled PO line items) minus (Unapplied Credit Pool).
     - *Logic:* This field effectively represents "Backlog" for the Purchase Order.
 - **Total Invoiced (Balance)** [Property]: A dual metric representing both the total amount officially billed and the portion still outstanding.
-    - *Total Invoiced:* The sum of "Total Due" across all active invoices.
-    - *Balance:* The sum of "Invoice Balances" (Total Due - Payments) across those same invoices.
+    - *Total Invoiced:* The sum of "Total Due" across all active and non-draft invoices.
+    - *Balance:* The sum of "Invoice Balances" (Total Due - Payments) across all active and non-draft invoices.
 - **Total Received** [Property]: The sum of all active payments received for this Order, including both invoice-linked payments and unapplied prepayments.
-- **Total Linked Expenses** [Property]: The sum of all active operational costs linked to this CDX number. This is the primary metric for tracking project-specific profitability.
+- **Total Linked Expenses** [Property]: The sum of all active and non-draft operational costs linked to this CDX number. This is the primary metric for tracking project-specific profitability.
 - **Total Linked Adjustments** [Property]: The sum of all non-operational gains or losses linked to the deal. This includes manual corrections and automated system write-offs.
 
 ---
