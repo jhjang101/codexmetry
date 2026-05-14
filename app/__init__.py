@@ -18,7 +18,7 @@ Version: 0.1.1
 Author:  Joon Hee Jang
 License: MIT
 """
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 
 def create_app():
