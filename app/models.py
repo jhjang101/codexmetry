@@ -336,9 +336,10 @@ class OrderRegistry(db.Model, AuditMixin):
 
     @property
     def total_expenses(self):
-        """Sum of all active expenses in this order."""
+        """Sum of all active and non-draft expenses in this order."""
         if 'expenses' in self.__dict__:
-            return sum(exp.total_amount for exp in self.expenses if exp.is_active)
+            return sum(exp.total_amount for exp in self.expenses 
+                       if exp.is_active and exp.status != 'draft')
         return 0
 
     @property
@@ -349,16 +350,18 @@ class OrderRegistry(db.Model, AuditMixin):
     
     @property
     def total_contextual_balance(self):
-        """Sum of unpaid balances across all issued invoices (Receivables)."""
+        """Sum of unpaid balances across all issued invoices (excludes drafts)."""
         if 'invoices' in self.__dict__:
-            return sum(inv.contextual_balance for inv in self.invoices if inv.is_active)
+            return sum(inv.contextual_balance for inv in self.invoices 
+                       if inv.is_active and inv.status != 'draft')
         return 0
     
     @property
     def total_invoiced_due(self):
-        """Sum of all total_due values (positive billing) in this order."""
+        """Sum of all total_due values (positive billing) in this order (excludes drafts)."""
         if 'invoices' in self.__dict__:
-            return sum(inv.total_due for inv in self.invoices if inv.is_active)
+            return sum(inv.total_due for inv in self.invoices 
+                       if inv.is_active and inv.status != 'draft')
         return 0
 
     @property
