@@ -54,7 +54,7 @@ If the application UI is unreachable, you can perform maintenance directly from 
 ### Manual Database Dump
 
 ```bash
-docker exec -t codexmetry_db pg_dump -U admin -d codexmetry > ./manual_backup.sql
+docker exec -t codexmetry_db pg_dump -U admin -d codexmetry --clean --if-exists --no-owner > ./manual_backup.sql
 ```
 
 ### Manual Asset Compression
