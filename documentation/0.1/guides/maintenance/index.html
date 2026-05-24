@@ -1381,7 +1381,7 @@
 <h2 id="4-manual-plan-b-operations-host-level">4. Manual "Plan B" Operations (Host Level)</h2>
 <p>If the application UI is unreachable, you can perform maintenance directly from the host machine terminal.</p>
 <h3 id="manual-database-dump">Manual Database Dump</h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-t<span class="w"> </span>codexmetry_db<span class="w"> </span>pg_dump<span class="w"> </span>-U<span class="w"> </span>admin<span class="w"> </span>-d<span class="w"> </span>codexmetry<span class="w"> </span>&gt;<span class="w"> </span>./manual_backup.sql
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-t<span class="w"> </span>codexmetry_db<span class="w"> </span>pg_dump<span class="w"> </span>-U<span class="w"> </span>admin<span class="w"> </span>-d<span class="w"> </span>codexmetry<span class="w"> </span>--clean<span class="w"> </span>--if-exists<span class="w"> </span>--no-owner<span class="w"> </span>&gt;<span class="w"> </span>./manual_backup.sql
 </span></code></pre></div>
 <h3 id="manual-asset-compression">Manual Asset Compression</h3>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Create a zip of all business assets from the project root</span>
