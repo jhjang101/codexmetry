@@ -150,7 +150,9 @@
                                       required>
                             <option value="">Select Category...</option>
                             {% for category in categories %}
-                                <option value="{{ category.id }}" {{ 'selected' if (product and product.category_id == category.id) else '' }}>{{ category.type }}</option>
+                                <option value="{{ category.id }}" {{ 'selected' if (product and product.category_id == category.id) else '' }}>
+                                    {{ category.type }}{{ '\t(Revenue)' if category.is_revenue else '' }}
+                                </option>
                             {% endfor %}
                         </select>
                         <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-400">

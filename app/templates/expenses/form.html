@@ -192,7 +192,9 @@
                                     required>
                                 <option value="">Select Category...</option>
                                 {% for c in categories %}
-                                    <option value="{{ c.id }}" {{ 'selected' if (expense and expense.category_id == c.id) else '' }}>{{ c.type }}</option>
+                                    <option value="{{ c.id }}" {{ 'selected' if (expense and expense.category_id == c.id) else '' }}>
+                                        {{ c.type }}{{ '\t(COGS)' if c.is_cogs else '\t(OPEX)' }}
+                                    </option>
                                 {% endfor %}
                             </select>
                             <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-400">
