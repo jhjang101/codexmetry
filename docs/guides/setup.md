@@ -14,7 +14,7 @@ Navigate to [**Settings**](../reference/settings.md) to establish the identity o
     - *Office Address*: Your primary physical location.
     - *Payable Address*: Where clients should mail checks.
     - *Shipping Address*: Where vendors should deliver items.
-- **Banking (Wire Transfer):** Provide your Bank Name, SWIFT, Routing, and Account numbers to ensure payment instructions are included on Invoices.
+- **Banking (Wire Transfer):** Provide your Account Name, Bank Name, SWIFT, Routing, and Account numbers to ensure payment instructions are included on Invoices.
 
 ---
 

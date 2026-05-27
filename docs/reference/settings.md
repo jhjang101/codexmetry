@@ -17,7 +17,7 @@ Codexmetry utilizes a singleton data pattern (ID: 1) for system settings, ensuri
 
 ### B. Banking & Remittance
 
-- **Wire Transfer Details** [Input]: Includes Bank Name, SWIFT, Routing, and Account numbers.
+- **Wire Transfer Details** [Input]: Includes Account Name, Bank Name, SWIFT, Routing, and Account numbers.
     - *Logic*: These fields are dynamically injected into the footer of all issued Invoices to provide clear payment instructions to clients.
 
 ---
