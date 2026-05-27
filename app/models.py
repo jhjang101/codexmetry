@@ -142,6 +142,7 @@ class SettingsMetadata(db.Model):
     shipping_address: Mapped[str | None] = mapped_column(Text)
 
     # New Banking Fields
+    bank_account_name: Mapped[str | None] = mapped_column(String(255))
     bank_name: Mapped[str | None] = mapped_column(String(100))
     bank_swift: Mapped[str | None] = mapped_column(String(50))
     bank_routing: Mapped[str | None] = mapped_column(String(50))

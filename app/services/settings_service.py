@@ -206,6 +206,7 @@ class MetadataService(BaseService):
             'shipping_address': data.get('shipping_address', '').strip(),
 
             # Banking
+            'bank_account_name': data.get('bank_account_name', '').strip(),
             'bank_name': data.get('bank_name', '').strip(),
             'bank_swift': data.get('bank_swift', '').strip(),
             'bank_routing': data.get('bank_routing', '').strip(),

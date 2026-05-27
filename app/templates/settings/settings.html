@@ -89,20 +89,29 @@
                     <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4 border-b pb-1">Wire Transfer Details</h2>
                     <div class="grid grid-cols-2 gap-4">
                         <div class="col-span-2">
+                            <label class="block text-xs font-medium text-gray-500">Account Name</label>
+                            <input type="text" name="bank_account_name" value="{{ metadata.bank_account_name or '' }}" 
+                                   class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">
+                        </div>
+                        <div class=>
                             <label class="block text-xs font-medium text-gray-500">Bank Name</label>
-                            <input type="text" name="bank_name" value="{{ metadata.bank_name or '' }}" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">
+                            <input type="text" name="bank_name" value="{{ metadata.bank_name or '' }}" 
+                                   class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-gray-500">SWIFT/BIC</label>
-                            <input type="text" name="bank_swift" value="{{ metadata.bank_swift or '' }}" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">
+                            <input type="text" name="bank_swift" value="{{ metadata.bank_swift or '' }}" 
+                                   class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-gray-500">Routing #</label>
-                            <input type="text" name="bank_routing" value="{{ metadata.bank_routing or '' }}" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">
+                            <input type="text" name="bank_routing" value="{{ metadata.bank_routing or '' }}" 
+                                   class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">
                         </div>
-                        <div class="col-span-2">
+                        <div>
                             <label class="block text-xs font-medium text-gray-500">Account #</label>
-                            <input type="text" name="bank_account" value="{{ metadata.bank_account or '' }}" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">
+                            <input type="text" name="bank_account" value="{{ metadata.bank_account or '' }}" 
+                                   class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">
                         </div>
                     </div>
                 </section>
