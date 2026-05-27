@@ -2396,8 +2396,8 @@ video {
   line-height: 1.25;
 }
 
-.tracking-\[0\.25em\] {
-  letter-spacing: 0.25em;
+.tracking-\[0\.1em\] {
+  letter-spacing: 0.1em;
 }
 
 .tracking-\[0\.2em\] {
