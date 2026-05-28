@@ -3,7 +3,7 @@ import os
 from flask.cli import with_appcontext
 from ..extensions import db
 from ..models import SettingsMetadata, ProductCategory, Product, AdjustmentCategory, User
-from sqlalchemy import select
+from sqlalchemy import select, text
 
 @click.command('seed-db')
 @with_appcontext
@@ -104,7 +104,36 @@ def seed_db_command():
         admin_user.set_password(password)
         
         db.session.add(admin_user)
+        sync_postgres_sequences()
         click.echo(f"Admin user '{admin_user.username}' created successfully.")
 
     db.session.commit()
     click.echo("Database initialized and Seeding complete.")
+
+def sync_postgres_sequences():
+    """
+    Logic: Heals Postgres sequences after manual seeding.
+    Prevents 'UniqueViolation: Key (id)=(1) already exists' errors.
+    """
+    # List of all tables that use auto-incrementing IDs
+    tables = [
+        'users', 'po_types', 'product_categories', 'expense_categories', 
+        'payment_types', 'adjustment_categories', 'carriers', 'clients', 
+        'vendors', 'products', 'orders', 'quotes', 'purchase_orders', 
+        'invoices', 'payments', 'expenses', 'adjustments'
+    ]
+    
+    for table in tables:
+        # This SQL finds the max ID and resets the sequence to that value
+        # The third parameter (max(id) IS NOT NULL) handles empty tables safely
+        query = text(f"""
+            SELECT setval(
+                pg_get_serial_sequence('{table}', 'id'), 
+                COALESCE(max(id), 1), 
+                max(id) IS NOT NULL
+            ) FROM {table}
+        """)
+        db.session.execute(query)
+    
+    db.session.commit()
+    print("PostgreSQL sequences synchronized.")
