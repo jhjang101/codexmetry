@@ -14,7 +14,7 @@ class ClientService(BaseService):
         'name': model.company_name,
         'contact': 'primary_name_label',  # Matches the label in the query
         'email': 'primary_email_label',    # Matches the label in the query
-        'address': model.address,
+        'address': model.primary_address,
     }
 
     @classmethod
@@ -80,7 +80,9 @@ class ClientService(BaseService):
             stmt = stmt.where(
                 or_(
                     cls.model.company_name.icontains(search_term),
-                    cls.model.address.icontains(search_term),
+                    cls.model.primary_address.icontains(search_term),
+                    cls.model.shipping_address.icontains(search_term),
+                    cls.model.billing_address.icontains(search_term),
                     ClientContact.email.icontains(search_term),
                     ClientContact.first_name.icontains(search_term),
                     ClientContact.last_name.icontains(search_term) 
@@ -210,7 +212,9 @@ class ClientService(BaseService):
         # 2. Transform data
         clean_data = {
             'company_name': company_name,
-            'address': data.get('address', '').strip()
+            'primary_address': data.get('primary_address', '').strip(),
+            'shipping_address': data.get('shipping_address', '').strip(),
+            'billing_address': data.get('billing_address', '').strip()
         }
         
         return clean_data

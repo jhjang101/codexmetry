@@ -72,7 +72,8 @@ def add():
                 'payment_type_id': request.form.get('payment_type_id'),
                 'amount': request.form.get('amount'),
                 'payment_date': request.form.get('payment_date'),
-                'note': request.form.get('note')
+                'note': request.form.get('note'),
+                'paid_from_address': request.form.get('paid_from_address')
             }
 
             # 2. Parse Attachments
@@ -270,7 +271,8 @@ def edit(id):
                 'payment_type_id': request.form.get('payment_type_id'),
                 'amount': request.form.get('amount'),
                 'payment_date': request.form.get('payment_date'),
-                'note': request.form.get('note')
+                'note': request.form.get('note'),
+                'paid_from_address': request.form.get('paid_from_address')
             }
 
             # 2. Parse Attachments

@@ -70,7 +70,8 @@ def add():
                 'quote_date': request.form.get('quote_date'),
                 'expiration_date': request.form.get('expiration_date'),
                 'status': request.form.get('status'),
-                'note': request.form.get('note')
+                'note': request.form.get('note'),
+                'quote_address': request.form.get('quote_address')
             }
 
             # 2. Parse Items
@@ -164,7 +165,8 @@ def edit(id):
                 'quote_date': request.form.get('quote_date'),
                 'expiration_date': request.form.get('expiration_date'),
                 'status': request.form.get('status'),
-                'note': request.form.get('note')
+                'note': request.form.get('note'),
+                'quote_address': request.form.get('quote_address')
             }
 
             # 2. Parse Items

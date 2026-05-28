@@ -172,7 +172,9 @@ class Client(db.Model, AuditMixin):
     __identity_attr__ = 'company_name'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     company_name: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
-    address: Mapped[str | None] = mapped_column(Text)
+    primary_address: Mapped[str | None] = mapped_column(Text)  # Renamed from 'address'
+    shipping_address: Mapped[str | None] = mapped_column(Text)
+    billing_address: Mapped[str | None] = mapped_column(Text)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     
     contacts: Mapped[list["ClientContact"]] = relationship(back_populates="client", cascade="all, delete-orphan")
@@ -401,6 +403,7 @@ class Quote(db.Model, AuditMixin):
     total_amount: Mapped[int] = mapped_column(Integer, default=0)
     quote_date: Mapped[date] = mapped_column(Date, server_default=func.current_date())
     expiration_date: Mapped[date | None] = mapped_column(Date)
+    quote_address: Mapped[str | None] = mapped_column(Text)
     status: Mapped[str] = mapped_column(String(20), default='draft') # draft, sent, accepted, expired
     order_id: Mapped[int | None] = mapped_column(ForeignKey('orders.id')) # Linked after conversion
     note: Mapped[str | None] = mapped_column(Text)
@@ -428,6 +431,8 @@ class PurchaseOrder(db.Model, AuditMixin):
     bill_to_id: Mapped[int] = mapped_column(ForeignKey('clients.id'), nullable=False)
     po_number: Mapped[str | None] = mapped_column(String(100))
     customer_po_number: Mapped[str | None] = mapped_column(String(100)) # Distributor's ref
+    shipping_address: Mapped[str | None] = mapped_column(Text)
+    billing_address: Mapped[str | None] = mapped_column(Text)
     net_days: Mapped[int | None] = mapped_column(Integer) # Terms override
     total_amount: Mapped[int] = mapped_column(Integer, default=0)
     po_date: Mapped[date] = mapped_column(Date, server_default=func.current_date())
@@ -530,6 +535,8 @@ class Invoice(db.Model, AuditMixin):
     bill_to_id: Mapped[int] = mapped_column(ForeignKey('clients.id'), nullable=False)
     invoice_number: Mapped[str] = mapped_column(String(100), unique=True, index=True, nullable=False)
     customer_po_number: Mapped[str | None] = mapped_column(String(100)) # Distributor's ref
+    shipping_address: Mapped[str | None] = mapped_column(Text)
+    billing_address: Mapped[str | None] = mapped_column(Text)
     net_days: Mapped[int | None] = mapped_column(Integer) # Terms override
     total_amount: Mapped[int] = mapped_column(Integer, default=0)
     invoice_date: Mapped[date] = mapped_column(Date, server_default=func.current_date())
@@ -589,10 +596,11 @@ class Payment(db.Model, AuditMixin):
     paid_from_id: Mapped[int] = mapped_column(ForeignKey('clients.id'), nullable=False)
     payment_type_id: Mapped[int | None] = mapped_column(ForeignKey('payment_types.id'))
     amount: Mapped[int] = mapped_column(Integer, nullable=False)
+
     payment_date: Mapped[date] = mapped_column(Date, server_default=func.current_date())
     note: Mapped[str | None] = mapped_column(Text)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
-
+    paid_from_address: Mapped[str | None] = mapped_column(Text)
     order: Mapped["OrderRegistry"] = relationship(back_populates="payments")
     purchase_order: Mapped["PurchaseOrder"] = relationship(back_populates="payments")
     invoice: Mapped["Invoice | None"] = relationship(back_populates="payments")

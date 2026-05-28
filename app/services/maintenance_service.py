@@ -168,10 +168,14 @@ class MaintenanceService:
         writer = csv.writer(output)
 
         if target_type == 'clients':
-            writer.writerow(['ID', 'Client Label', 'Address', 'Primary Contact', 'Email', 'Phone'])
+            writer.writerow(['ID', 'Client Label', 'Primary Address', 'Shipping Address', 'Billing Address', 'Primary Contact', 'Email', 'Phone'])
             records = db.session.execute(db.select(Client).where(Client.is_active==True)).scalars().all()
             for r in records:
-                writer.writerow([r.id, r.company_name, r.address, r.primary_contact_name, r.primary_contact_email, r.primary_contact_phone])
+                writer.writerow([
+                    r.id, r.company_name, r.primary_address, 
+                    r.shipping_address, r.billing_address, 
+                    r.primary_contact_name, r.primary_contact_email, r.primary_contact_phone
+                ])
 
         elif target_type == 'vendors':
             writer.writerow(['ID', 'Vendor Label', 'URL', 'Address', 'Primary Contact', 'Email', 'Phone'])

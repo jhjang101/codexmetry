@@ -76,7 +76,9 @@ def add():
                 'carrier_id': request.form.get('carrier_id'),
                 'ship_date': request.form.get('ship_date'),
                 'tracking_number': request.form.get('tracking_number'),
-                'note': request.form.get('note')
+                'note': request.form.get('note'),
+                'shipping_address': request.form.get('shipping_address'),
+                'billing_address': request.form.get('billing_address')
             }
 
             # 2. Parse Items
@@ -267,7 +269,9 @@ def edit(id):
                 'carrier_id': request.form.get('carrier_id'),
                 'ship_date': request.form.get('ship_date'),
                 'tracking_number': request.form.get('tracking_number'),
-                'note': request.form.get('note')
+                'note': request.form.get('note'),
+                'shipping_address': request.form.get('shipping_address'),
+                'billing_address': request.form.get('billing_address')
             }
 
             # 3. Parse Items
@@ -467,7 +471,7 @@ def issue(id):
             flash(f"Associated PO {po_name} status updated: {po_status['before'].upper()} → {po_status['after'].upper()}", "info")
 
         # 5. RIPPLE FEEDBACK: Write-off Adjustments
-        adjustment_status = invoice_status.get('adjustment')
+        adjustment_status = invoice_status.get('adjustment') # type: ignore
         if isinstance(adjustment_status, dict):
             action = adjustment_status.get('action')
             adjustment_name = adjustment_status.get('number')

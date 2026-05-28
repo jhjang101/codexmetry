@@ -54,7 +54,9 @@ def add():
             # 1. Prepare data
             client_data = {
                 'company_name': request.form.get('company_name'),
-                'address': request.form.get('address')
+                'primary_address': request.form.get('primary_address'),
+                'shipping_address': request.form.get('shipping_address'),
+                'billing_address': request.form.get('billing_address')
             }
             contacts_data = _parse_contact_form(request.form)
 
@@ -104,7 +106,9 @@ def edit(id):
             # 1. Prepare data
             client_data = {
                 'company_name': request.form.get('company_name'),
-                'address': request.form.get('address')
+                'primary_address': request.form.get('primary_address'),
+                'shipping_address': request.form.get('shipping_address'),
+                'billing_address': request.form.get('billing_address')
             }
             contacts = _parse_contact_form(request.form)
 
