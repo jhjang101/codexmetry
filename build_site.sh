@@ -43,9 +43,9 @@ git worktree prune
 # This updates the local gh-pages branch with Mike's logic
 echo "Executing Mike Deployment ($DOC_VERSION) to branch: gh-pages..."
 if [ -n "$ALIAS" ]; then
-    uv run mike deploy --deploy-prefix documentation $DOC_VERSION $ALIAS
+    uv run mike deploy --update-aliases --deploy-prefix documentation $DOC_VERSION $ALIAS
 else
-    uv run mike deploy --deploy-prefix documentation $DOC_VERSION
+    uv run mike deploy --update-aliases --deploy-prefix documentation $DOC_VERSION
 fi
 
 # --- 5. SITE ASSEMBLY (Landing Page Logic) ---
