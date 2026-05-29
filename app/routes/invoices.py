@@ -130,6 +130,7 @@ def add():
 
     client_id = request.args.get('client_id', type=int) # from Client
     po_id = request.args.get('po_id', type=int) # from PO
+    po = None
 
     customer_po_prefill = ""
     net_days_prefill = None
@@ -197,6 +198,7 @@ def add():
                            clients=clients, 
                            pos=pos,
                            payers=payers,
+                           po=po,
                            products=products,
                            suggested_number=suggested_number,
                            carriers=carriers,
@@ -697,6 +699,7 @@ def load_po_details():
         invoice_id=invoice_id,
         po_id=po_id,      # need for enable/disable dropdown
         payers=payers,
+        po=po,
         products=products,
         payer_prefill_id=payer_prefill_id,
         po_total_prepayment=po_total_prepayment, # need to display remaining credit if po reveiced prepayment
@@ -705,6 +708,15 @@ def load_po_details():
     # 6. Trigger math recalculation
     resp.headers['HX-Trigger-After-Swap'] = 'recalculate' # Trigger grand total
     return resp
+
+@bp.route('/get-billing-address')
+def get_billing_address():
+    """Update only the billing snapshot when Bill-To ID is manually changed."""
+    bill_to_id = request.args.get('bill_to_id', type=int)
+    client = ClientService.get_by_id(bill_to_id) if bill_to_id else None
+    address=client.billing_address if client else ""
+    return render_template('purchase_orders/partials/billing_address_input.html', 
+                           address=address)
 
 @bp.route('/update-shipping-logic')
 def update_shipping_logic():

@@ -121,8 +121,8 @@
                 <div class="justify-start items-start gap-2">
                     <div class="font-bold uppercase tracking-widest pr-4 mb-1">Bill To</div>
                     <div class="pl-4 text-gray-800">
-                        <p class="whitespace-pre-line">{{ invoice.bill_to.address }}</p>
-                        {% if invoice.bill_to.primary_contact_name %}
+                        <p class="whitespace-pre-line">{{ invoice.billing_address }}</p>
+                        {# {% if invoice.bill_to.primary_contact_name %}
                         <p>{{ invoice.bill_to.primary_contact_name }}</p>
                         {% endif %}
                         {% if invoice.bill_to.primary_contact_phone %}
@@ -130,7 +130,7 @@
                         {% endif %}
                         {% if invoice.bill_to.primary_contact_email %}
                         <p>Email: {{ invoice.bill_to.primary_contact_email }}</p>
-                        {% endif %}
+                        {% endif %} #}
                     </div>
                 </div>
 
@@ -138,8 +138,8 @@
                 <div class="justify-start items-start gap-2">
                     <div class="font-bold uppercase tracking-widest pr-4 mb-1">Ship To</div>
                     <div class="pl-4 text-gray-800">
-                        <p class="whitespace-pre-line">{{ invoice.client.address }}</p>
-                        {% if invoice.client.primary_contact_name %}
+                        <p class="whitespace-pre-line">{{ invoice.shipping_address }}</p>
+                        {# {% if invoice.client.primary_contact_name %}
                         <p>Attn. {{ invoice.client.primary_contact_name }}</p>
                         {% endif %}
                         {% if invoice.client.primary_contact_phone %}
@@ -147,7 +147,7 @@
                         {% endif %}
                         {% if invoice.client.primary_contact_email %}
                         <p>Email: {{ invoice.client.primary_contact_email }}</p>
-                        {% endif %}
+                        {% endif %} #}
                     </div>
                 </div>
             </div>
