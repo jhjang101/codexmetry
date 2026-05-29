@@ -359,13 +359,6 @@ class PaymentService(BaseService):
         else: 
             payment_date = datetime.now(ZoneInfo(tz_name)).date()
 
-        # 4. Address SResolution
-        payer = db.session.get(Client, int(paid_from_id))
-        
-        paid_from_address = data.get('paid_from_address', '').strip()
-        if not paid_from_address:
-            paid_from_address = payer.billing_address if payer else ""
-
         invoice_id = data.get('invoice_id')
         payment_type_id = data.get('payment_type_id')
 
@@ -377,7 +370,6 @@ class PaymentService(BaseService):
             'po_id': po.id,
             'invoice_id': int(invoice_id) if invoice_id else None,
             'paid_from_id': int(paid_from_id),
-            'paid_from_address': paid_from_address,
             'payment_type_id': int(payment_type_id) if payment_type_id else None,
             'amount': parse_to_cents(str(data.get('amount', 0))),
             'payment_date': payment_date,
