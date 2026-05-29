@@ -1,0 +1,25 @@
+/* --- Codexmetry Documentation Typography Overrides --- */
+
+.md-typeset {
+    /* 1. Font Size (Standard: 0.8rem is ~16px) */
+    font-size: 0.8rem; 
+
+    /* 2. Line Spacing (Standard: 1.6 is optimal for readability) */
+    line-height: 1.6;
+}
+
+/* 3. Paragraph Spacing */
+.md-typeset p {
+    margin-bottom: 1.2em;
+}
+
+/* 4. Fine-tuning headers to match new base size */
+.md-typeset h1 { font-size: 2.2em; margin-bottom: 0.8em; }
+.md-typeset h2 { font-size: 1.6em; margin-top: 1.5em; margin-bottom: 0.6em; }
+.md-typeset h3 { font-size: 1.2em; margin-top: 1.2em; }
+
+/* 5. Indentation nav */
+.md-nav[data-md-level="1"] > .md-nav__list {
+  margin-left: 1em;
+  padding-left: 0.5em;
+}
