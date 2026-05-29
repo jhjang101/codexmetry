@@ -330,14 +330,6 @@
 
             <!-- Addresses -->
             <div class="grid grid-cols-2 gap-4 mt-4">
-                <div id="billing-address-container">
-                    <label class="block text-sm font-medium text-gray-500">Billing Address Snapshot</label>
-                    {% if mode == 'view' %}
-                        <p class="mt-1 block bg-gray-100 border rounded-lg p-2 text-sm whitespace-pre-wrap">{{ po.billing_address or '-' }}</p>
-                    {% else %}
-                        <textarea name="billing_address" rows="3" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">{{ po.billing_address if po else (client.billing_address if client else '') }}</textarea>
-                    {% endif %}
-                </div>
 
                 <div id="shipping-address-container">
                     <label class="block text-sm font-medium text-gray-500">Shipping Address Snapshot</label>
@@ -345,6 +337,15 @@
                         <p class="mt-1 block bg-gray-100 border rounded-lg p-2 text-sm whitespace-pre-wrap">{{ po.shipping_address or '-' }}</p>
                     {% else %}
                         <textarea name="shipping_address" rows="3" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">{{ po.shipping_address if po else (client.shipping_address if client else '') }}</textarea>
+                    {% endif %}
+                </div>
+
+                <div id="billing-address-container">
+                    <label class="block text-sm font-medium text-gray-500">Billing Address Snapshot</label>
+                    {% if mode == 'view' %}
+                        <p class="mt-1 block bg-gray-100 border rounded-lg p-2 text-sm whitespace-pre-wrap">{{ po.billing_address or '-' }}</p>
+                    {% else %}
+                        <textarea name="billing_address" rows="3" class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">{{ po.billing_address if po else (client.billing_address if client else '') }}</textarea>
                     {% endif %}
                 </div>
 

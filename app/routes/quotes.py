@@ -104,7 +104,7 @@ def add():
     client_id = request.args.get('client_id', type=int)
     client = None
 
-    if client_id: # generate PO from client
+    if client_id: # generate Quote from client
         client = ClientService.get_by_id(client_id)
         if not client:
             flash("Client not found", "error")
