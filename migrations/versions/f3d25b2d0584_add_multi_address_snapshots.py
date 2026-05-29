@@ -1,8 +1,8 @@
 """Add multi-address snapshots
 
-Revision ID: 1ddf2cd153fe
+Revision ID: f3d25b2d0584
 Revises: 58f90764441d
-Create Date: 2026-05-28 18:16:52.827621
+Create Date: 2026-05-28 22:44:19.346974
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '1ddf2cd153fe'
+revision = 'f3d25b2d0584'
 down_revision = '58f90764441d'
 branch_labels = None
 depends_on = None
@@ -26,9 +26,6 @@ def upgrade():
     with op.batch_alter_table('invoices', schema=None) as batch_op:
         batch_op.add_column(sa.Column('shipping_address', sa.Text(), nullable=True))
         batch_op.add_column(sa.Column('billing_address', sa.Text(), nullable=True))
-
-    with op.batch_alter_table('payments', schema=None) as batch_op:
-        batch_op.add_column(sa.Column('paid_from_address', sa.Text(), nullable=True))
 
     with op.batch_alter_table('purchase_orders', schema=None) as batch_op:
         batch_op.add_column(sa.Column('shipping_address', sa.Text(), nullable=True))
@@ -48,9 +45,6 @@ def downgrade():
     with op.batch_alter_table('purchase_orders', schema=None) as batch_op:
         batch_op.drop_column('billing_address')
         batch_op.drop_column('shipping_address')
-
-    with op.batch_alter_table('payments', schema=None) as batch_op:
-        batch_op.drop_column('paid_from_address')
 
     with op.batch_alter_table('invoices', schema=None) as batch_op:
         batch_op.drop_column('billing_address')

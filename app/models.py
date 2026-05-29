@@ -600,7 +600,6 @@ class Payment(db.Model, AuditMixin):
     payment_date: Mapped[date] = mapped_column(Date, server_default=func.current_date())
     note: Mapped[str | None] = mapped_column(Text)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
-    paid_from_address: Mapped[str | None] = mapped_column(Text)
     order: Mapped["OrderRegistry"] = relationship(back_populates="payments")
     purchase_order: Mapped["PurchaseOrder"] = relationship(back_populates="payments")
     invoice: Mapped["Invoice | None"] = relationship(back_populates="payments")
