@@ -671,6 +671,9 @@ class PurchaseOrderService(BaseService):
         if not client_id:
             raise ValueError("Client is required.")
         
+        client_id= int(client_id)
+        bill_to_id = int(data.get('bill_to_id', client_id))
+        
         # Parse dates
         raw_date = data.get('po_date')
         raw_net_days = data.get('net_days')
@@ -693,13 +696,28 @@ class PurchaseOrderService(BaseService):
         else:
             # Leave as None if blank to reflect the literal document received
             net_days = None
+
+        # Address Snapshot Logic
+        client = db.session.get(Client, client_id)
+        bill_to = db.session.get(Client, bill_to_id)
+
+        shipping_address = data.get('shipping_address', '').strip()
+        if not shipping_address:
+            shipping_address = client.shipping_address if client else ""
+            
+        billing_address = data.get('billing_address', '').strip()
+        if not billing_address:
+            billing_address = bill_to.billing_address if bill_to else ""
+
         
         po_type_id = data.get('po_type_id')
         quote_id = data.get('quote_id')
 
         clean_data ={
-            'client_id': int(client_id),
-            'bill_to_id': int(data.get('bill_to_id', client_id)),
+            'client_id': client_id,
+            'bill_to_id': bill_to_id,
+            'shipping_address': shipping_address,
+            'billing_address': billing_address,
             'po_number': data.get('po_number', '').strip(),
             'customer_po_number': data.get('customer_po_number', '').strip(),
             'po_date': po_date,

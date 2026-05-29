@@ -121,15 +121,15 @@
                         {% if quote.client.primary_contact_name %}
                         <p class="text-gray-950">{{ quote.client.primary_contact_name }}</p>
                         {% endif %}
-                        {% if quote.client.address %}
-                        <p class="whitespace-pre-line">{{ quote.client.address }}</p>
+                        {% if quote.quote_address %}
+                        <p class="whitespace-pre-line">{{ quote.quote_address }}</p>
                         {% endif %}
-                        {% if quote.client.primary_contact_phone %}
+                        {# {% if quote.client.primary_contact_phone %}
                         <p>Phone: {{ quote.client.primary_contact_phone }}</p>
                         {% endif %}
                         {% if quote.client.primary_contact_email %}
                         <p>Enail: {{ quote.client.primary_contact_email }}</p>
-                        {% endif %}
+                        {% endif %} #}
                     </div>
                 </div>
 

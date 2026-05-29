@@ -607,6 +607,15 @@ class InvoiceService(BaseService):
         raw_ship_date = data.get('ship_date')
         carrier_id = data.get('carrier_id')
 
+        # 5. Address Resolution (Inherit from PO)
+        shipping_address = data.get('shipping_address', '').strip()
+        if not shipping_address:
+            shipping_address = po.shipping_address if po else ""
+
+        billing_address = data.get('billing_address', '').strip()
+        if not billing_address:
+            billing_address = po.billing_address if po else ""
+
         # 5. Terms Resolution
         if invoice and invoice.terms:
             resolved_terms = invoice.terms
@@ -619,6 +628,8 @@ class InvoiceService(BaseService):
             'po_id': po.id,
             'client_id': int(data.get('client_id', po.client_id)),
             'bill_to_id': int(data.get('bill_to_id', po.bill_to_id)),
+            'shipping_address': shipping_address,
+            'billing_address': billing_address,
             'invoice_number': data.get('invoice_number', '').strip(),
             'customer_po_number': customer_po, # Resolved inheritance
             'net_days': net_days, # Resolved snapshot

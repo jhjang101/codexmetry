@@ -157,6 +157,10 @@
                         <div class="relative">
                             <select name="client_id" 
                                     class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none appearance-none bg-transparent cursor-pointer pr-10" 
+                                    hx-get="{{ url_for('quotes.get_client_address') }}"
+                                    hx-trigger="change"
+                                    hx-target="#quote-address-container"
+                                    hx-swap="outerHTML"
                                     required>
                                 <option value="">Select Client...</option>
                                 {% for client in clients %}
@@ -240,6 +244,17 @@
                                 <i class="fa-solid fa-chevron-down text-[10px]"></i>
                             </div>
                         </div>
+                    {% endif %}
+                </div>
+                <!-- Snapshot Address Field -->
+                <div class="col-span-3" id="quote-address-container">
+                    <label class="block text-sm font-medium text-gray-500">Quote To</label>
+                    {% if mode == 'view' %}
+                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm whitespace-pre-wrap">{{ quote.quote_address or '-' }}</p>
+                    {% else %}
+                        <textarea name="quote_address" rows="4" 
+                                  class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none"
+                                  placeholder="The address as it will appear on the printed PDF...">{{ quote.quote_address if quote else (client.primary_address if client else '') }}</textarea>
                     {% endif %}
                 </div>
             </div>

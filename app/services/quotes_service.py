@@ -353,13 +353,23 @@ class QuoteService(BaseService):
         if quote_date > expiration_date:
             raise ValueError("Expiration date cannot be before quote date.")
         
-        # 3. Terms Resolution
+        # 3. Address Resolution
+        client = db.session.get(Client, int(client_id))
+        # Priority: 1. User Input -> 2. Existing Record -> 3. Client Default
+        quote_address = data.get('quote_address', '').strip()
+        if not quote_address:
+            if quote:
+                quote_address = quote.quote_address
+            else:
+                quote_address = client.primary_address if client else ""
+        
+        # 4. Terms Resolution
         if quote and quote.terms:
             resolved_terms = quote.terms
         else:
             resolved_terms = default_terms
 
-        # 4. Transform and return data
+        # 5. Transform and return data
         clean_data ={
             'client_id': int(client_id),
             'quote_number': quote_number,
@@ -367,7 +377,8 @@ class QuoteService(BaseService):
             'expiration_date': expiration_date,
             'status': data.get('status', 'draft'),
             'note': data.get('note', '').strip(),
-            'terms': resolved_terms
+            'terms': resolved_terms,
+            'quote_address': quote_address
         }
 
         return clean_data

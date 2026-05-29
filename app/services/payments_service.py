@@ -348,7 +348,7 @@ class PaymentService(BaseService):
         if not po:
             raise ValueError("The selected Purchase Order does not exist.")
 
-        # Parse dates
+        # 3. Parse dates
         raw_date = data.get('payment_date')
         # Get TimeZone from metadata
         metadata = db.session.get(SettingsMetadata, 1)
@@ -359,10 +359,17 @@ class PaymentService(BaseService):
         else: 
             payment_date = datetime.now(ZoneInfo(tz_name)).date()
 
+        # 4. Address SResolution
+        payer = db.session.get(Client, int(paid_from_id))
+        
+        paid_from_address = data.get('paid_from_address', '').strip()
+        if not paid_from_address:
+            paid_from_address = payer.billing_address if payer else ""
+
         invoice_id = data.get('invoice_id')
         payment_type_id = data.get('payment_type_id')
 
-        # 3. Transform data
+        # 5. Transform data
         clean_data = {
             'client_id': int(client_id),
             'payment_number': payment_number,
@@ -370,6 +377,7 @@ class PaymentService(BaseService):
             'po_id': po.id,
             'invoice_id': int(invoice_id) if invoice_id else None,
             'paid_from_id': int(paid_from_id),
+            'paid_from_address': paid_from_address,
             'payment_type_id': int(payment_type_id) if payment_type_id else None,
             'amount': parse_to_cents(str(data.get('amount', 0))),
             'payment_date': payment_date,

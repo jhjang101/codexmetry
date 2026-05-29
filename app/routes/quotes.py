@@ -286,6 +286,16 @@ def issue(id):
         return handle_post_error(e, "quotes.issue")
 
 # --- HTMX PARTIALS & LIVE MATH ---
+@bp.route('/get-client-address')
+def get_client_address():
+    """Returns the primary_address for the selected client to prefill the snapshot."""
+    client_id = request.args.get('client_id', type=int)
+    if not client_id:
+        return render_template('quotes/partials/address_input.html', address="")
+    
+    client = ClientService.get_by_id(client_id)
+    address = client.primary_address if client else ""
+    return render_template('quotes/partials/address_input.html', address=address)
 
 @bp.route('/add-row')
 def add_row():
