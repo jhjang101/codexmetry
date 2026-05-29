@@ -102,6 +102,7 @@ def add():
         cancel_url = referrer
 
     client_id = request.args.get('client_id', type=int)
+    client = None
 
     if client_id: # generate PO from client
         client = ClientService.get_by_id(client_id)
@@ -123,6 +124,7 @@ def add():
                            mode='add', 
                            quote=None, 
                            clients=clients, 
+                           client=client,
                            products=products,
                            suggested_number=suggested_number,
                            client_id=client_id,

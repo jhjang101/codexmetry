@@ -108,6 +108,7 @@ def add():
     payers = []
     quotes = []
     items = []
+    client = None
 
     if client_id: # generate PO from client
         client = ClientService.get_by_id(client_id)
@@ -124,6 +125,7 @@ def add():
             return redirect(url_for('purchase_orders.index'))
 
         client_id = quote.client_id if quote else None
+        client = ClientService.get_by_id(client_id)
         payers = ClientService.get_all()
         quotes = QuoteService.get_quotes_by_client(client_id, include_id=quote_id) if client_id else []
 
@@ -152,6 +154,7 @@ def add():
 
     print('client_id:', client_id)
     print('quote_id:', quote_id)
+    print('client:', client)
 
     return render_template('purchase_orders/form.html', 
                            mode='add', 
@@ -159,6 +162,7 @@ def add():
                            clients=clients, 
                            payers=payers,
                            quotes=quotes,
+                           client=client,
                            products=products,
                            po_types=po_types,
                            client_id = client_id,
