@@ -368,7 +368,7 @@
 
             <div class="grid grid-cols-2 gap-4 mt-4">
                 <div id="shipping-address-container">
-                    <label class="block text-sm font-medium text-gray-500">Shipping Address Snapshot</label>
+                    <label class="block text-sm font-medium text-gray-500">Shipping Address</label>
                     {% if mode == 'view' %}
                         <p class="mt-1 block bg-gray-100 border rounded-lg p-2 text-sm whitespace-pre-wrap">{{ invoice.shipping_address or '-' }}</p>
                     {% else %}
@@ -376,7 +376,7 @@
                     {% endif %}
                 </div>
                 <div id="billing-address-container">
-                    <label class="block text-sm font-medium text-gray-500">Billing Address Snapshot</label>
+                    <label class="block text-sm font-medium text-gray-500">Billing Address</label>
                     {% if mode == 'view' %}
                         <p class="mt-1 block bg-gray-100 border rounded-lg p-2 text-sm whitespace-pre-wrap">{{ invoice.billing_address or '-' }}</p>
                     {% else %}
