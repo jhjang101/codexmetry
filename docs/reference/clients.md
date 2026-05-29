@@ -8,9 +8,13 @@ The Clients module serves as the primary master data anchor for the Sales and Fu
 
 - **Client Label** [Input]: The primary identifier for internal use to label the client (e.g., "General Electric-Shipping").
     - *Display Logic:* In system dropdowns, this field appears as the **Label (Primary Contact Name)** to provide users with immediate account identification.
-    - *Integrity Constraint:* This field is **Unique**. The system prevents the creation of duplicate account labels to ensure payments and orders are never assosiated with the wrong legal entity.
-- **Company Address** [Input]: The shipping or billing address for the account.
-    - *Logic:* This field is used *"As-is"* to populate the **Ship To** and **Bill To** Address fields on all issued Invoices and the **TO** section on all issued Quotes.
+    - *Integrity Constraint:* This field is **Unique**. The system prevents the creation of duplicate account labels to ensure payments and orders are never associated with the wrong legal entity.
+- **Primary Address** [Input]: The default primary address used for **Quotes**.
+    - *Logic:* This field is used *"As-is"* to prefill the **TO** section on new Quotes, but allow manual override within the specific Quote.
+- **Shipping Address** [Input]: The default address for products delivery used for **Ship To** block on Purchase Orders and Invoices.
+    - *Logic:* This field is used *"As-is"* to prefill the **Ship To** block on new Purchase Orders and Invoices, but allow manual override within the specific Purchase Orders or Invoices.
+- **Billing Address** [Input]: The default billing address used for **Bill To** block on Purchase Orders and Invoices.
+    - *Logic:* This field is used *"As-is"* to prefill the **Bill To** block on new Purchase Orders and Invoices, but allow manual override within the specific Purchase Orders or Invoices.
 
 ---
 

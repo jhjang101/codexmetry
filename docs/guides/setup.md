@@ -62,7 +62,9 @@ The Product Catalog serves as the system of record for your Sales documents.
 
 Before creating orders, you must define your external relationships.
 
-- **Account Labels:** Use a unique and descriptive label for Client and Vendor (e.g., "General Electric-Billing").
-- **Company Address:** Provide the shipping or billing address for the account. This is used to populate the "Bill To" or "Vendor" sections on PDFs.
+- **Account Labels:** Use a unique and descriptive label for Client and Vendor (e.g., "General Electric - NY").
+- **Primary Address**: The default physical address used for **Quotes**.
+- **Shipping Address**: The default location for products delivery. This prefills the **Ship To** block on Purchase Orders and Invoices.
+- **Billing Address**: The default accounting location. This prefills the **Bill To** block on Purchase Orders and Invoices.
 - **Personnel & Contacts:** Each account can contain multiple contacts. The system automatically identifies the **Primary Contact** (the topmost record) and display in the dropdown options when creating or editing documents.
 - **Lifecycle Awareness:** The Client view provides immediate visibility into whether an account has open POs or unpaid Invoices, guiding your daily priority. *(TODO)*

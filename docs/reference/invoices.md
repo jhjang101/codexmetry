@@ -27,6 +27,12 @@ The Invoices module manages the official payment requests and records the fulfil
     - *Ripple:* Selecting a carrier enables the **Ship Date** and **Tracking Number** fields.
 - **Ship Date** [Input]: The date the goods left the facility. Defaults to the current date upon carrier selection.
 - **Tracking Number** [Input]: The carrier-provided reference for the shipment.
+- **Shipping Address** [Input/System]: The **Ship To** address as it appears on the printed invoice.
+    - *Logic*: This field is inherited *"As-is"* from the Client's **Shipping Address** default upon PO selection.
+    - *Flexibility*: The text can be manually overridden for the specific Invoice without affecting the master Client record.
+- **Billing Address** [Input/System]: The **Bill To** address as it appears on the printed invoice.
+    - *Logic*: This field is inherited *"As-is"* from the Client's **Billing Address** default upon PO selection or Bill To selection.
+    - *Flexibility*: The text can be manually overridden for the specific Invoice without affecting the master Client record.
 
 ---
 

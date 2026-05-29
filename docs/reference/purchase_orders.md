@@ -28,6 +28,13 @@ The Purchase Order (PO) represents the formal commitment between the business an
     - `Open`: Items remain to be fulfilled and invoiced.
     - `Invoiced`: All items have been moved to invoices, but invoice balances are not yet fully settled.
     - `Completed`: All items are billed and all invoices are fully paid.
+- **Shipping Address** [Input/System]: The **Ship To** address as it appears on the received PO documemt.
+    - *Logic*: This field is inherited *"As-is"* from the Client's **Shipping Address** default upon client selection.
+    - *Flexibility*: The text can be manually overridden for the specific PO without affecting the master Client record.
+- **Billing Address** [Input/System]: The **Bill To** address as it appears on the received PO documemt.
+    - *Logic*: This field is inherited *"As-is"* from the Client's **Billing Address** default upon client selection or Bill To selection.
+    - *Flexibility*: The text can be manually overridden for the specific PO without affecting the master Client record.
+
 
 ---
 

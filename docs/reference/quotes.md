@@ -24,6 +24,9 @@ The Quotes module manages formal proposals issued to clients. It serves as the s
     - `Sent`: The document has been issued and a PDF has been generated.
     - `Accepted`: The client has accepted the Quotes and it has been converted into a PO.
     - `Expired`: The Quotes has passed its expiration date without conversion.
+- **Quote To** [Input/System]: The **To** address as it appears on the printed quote.
+    - *Logic*: This field is inherited *"As-is"* from the Client's **Primary Address** default upon client selection.
+    - *Flexibility*: The text can be manually overridden for the specific Quote without affecting the master Client record, ensuring the document accurately reflects the requester's location at the time of the quote.
 
 ---
 
