@@ -7,3 +7,17 @@
 <div id="quote-select-container" hx-swap-oob="true" class="relative">
     {% include 'purchase_orders/partials/quote_select.html' %}
 </div>
+
+<!-- OOB: Update Shipping Address -->
+<div id="shipping-address-container" hx-swap-oob="true">
+    <label class="block text-sm font-medium text-gray-500">Shipping Address Snapshot</label>
+    <textarea name="shipping_address" rows="3" 
+              class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">{{ client.shipping_address if client else '' }}</textarea>
+</div>
+
+<!-- OOB: Update Billing Address -->
+<div id="billing-address-container" hx-swap-oob="true">
+    <label class="block text-sm font-medium text-gray-500">Billing Address Snapshot</label>
+    <textarea name="billing_address" rows="3" 
+              class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none">{{ client.billing_address if client else '' }}</textarea>
+</div>

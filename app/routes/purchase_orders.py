@@ -176,21 +176,16 @@ def view(id):
         flash("Purchase Order not found.", "error")
         return redirect(url_for('purchase_orders.index'))
 
-    print('po.total_amount:', po.total_amount)
-    print('po.to_be_invoiced:', po.to_be_invoiced)
-    print('po.total_prepayment:', po.total_prepayment)
-    print('po.remaining_credit:', po.remaining_credit)
-    for item in po.items:
-        print('item.product.name:', item.product.name)
-        print('item.quantity:', item.quantity)
-        print('item.unit_price:', item.agreed_unit_price)
-        print('item.allocated_qty:', item.allocated_qty)
-
-        
-
-
-
-    print('po.balance_tobe_invoiced:', po.balance_tobe_invoiced)
+    # print('po.total_amount:', po.total_amount)
+    # print('po.to_be_invoiced:', po.to_be_invoiced)
+    # print('po.total_prepayment:', po.total_prepayment)
+    # print('po.remaining_credit:', po.remaining_credit)
+    # for item in po.items:
+    #     print('item.product.name:', item.product.name)
+    #     print('item.quantity:', item.quantity)
+    #     print('item.unit_price:', item.agreed_unit_price)
+    #     print('item.allocated_qty:', item.allocated_qty)
+    # print('po.balance_tobe_invoiced:', po.balance_tobe_invoiced)
 
     tree = OrderService.get_deal_tree(po.order_id)
     history = AuditLogService.get_for_entity('PurchaseOrder', id)
@@ -243,11 +238,11 @@ def edit(id):
             new_quote_id = po.quote_id
             if old_quote_id != new_quote_id:
                 if old_quote_id and new_quote_id:
-                    flash(f"Quote link updated: {old_quote_number} released, {po.quote.quote_number} accepted.", "info")
+                    flash(f"Quote link updated: {old_quote_number} released, {po.quote.quote_number} accepted.", "info") # type: ignore
                 elif old_quote_id:
                     flash(f"Previous Quote {old_quote_number} has been released and reverted to 'SENT' status.", "info")
                 elif new_quote_id:
-                    flash(f"Quote {po.quote.quote_number} has been accepted.", "info")
+                    flash(f"Quote {po.quote.quote_number} has been accepted.", "info") # type: ignore
 
 
 
@@ -384,6 +379,7 @@ def update_client_cascades():
     # Extract IDs from the HTMX request
     po_id = request.args.get('po_id', type=int)
     client_id = request.args.get('client_id', type=int)
+    client = ClientService.get_by_id(client_id) if client_id else None
 
     quote_id = None # add
     if po_id: # edit
@@ -400,8 +396,6 @@ def update_client_cascades():
         print('quote.quote_number:', quote.quote_number)
         print('quote.status:', quote.status)
 
-
-    
     # Populate payers for Bill_To dropdown
     payers = ClientService.get_all()
     
@@ -412,9 +406,19 @@ def update_client_cascades():
     return render_template('purchase_orders/partials/client_cascades.html', 
                            po_id=po_id, # Add if none else Edit
                            client_id=client_id,   # need for enable/disable dropdown
+                           client=client,
                            quotes=quotes,
                            payers=payers,
                            payer_prefill_id=payer_prefill_id)
+
+@bp.route('/get-billing-address')
+def get_billing_address():
+    """Update only the billing snapshot when Bill-To ID changes."""
+    bill_to_id = request.args.get('bill_to_id', type=int)
+    client = ClientService.get_by_id(bill_to_id) if bill_to_id else None
+    address=client.billing_address if client else ""
+    return render_template('purchase_orders/partials/billing_address_input.html', 
+                           address=address)
 
 # --- HTMX Quote-Itmes Cascade Routes ---
 

@@ -9,6 +9,9 @@
             {% if not client_id and not po %} bg-gray-100 text-gray-400 cursor-not-allowed
             {% else %} bg-transparent cursor-pointer
             {% endif %}" 
+            hx-get="{{ url_for('purchase_orders.get_billing_address') }}"
+            hx-target="#billing-address-container"
+            hx-swap="outerHTML"
             required>
 
         <option value="">
