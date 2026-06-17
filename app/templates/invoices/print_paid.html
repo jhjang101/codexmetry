@@ -115,6 +115,11 @@
                     
                     <div class="font-bold">P.O. Number</div>
                     <div>{{ invoice.purchase_order.po_number if invoice.purchase_order else '' }}</div>
+
+                    {% if invoice.customer_po_number %}
+                    <div class="font-bold">Customer PO</div>
+                    <div>{{ invoice.customer_po_number}}</div>
+                    {% endif %}
                 </div>
             </div>
 
