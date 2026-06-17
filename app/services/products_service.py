@@ -203,6 +203,11 @@ class ProductService(BaseService):
         if not category_id:
             raise ValueError("Product Category is required.")
         
+        # Prevents "None" or empty strings from being saved as literal text
+        image_url = data.get('image_url')
+        if not image_url or str(image_url).strip() in ['None', 'NULL', '']:
+            image_url = None
+        
         # 2. Transform data
         clean_data = {
             'name': name,
@@ -210,7 +215,7 @@ class ProductService(BaseService):
             'category_id': int(category_id),
             'document_placement': data.get('document_placement', 'Lineitem'),
             'default_unit_price': parse_to_cents(str(data.get('default_unit_price', 0))),
-            'image_url': data.get('image_url') # Handled by Route/images.py
+            'image_url': image_url
         }
         
         return clean_data
