@@ -14,11 +14,11 @@ from .utils.auth import init_auth_loaders
 """
 CODEXMETRY: The Financial Fortress of Order Management
 ------------------------------------------------------
-Version: 0.2.0
+Version: 0.2.1
 Author:  Joon Hee Jang
 License: MIT
 """
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 
 
 def create_app():
