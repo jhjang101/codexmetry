@@ -24,7 +24,7 @@
             </div> 
             <div>
                 <span class="tracking-widest">Order Date: </span> 
-                <span class="tracking-widest">{{ (tree.created_at | localize).strftime('%Y-%m-%d') }}</span>
+                <span class="tracking-widest">{{ tree.purchase_order.po_date if tree.purchase_order else '-' }}</span>
             </div> 
         </div>
     </div>
