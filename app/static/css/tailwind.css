@@ -1317,6 +1317,10 @@ video {
   max-width: 150px;
 }
 
+.max-w-\[160px\] {
+  max-width: 160px;
+}
+
 .max-w-\[200px\] {
   max-width: 200px;
 }
@@ -1339,6 +1343,10 @@ video {
 
 .max-w-\[300px\] {
   max-width: 300px;
+}
+
+.max-w-\[320px\] {
+  max-width: 320px;
 }
 
 .max-w-\[340px\] {

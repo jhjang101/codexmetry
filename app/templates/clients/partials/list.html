@@ -15,7 +15,7 @@
         <tr class="hover:bg-blue-50/40 transition-colors">
             
             <td class="px-6 py-4 whitespace-nowrap">
-                <span class="text-sm font-bold text-blue-700">{{ client.company_name }}</span>
+                <span class="text-sm font-bold text-blue-700 truncate block max-w-[240px]">{{ client.company_name }}</span>
             </td>
             
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
@@ -23,11 +23,11 @@
             </td>
             
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                {{ client.primary_contact_email or '-'}}
+                <span class="truncate block max-w-[160px]">{{ client.primary_contact_email or '-'}}</span>
             </td>
             
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                <span class="truncate block max-w-xs">{{ client.primary_address or '-' }}</span>
+                <span class="truncate block max-w-[320px]">{{ client.primary_address or '-' }}</span>
             </td>
             
             <td class="pl-6 pr-8 y-4 whitespace-nowrap text-right text-sm">
