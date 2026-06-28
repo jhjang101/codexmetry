@@ -227,7 +227,7 @@
                 <div class="col-span-2">
                     <label class="block text-sm font-medium text-gray-500">Invoice Number</label>
                     {% if mode == 'view' %}
-                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm font-mono">{{ invoice.invoice_number or '-'}}</p>
+                        <p class="mt-1 block bg-gray-100 w-full border rounded-lg p-2 text-sm">{{ invoice.invoice_number or '-'}}</p>
                     {% else %}
                         <input type="text" name="invoice_number" value="{{ invoice.invoice_number if invoice else suggested_number }}" 
                                class="mt-1 block w-full border rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-300 outline-none transition-all">
