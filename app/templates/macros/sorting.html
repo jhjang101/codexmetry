@@ -7,10 +7,10 @@
     {# 2. Header Element #}
     {% set alignment_class = 'text-right' if align == 'right' else 'text-left' %}
     {% set justify_class = 'justify-end' if align == 'right' else 'justify-start' %}
-    <th class="px-6 py-4 {{ alignment_class }} 
+    <th class="px-3 py-4 {{ alignment_class }} 
                text-xs font-semibold text-gray-600 
                uppercase tracking-wider cursor-pointer 
-               hover:bg-gray-100 transition-colors group"
+               hover:bg-gray-100 transition-colors group whitespace-nowrap"
         hx-get="{{ url_for(endpoint, 
                            sort=key, 
                            dir=next_dir, 

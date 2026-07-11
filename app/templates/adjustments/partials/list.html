@@ -8,23 +8,29 @@
             {{ sort_header('Amount', 'amount', pagination, 'adjustments.index', align='right') }}
             {{ sort_header('Category', 'category', pagination, 'adjustments.index') }}
             {{ sort_header('Date', 'date', pagination, 'adjustments.index') }}
-            <th class="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase">Actions</th>
+            <th class="px-3 py-4 text-center text-xs font-semibold text-gray-600 uppercase">Actions</th>
         </tr>
     </thead>
     <tbody class="divide-y divide-gray-100 bg-white">
         {% for adjustment in pagination.items %}
         <tr class="hover:bg-blue-50/40 transition-colors">
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ adjustment.adjustment_number }}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 truncate max-w-xs">{{ adjustment.description }}</td>
-            <td class="pl-6 pr-10 py-4 text-right whitespace-nowrap text-sm {{ 'text-green-700' if adjustment.amount >= 0 else 'text-red-600' }}">
+            <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-700">
+                {{ adjustment.adjustment_number }}
+            </td>
+            <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-700">
+                <span class="truncate block max-w-[530px]">{{ adjustment.description }}</span>
+                </td>
+            <td class="pl-3 pr-6 py-4 text-right whitespace-nowrap text-sm {{ 'text-green-700' if adjustment.amount >= 0 else 'text-red-600' }}">
                 {{ adjustment.amount | usd }}
             </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ adjustment.category.type if adjustment.category else '-' }}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+            <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-700">
+                <span class="truncate block max-w-44">{{ adjustment.category.type if adjustment.category else '-' }}</span>
+                </td>
+            <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-700">
                 {{ adjustment.adjustment_date.strftime('%Y-%m-%d') }}
             </td>
 
-            <td class="pl-6 pr-8 py-4 whitespace-nowrap text-right text-sm">
+            <td class="px3 py-4 whitespace-nowrap text-center text-sm">
                 <span class="text-gray-400 hover:text-blue-600 cursor-pointer" 
                       hx-get="{{ url_for('adjustments.view', id=adjustment.id) }}" 
                       hx-target="body" 

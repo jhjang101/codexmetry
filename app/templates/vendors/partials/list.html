@@ -7,30 +7,30 @@
             {{ sort_header('Website', 'url', pagination, 'vendors.index') }}
             {{ sort_header('Primary Contact', 'contact', pagination, 'vendors.index') }}
             {{ sort_header('Address', 'address', pagination, 'vendors.index') }}
-            <th class="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
+            <th class="px-3 py-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
         </tr>
     </thead>
     <tbody class="divide-y divide-gray-100 bg-white">
         {% for vendor in pagination.items %}
         <tr class="hover:bg-blue-50/40 transition-colors">
 
-            <td class="px-6 py-4 whitespace-nowrap">
-                <span class="text-sm font-bold text-blue-700">{{ vendor.company_name }}</span>
+            <td class="px-3 py-4 whitespace-nowrap">
+                <span class="truncate block max-w-96 text-sm font-bold text-blue-700">{{ vendor.company_name }}</span>
             </td>
 
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                {{ vendor.url or '-' }}
+            <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-700">
+                <span class="truncate block max-w-48">{{ vendor.url or '-' }}</span>
             </td>
 
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                {{ vendor.primary_contact_name or '-'}}
+            <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-700">
+                <span class="truncate block max-w-44">{{ vendor.primary_contact_name or '-'}}</span>
             </td>
 
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                <span class="truncate block max-w-xs">{{ vendor.address or '-' }}</span>
+            <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-700">
+                <span class="truncate block max-w-56">{{ vendor.address or '-' }}</span>
             </td>
 
-            <td class="pl-6 pr-8 py-4 whitespace-nowrap text-right text-sm">
+            <td class="px-3 py-4 whitespace-nowrap text-center text-sm">
                 <span class="text-gray-400 font-medium hover:text-blue-600 cursor-pointer"
                       hx-get="{{ url_for('vendors.view', id=vendor.id) }}" 
                       hx-target="body" 

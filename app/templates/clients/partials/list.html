@@ -7,30 +7,30 @@
             {{ sort_header('Primary Contact', 'contact', pagination, 'clients.index') }}
             {{ sort_header('Email', 'email', pagination, 'clients.index') }}
             {{ sort_header('Primary Address', 'address', pagination, 'clients.index') }}
-            <th class="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider w-20">Actions</th>
+            <th class="px-3 py-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
         </tr>
     </thead>
     <tbody class="divide-y divide-gray-100 bg-white">
         {% for client in pagination.items %}
         <tr class="hover:bg-blue-50/40 transition-colors">
             
-            <td class="px-6 py-4 whitespace-nowrap">
-                <span class="text-sm font-bold text-blue-700 truncate block max-w-[240px]">{{ client.company_name }}</span>
+            <td class="px-3 py-4 whitespace-nowrap">
+                <span class="text-sm font-bold text-blue-700 truncate block max-w-[440px]">{{ client.company_name }}</span>
             </td>
             
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                {{ client.primary_contact_name or '-'}}
+            <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-700">
+                <span class="truncate block max-w-36">{{ client.primary_contact_name or '-'}}</span>
             </td>
             
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                <span class="truncate block max-w-[160px]">{{ client.primary_contact_email or '-'}}</span>
+            <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-700">
+                <span class="truncate block max-w-40">{{ client.primary_contact_email or '-'}}</span>
             </td>
             
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                <span class="truncate block max-w-[320px]">{{ client.primary_address or '-' }}</span>
+            <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-700">
+                <span class="truncate block max-w-60">{{ client.primary_address or '-' }}</span>
             </td>
             
-            <td class="pl-6 pr-8 y-4 whitespace-nowrap text-right text-sm">
+            <td class="px-3 py-4 whitespace-nowrap text-center text-sm">
                 <span class="text-gray-400 font-medium hover:text-blue-600 cursor-pointer"
                       hx-get="{{ url_for('clients.view', id=client.id) }}" 
                       hx-target="body" 

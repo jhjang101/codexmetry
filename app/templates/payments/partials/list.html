@@ -10,29 +10,29 @@
             {{ sort_header('Paid From', 'payer', pagination, 'payments.index') }}
             {{ sort_header('Amount', 'amount', pagination, 'payments.index', align='right') }}
             {{ sort_header('Date', 'date', pagination, 'payments.index') }}
-            <th class="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider w-20">Actions</th>
+            <th class="px-3 py-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
         </tr>
     </thead>
     <tbody class="divide-y divide-gray-100 bg-white">
         {% for payment in pagination.items %}
         <tr class="hover:bg-blue-50/40 transition-colors">
 
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+            <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-700">
                 {{ payment.payment_number }}
             </td>
 
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+            <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-700">
             <span class="{{ 'text-gray-500 line-through' if not payment.purchase_order.is_active else '' }}">
                 {{ payment.order.order_number or payment.purchase_order.po_number }}
                 {# {% if not payment.purchase_order.is_active %}(Archived){% endif %} #}
             </span>
             </td>
 
-            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-blue-700 max-w-[200px] truncate">
-                {{ payment.client.company_name }}
+            <td class="px-3 py-4 whitespace-nowrap text-sm font-bold text-blue-700">
+                <div class="max-w-72 truncate">{{ payment.client.company_name }}</div>
             </td>
 
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+            <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-700">
                 {% if payment.invoice %}
                     <span class="{{ 'text-gray-500 line-through' if not payment.invoice.is_active else '' }}">
                         {{ payment.invoice.invoice_number }}
@@ -43,19 +43,19 @@
                 {% endif %}
             </td>
 
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 max-w-[200px] truncate">
-                {{ payment.paid_from.company_name if payment.paid_from else '-'}}
+            <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-700">
+                <div class="max-w-60 truncate">{{ payment.paid_from.company_name if payment.paid_from else '-'}}</div>
             </td>
 
-            <td class="pl-6 pr-10 py-4 text-right whitespace-nowrap text-sm {{ 'text-green-700' if payment.amount >= 0 else 'text-red-600' }}">
+            <td class="pl-3 pr-6 py-4 text-right whitespace-nowrap text-sm {{ 'text-green-700' if payment.amount >= 0 else 'text-red-600' }}">
                 {{ payment.amount | usd }}
             </td>
 
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+            <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-700">
                 {{ payment.payment_date.strftime('%Y-%m-%d') if payment.payment_date else '-' }}
             </td>
 
-            <td class="pl-6 pr-8 py-4 whitespace-nowrap text-right text-sm w-20">
+            <td class="px-3 py-4 whitespace-nowrap text-center text-sm w-20">
                 <span class="text-gray-400 font-medium hover:text-blue-600 cursor-pointer"
                       hx-get="{{ url_for('payments.view', id=payment.id) }}" 
                       hx-target="body" 
