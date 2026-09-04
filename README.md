@@ -2,7 +2,7 @@
 
 ### The Financial Fortress of Order Management
 
-[![Version](https://img.shields.io/badge/version-0.2.3-blue.svg)](https://github.com/jhjang101/codexmetry)
+[![Version](https://img.shields.io/badge/version-0.2.4-blue.svg)](https://github.com/jhjang101/codexmetry)
 [![License: MIT](https://img.shields.io/badge/License-MIT-emerald.svg)](https://opensource.org/licenses/MIT)
 [![Docker Ready](https://img.shields.io/badge/docker-ready-blue.svg)](https://www.docker.com/)
 
