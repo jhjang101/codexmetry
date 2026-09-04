@@ -218,14 +218,19 @@ class AdjustmentService(BaseService):
         if invoice.status == 'completed' and invoice.is_active:
             # Calculate the Gap (Receipts - Billed Amount)
             # Example: $998 received - $1000 billed = -$2 write-off
-            total_paid = sum(p.amount for p in invoice.payments if p.is_active)
+            active_payments = [p for p in invoice.payments if p.is_active]
+            total_paid = sum(p.amount for p in active_payments)
             gap = total_paid - invoice.total_due
+
+            # Resolve settlement date: latest active payment date, or invoice date fallback
+            payment_dates = [p.payment_date for p in active_payments if p.payment_date]
+            settlement_date = max(payment_dates) if payment_dates else invoice.invoice_date
 
             # A: If gap exists, create or update
             if gap != 0:
                 if existing_adj: # Update 
                     existing_adj.amount = gap
-                    existing_adj.adjustment_date = invoice.invoice_date
+                    existing_adj.adjustment_date = settlement_date
                     # Ensure links are correct (In case of a PO swap on the invoice)
                     existing_adj.client_id = invoice.client_id
                     existing_adj.po_id = invoice.po_id
@@ -233,14 +238,14 @@ class AdjustmentService(BaseService):
 
                     # Capture for audit
                     new_data = {'amount': gap, 
-                                'adjustment_date': invoice.invoice_date,
+                                'adjustment_date': settlement_date,
                                 'client_id': invoice.client_id,
                                 'po_id': invoice.po_id,
                                 'order_id': invoice.order_id}
 
                     # Check for ANY change (Amount or Date)
                     if (old_snapshot.get('amount') != gap or 
-                        old_snapshot.get('adjustment_date') != invoice.invoice_date):
+                        old_snapshot.get('adjustment_date') != settlement_date):
                         AuditLogService.record(existing_adj.id,
                                                cls.model.__name__,  
                                                'UPDATE', 
@@ -254,7 +259,7 @@ class AdjustmentService(BaseService):
                     new_adj.adjustment_number = generate_doc_number('A', Adjustment, 'adjustment_number')
                     new_adj.description = f"Write-off for Invoice {invoice.invoice_number}"
                     new_adj.amount = gap
-                    new_adj.adjustment_date = invoice.invoice_date
+                    new_adj.adjustment_date = settlement_date
                     new_adj.category_id = category.id
                     new_adj.invoice_id = invoice.id
                     new_adj.client_id = invoice.client_id
