@@ -7,7 +7,7 @@ from ..extensions import db
 from ..utils.docs import generate_doc_number
 from ..utils.money import parse_to_cents, format_usd
 from ..utils.manual_pagination import ManualPagination
-from sqlalchemy import select, or_, func, and_, exists, case
+from sqlalchemy import select, or_, func, and_, exists, case, update
 from sqlalchemy.orm import contains_eager, joinedload, selectinload
 from datetime import datetime
 from zoneinfo import ZoneInfo
@@ -760,7 +760,16 @@ class PurchaseOrderService(BaseService):
                 # INTEGRITY GUARD 1: Contractual Identity (Product & Price)
                 # Logic: If SKU or Price changes, verify no Invoices (including drafts) exist.
                 if po_item.product_id != product_id or po_item.agreed_unit_price != price:
-                    is_allocated = db.session.query(exists().where(InvoiceItem.po_item_id == po_item.id)).scalar()
+                    is_allocated = db.session.execute(
+                        select(InvoiceItem.id)
+                        .join(Invoice)
+                        .where(
+                            InvoiceItem.po_item_id == po_item.id,
+                            Invoice.is_active == True
+                        )
+                        .limit(1)
+                    ).first() is not None
+
                     if is_allocated:
                         raise ValueError(
                             f"Integrity Violation: Cannot change the Product or Price for line #{idx} ('{po_item.product.name}'). "
@@ -770,8 +779,13 @@ class PurchaseOrderService(BaseService):
 
                 # --- NEW: INTEGRITY GUARD 3: Quantity Floor ---
                 # Check how many units are currently 'Allocated' (reserved across all active invoices)
-                allocated_qty = db.session.query(func.sum(InvoiceItem.quantity)).filter(
-                    InvoiceItem.po_item_id == po_item.id
+                allocated_qty = db.session.execute(
+                    select(func.sum(InvoiceItem.quantity))
+                    .join(Invoice)
+                    .where(
+                        InvoiceItem.po_item_id == po_item.id,
+                        Invoice.is_active == True
+                    )
                 ).scalar() or 0
 
                 if qty < allocated_qty:
@@ -818,13 +832,29 @@ class PurchaseOrderService(BaseService):
         orphan_ids = set(po_items.keys()) - incoming_ids
         for oid in orphan_ids:
             # INTEGRITY GUARD 2: Check for Invoice Links
-            is_invoiced = db.session.query(exists().where(InvoiceItem.po_item_id == oid)).scalar()
+            is_invoiced = db.session.execute(
+                select(InvoiceItem.id)
+                .join(Invoice)
+                .where(
+                    InvoiceItem.po_item_id == oid,
+                    Invoice.is_active == True
+                )
+                .limit(1)
+            ).first() is not None
+
             if is_invoiced:
                 linked_item = po_items[oid]
                 raise ValueError(
                     f"Integrity Violation: Cannot remove '{linked_item.product.name}' from this Purchase Order. "
                     "It has already been fulfilled in an active Invoice. Archive the Invoice first."
                 )
+
+            # Unlink from historical/archived invoices so Postgres allows the physical deletion
+            db.session.execute(
+                update(InvoiceItem)
+                .where(InvoiceItem.po_item_id == oid)
+                .values(po_item_id=None)
+            )
             
             # Safe to delete
             db.session.delete(po_items[oid])
