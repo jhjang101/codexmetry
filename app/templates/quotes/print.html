@@ -136,14 +136,14 @@
                 <!-- Quoted By: Internal -->
                 <div class="grid grid-cols-3 content-start gap-y-1">
                     <div class="font-bold pr-4">Quoted by</div>
-                    <div class="col-span-2 text-left">{{ quote.creator.full_name or quote.creator.username }}</div>
+                    <div class="col-span-2 text-left">{{ current_user.full_name or current_user.username }}</div>
                     <div class="font-bold pr-4">E-mail</div>
-                    <div class="col-span-2 text-blue-600">{{ quote.creator.email }}</div>
-                    {% if quote.creator.phone_number or metadata.company_phone %}
+                    <div class="col-span-2 text-blue-600">{{ current_user.email }}</div>
+                    {% if current_user.phone_number or metadata.company_phone %}
                     <div class="font-bold pr-4">Phone</div>
                     <div class="col-span-2 text-gray-800">
-                        {% if quote.creator.phone_number %}
-                            {{ quote.creator.phone_number }}
+                        {% if current_user.phone_number %}
+                            {{ current_user.phone_number }}
                         {% else %}
                             {{ metadata.company_phone }}       
                         {% endif %} 
@@ -303,7 +303,7 @@
                     {% else %}
                     <p>Please submit a Purchase Order referencing this Quotation number.</p>
                     {% endif %}
-                    <p>If you have any questions, please contact <span class="font-medium">{{ quote.creator.full_name or quote.creator.username }}</span> at <span class="text-blue-600">{{ quote.creator.email }}</span>{% if quote.creator.phone_number %} or <span class="font-medium">{{ quote.creator.phone_number }}</span>{% elif metadata.company_phone %} or <span class="font-medium">{{ metadata.company_phone }}</span> {% endif %}.</p>
+                    <p>If you have any questions, please contact <span class="font-medium">{{ current_user.full_name or current_user.username }}</span> at <span class="text-blue-600">{{ current_user.email }}</span>{% if current_user.phone_number %} or <span class="font-medium">{{ current_user.phone_number }}</span>{% elif metadata.company_phone %} or <span class="font-medium">{{ metadata.company_phone }}</span> {% endif %}.</p>
                 </div>
             </div>
 
