@@ -50,11 +50,25 @@ def _upsert_lookup(cls, **kwargs):
 class CarrierService(BaseService):
     model = Carrier
     @classmethod
+    def get_all(cls):
+        stmt = select(cls.model).where(
+            cls.model.is_active == True
+        ).order_by(cls.model.type.asc())
+        return db.session.execute(stmt).scalars().all()
+    
+    @classmethod
     def add(cls, **kwargs):
         return _upsert_lookup(cls, **kwargs)
 
 class PoTypeService(BaseService):
     model = PoType
+    @classmethod
+    def get_all(cls):
+        stmt = select(cls.model).where(
+            cls.model.is_active == True
+        ).order_by(cls.model.type.asc())
+        return db.session.execute(stmt).scalars().all()
+    
     @classmethod
     def add(cls, **kwargs):
         return _upsert_lookup(cls, **kwargs)
@@ -88,6 +102,13 @@ class ProductCategoryService(BaseService):
 class PaymentTypeService(BaseService):
     model = PaymentType
     @classmethod
+    def get_all(cls):
+        stmt = select(cls.model).where(
+            cls.model.is_active == True
+        ).order_by(cls.model.type.asc())
+        return db.session.execute(stmt).scalars().all()
+    
+    @classmethod
     def add(cls, **kwargs):
         return _upsert_lookup(cls, **kwargs)
 
@@ -111,6 +132,13 @@ class AdjustmentCategoryService(BaseService):
 
 class ExpenseCategoryService(BaseService):
     model = ExpenseCategory
+    @classmethod
+    def get_all(cls):
+        stmt = select(cls.model).where(
+            cls.model.is_active == True
+        ).order_by(cls.model.type.asc())
+        return db.session.execute(stmt).scalars().all()
+    
     @classmethod
     def add(cls, **kwargs):
         return _upsert_lookup(cls, **kwargs)

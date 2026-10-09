@@ -18,6 +18,18 @@ class VendorService(BaseService):
     }
 
     @classmethod
+    def get_all(cls):
+        """
+        Override: Fetches active vendors ordered alphabetically by company name.
+        """
+        stmt = (
+            select(cls.model)
+            .where(cls.model.is_active == True)
+            .order_by(cls.model.company_name.asc())
+        )
+        return db.session.execute(stmt).scalars().all()
+
+    @classmethod
     def get_all_with_search(cls, 
                             search_term: str | None = None, 
                             page: int = 1, 
