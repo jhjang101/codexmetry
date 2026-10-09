@@ -2,6 +2,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import joinedload, selectinload
 from ..models import OrderRegistry, Quote, PurchaseOrder, Invoice, Payment, Expense, Adjustment
 from ..extensions import db
+from datetime import date
 
 class OrderService:
     model = OrderRegistry
@@ -49,6 +50,12 @@ class OrderService:
         tree = db.session.execute(stmt).scalar_one_or_none()
 
         if tree:
+            # 1. Sort child documents chronologically (newest first)
+            tree.invoices.sort(key=lambda x: (x.invoice_date or date.min, x.id), reverse=True)
+            tree.payments.sort(key=lambda x: (x.payment_date or date.min, x.id), reverse=True)
+            tree.expenses.sort(key=lambda x: (x.expense_date or date.min, x.id), reverse=True)
+            tree.adjustments.sort(key=lambda x: (x.adjustment_date or date.min, x.id), reverse=True)
+
             # 2. Attach the Deal Timeline (The "Black Box" data)
             from .audit_service import AuditLogService
             tree.timeline = AuditLogService.get_for_order(tree.id) # type: ignore
